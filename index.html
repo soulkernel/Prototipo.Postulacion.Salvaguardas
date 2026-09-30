@@ -229,8 +229,8 @@
             <p>Personas naturales ecuatorianas o extranjeras con residencia legal, así como organizaciones jurídicas sin fines de lucro localizadas o con presencia operativa en Galápagos.</p>
           </div>
           <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
-            <h5 class="font-bold text-slate-900 mb-1"><i class="fa-solid fa-shield-virus text-amber-600 mr-1.5"></i> Salvaguardas y Matriz de Riesgos</h5>
-            <p>Todas las propuestas deben completar obligatoriamente la matriz de evaluación de salvaguardas (Matriz de Ulf) para identificar y mitigar posibles impactos ambientales y sociales.</p>
+            <h5 class="font-bold text-slate-900 mb-1"><i class="fa-solid fa-shield-virus text-amber-600 mr-1.5"></i> Salvaguardas en Formulario Web Interactivo</h5>
+            <p>Todas las propuestas completan directamente en la plataforma web la matriz de evaluación de salvaguardas (Matriz de Ulf) eliminando la necesidad de archivos Excel externos.</p>
           </div>
         </div>
       </div>
@@ -733,9 +733,11 @@ Entregable: 1 Manual de Buenas Prácticas de Monitoreo Comunitario publicado y e
       <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-3">
           <div>
-            <span class="text-xs font-bold text-teal-700 uppercase">Evaluación Normativa Oficial</span>
-            <h2 class="text-xl font-bold text-slate-900">Matriz de Riesgos, Salvaguardas y Planificación (Matriz de Ulf)</h2>
-            <p class="text-slate-500">Reemplaza el formulario VEAS. Cálculo automático transparente de categoría y nivel residual de riesgo.</p>
+            <div class="inline-flex items-center px-2.5 py-0.5 rounded bg-teal-100 text-teal-800 font-bold text-[11px] mb-1">
+              <i class="fa-solid fa-laptop-code mr-1.5"></i> FORMULARIO WEB INTERACTIVO (REEMPLAZA LA PLANTILLA EXCEL)
+            </div>
+            <h2 class="text-xl font-bold text-slate-900">Matriz en Línea de Riesgos, Salvaguardas y Planificación (Matriz de Ulf)</h2>
+            <p class="text-slate-500">Este formulario digitaliza 100% la matriz de Ulf en el navegador. Reemplaza el examen VEAS y la hoja Excel manual.</p>
           </div>
           <button onclick="downloadMockPDF('Matriz_Salvaguardas_Ulf.pdf')" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow flex items-center">
             <i class="fa-solid fa-file-pdf mr-2 text-red-400"></i> Previsualizar Matriz PDF
@@ -760,7 +762,7 @@ Entregable: 1 Manual de Buenas Prácticas de Monitoreo Comunitario publicado y e
           <div>
             <span class="font-bold text-slate-800 block">Estado del Catálogo de Salvaguardas</span>
             <span class="inline-block mt-1 text-amber-800 bg-amber-100 px-2 py-0.5 rounded font-semibold">
-              <i class="fa-solid fa-triangle-exclamation mr-1"></i> Catálogo definitivo pendiente de carga GLF
+              <i class="fa-solid fa-gears mr-1"></i> Formulario web configurado en plataforma
             </span>
           </div>
         </div>
@@ -850,7 +852,7 @@ Entregable: 1 Manual de Buenas Prácticas de Monitoreo Comunitario publicado y e
           <div class="flex items-center text-emerald-700"><i class="fa-solid fa-circle-check mr-2"></i> Datos del Aplicante Completo</div>
           <div class="flex items-center text-emerald-700"><i class="fa-solid fa-circle-check mr-2"></i> Nota Conceptual (Secciones I a III)</div>
           <div class="flex items-center text-emerald-700"><i class="fa-solid fa-circle-check mr-2"></i> Anexo 1 & 2 (Cuestionario SGAS)</div>
-          <div class="flex items-center text-emerald-700"><i class="fa-solid fa-circle-check mr-2"></i> Matriz de Salvaguardas (Ulf)</div>
+          <div class="flex items-center text-emerald-700"><i class="fa-solid fa-circle-check mr-2"></i> Formulario Web de Salvaguardas (Ulf)</div>
           <div class="flex items-center text-emerald-700"><i class="fa-solid fa-circle-check mr-2"></i> Presupuesto & Cofinanciación Validado</div>
           <div class="flex items-center text-emerald-700"><i class="fa-solid fa-circle-check mr-2"></i> Anexos Requeridos Adjuntados</div>
         </div>
@@ -1189,16 +1191,16 @@ Entregable: 1 Manual de Buenas Prácticas de Monitoreo Comunitario publicado y e
     <div id="view-admin-catalogues" class="view-panel space-y-6 text-xs">
       <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
         <div class="border-b border-slate-200 pb-3">
-          <h2 class="text-xl font-bold text-slate-900">Configuración de Catálogos y Salvaguardas Normativas</h2>
-          <p class="text-slate-500">Módulo preparado para importar el catálogo oficial de medidas desde el libro Excel de Ulf.</p>
+          <h2 class="text-xl font-bold text-slate-900">Configuración Web de Catálogos y Reglas de Salvaguardas</h2>
+          <p class="text-slate-500">Módulo interno para administrar catálogos de salvaguardas, escalas y medidas directamente en la plataforma web (opción de importación masiva desde Excel referencial).</p>
         </div>
 
         <div class="p-6 border-2 border-dashed border-teal-400 bg-teal-50/40 rounded-2xl text-center space-y-2">
-          <i class="fa-solid fa-file-excel text-4xl text-teal-600 mb-1"></i>
-          <h4 class="font-bold text-slate-900 text-sm">Carga del Catálogo Oficial de Salvaguardas (Excel Ulf)</h4>
-          <p class="text-slate-600 text-xs">Suba el archivo <code>Matriz_Riesgos_Salvaguardas_Final.xlsx</code> para sincronizar automáticamente el listado maestro de medidas e instrumentos.</p>
-          <button onclick="alert('Catálogo importado y sincronizado exitosamente con 18 medidas estándar GLF')" class="mt-3 px-5 py-2.5 bg-teal-600 text-white font-bold rounded-xl shadow">
-            Simular Importación de Catálogo Excel
+          <i class="fa-solid fa-sliders text-4xl text-teal-600 mb-1"></i>
+          <h4 class="font-bold text-slate-900 text-sm">Administrador del Formulario Web de Salvaguardas</h4>
+          <p class="text-slate-600 text-xs">Permite a los administradores GLF editar las medidas de mitigación en línea y cargar masivamente catálogos desde archivos Excel de referencia.</p>
+          <button onclick="alert('Catálogo maestro actualizado exitosamente con 18 medidas estándar GLF en el formulario web')" class="mt-3 px-5 py-2.5 bg-teal-600 text-white font-bold rounded-xl shadow">
+            Simular Actualización de Catálogo Web
           </button>
         </div>
       </div>
@@ -1679,7 +1681,7 @@ Entregable: 1 Manual de Buenas Prácticas de Monitoreo Comunitario publicado y e
         { id: 'applicant-info', name: '5. Datos del Aplicante' },
         { id: 'applicant-conceptual-note', name: '6. Nota Conceptual (Formulario)' },
         { id: 'applicant-activities-risks', name: '7. Actividades y Riesgos A&S' },
-        { id: 'applicant-safeguards-matrix', name: '8. Matriz de Salvaguardas (Ulf)' },
+        { id: 'applicant-safeguards-matrix', name: '8. Formulario Web Salvaguardas (Ulf)' },
         { id: 'applicant-annexes', name: '9. Carga de Anexos' },
         { id: 'applicant-final-review', name: '10. Revisión Final y Envío' },
         { id: 'applicant-expediente-view', name: '11. Expediente Enviado & PDFs' },
@@ -1689,7 +1691,7 @@ Entregable: 1 Manual de Buenas Prácticas de Monitoreo Comunitario publicado y e
         { id: 'admin-dashboard', name: '1. Inicio Técnico / Dashboard' },
         { id: 'admin-calls', name: '2. Convocatorias y Editor Parámetros' },
         { id: 'admin-users', name: '3. Usuarios Externos' },
-        { id: 'admin-catalogues', name: '4. Catálogos y Salvaguardas' },
+        { id: 'admin-catalogues', name: '4. Configuración Web Catálogos' },
         { id: 'admin-expediente-review', name: '5. Revisión Técnica de Expediente' },
         { id: 'admin-rag-assistant', name: '6. Asistencia RAG Normativa' },
         { id: 'admin-reports', name: '7. Reportes y Exportación' },
