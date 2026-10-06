@@ -2,6 +2,8 @@ import Link from "next/link";
 import { requireViewer } from "@/lib/data";
 import { getLocale } from "@/lib/locale";
 import { Shell } from "@/components/shell";
+import { EvidenceSearch } from "@/components/evidence-search";
+import { ragConfigured } from "@/lib/rag";
 export default async function EvidencePage() {
   await requireViewer(["sustainability_reviewer", "administrator"]);
   const locale = await getLocale();
@@ -17,13 +19,17 @@ export default async function EvidencePage() {
       <section className="live-card">
         <h2>
           {es
-            ? "Consulta de evidencia desde el equipo GLF"
-            : "Evidence retrieval from the GLF computer"}
+            ? "Consulta de evidencia normativa"
+            : "Normative evidence retrieval"}
         </h2>
         <p>
           {es
-            ? "La inferencia E5 se ejecutará en el equipo autorizado. El servicio local todavía no está conectado a este portal."
-            : "E5 inference will run on the authorized computer. The local service is not yet connected to this portal."}
+            ? ragConfigured()
+              ? "La búsqueda utiliza E5 en la nube y fuentes aprobadas del corpus GLF."
+              : "La conexión está preparada. Falta activar el servicio E5 en la nube e incorporar el corpus aprobado."
+            : ragConfigured()
+              ? "Search uses cloud E5 and approved GLF corpus sources."
+              : "The connection is prepared. Cloud E5 and the approved corpus still need activation."}
         </p>
         <p>
           {es
@@ -31,6 +37,7 @@ export default async function EvidencePage() {
             : "Search must return documents, versions and verifiable locators. Ratings and decisions remain with GLF staff."}
         </p>
       </section>
+      <EvidenceSearch locale={locale} enabled={ragConfigured()} />
     </Shell>
   );
 }
