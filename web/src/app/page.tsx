@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { getCalls } from "@/lib/data";
+import { getCalls, getViewer } from "@/lib/data";
 import { getLocale } from "@/lib/locale";
 import { Shell, SetupNotice } from "@/components/shell";
 import { isConfigured } from "@/lib/supabase/server";
 export default async function Home() {
   const locale = await getLocale();
+  const viewer = await getViewer();
   const calls = isConfigured()
     ? (await getCalls()).filter((c) => c.status === "published")
     : [];
@@ -23,12 +24,31 @@ export default async function Home() {
             : "Prepare your Concept Note and initial environmental and social risk screening. One organized application, from your first idea to GLF's decision."}
         </p>
         <div className="live-actions">
-          <Link className="button primary" href="/register">
-            {locale === "es" ? "Crear cuenta" : "Create account"}
-          </Link>
-          <Link className="button secondary" href="/login">
-            {locale === "es" ? "Ya tengo una cuenta" : "I have an account"}
-          </Link>
+          {viewer ? (
+            <Link
+              className="button primary"
+              href={
+                viewer.profile.role === "applicant" ? "/applicant" : "/internal"
+              }
+            >
+              {viewer.profile.role === "applicant"
+                ? locale === "es"
+                  ? "Mis postulaciones"
+                  : "My applications"
+                : locale === "es"
+                  ? "Ir al panel GLF"
+                  : "Go to GLF workspace"}
+            </Link>
+          ) : (
+            <>
+              <Link className="button primary" href="/register">
+                {locale === "es" ? "Crear cuenta" : "Create account"}
+              </Link>
+              <Link className="button secondary" href="/login">
+                {locale === "es" ? "Ya tengo una cuenta" : "I have an account"}
+              </Link>
+            </>
+          )}
         </div>
       </section>
       <div className="section-heading">
