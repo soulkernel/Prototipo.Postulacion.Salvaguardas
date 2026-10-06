@@ -27,6 +27,8 @@ Construir una aplicación GLF para gestionar el proceso de subvenciones de extre
 
 ## Implementación actual (6 de octubre)
 
+Código funcional publicado en la rama `feat/full-grants-platform`, commit `ed4d2fb`. Pull request **en borrador**: https://github.com/soulkernel/Prototipo.Postulacion.Salvaguardas/pull/1 . CI Linux de ese commit completada correctamente: https://github.com/soulkernel/Prototipo.Postulacion.Salvaguardas/actions/runs/37469587258 . No se fusionó a main; `index.html` no forma parte de los cambios.
+
 La aplicación real está en las rutas raíz, /applicant e /internal; el antiguo demo ficticio quedó explícitamente separado en /demo. Se corrigieron los errores de compilación anteriores y se añadieron Auth, formularios conectables a Supabase, versiones inmutables, anexos privados, PDF, funciones de workflow, RLS y reportería. El E5 todavía NO está implementado: solo hay tabla vectorial y RPC de recuperación preparados.
 
 El usuario confirmó que no hay proyectos Supabase/Vercel existentes y autorizó preparar proyectos nuevos. Se abrieron los servicios en Chrome; ambos requieren iniciar sesión. Se le pidió hacerlo directamente, sin compartir secretos. No se creó proyecto, aplicó migración ni confirmó despliegue remoto aún.
