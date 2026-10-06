@@ -77,3 +77,6 @@ El usuario confirmó que no hay proyectos Supabase/Vercel existentes y autorizó
 - .test-artifacts, .env.local, .next y node_modules ignorados. No subir corpus/expedientes reales al repositorio público.
 - gh funciona fuera del sandbox mediante credenciales del llavero; dentro del sandbox puede informar token inválido aunque no lo sea. No volver a autenticar sin comprobarlo.
 - El resumen de versiones Git/PR se debe verificar con git status, git log y gh pr view; nunca inferir push a partir de commit local.
+
+## Relevo de despliegue 2026-10-06
+Supabase glf-postulaciones (dcxhuwghakdjcnrqkziq) YA tiene las cinco migraciones instaladas; auditoría remota correcta (14 tablas public, todas con RLS, bucket privado, sin escritura directa). Véase último bloque de DEPLOYMENT.md. No repetir instalación inicial. Falta conciliar historial CLI, Auth y conectar frontend. Vercel bloqueado en verificación de identidad GitHub del titular. Las pestañas Supabase/Vercel/GitHub se conservan para continuación. Nueva migración 202610060005 protege private.role_events; 14 pruebas DB pasan.

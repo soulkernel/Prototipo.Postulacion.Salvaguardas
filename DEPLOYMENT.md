@@ -41,3 +41,15 @@ El usuario autorizó crear proyectos específicos nuevos de Supabase y Vercel. N
 - Validador de firma de archivo no es antivirus ni inspección completa de OOXML. Falta cuarentena/escaneo y limpieza de cargas huérfanas.
 - Noto Sans embebida en PDF garantiza acentos ES/EN sin depender de fuentes del servidor; Arial en interfaz. El uso/licencia de Arial embebida y la maquetación oficial final deben resolverse si se exige esa fuente en el producto definitivo.
 - E5 local y corpus todavía no integrados. No presentar el buscador preparado en SQL como inferencia operativa.
+
+## Avance remoto verificado — 2026-10-06
+
+- Supabase creado: `glf-postulaciones`, organización GLF, ref `dcxhuwghakdjcnrqkziq`, región us-west-2, plan Free.
+- URL: https://dcxhuwghakdjcnrqkziq.supabase.co
+- Instaladas las migraciones 202610050001 a 202610060005 en una transacción mediante SQL Editor. Resultado: Success. No rows returned.
+- Verificación remota: 14 tablas public; 0 tablas public/private sin RLS; bucket application-files privado; authenticated no lee private.role_events; 0 permisos directos INSERT/UPDATE/DELETE/TRUNCATE para anon/authenticated en public.
+- La quinta migración protege adicionalmente el registro privado de cambios de roles. 14 pruebas de base locales pasan con ella.
+- IMPORTANTE: aplicación manual por SQL Editor; aún NO se ha conciliado el historial de Supabase CLI. Antes de cualquier db push, registrar/repair las cinco versiones como aplicadas; no ejecutar de nuevo las migraciones iniciales.
+- Pendiente: políticas Auth, URL de redirección, cuenta administradora autorizada, pruebas integrales de Auth/Storage y despliegue Vercel.
+- Vercel aún no creado: GitHub solicita Confirm access en https://github.com/settings/installations/153846223 antes de autorizar el repositorio. Nombre elegido: glf-postulaciones. Mantener main/prototipo intactos y usar feat/full-grants-platform, raíz web.
+- No se han cargado expedientes reales ni obtenido contraseñas de base.
