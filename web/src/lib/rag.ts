@@ -6,6 +6,10 @@ export function ragConfigured() {
 }
 
 export async function embedQuery(query: string) {
+  return (await embedTexts([query], "query"))[0];
+}
+
+export async function embedTexts(inputs: string[], kind: "query" | "passage") {
   const endpoint = process.env.GLF_E5_ENDPOINT;
   const key = process.env.GLF_E5_API_KEY;
   if (!endpoint || !key) throw new Error("GLF_RAG_NOT_CONFIGURED");
@@ -18,7 +22,7 @@ export async function embedQuery(query: string) {
       Authorization: `Bearer ${key}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ inputs: [query], kind: "query" }),
+    body: JSON.stringify({ inputs, kind }),
     cache: "no-store",
     redirect: "error",
     signal: AbortSignal.timeout(25000),
@@ -28,8 +32,8 @@ export async function embedQuery(query: string) {
   if (
     data.model !== EMBEDDING_MODEL ||
     !Array.isArray(data.embeddings) ||
-    data.embeddings.length !== 1
+    data.embeddings.length !== inputs.length
   )
     throw new Error("GLF_MODEL_MISMATCH");
-  return validateEmbedding(data.embeddings[0]);
+  return data.embeddings.map(validateEmbedding) as number[][];
 }

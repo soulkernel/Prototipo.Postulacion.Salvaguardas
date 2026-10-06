@@ -13,6 +13,18 @@ const ids = {
   committee: "00000000-0000-4000-8000-000000000006",
   admin: "00000000-0000-4000-8000-000000000007",
 };
+test("corpus import requires administrator and preserves pending approval and versions", async () => {
+  const item = { document_name: "Test source", document_version: "test-v1", locator: "page 1", content: "Test normative evidence", source_kind: "official", embedding: Array(384).fill(0.05) };
+  await assert.rejects(rpc("import_evidence", {items:JSON.stringify([item])}, "applicant"), /GLF_FORBIDDEN/);
+  await assert.rejects(rpc("import_evidence", {items:JSON.stringify([item])}, "reviewer"), /GLF_FORBIDDEN/);
+  assert.equal(await rpc("import_evidence", {items:JSON.stringify([item])}, "admin"), 1);
+  assert.equal(await rpc("import_evidence", {items:JSON.stringify([item])}, "admin"), 0);
+  await assert.rejects(rpc("import_evidence", {items:JSON.stringify([{...item,content:"changed"}])}, "admin"), /GLF_CORPUS_VERSION_CONFLICT/);
+  const hidden = await as("reviewer", () => db.query("select * from public.knowledge_chunks where document_name='Test source'"));
+  assert.equal(hidden.rows.length, 0);
+  const visible = await as("admin", () => db.query("select * from public.knowledge_chunks where document_name='Test source'"));
+  assert.equal(visible.rows[0].approved, false);
+});
 const rules = {
   categories: [
     {

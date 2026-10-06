@@ -4,8 +4,12 @@ import { getLocale } from "@/lib/locale";
 import { Shell } from "@/components/shell";
 import { EvidenceSearch } from "@/components/evidence-search";
 import { ragConfigured } from "@/lib/rag";
+import { CorpusImport } from "@/components/corpus-import";
 export default async function EvidencePage() {
-  await requireViewer(["sustainability_reviewer", "administrator"]);
+  const { profile } = await requireViewer([
+    "sustainability_reviewer",
+    "administrator",
+  ]);
   const locale = await getLocale();
   const es = locale === "es";
   return (
@@ -38,6 +42,7 @@ export default async function EvidencePage() {
         </p>
       </section>
       <EvidenceSearch locale={locale} enabled={ragConfigured()} />
+      {profile.role === "administrator" && <CorpusImport locale={locale} />}
     </Shell>
   );
 }
