@@ -178,7 +178,12 @@ export function ApplicationEditor({
         <option value="">{es ? "Seleccione" : "Select"}</option>
         {[1, 2, 3, 4, 5].map((n) => (
           <option key={n} value={n}>
-            {n}
+            {n} ·{" "}
+            {
+              (es
+                ? ["Muy baja", "Baja", "Media", "Alta", "Muy alta"]
+                : ["Very low", "Low", "Medium", "High", "Very high"])[n - 1]
+            }
           </option>
         ))}
       </select>
@@ -209,7 +214,11 @@ export function ApplicationEditor({
   async function persist(submit = false) {
     if (busy || !editable) return;
     if (submit) {
-      const missing = validateComplete(payload, application.rules_snapshot);
+      const missing = validateComplete(
+        payload,
+        application.rules_snapshot,
+        application.stage,
+      );
       if (missing.length) {
         setError(
           (es ? "Complete o revise: " : "Complete or review: ") +
@@ -555,13 +564,17 @@ export function ApplicationEditor({
             <div className="live-form">
               <h2>
                 {es
-                  ? "Actividades, riesgos y salvaguardas"
-                  : "Activities, risks and safeguards"}
+                  ? application.stage === 1
+                    ? "Screening: actividades y riesgos A&S"
+                    : "Evaluación completa de riesgos y PGAS"
+                  : application.stage === 1
+                    ? "Screening: activities and E&S risks"
+                    : "Full risk assessment and ESMP"}
               </h2>
               <p>
                 {es
-                  ? "Una actividad puede tener varios riesgos y cada riesgo varias medidas. Si no identifica riesgos, explique por qué para que GLF lo revise."
-                  : "An activity can have several risks, and each risk several measures. If you identify no risks, explain why for GLF review."}
+                  ? "Identifique y evalúe los riesgos de cada actividad. La mitigación y el PGAS se completan en la Fase 2. Si no identifica riesgos, justifíquelo."
+                  : "Identify and assess risks for each activity. Mitigation and the ESMP are completed in Phase 2. If you identify no risks, explain why."}
               </p>
               {payload.activities.map((activity, ai) => (
                 <section className="activity-card" key={activity.id}>
@@ -709,207 +722,228 @@ export function ApplicationEditor({
                             {score ?? "—"} · {levels[locale][riskLevel(score)]}
                           </strong>
                         </div>
-                        <section className="measure-section">
-                          <h4>
-                            {es
-                              ? "Salvaguardas o medidas"
-                              : "Safeguards or measures"}
-                          </h4>
-                          {!catalog.length && (
-                            <p className="field-help">
-                              {es
-                                ? "El catálogo oficial aún no está habilitado. Las medidas que describa se registrarán como propuestas para validación del GLF."
-                                : "The official catalog is not yet enabled. Measures you describe will be recorded as proposals for GLF validation."}
-                            </p>
-                          )}
-                          {risk.measures.map((m, mi) => (
-                            <div className="measure-row" key={mi}>
-                              {m.catalog_id ? (
-                                <p>
-                                  {(es
-                                    ? catalog.find((c) => c.id === m.catalog_id)
-                                        ?.label_es
-                                    : catalog.find((c) => c.id === m.catalog_id)
-                                        ?.label_en) || m.catalog_id}
-                                  <small>
-                                    {
-                                      catalog.find((c) => c.id === m.catalog_id)
-                                        ?.normative_reference
-                                    }
-                                  </small>
+                        {application.stage === 2 && (
+                          <>
+                            <section className="measure-section">
+                              <h4>
+                                {es
+                                  ? "Salvaguardas o medidas"
+                                  : "Safeguards or measures"}
+                              </h4>
+                              {!catalog.length && (
+                                <p className="field-help">
+                                  {es
+                                    ? "El catálogo oficial aún no está habilitado. Las medidas que describa se registrarán como propuestas para validación del GLF."
+                                    : "The official catalog is not yet enabled. Measures you describe will be recorded as proposals for GLF validation."}
                                 </p>
-                              ) : (
-                                <label>
-                                  {es ? "Medida propuesta" : "Proposed measure"}
-                                  <textarea
-                                    rows={2}
-                                    value={m.text || ""}
-                                    onChange={(e) =>
+                              )}
+                              {risk.measures.map((m, mi) => (
+                                <div className="measure-row" key={mi}>
+                                  {m.catalog_id ? (
+                                    <p>
+                                      {(es
+                                        ? catalog.find(
+                                            (c) => c.id === m.catalog_id,
+                                          )?.label_es
+                                        : catalog.find(
+                                            (c) => c.id === m.catalog_id,
+                                          )?.label_en) || m.catalog_id}
+                                      <small>
+                                        {
+                                          catalog.find(
+                                            (c) => c.id === m.catalog_id,
+                                          )?.normative_reference
+                                        }
+                                      </small>
+                                    </p>
+                                  ) : (
+                                    <label>
+                                      {es
+                                        ? "Medida propuesta"
+                                        : "Proposed measure"}
+                                      <textarea
+                                        rows={2}
+                                        value={m.text || ""}
+                                        onChange={(e) =>
+                                          updateRisk(ai, ri, {
+                                            measures: risk.measures.map(
+                                              (x, i) =>
+                                                i === mi
+                                                  ? { text: e.target.value }
+                                                  : x,
+                                            ),
+                                          })
+                                        }
+                                      />
+                                    </label>
+                                  )}
+                                  <button
+                                    type="button"
+                                    className="button ghost"
+                                    aria-label={
+                                      es ? "Quitar medida" : "Remove measure"
+                                    }
+                                    onClick={() =>
                                       updateRisk(ai, ri, {
-                                        measures: risk.measures.map((x, i) =>
-                                          i === mi
-                                            ? { text: e.target.value }
-                                            : x,
+                                        measures: risk.measures.filter(
+                                          (_, i) => i !== mi,
                                         ),
                                       })
                                     }
-                                  />
-                                </label>
-                              )}
-                              <button
-                                type="button"
-                                className="button ghost"
-                                aria-label={
-                                  es ? "Quitar medida" : "Remove measure"
-                                }
-                                onClick={() =>
-                                  updateRisk(ai, ri, {
-                                    measures: risk.measures.filter(
-                                      (_, i) => i !== mi,
-                                    ),
-                                  })
-                                }
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </div>
-                          ))}
-                          <div className="live-actions">
-                            <button
-                              type="button"
-                              className="button secondary"
-                              onClick={() =>
-                                updateRisk(ai, ri, {
-                                  measures: [...risk.measures, { text: "" }],
-                                })
-                              }
-                            >
-                              <Plus size={16} />
-                              {es
-                                ? "Añadir medida propuesta"
-                                : "Add proposed measure"}
-                            </button>
-                            {catalog.length > 0 && (
-                              <select
-                                aria-label={
-                                  es
-                                    ? "Agregar salvaguarda del catálogo"
-                                    : "Add catalog safeguard"
-                                }
-                                value=""
-                                onChange={(e) => {
-                                  if (
-                                    e.target.value &&
-                                    !risk.measures.some(
-                                      (m) => m.catalog_id === e.target.value,
-                                    )
-                                  )
+                                  >
+                                    <Trash2 size={16} />
+                                  </button>
+                                </div>
+                              ))}
+                              <div className="live-actions">
+                                <button
+                                  type="button"
+                                  className="button secondary"
+                                  onClick={() =>
                                     updateRisk(ai, ri, {
                                       measures: [
                                         ...risk.measures,
-                                        { catalog_id: e.target.value },
+                                        { text: "" },
                                       ],
-                                    });
-                                }}
-                              >
-                                <option value="">
+                                    })
+                                  }
+                                >
+                                  <Plus size={16} />
                                   {es
-                                    ? "Seleccionar del catálogo"
-                                    : "Select from catalog"}
-                                </option>
-                                {catalog.map((c) => (
-                                  <option key={c.id} value={c.id}>
-                                    {es ? c.label_es : c.label_en}
-                                  </option>
-                                ))}
-                              </select>
-                            )}
-                          </div>
-                        </section>
-                        <div className="live-grid form-columns">
-                          {scale(
-                            es
-                              ? "Probabilidad residual (1–5)"
-                              : "Residual probability (1–5)",
-                            risk.residual_probability,
-                            (n) =>
-                              updateRisk(ai, ri, { residual_probability: n }),
-                          )}
-                          {scale(
-                            es
-                              ? "Gravedad residual (1–5)"
-                              : "Residual severity (1–5)",
-                            risk.residual_severity,
-                            (n) => updateRisk(ai, ri, { residual_severity: n }),
-                          )}
-                          <label>
-                            {es ? "Ubicación" : "Location"}
-                            <input
-                              value={risk.location}
-                              onChange={(e) =>
-                                updateRisk(ai, ri, { location: e.target.value })
-                              }
-                            />
-                          </label>
-                          <label>
-                            {es
-                              ? "Costo estimado (USD)"
-                              : "Estimated cost (USD)"}
-                            <input
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              value={risk.cost ?? ""}
-                              onChange={(e) =>
-                                updateRisk(ai, ri, {
-                                  cost:
-                                    e.target.value === ""
-                                      ? null
-                                      : Number(e.target.value),
-                                })
-                              }
-                            />
-                          </label>
-                          <label className="full-width">
-                            {es
-                              ? "Responsable de la medida"
-                              : "Person responsible for the measure"}
-                            <input
-                              value={risk.responsible}
-                              onChange={(e) =>
-                                updateRisk(ai, ri, {
-                                  responsible: e.target.value,
-                                })
-                              }
-                            />
-                          </label>
-                          {quarter(
-                            es ? "Trimestre inicial" : "Start quarter",
-                            risk.start_quarter,
-                            (n) => updateRisk(ai, ri, { start_quarter: n }),
-                          )}
-                          {quarter(
-                            es ? "Trimestre final" : "End quarter",
-                            risk.end_quarter,
-                            (n) => updateRisk(ai, ri, { end_quarter: n }),
-                          )}
-                        </div>
-                        <div className={"risk-result " + riskLevel(residual)}>
-                          {es ? "Puntaje residual" : "Residual score"}:{" "}
-                          <strong>
-                            {residual ?? "—"} ·{" "}
-                            {levels[locale][riskLevel(residual)]}
-                          </strong>
-                          <span>
-                            {es ? "Duración" : "Duration"}:{" "}
-                            {risk.end_quarter &&
-                            risk.start_quarter &&
-                            risk.end_quarter >= risk.start_quarter
-                              ? risk.end_quarter - risk.start_quarter + 1
-                              : "—"}{" "}
-                            {es ? "trimestres" : "quarters"}
-                          </span>
-                        </div>
+                                    ? "Añadir medida propuesta"
+                                    : "Add proposed measure"}
+                                </button>
+                                {catalog.length > 0 && (
+                                  <select
+                                    aria-label={
+                                      es
+                                        ? "Agregar salvaguarda del catálogo"
+                                        : "Add catalog safeguard"
+                                    }
+                                    value=""
+                                    onChange={(e) => {
+                                      if (
+                                        e.target.value &&
+                                        !risk.measures.some(
+                                          (m) =>
+                                            m.catalog_id === e.target.value,
+                                        )
+                                      )
+                                        updateRisk(ai, ri, {
+                                          measures: [
+                                            ...risk.measures,
+                                            { catalog_id: e.target.value },
+                                          ],
+                                        });
+                                    }}
+                                  >
+                                    <option value="">
+                                      {es
+                                        ? "Seleccionar del catálogo"
+                                        : "Select from catalog"}
+                                    </option>
+                                    {catalog.map((c) => (
+                                      <option key={c.id} value={c.id}>
+                                        {es ? c.label_es : c.label_en}
+                                      </option>
+                                    ))}
+                                  </select>
+                                )}
+                              </div>
+                            </section>
+                            <div className="live-grid form-columns">
+                              {scale(
+                                es
+                                  ? "Probabilidad residual (1–5)"
+                                  : "Residual probability (1–5)",
+                                risk.residual_probability,
+                                (n) =>
+                                  updateRisk(ai, ri, {
+                                    residual_probability: n,
+                                  }),
+                              )}
+                              {scale(
+                                es
+                                  ? "Gravedad residual (1–5)"
+                                  : "Residual severity (1–5)",
+                                risk.residual_severity,
+                                (n) =>
+                                  updateRisk(ai, ri, { residual_severity: n }),
+                              )}
+                              <label>
+                                {es ? "Ubicación" : "Location"}
+                                <input
+                                  value={risk.location}
+                                  onChange={(e) =>
+                                    updateRisk(ai, ri, {
+                                      location: e.target.value,
+                                    })
+                                  }
+                                />
+                              </label>
+                              <label>
+                                {es
+                                  ? "Costo estimado (USD)"
+                                  : "Estimated cost (USD)"}
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  value={risk.cost ?? ""}
+                                  onChange={(e) =>
+                                    updateRisk(ai, ri, {
+                                      cost:
+                                        e.target.value === ""
+                                          ? null
+                                          : Number(e.target.value),
+                                    })
+                                  }
+                                />
+                              </label>
+                              <label className="full-width">
+                                {es
+                                  ? "Responsable de la medida"
+                                  : "Person responsible for the measure"}
+                                <input
+                                  value={risk.responsible}
+                                  onChange={(e) =>
+                                    updateRisk(ai, ri, {
+                                      responsible: e.target.value,
+                                    })
+                                  }
+                                />
+                              </label>
+                              {quarter(
+                                es ? "Trimestre inicial" : "Start quarter",
+                                risk.start_quarter,
+                                (n) => updateRisk(ai, ri, { start_quarter: n }),
+                              )}
+                              {quarter(
+                                es ? "Trimestre final" : "End quarter",
+                                risk.end_quarter,
+                                (n) => updateRisk(ai, ri, { end_quarter: n }),
+                              )}
+                            </div>
+                            <div
+                              className={"risk-result " + riskLevel(residual)}
+                            >
+                              {es ? "Puntaje residual" : "Residual score"}:{" "}
+                              <strong>
+                                {residual ?? "—"} ·{" "}
+                                {levels[locale][riskLevel(residual)]}
+                              </strong>
+                              <span>
+                                {es ? "Duración" : "Duration"}:{" "}
+                                {risk.end_quarter &&
+                                risk.start_quarter &&
+                                risk.end_quarter >= risk.start_quarter
+                                  ? risk.end_quarter - risk.start_quarter + 1
+                                  : "—"}{" "}
+                                {es ? "trimestres" : "quarters"}
+                              </span>
+                            </div>
+                          </>
+                        )}
                       </article>
                     );
                   })}

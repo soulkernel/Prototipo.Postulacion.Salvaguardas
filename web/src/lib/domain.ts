@@ -248,7 +248,11 @@ export function safeReturnPath(value: unknown, fallback = "/applicant") {
 export function words(value: string) {
   return value.trim().split(/\s+/).filter(Boolean).length;
 }
-export function validateComplete(payload: Payload, rules: Rules): string[] {
+export function validateComplete(
+  payload: Payload,
+  rules: Rules,
+  stage: number,
+): string[] {
   const missing: string[] = [];
   const c = payload.concept;
   for (const [key, value] of Object.entries(c)) {
@@ -268,22 +272,35 @@ export function validateComplete(payload: Payload, rules: Rules): string[] {
       missing.push("no_risks_reason_" + (i + 1));
     a.risks.forEach((r, j) => {
       if (
-        [r.name, r.description, r.location, r.responsible].some(
-          (v) => !v.trim(),
-        ) ||
+        [
+          r.name,
+          r.description,
+          ...(stage === 2 ? [r.location, r.responsible] : []),
+        ].some((v) => !v.trim()) ||
         [
           r.probability,
           r.severity,
-          r.residual_probability,
-          r.residual_severity,
-          r.cost,
-          r.start_quarter,
-          r.end_quarter,
+          ...(stage === 2
+            ? [
+                r.residual_probability,
+                r.residual_severity,
+                r.cost,
+                r.start_quarter,
+                r.end_quarter,
+              ]
+            : []),
         ].some((v) => v === null) ||
-        !r.measures.length
+        (stage === 2 &&
+          (!r.measures.length ||
+            r.measures.some((m) => !m.catalog_id && !m.text?.trim())))
       )
         missing.push("risk_" + (i + 1) + "_" + (j + 1));
-      if (r.start_quarter && r.end_quarter && r.end_quarter < r.start_quarter)
+      if (
+        stage === 2 &&
+        r.start_quarter &&
+        r.end_quarter &&
+        r.end_quarter < r.start_quarter
+      )
         missing.push("quarters_" + (i + 1) + "_" + (j + 1));
     });
   });

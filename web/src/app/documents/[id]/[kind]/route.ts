@@ -41,6 +41,7 @@ export async function GET(
     base + "/documents/" + id + "/" + kind + "?lang=" + locale;
   const result = await applicationPdf({
     payload: version.payload as Payload,
+    stage: version.stage,
     reference: app.reference_code,
     revision: version.revision,
     submittedAt: version.submitted_at,

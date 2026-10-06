@@ -171,29 +171,39 @@ export default async function ReviewPage({
                 </h4>
                 <p>{r.description}</p>
                 <p>
-                  {es ? "Inicial / residual" : "Initial / residual"}:{" "}
+                  {es ? "Riesgo inicial" : "Initial risk"}:{" "}
                   {riskScore(r.probability, r.severity)} (
-                  {riskLevel(riskScore(r.probability, r.severity))}) /{" "}
-                  {riskScore(r.residual_probability, r.residual_severity)} (
-                  {riskLevel(
-                    riskScore(r.residual_probability, r.residual_severity),
-                  )}
-                  )
-                </p>
-                <ul>
-                  {r.measures.map((m, i) => (
-                    <li key={i}>
-                      {m.text || m.label_es || m.label_en || m.catalog_id}
-                      {m.normative_reference && (
-                        <small> · {m.normative_reference}</small>
+                  {riskLevel(riskScore(r.probability, r.severity))})
+                  {a.stage === 2 && (
+                    <>
+                      {" "}
+                      / {es ? "Residual" : "Residual"}:{" "}
+                      {riskScore(r.residual_probability, r.residual_severity)} (
+                      {riskLevel(
+                        riskScore(r.residual_probability, r.residual_severity),
                       )}
-                    </li>
-                  ))}
-                </ul>
-                <p>
-                  {r.location} · USD {r.cost} · {r.responsible} · T
-                  {r.start_quarter}–T{r.end_quarter}
+                      )
+                    </>
+                  )}
                 </p>
+                {a.stage === 2 && (
+                  <>
+                    <ul>
+                      {r.measures.map((m, i) => (
+                        <li key={i}>
+                          {m.text || m.label_es || m.label_en || m.catalog_id}
+                          {m.normative_reference && (
+                            <small> · {m.normative_reference}</small>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                    <p>
+                      {r.location} · USD {r.cost} · {r.responsible} · T
+                      {r.start_quarter}–T{r.end_quarter}
+                    </p>
+                  </>
+                )}
               </div>
             ))}
           </article>

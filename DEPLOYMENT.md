@@ -8,7 +8,7 @@ El usuario autorizó crear proyectos específicos nuevos de Supabase y Vercel. N
 
 1. Iniciar sesión en la organización autorizada y crear un proyecto nuevo. El titular establece y conserva la contraseña de la base en su gestor; no enviarla por chat ni incluirla en Git.
 2. Seleccionar región disponible próxima a los usuarios y al cómputo web, revisando requisitos institucionales de alojamiento antes de casos reales. Empezar en plan gratuito si está disponible y no contratar planes de pago sin autorización.
-3. Aplicar, en orden y mediante migraciones, los tres archivos de `supabase/migrations`. Nunca aplicarlos a otra base ya existente sin revisar su historial. No se han aplicado remotamente todavía.
+3. Aplicar, en orden y mediante migraciones, los cuatro archivos de `supabase/migrations`. Nunca aplicarlos a otra base ya existente sin revisar su historial. No se han aplicado remotamente todavía.
 4. Activar confirmación de correo, política de contraseña de al menos 12 caracteres, MFA TOTP, límites de Auth y SMTP autorizado para pruebas fuera del equipo. Verificar capacidad y límites del plan. La configuración del frontend por sí sola no impone estas políticas en Auth.
 5. Configurar Site URL y URLs de redirección exactas: URL de la vista previa y `/auth/callback`. Evitar comodines de dominios ajenos. Probar registro, confirmación, recuperación y cierre global de sesión.
 6. Registrar una cuenta de administración con correo verificado. El propietario de la base asigna el primer rol administrator a su UUID mediante SQL controlado y registra esa operación. Los roles posteriores se asignan desde la interfaz con MFA. No crear cuentas compartidas.

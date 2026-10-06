@@ -13,6 +13,7 @@ export async function applicationPdf({
   kind,
   locale,
   downloadUrl,
+  stage,
 }: {
   payload: Payload;
   reference: string;
@@ -21,6 +22,7 @@ export async function applicationPdf({
   kind: "concept" | "matrix";
   locale: Locale;
   downloadUrl: string;
+  stage: number;
 }) {
   const es = locale === "es";
   const pdf = await PDFDocument.create();
@@ -100,8 +102,12 @@ export async function applicationPdf({
         ? "NOTA CONCEPTUAL"
         : "CONCEPT NOTE"
       : es
-        ? "MATRIZ DE RIESGOS Y SALVAGUARDAS"
-        : "RISK AND SAFEGUARD MATRIX",
+        ? stage === 1
+          ? "SCREENING AMBIENTAL Y SOCIAL"
+          : "MATRIZ COMPLETA DE RIESGOS Y PGAS"
+        : stage === 1
+          ? "ENVIRONMENTAL AND SOCIAL SCREENING"
+          : "FULL RISK MATRIX AND ESMP",
     true,
   );
   draw(
@@ -135,7 +141,7 @@ export async function applicationPdf({
           a.no_risks_reason,
         );
     });
-    if (Object.keys(payload.phase2 || {}).length) {
+    if (stage === 2 && Object.keys(payload.phase2 || {}).length) {
       draw(
         es ? "APARTADOS DE PROYECTO COMPLETO" : "FULL PROPOSAL SECTIONS",
         true,
@@ -182,54 +188,56 @@ export async function applicationPdf({
             " · " +
             levelLabel(score),
         );
-        for (const m of r.measures) {
-          field(
-            es ? "Medida de mitigación" : "Mitigation measure",
-            m.text ||
-              (es ? m.label_es : m.label_en) ||
-              m.label_es ||
-              m.label_en ||
-              m.catalog_id,
-          );
-          if (m.normative_reference)
+        if (stage === 2) {
+          for (const m of r.measures) {
             field(
-              es ? "Referencia normativa" : "Normative reference",
-              m.normative_reference,
+              es ? "Medida de mitigación" : "Mitigation measure",
+              m.text ||
+                (es ? m.label_es : m.label_en) ||
+                m.label_es ||
+                m.label_en ||
+                m.catalog_id,
             );
-          else
-            draw(
-              es
-                ? "Propuesta del aplicante; requiere validación GLF."
-                : "Applicant proposal; requires GLF validation.",
-            );
+            if (m.normative_reference)
+              field(
+                es ? "Referencia normativa" : "Normative reference",
+                m.normative_reference,
+              );
+            else
+              draw(
+                es
+                  ? "Propuesta del aplicante; requiere validación GLF."
+                  : "Applicant proposal; requires GLF validation.",
+              );
+          }
+          field(
+            es
+              ? "Probabilidad × gravedad residual"
+              : "Residual probability × severity",
+            r.residual_probability +
+              " × " +
+              r.residual_severity +
+              " = " +
+              residual +
+              " · " +
+              levelLabel(residual),
+          );
+          field(es ? "Ubicación" : "Location", r.location);
+          field(es ? "Costo estimado (USD)" : "Estimated cost (USD)", r.cost);
+          field(es ? "Responsable" : "Responsible person", r.responsible);
+          field(
+            es
+              ? "Inicio / fin / duración (trimestres)"
+              : "Start / end / duration (quarters)",
+            r.start_quarter +
+              " / " +
+              r.end_quarter +
+              " / " +
+              (r.end_quarter && r.start_quarter
+                ? r.end_quarter - r.start_quarter + 1
+                : "—"),
+          );
         }
-        field(
-          es
-            ? "Probabilidad × gravedad residual"
-            : "Residual probability × severity",
-          r.residual_probability +
-            " × " +
-            r.residual_severity +
-            " = " +
-            residual +
-            " · " +
-            levelLabel(residual),
-        );
-        field(es ? "Ubicación" : "Location", r.location);
-        field(es ? "Costo estimado (USD)" : "Estimated cost (USD)", r.cost);
-        field(es ? "Responsable" : "Responsible person", r.responsible);
-        field(
-          es
-            ? "Inicio / fin / duración (trimestres)"
-            : "Start / end / duration (quarters)",
-          r.start_quarter +
-            " / " +
-            r.end_quarter +
-            " / " +
-            (r.end_quarter && r.start_quarter
-              ? r.end_quarter - r.start_quarter + 1
-              : "—"),
-        );
       });
     });
     field(

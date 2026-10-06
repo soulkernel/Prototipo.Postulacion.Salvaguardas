@@ -214,7 +214,7 @@ test("direct workflow and role edits are denied", async () => {
     /GLF_FORBIDDEN/,
   );
 });
-const payload = {
+const fullPayload = {
   concept: {
     title: "Proyecto de prueba",
     applicant_type: "organization",
@@ -271,6 +271,27 @@ const payload = {
   consent: true,
   truthful: true,
 };
+const payload = structuredClone(fullPayload);
+Object.assign(payload.activities[0].risks[0], {
+  measures: [],
+  residual_probability: null,
+  residual_severity: null,
+  cost: null,
+  location: "",
+  responsible: "",
+  start_quarter: null,
+  end_quarter: null,
+});
+test("screening rejects mitigation fields before phase two", async () => {
+  await assert.rejects(
+    rpc("save_application", {
+      application_id: app,
+      expected_revision: 0,
+      payload: fullPayload,
+    }),
+    /GLF_SCREENING_ONLY/,
+  );
+});
 test("draft saving calculates risks and rejects stale writes", async () => {
   assert.equal(
     await rpc("save_application", {
@@ -290,8 +311,8 @@ test("draft saving calculates risks and rejects stale writes", async () => {
   ).rows[0];
   assert.deepEqual(risk, {
     initial_score: 12,
-    residual_score: 4,
-    duration_quarters: 2,
+    residual_score: null,
+    duration_quarters: null,
   });
   await assert.rejects(
     rpc("save_application", {
@@ -461,7 +482,11 @@ test("staff without a second factor cannot read applications or mutate calls", a
 });
 
 test("phase two drafts do not affect submitted report totals", async () => {
-  const phase2 = structuredClone(payload);
+  await assert.rejects(
+    db.query("select private.validate_payload($1,$2,true,2)", [payload, rules]),
+    /GLF_REQUIRED:residual_probability/,
+  );
+  const phase2 = structuredClone(fullPayload);
   phase2.concept.requested_amount = 60000;
   phase2.phase2.proposal = "Proyecto completo de prueba";
   assert.equal(
@@ -536,7 +561,7 @@ test("corrections require resubmission even after the correction window expires"
     },
     "grants",
   );
-  const updated = structuredClone(payload);
+  const updated = structuredClone(fullPayload);
   updated.phase2.proposal = "Propuesta final";
   await rpc("save_application", {
     application_id: app,

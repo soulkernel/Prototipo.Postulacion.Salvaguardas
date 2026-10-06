@@ -40,29 +40,31 @@ test("concept and matrix PDFs embed fonts, paginate and contain a QR image", asy
   activity.risks = [risk];
   payload.activities = [activity];
   await mkdir(".test-artifacts", { recursive: true });
-  for (const locale of ["es", "en"] as const)
-    for (const kind of ["concept", "matrix"] as const) {
-      const result = await applicationPdf({
-        payload,
-        reference: "GLF-TEST-001",
-        revision: 2,
-        submittedAt: "2026-10-06T12:00:00Z",
-        kind,
-        locale,
-        downloadUrl:
-          "https://example.test/documents/test/" + kind + "?lang=" + locale,
-      });
-      const pdf = await PDFDocument.load(result.bytes);
-      assert.equal(pdf.getPageCount(), result.pages);
-      assert.ok(result.bytes.length > 10000);
-      assert.ok(
-        pdf
-          .getPages()
-          .some((p) => String(p.node.Resources()).includes("XObject")),
-      );
-      await writeFile(
-        ".test-artifacts/" + kind + "-" + locale + ".pdf",
-        result.bytes,
-      );
-    }
+  for (const stage of [1, 2])
+    for (const locale of ["es", "en"] as const)
+      for (const kind of ["concept", "matrix"] as const) {
+        const result = await applicationPdf({
+          payload,
+          stage,
+          reference: "GLF-TEST-001",
+          revision: 2,
+          submittedAt: "2026-10-06T12:00:00Z",
+          kind,
+          locale,
+          downloadUrl:
+            "https://example.test/documents/test/" + kind + "?lang=" + locale,
+        });
+        const pdf = await PDFDocument.load(result.bytes);
+        assert.equal(pdf.getPageCount(), result.pages);
+        assert.ok(result.bytes.length > 10000);
+        assert.ok(
+          pdf
+            .getPages()
+            .some((p) => String(p.node.Resources()).includes("XObject")),
+        );
+        await writeFile(
+          ".test-artifacts/" + kind + "-" + locale + "-stage" + stage + ".pdf",
+          result.bytes,
+        );
+      }
 });

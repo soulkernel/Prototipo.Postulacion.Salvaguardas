@@ -18,12 +18,16 @@ Construir una aplicación GLF para gestionar el proceso de subvenciones de extre
 - El portal externo y el espacio de personal son áreas separadas. Roles internos: `grants_manager` (Paulina), `sustainability_reviewer` (Ulf), `project_coordinator` (Gabriela, San Cristóbal), `committee_member` y `administrator`. Los roles reales provienen del perfil Supabase, no de una elección del navegador.
 - Solicitantes y convocatorias deben admitir las categorías configuradas para cada convocatoria; español e inglés, inicializados desde el idioma del navegador con selector manual.
 - Fase 1 replica el formato oficial de Nota Conceptual proporcionado y sustituye VEAS por la matriz de Ulf, conforme a decisión expresa del usuario. La Nota Conceptual y la matriz son documentos independientes del expediente. El formulario oficial completo de Fase 2 todavía debe validarse; sus campos no se deben inventar.
-- Una actividad puede asociarse con varios riesgos y un riesgo con varias salvaguardas. Los campos establecidos en la matriz de riesgo son obligatorios. Catálogo oficial de salvaguardas pendiente de entrega/aprobación por Ulf; mientras tanto, las propuestas del solicitante deben distinguirse claramente de medidas aprobadas.
+- Una actividad puede asociarse con varios riesgos y un riesgo con varias salvaguardas. Según la aclaración más reciente de Ulf, Fase 1 exige únicamente A–G (screening); Fase 2 exige la matriz A–Q con mitigación y planificación/PGAS. Catálogo oficial de salvaguardas pendiente de entrega/aprobación por Ulf; mientras tanto, las propuestas del solicitante deben distinguirse claramente de medidas aprobadas.
 - Matriz de Ulf: probabilidad y severidad inherentes/residuales de 1–5; puntaje = producto; bandas por riesgo: 1–4 bajo, 5–9 medio, 10–15 alto, 16–25 muy alto. Cronograma trimestral hasta 12 trimestres, duración inclusiva. La suma de puntajes por actividad puede mostrarse como suma; **no hay bandas confirmadas para asignar categoría global automática**. No mapear categorías A/B/C a la escala de Ulf.
 - Postulación enviada queda bloqueada. Solo GLF autoriza reapertura registrada con plazo. La invitación a Fase 2, aprobación formal y convenio firmado son hitos distintos, documentados por separado. Comité/consejo conserva decisión humana.
 - Reportería interna al cierre: recibidas, no calificadas/no avanzadas, invitadas/seleccionadas, propuestas completas, aprobadas y convenios firmados; clasificación por tipo y montos; indicadores ambientales/sociales **esperados o comprometidos**, claramente distintos de impacto observado. El sistema entrega datos a Comunicación, no publica ni escribe noticias. Monitoreo de ejecución es otro sistema futuro.
 - El E5 `intfloat/multilingual-e5-small` recupera fragmentos del corpus con documento, página/sección y referencia verificable; no evalúa cumplimiento, no asigna puntajes ni decide. Correr localmente en equipo GLF autorizado; nunca servir el modelo desde Vercel ni exponer el equipo en internet.
 - Diseño sobrio/minimalista, marca GLF; se extrajo el logo embebido del prototipo existente a `web/public/glf-logo.png`. No incluir documentos de expedientes reales ni datos personales en demos.
+
+## Aclaración más reciente de Ulf (6 de octubre)
+
+Ver REQUIREMENTS_ULF_2026-10-06.md. Se separaron screening y PGAS en servidor, interfaz, panel y PDF mediante una cuarta migración. Las observaciones de Gaby siguen pendientes; no inventar su contenido. El index.html de revisión continúa sin cambios.
 
 ## Implementación actual (6 de octubre)
 
@@ -36,7 +40,7 @@ El usuario confirmó que no hay proyectos Supabase/Vercel existentes y autorizó
 ## Arquitectura y seguridad implementadas
 
 - Next 16.3.8 / React 19.2.8, Supabase SSR, validación Zod. Las acciones usan el JWT del usuario; no hay service_role en la web.
-- Tres migraciones iniciales aún NO aplicadas a una base real; se pueden corregir antes del primer despliegue. Después de aplicadas, cualquier cambio requiere una migración nueva.
+- Cuatro migraciones aún NO aplicadas a una base real; se pueden corregir antes del primer despliegue. Después de aplicadas, cualquier cambio requiere una migración nueva.
 - Mutaciones solo por RPC security definer con search_path vacío y comprobación de rol, estado, revisión y plazo; permisos de ejecución PUBLIC revocados. RLS en tablas/Storage. El borrador inicial pertenece solo al aplicante; personal accede después del primer envío.
 - MFA aal2 requerido en código y base para roles de personal; perfiles inactivos quedan sin acceso. Primer administrador requiere bootstrap por propietario de base. No confiar roles de metadatos del registro.
 - Guardado MANUAL de borrador, aviso de cambios sin guardar, control optimista de revisión. Envío crea una versión inmutable con anexos registrados. Reapertura requiere GLF y plazo; para revisar o decidir se exige reenvío, aunque el plazo de corrección haya expirado.
@@ -47,7 +51,7 @@ El usuario confirmó que no hay proyectos Supabase/Vercel existentes y autorizó
 
 ## Verificación realizada
 
-- 19 pruebas automatizadas: 13 de PostgreSQL/PGlite ejecutando migraciones/RLS/transiciones y 6 de dominio/archivos/PDF. Incluyen aislamiento, escalada de rol denegada, MFA, conflicto de edición, bloqueo tras envío, corrección/reenvío, revisión vigente, aprobación y techo del convenio. Reejecutar tras cambios.
+- 20 pruebas automatizadas: 14 de PostgreSQL/PGlite ejecutando migraciones/RLS/transiciones y 6 de dominio/archivos/PDF. Incluyen aislamiento, escalada de rol denegada, MFA, conflicto de edición, bloqueo tras envío, corrección/reenvío, revisión vigente, aprobación y techo del convenio. Reejecutar tras cambios.
 - Compilación de producción y TypeScript pasan; ESLint pasa. La caché persistente de build Turbopack falló repetidamente al reabrirse en esta carpeta sincronizada Windows. Se desactivó con experimental.turbopackFileSystemCacheForBuild=false; la compilación no depende de esa caché.
 - npm audit --omit=dev: 0 vulnerabilidades conocidas al verificar. El audit completo registra 5 altas en cadena de herramientas de desarrollo braces/micromatch, sin corrección automática disponible; no ocultarlas ni aplicar --force.
 - Cuatro PDF ficticios generados (dos tipos por dos idiomas); comprobada paginación e imágenes QR por prueba automatizada y revisión visual representativa. Falta cotejo institucional integral, QR decodificado y navegación autenticada alojada.

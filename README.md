@@ -28,6 +28,7 @@ npm audit --omit=dev
 ## Funcionalidad implementada
 
 - Portal ES/EN, idioma del navegador y selector persistente, registro, recuperación de contraseña y segundo factor obligatorio para el personal.
+- Fase 1: screening A–G sin mitigación. Fase 2: evaluación completa A–Q y planificación del PGAS, según la aclaración más reciente de Ulf (ver REQUIREMENTS_ULF_2026-10-06.md).
 - Convocatorias configurables; borradores de Nota Conceptual y matriz de riesgos, guardado manual, varias actividades/riesgos/medidas, validación al enviar, control de concurrencia y versiones enviadas inmutables.
 - Anexos privados, descargas autorizadas, PDF separados de Nota Conceptual y matriz, QR a la versión autenticada. El PDF se genera desde la versión congelada; todavía no se archiva como binario definitivo.
 - Revisión por área, correcciones autorizadas, invitación a segunda fase, revisión de la propuesta completa, decisión humana y convenio firmado como hitos diferentes.
