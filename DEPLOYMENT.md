@@ -53,3 +53,13 @@ El usuario autorizó crear proyectos específicos nuevos de Supabase y Vercel. N
 - Pendiente: políticas Auth, URL de redirección, cuenta administradora autorizada, pruebas integrales de Auth/Storage y despliegue Vercel.
 - Vercel aún no creado: GitHub solicita Confirm access en https://github.com/settings/installations/153846223 antes de autorizar el repositorio. Nombre elegido: glf-postulaciones. Mantener main/prototipo intactos y usar feat/full-grants-platform, raíz web.
 - No se han cargado expedientes reales ni obtenido contraseñas de base.
+
+## Vercel y Auth — avance 2026-10-06
+- Permiso GitHub Vercel aprobado expresamente por el usuario y guardado para el repositorio específico, conservando seguimiento-glf.
+- Proyecto Vercel creado: glf-postulaciones, ID prj_QKNHR91b7cJ76x750PgMRzX0TJ98, equipo schubert1-3992s-projects; Git conectado; raíz web, Next.js, Node 24.
+- Uso de datos del proyecto para entrenar modelos de Vercel desactivado.
+- Tres variables públicas configuradas en Preview: URL Supabase, publishable key y NEXT_PUBLIC_SITE_URL. No se usa service_role.
+- URL estable Preview: https://glf-postulaciones-git-feat-full-819731-schubert1-3992s-projects.vercel.app
+- Supabase Site URL y redirect exacto /auth/callback configurados a esa URL. Confirm email activado, anonymous sign-in desactivado y longitud mínima de contraseña 12 guardada.
+- Commit 9eac0f8 subido. Vercel hizo un primer despliegue como Production (BEeGNLXxqh6e78WujJ8tw9yBSwnW), sin variables Production. No usar ese despliegue: iniciado redeploy explícito Preview 2sDkHSFeuZTbJxdZkgFjnHbw3KEc con las tres variables. Main/GitHub Pages permanecen intactos.
+- Dominio automático antiguo project-v1no4.vercel.app aún asociado a Production; no es el enlace de pruebas.

@@ -19,8 +19,8 @@ export default async function Home() {
         </h1>
         <p>
           {locale === "es"
-            ? "Prepare su Nota Conceptual y sus salvaguardas ambientales y sociales. Un expediente organizado, desde la primera idea hasta la decisión del GLF."
-            : "Prepare your Concept Note and environmental and social safeguards. One organized application, from your first idea to GLF's decision."}
+            ? "Prepare su Nota Conceptual y la evaluación inicial de riesgos ambientales y sociales. Un expediente organizado, desde la primera idea hasta la decisión del GLF."
+            : "Prepare your Concept Note and initial environmental and social risk screening. One organized application, from your first idea to GLF's decision."}
         </p>
         <div className="live-actions">
           <Link className="button primary" href="/register">
@@ -72,8 +72,8 @@ export default async function Home() {
             <h3>01 · {locale === "es" ? "Nota Conceptual" : "Concept Note"}</h3>
             <p>
               {locale === "es"
-                ? "Describa su propuesta, actividades, riesgos y medidas. Guarde su borrador y envíelo cuando esté completo."
-                : "Describe your proposal, activities, risks and measures. Save your draft and submit it when complete."}
+                ? "Describa su propuesta y actividades, e identifique y evalúe sus riesgos. Guarde su borrador y envíelo cuando esté completo."
+                : "Describe your proposal and activities, and identify and assess their risks. Save your draft and submit it when complete."}
             </p>
           </div>
           <div>
