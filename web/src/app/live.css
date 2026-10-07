@@ -726,6 +726,22 @@ a {
   color: #9f2424;
   font-weight: 700;
 }
+.auth-card .remember-choice,
+.live-form .remember-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+.remember-choice input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  min-height: 18px;
+  flex: 0 0 18px;
+  margin-top: 2px;
+}
 .required-fields-help {
   font-size: 16px;
   line-height: 1.6;

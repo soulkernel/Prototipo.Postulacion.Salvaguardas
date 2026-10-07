@@ -1,5 +1,9 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import {
+  sessionCookieOptions,
+  sessionPreferenceCookie,
+} from "@/lib/session-preference";
 export async function proxy(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key =
@@ -41,7 +45,14 @@ export async function proxy(request: NextRequest) {
             .getAll()
             .forEach((cookie) => response.cookies.set(cookie));
           values.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options),
+            response.cookies.set(
+              name,
+              value,
+              sessionCookieOptions(
+                options,
+                request.cookies.get(sessionPreferenceCookie)?.value,
+              ),
+            ),
           );
           Object.entries(headers).forEach(([name, value]) =>
             response.headers.set(name, value),

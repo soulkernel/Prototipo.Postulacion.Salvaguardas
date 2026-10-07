@@ -15,6 +15,34 @@ import { normalizePhone } from "../src/lib/phone";
 import { stepIssues } from "../src/lib/step-validation";
 import { geographyIssues } from "../src/lib/geography";
 import { emptySummary, summaryText } from "../src/lib/summary";
+import {
+  sessionCookieOptions,
+  rememberSeconds,
+} from "../src/lib/session-preference";
+test("remembered sessions preserve a fixed 90-day deadline and cookie deletion", () => {
+  const now = 1700000000000;
+  const options = { path: "/", maxAge: 400 * 86400, sameSite: "lax" as const };
+  const preference = String(now + rememberSeconds * 1000);
+  assert.equal(
+    sessionCookieOptions(options, preference, now).maxAge,
+    rememberSeconds,
+  );
+  assert.equal(
+    sessionCookieOptions(options, preference, now + 86400000).maxAge,
+    rememberSeconds - 86400,
+  );
+  assert.equal(
+    sessionCookieOptions(options, preference, now + rememberSeconds * 1000)
+      .maxAge,
+    0,
+  );
+  assert.equal(sessionCookieOptions(options, "session", now).maxAge, undefined);
+  assert.equal(
+    sessionCookieOptions({ ...options, maxAge: 0 }, preference, now).maxAge,
+    0,
+  );
+  assert.equal(sessionCookieOptions(options, "invalid", now).maxAge, undefined);
+});
 test("summary limit applies to the combined six sections without counting headings", () => {
   const p = emptyPayload();
   p.concept.summary_parts = {

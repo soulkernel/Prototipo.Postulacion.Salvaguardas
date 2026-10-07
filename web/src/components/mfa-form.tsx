@@ -4,12 +4,15 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import type { Locale } from "@/lib/domain";
+import { rememberVerifiedSession } from "@/app/auth/actions";
 export function MfaForm({
   locale,
   factorId,
+  remembered = false,
 }: {
   locale: Locale;
   factorId?: string;
+  remembered?: boolean;
 }) {
   const es = locale === "es";
   const router = useRouter();
@@ -18,6 +21,7 @@ export function MfaForm({
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [remember, setRemember] = useState(remembered);
   async function enroll() {
     setBusy(true);
     setError("");
@@ -55,6 +59,8 @@ export function MfaForm({
         code,
       });
       if (error) throw error;
+      const result = await rememberVerifiedSession(remember);
+      if (!result.ok) throw new Error("Session preference failed");
       router.push("/internal");
       router.refresh();
     } catch {
@@ -117,6 +123,21 @@ export function MfaForm({
               required
             />
           </label>
+          <label className="remember-choice">
+            <input
+              type="checkbox"
+              checked={remember}
+              onChange={(e) => setRemember(e.target.checked)}
+            />
+            {es
+              ? "Mantenerme conectado en este navegador durante 90 días"
+              : "Keep me signed in on this browser for 90 days"}
+          </label>
+          <small>
+            {es
+              ? "Úselo en su equipo personal. Cerrar sesión, borrar las cookies o cambiar de navegador requerirá ingresar y verificar de nuevo."
+              : "Use on your personal device. Signing out, clearing cookies or using another browser requires signing in and verifying again."}
+          </small>
           <button
             className="button primary"
             disabled={busy || code.length !== 6}

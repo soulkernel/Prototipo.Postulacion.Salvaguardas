@@ -151,6 +151,14 @@ export function AuthForm({
                 : "Use a unique password of at least 12 characters."}
             </small>
           )}
+          {!register && (
+            <label className="remember-choice">
+              <input type="checkbox" name="remember" />
+              {es
+                ? "Mantenerme conectado en este navegador durante 90 días"
+                : "Keep me signed in on this browser for 90 days"}
+            </label>
+          )}
           <button className="button primary" type="submit">
             {register
               ? es

@@ -3,6 +3,51 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { safeReturnPath } from "@/lib/domain";
+import { cookies } from "next/headers";
+import {
+  rememberSeconds,
+  sessionPreferenceCookie,
+  sessionCookieOptions,
+} from "@/lib/session-preference";
+async function writeSessionPreference(remember: boolean) {
+  const store = await cookies();
+  const preference = remember
+    ? String(Date.now() + rememberSeconds * 1000)
+    : "session";
+  store.set(sessionPreferenceCookie, preference, {
+    path: "/",
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: remember ? rememberSeconds : undefined,
+  });
+  for (const c of store.getAll())
+    if (/^sb-.*-auth-token(?:\.\d+)?$/.test(c.name))
+      store.set(
+        c.name,
+        c.value,
+        sessionCookieOptions(
+          {
+            path: "/",
+            sameSite: "lax",
+            secure: process.env.NODE_ENV === "production",
+          },
+          preference,
+        ),
+      );
+}
+export async function rememberVerifiedSession(remember: boolean) {
+  const db = await createSupabaseServerClient();
+  if (!db) return { ok: false };
+  const {
+    data: { user },
+    error,
+  } = await db.auth.getUser();
+  if (error || !user) return { ok: false };
+  const { data } = await db.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (data?.currentLevel !== "aal2") return { ok: false };
+  await writeSessionPreference(remember);
+  return { ok: true };
+}
 function siteUrl() {
   const site = process.env.NEXT_PUBLIC_SITE_URL;
   if (!site && process.env.NODE_ENV === "production")
@@ -10,12 +55,13 @@ function siteUrl() {
   return site || "http://localhost:3000";
 }
 export async function signIn(form: FormData) {
-  const db = await createSupabaseServerClient();
-  if (!db) redirect("/login?error=config");
   const email = z.email().safeParse(String(form.get("email") || "").trim());
   const password = String(form.get("password") || "");
   if (!email.success || !password || password.length > 256)
     redirect("/login?error=credentials");
+  await writeSessionPreference(form.get("remember") === "on");
+  const db = await createSupabaseServerClient();
+  if (!db) redirect("/login?error=config");
   const { error } = await db.auth.signInWithPassword({
     email: email.data,
     password,
@@ -87,6 +133,7 @@ export async function resendConfirmation(form: FormData) {
 export async function signOut() {
   const db = await createSupabaseServerClient();
   if (db) await db.auth.signOut({ scope: "local" });
+  (await cookies()).delete(sessionPreferenceCookie);
   redirect("/login");
 }
 export async function requestPasswordReset(form: FormData) {
