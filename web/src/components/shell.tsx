@@ -66,7 +66,7 @@ export async function Shell({
               {(viewer.profile.role === "administrator" ||
                 viewer.profile.user_admin_scope !== "none") && (
                 <MenuLink href="/internal/users">
-                  {locale === "es" ? "Usuarios" : "Users"}
+                  {locale === "es" ? "Gestión de usuarios" : "User management"}
                 </MenuLink>
               )}
             </>
