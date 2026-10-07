@@ -51,24 +51,48 @@ export default async function ApplicantPage({
       <section className="live-card">
         <h2>{es ? "Iniciar una postulación" : "Start an application"}</h2>
         {calls.length ? (
-          <form className="live-form" action={createDraft}>
-            <label>
-              {es ? "Convocatoria" : "Call"}
-              <select name="call_id" required>
-                <option value="">
-                  {es ? "Seleccione una convocatoria" : "Select a call"}
-                </option>
-                {calls.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {es ? c.title_es : c.title_en}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button className="button primary">
-              {es ? "Crear borrador" : "Create draft"}
-            </button>
-          </form>
+          <div className="live-form">
+            {calls.map((call) => (
+              <section key={call.id}>
+                <h3>{es ? call.title_es : call.title_en}</h3>
+                <p>{es ? call.description_es : call.description_en}</p>
+                <div className="live-grid">
+                  {call.rules.categories.map((category) => (
+                    <form
+                      className="live-card"
+                      key={category.id}
+                      action={createDraft}
+                    >
+                      <input type="hidden" name="call_id" value={call.id} />
+                      <input
+                        type="hidden"
+                        name="category_id"
+                        value={category.id}
+                      />
+                      <h3>{es ? category.label_es : category.label_en}</h3>
+                      <p>
+                        USD {category.min_amount.toLocaleString(locale)} –{" "}
+                        {category.max_amount?.toLocaleString(locale) ??
+                          (es ? "según las bases" : "see call rules")}
+                      </p>
+                      <p>
+                        {category.max_months}{" "}
+                        {es
+                          ? "meses · Cofinanciamiento mínimo"
+                          : "months · Minimum cofinancing"}
+                        : {category.cofinance_percent}%
+                      </p>
+                      <button className="button primary">
+                        {es
+                          ? "Elegir y preparar Nota Conceptual"
+                          : "Choose and prepare Concept Note"}
+                      </button>
+                    </form>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
         ) : (
           <p>
             {es

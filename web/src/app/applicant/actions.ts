@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireViewer } from "@/lib/data";
-import { payloadSchema } from "@/lib/domain";
+import { payloadSchema, emptyPayload } from "@/lib/domain";
 export type MutationResult =
   { ok: true; revision: number } | { ok: false; error: string };
 function safeError(message: string) {
@@ -14,6 +14,23 @@ export async function createDraft(form: FormData) {
   const { db } = await requireViewer(["applicant"]);
   const id = z.uuid().safeParse(form.get("call_id"));
   if (!id.success) redirect("/applicant?error=invalid_call");
+  const category = z
+    .string()
+    .min(1)
+    .max(200)
+    .safeParse(form.get("category_id"));
+  const { data: call } = await db
+    .from("calls")
+    .select("rules")
+    .eq("id", id.data)
+    .single();
+  if (
+    !category.success ||
+    !call?.rules?.categories?.some(
+      (c: { id: string }) => c.id === category.data,
+    )
+  )
+    redirect("/applicant?error=invalid_category");
   const { data, error } = await db.rpc("create_application", {
     call_id: id.data,
   });
@@ -21,6 +38,14 @@ export async function createDraft(form: FormData) {
     redirect(
       "/applicant?error=" + encodeURIComponent(safeError(error.message)),
     );
+  const payload = emptyPayload();
+  payload.concept.category_id = category.data;
+  const { error: saveError } = await db.rpc("save_application", {
+    application_id: data,
+    expected_revision: 0,
+    payload,
+  });
+  if (saveError) redirect("/applicant/" + data);
   redirect("/applicant/" + data);
 }
 export async function saveDraft(

@@ -15,8 +15,8 @@ export default async function Home() {
         <span className="eyebrow">GALÁPAGOS LIFE FUND</span>
         <h1>
           {locale === "es"
-            ? "Ideas que conservan el futuro de Galápagos"
-            : "Ideas that conserve the future of Galápagos"}
+            ? "Portal de postulación a subvenciones del GLF"
+            : "GLF grant application portal"}
         </h1>
         <p>
           {locale === "es"
@@ -51,7 +51,7 @@ export default async function Home() {
           )}
         </div>
       </section>
-      <div className="section-heading">
+      <div className="section-heading" id="convocatorias">
         <h2>{locale === "es" ? "Convocatorias" : "Calls for proposals"}</h2>
       </div>
       {calls.length ? (
@@ -81,12 +81,54 @@ export default async function Home() {
       ) : (
         <SetupNotice locale={locale} />
       )}
-      <section className="live-card">
+      <section className="live-card" id="categorias">
+        <h2>
+          {locale === "es" ? "Categorías de subvención" : "Grant categories"}
+        </h2>
+        <p>
+          {locale === "es"
+            ? "Los montos, plazos y requisitos aplicables se indican en las bases de cada convocatoria. Cree su cuenta para elegir una categoría y preparar su Nota Conceptual."
+            : "Applicable amounts, deadlines and requirements are defined in each call. Create your account to choose a category and prepare your Concept Note."}
+        </p>
+        <div className="live-grid">
+          {[
+            [
+              "Pequeña",
+              "Small",
+              "Hasta USD 100.000 · hasta 12 meses",
+              "Up to USD 100,000 · up to 12 months",
+            ],
+            [
+              "Mediana",
+              "Medium",
+              "Hasta USD 250.000 · hasta 24 meses",
+              "Up to USD 250,000 · up to 24 months",
+            ],
+            [
+              "Grande",
+              "Large",
+              "Desde USD 250.000 · hasta 36 meses",
+              "From USD 250,000 · up to 36 months",
+            ],
+          ].map((category) => (
+            <article key={category[0]}>
+              <h3>{category[locale === "es" ? 0 : 1]}</h3>
+              <p>{category[locale === "es" ? 2 : 3]}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+      <section className="live-card" id="como-postular">
         <h2>
           {locale === "es"
             ? "Dos fases, con revisión humana"
             : "Two phases, with human review"}
         </h2>
+        <p>
+          {locale === "es"
+            ? "1. Cree una cuenta y confirme su correo. 2. Ingrese y elija la convocatoria y categoría. 3. Complete la Nota Conceptual y la evaluación inicial de riesgos ambientales y sociales. La fase de proyecto completo se habilita únicamente por invitación del GLF."
+            : "1. Create an account and confirm your email. 2. Sign in and choose a call and category. 3. Complete the Concept Note and initial environmental and social screening. The full proposal phase is available only upon GLF invitation."}
+        </p>
         <div className="live-grid">
           <div>
             <h3>01 · {locale === "es" ? "Nota Conceptual" : "Concept Note"}</h3>

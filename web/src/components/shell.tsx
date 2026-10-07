@@ -2,7 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { LanguageSwitch } from "./language-switch";
 import type { Locale } from "@/lib/domain";
-export function Shell({
+import { getViewer } from "@/lib/data";
+export async function Shell({
   locale,
   children,
   internal = false,
@@ -11,6 +12,7 @@ export function Shell({
   children: React.ReactNode;
   internal?: boolean;
 }) {
+  const viewer = await getViewer();
   return (
     <div className="live-shell">
       <header className="live-header">
@@ -28,13 +30,22 @@ export function Shell({
             locale === "es" ? "Navegación principal" : "Main navigation"
           }
         >
-          <Link href="/">{locale === "es" ? "Convocatorias" : "Calls"}</Link>
-          <Link href="/applicant">
-            {locale === "es" ? "Mis postulaciones" : "My applications"}
+          <Link href="/#convocatorias">
+            {locale === "es" ? "Convocatorias" : "Calls"}
           </Link>
-          <Link href="/internal">
-            {locale === "es" ? "Personal GLF" : "GLF staff"}
+          <Link href="/#como-postular">
+            {locale === "es" ? "Cómo postular" : "How to apply"}
           </Link>
+          {viewer?.profile.role === "applicant" && (
+            <Link href="/applicant">
+              {locale === "es" ? "Mis postulaciones" : "My applications"}
+            </Link>
+          )}
+          {viewer && viewer.profile.role !== "applicant" && (
+            <Link href="/internal">
+              {locale === "es" ? "Personal GLF" : "GLF staff"}
+            </Link>
+          )}
         </nav>
         <LanguageSwitch locale={locale} />
       </header>
@@ -68,11 +79,6 @@ export function SetupNotice({ locale }: { locale: Locale }) {
           ? "Las postulaciones se habilitarán cuando GLF publique una convocatoria."
           : "Applications will open when GLF publishes a call."}
       </p>
-      <Link className="button secondary" href="/demo">
-        {locale === "es"
-          ? "Explorar demostración con datos ficticios"
-          : "Explore demo with fictional data"}
-      </Link>
     </section>
   );
 }
