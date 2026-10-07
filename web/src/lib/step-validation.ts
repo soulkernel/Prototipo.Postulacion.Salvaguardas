@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { normalizePhone } from "./phone";
 import { geographyIssues } from "./geography";
+import { hasSummaryParts, summarySections, summaryText } from "./summary";
 import {
   financialErrors,
   validateComplete,
@@ -49,7 +50,17 @@ export function stepIssues(
         invalid.push("email");
       invalid.push(...Object.keys(financialErrors(payload.concept, rules)));
     } else {
-      if (words(payload.concept.summary) > rules.summary_word_limit)
+      if (hasSummaryParts(payload.concept.summary_parts))
+        for (const section of summarySections)
+          if (!payload.concept.summary_parts[section.key].trim())
+            missing.push("summary:" + section.key);
+      if (
+        words(
+          hasSummaryParts(payload.concept.summary_parts)
+            ? summaryText(payload.concept.summary_parts)
+            : payload.concept.summary,
+        ) > rules.summary_word_limit
+      )
         invalid.push("summary");
       if (stage === 2)
         for (const f of phase2)

@@ -14,6 +14,26 @@ import { csvCell, validateFile } from "../src/lib/files";
 import { normalizePhone } from "../src/lib/phone";
 import { stepIssues } from "../src/lib/step-validation";
 import { geographyIssues } from "../src/lib/geography";
+import { emptySummary, summaryText } from "../src/lib/summary";
+test("summary limit applies to the combined six sections without counting headings", () => {
+  const p = emptyPayload();
+  p.concept.summary_parts = {
+    ...emptySummary,
+    context: "word ".repeat(495),
+    problem: "one",
+    threats: "two",
+    rationale: "three",
+    solution: "four",
+    results: "five",
+  };
+  p.concept.summary = summaryText(p.concept.summary_parts);
+  const rules = { summary_word_limit: 500 } as Rules;
+  assert.deepEqual(stepIssues(p, rules, 1, 1).invalid, []);
+  p.concept.summary_parts.context += "another";
+  assert.ok(stepIssues(p, rules, 1, 1).invalid.includes("summary"));
+  p.concept.summary_parts.problem = "";
+  assert.ok(stepIssues(p, rules, 1, 1).missing.includes("summary:problem"));
+});
 test("geography requires address location and consistent project islands", () => {
   assert.deepEqual(
     geographyIssues({

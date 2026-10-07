@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { normalizePhone } from "./phone";
 import { geographyIssues } from "./geography";
+import { emptySummary, hasSummaryParts } from "./summary";
 export const roles = [
   "applicant",
   "grants_manager",
@@ -37,6 +38,17 @@ export const conceptSchema = z
     start_date: z.string().max(10),
     end_date: z.string().max(10),
     summary: text,
+    summary_parts: z
+      .object({
+        context: text,
+        problem: text,
+        threats: text,
+        rationale: text,
+        solution: text,
+        results: text,
+      })
+      .strict()
+      .default(emptySummary),
     objectives: text,
     beneficiaries: text,
     results: text,
@@ -206,6 +218,7 @@ export function emptyPayload(): Payload {
       start_date: "",
       end_date: "",
       summary: "",
+      summary_parts: { ...emptySummary },
       objectives: "",
       beneficiaries: "",
       results: "",
@@ -339,6 +352,11 @@ export function validateComplete(
   }
   if (c.summary && words(c.summary) > rules.summary_word_limit)
     missing.push("summary_word_limit");
+  if (
+    hasSummaryParts(c.summary_parts) &&
+    Object.values(c.summary_parts).some((v) => !v.trim())
+  )
+    missing.push("summary");
   if (!payload.activities.length) missing.push("activities");
   payload.activities.forEach((a, i) => {
     if (!a.title.trim() || !a.description.trim())

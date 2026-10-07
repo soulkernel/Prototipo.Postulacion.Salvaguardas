@@ -18,6 +18,14 @@ test("concept and matrix PDFs embed fonts, paginate and contain a QR image", asy
   payload.concept.summary = "Conservación y participación comunitaria. ".repeat(
     90,
   );
+  payload.concept.summary_parts = {
+    context: payload.concept.summary,
+    problem: "Problema ficticio",
+    threats: "Amenaza ficticia",
+    rationale: "Justificación ficticia",
+    solution: "Solución ficticia",
+    results: "Resultados ficticios",
+  };
   payload.concept.requested_amount = 50000;
   const activity = newActivity();
   activity.title = "Restauración costera";

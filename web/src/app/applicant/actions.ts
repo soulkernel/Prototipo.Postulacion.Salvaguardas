@@ -6,6 +6,8 @@ import { requireViewer } from "@/lib/data";
 import { payloadSchema, emptyPayload, applicantDefaults } from "@/lib/domain";
 import { normalizePhone } from "@/lib/phone";
 import { geographyIssues } from "@/lib/geography";
+import { hasSummaryParts, summaryText } from "@/lib/summary";
+import { words } from "@/lib/domain";
 import type { SupabaseClient } from "@supabase/supabase-js";
 async function validStoredPhone(db: SupabaseClient, id: string) {
   const { data, error } = await db
@@ -30,6 +32,25 @@ async function validStoredGeography(db: SupabaseClient, id: string) {
     !error &&
     parsed.success &&
     geographyIssues(parsed.data.concept).length === 0
+  );
+}
+async function validStoredSummary(db: SupabaseClient, id: string) {
+  const { data, error } = await db
+    .from("applications")
+    .select("payload,rules_snapshot")
+    .eq("id", id)
+    .maybeSingle();
+  const parsed = payloadSchema.safeParse(data?.payload);
+  if (error || !data || !parsed.success) return false;
+  const c = parsed.data.concept;
+  return (
+    (!hasSummaryParts(c.summary_parts) ||
+      Object.values(c.summary_parts).every((v) => v.trim())) &&
+    words(
+      hasSummaryParts(c.summary_parts)
+        ? summaryText(c.summary_parts)
+        : c.summary,
+    ) <= data.rules_snapshot.summary_word_limit
   );
 }
 export type MutationResult =
@@ -115,6 +136,9 @@ export async function saveDraft(
       ...parsed.data,
       concept: {
         ...parsed.data.concept,
+        summary: hasSummaryParts(parsed.data.concept.summary_parts)
+          ? summaryText(parsed.data.concept.summary_parts)
+          : parsed.data.concept.summary,
         phone:
           normalizePhone(parsed.data.concept.phone) ||
           parsed.data.concept.phone,
@@ -130,6 +154,8 @@ export async function prepareDocuments(id: string, revision: number) {
   if (!z.uuid().safeParse(id).success || !Number.isSafeInteger(revision))
     return { error: "GLF_INVALID_PAYLOAD" };
   if (!(await validStoredPhone(db, id))) return { error: "GLF_INVALID_PHONE" };
+  if (!(await validStoredSummary(db, id)))
+    return { error: "GLF_INVALID_SUMMARY" };
   if (!(await validStoredGeography(db, id)))
     return { error: "GLF_INVALID_GEOGRAPHY" };
   const { data, error } = await db.rpc("prepare_application_documents", {
@@ -147,6 +173,8 @@ export async function submitDraft(
     return { ok: false, error: "GLF_INVALID_PAYLOAD" };
   if (!(await validStoredPhone(db, id)))
     return { ok: false, error: "GLF_INVALID_PHONE" };
+  if (!(await validStoredSummary(db, id)))
+    return { ok: false, error: "GLF_INVALID_SUMMARY" };
   if (!(await validStoredGeography(db, id)))
     return { ok: false, error: "GLF_INVALID_GEOGRAPHY" };
   const { data, error } = await db.rpc("submit_application", {

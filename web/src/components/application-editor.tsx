@@ -5,6 +5,8 @@ import { PhoneField } from "./phone-field";
 import { RequiredMark } from "./required-mark";
 import { stepIssues } from "@/lib/step-validation";
 import { GeographyFields } from "./geography-fields";
+import { SummaryFields } from "./summary-fields";
+import { summaryText, summarySections } from "@/lib/summary";
 import { useRouter } from "next/navigation";
 import {
   Plus,
@@ -71,6 +73,10 @@ const levels = {
   },
 };
 function message(code: string, es: boolean) {
+  if (code.includes("SUMMARY"))
+    return es
+      ? "Complete las seis secciones del resumen y respete el límite total de palabras."
+      : "Complete all six summary sections and respect the total word limit.";
   if (code.includes("GEOGRAPHY"))
     return es
       ? "Complete provincia, ciudad o localidad e islas de ejecución; especifique las otras islas si las seleccionó."
@@ -383,6 +389,10 @@ export function ApplicationEditor({
   const fieldIssue = (key: string) =>
     currentIssues.missing.includes(key) || currentIssues.invalid.includes(key);
   const issueLabel = (key: string) => {
+    if (key.startsWith("summary:")) {
+      const s = summarySections.find((s) => s.key === key.slice(8));
+      return (es ? "Resumen: " : "Summary: ") + (s ? (es ? s.es : s.en) : key);
+    }
     const field = [...identityFields, ...narrativeFields].find(
       (f) => f.key === key,
     );
@@ -609,12 +619,30 @@ export function ApplicationEditor({
                 className={step === 0 ? "live-grid form-columns" : "live-form"}
               >
                 {fields.map((field) =>
-                  [
-                    "province",
-                    "city",
-                    "project_islands",
-                    "other_islands",
-                  ].includes(field.key) ? null : field.key === "address" ||
+                  field.key === "summary" ? (
+                    <SummaryFields
+                      key={field.key}
+                      parts={payload.concept.summary_parts}
+                      legacy={payload.concept.summary}
+                      limit={rules.summary_word_limit}
+                      locale={locale}
+                      onChange={(parts) =>
+                        setPayload((p) => ({
+                          ...p,
+                          concept: {
+                            ...p.concept,
+                            summary_parts: parts,
+                            summary: summaryText(parts),
+                          },
+                        }))
+                      }
+                    />
+                  ) : [
+                      "province",
+                      "city",
+                      "project_islands",
+                      "other_islands",
+                    ].includes(field.key) ? null : field.key === "address" ||
                     field.key === "location" ? (
                     <GeographyFields
                       key={field.key}
@@ -650,7 +678,7 @@ export function ApplicationEditor({
                         <textarea
                           aria-required={field.key !== "partners"}
                           aria-invalid={fieldIssue(field.key)}
-                          rows={field.key === "summary" ? 6 : 4}
+                          rows={4}
                           maxLength={12000}
                           value={String(payload.concept[field.key] ?? "")}
                           onChange={(e) =>
@@ -707,10 +735,14 @@ export function ApplicationEditor({
                           {message(financial[field.key]!, es)}
                         </span>
                       )}
-                      {field.key === "summary" && (
+                      {field.type === "textarea" && (
                         <small>
-                          {words(payload.concept.summary)} /{" "}
-                          {rules.summary_word_limit} {es ? "palabras" : "words"}
+                          {words(String(payload.concept[field.key] || ""))}{" "}
+                          {es ? "palabras" : "words"} ·{" "}
+                          {String(
+                            payload.concept[field.key] || "",
+                          ).length.toLocaleString(locale)}{" "}
+                          / 12.000 {es ? "caracteres" : "characters"}
                         </small>
                       )}
                     </label>

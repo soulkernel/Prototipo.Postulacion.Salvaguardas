@@ -4,6 +4,7 @@ import QRCode from "qrcode";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { identityFields, narrativeFields } from "./fields";
+import { hasSummaryParts, summarySections } from "./summary";
 import { riskScore, riskLevel, type Payload, type Locale } from "./domain";
 export async function applicationPdf({
   payload,
@@ -120,13 +121,27 @@ export async function applicationPdf({
       stamp.toISOString(),
   );
   if (kind === "concept") {
-    for (const fieldSpec of [...identityFields, ...narrativeFields])
+    for (const fieldSpec of [...identityFields, ...narrativeFields]) {
+      if (
+        fieldSpec.key === "summary" &&
+        payload.concept.summary_parts &&
+        hasSummaryParts(payload.concept.summary_parts)
+      ) {
+        draw(es ? "RESUMEN DEL PROYECTO" : "PROJECT SUMMARY", true);
+        for (const section of summarySections)
+          field(
+            es ? section.es : section.en,
+            payload.concept.summary_parts[section.key],
+          );
+        continue;
+      }
       field(
         es ? fieldSpec.es : fieldSpec.en,
         Array.isArray(payload.concept[fieldSpec.key])
           ? (payload.concept[fieldSpec.key] as string[]).join(", ")
           : payload.concept[fieldSpec.key],
       );
+    }
     field(
       es ? "Tipo de solicitante" : "Applicant type",
       payload.concept.applicant_type,
