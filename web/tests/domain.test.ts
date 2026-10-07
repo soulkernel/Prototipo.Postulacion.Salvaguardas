@@ -12,6 +12,33 @@ import {
 } from "../src/lib/domain";
 import { csvCell, validateFile } from "../src/lib/files";
 import { normalizePhone } from "../src/lib/phone";
+import { stepIssues } from "../src/lib/step-validation";
+test("continue reports missing required fields and financial errors together", () => {
+  const rules = {
+    categories: [
+      { id: "small", min_amount: 0, max_amount: 100000, cofinance_percent: 0 },
+    ],
+    max_admin_percent: 10,
+    summary_word_limit: 500,
+  } as Rules;
+  const p = emptyPayload();
+  Object.assign(p.concept, {
+    category_id: "small",
+    requested_amount: 120000,
+    cofinance_amount: 12000,
+    admin_cost: 50000,
+  });
+  const both = stepIssues(p, rules, 1, 0);
+  assert.ok(both.missing.includes("title"));
+  assert.ok(both.missing.includes("contact_name"));
+  assert.ok(!both.missing.includes("partners"));
+  assert.deepEqual(both.invalid, ["requested_amount", "admin_cost"]);
+  p.concept.requested_amount = 100000;
+  p.concept.admin_cost = 1000;
+  assert.deepEqual(stepIssues(p, rules, 1, 0).invalid, []);
+  assert.ok(stepIssues(p, rules, 1, 1).missing.includes("summary"));
+  assert.deepEqual(stepIssues(p, rules, 1, 2).missing, ["activities"]);
+});
 test("new applications reuse editable applicant details without copying project data", () => {
   const original = {
     ...emptyPayload().concept,

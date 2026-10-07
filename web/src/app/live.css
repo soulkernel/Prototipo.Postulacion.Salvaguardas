@@ -359,6 +359,9 @@ a {
 .editor-action-feedback .auth-error {
   margin: 0;
   overflow-wrap: anywhere;
+  white-space: pre-line;
+  max-height: 220px;
+  overflow-y: auto;
 }
 .editor-action-feedback .live-actions {
   justify-content: flex-end;

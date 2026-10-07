@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { PhoneField } from "./phone-field";
 import { RequiredMark } from "./required-mark";
+import { stepIssues } from "@/lib/step-validation";
 import { useRouter } from "next/navigation";
 import {
   Plus,
@@ -156,6 +157,7 @@ export function ApplicationEditor({
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [error, setError] = useState("");
+  const [checkedStep, setCheckedStep] = useState<number | null>(null);
   const [documents, setDocuments] = useState(initialDocuments);
   const [prepared, setPrepared] = useState<{
     id: string;
@@ -369,6 +371,42 @@ export function ApplicationEditor({
   }
   const fields = step === 0 ? identityFields : narrativeFields;
   const rules = application.rules_snapshot;
+  const currentIssues =
+    checkedStep === step
+      ? stepIssues(payload, rules, application.stage, step, call.phase2_schema)
+      : { missing: [], invalid: [] };
+  const fieldIssue = (key: string) =>
+    currentIssues.missing.includes(key) || currentIssues.invalid.includes(key);
+  const issueLabel = (key: string) => {
+    const field = [...identityFields, ...narrativeFields].find(
+      (f) => f.key === key,
+    );
+    if (field) return es ? field.es : field.en;
+    if (key === "applicant_type")
+      return es ? "Tipo de solicitante" : "Applicant type";
+    if (key === "category_id")
+      return es ? "Categoría de subvención" : "Grant category";
+    if (key.startsWith("phase2:")) {
+      const f = call.phase2_schema.find((f) => f.id === key.slice(7));
+      return f ? (es ? f.label_es : f.label_en) : key;
+    }
+    if (key === "activities")
+      return es ? "Al menos una actividad" : "At least one activity";
+    const numbers = key.match(/\d+/g)?.join(".") || "";
+    return (
+      (key.startsWith("no_risks_reason")
+        ? es
+          ? "Justificación sin riesgos, actividad "
+          : "No-risk explanation, activity "
+        : key.startsWith("activity_")
+          ? es
+            ? "Nombre y descripción, actividad "
+            : "Name and description, activity "
+          : es
+            ? "Campos del riesgo o trimestres, actividad/riesgo "
+            : "Risk fields or quarters, activity/risk ") + numbers
+    );
+  };
   const financial = financialErrors(payload.concept, rules);
   const selectedCategory = rules.categories.find(
     (c) => c.id === payload.concept.category_id,
@@ -576,6 +614,7 @@ export function ApplicationEditor({
                       {field.type === "textarea" ? (
                         <textarea
                           aria-required={field.key !== "partners"}
+                          aria-invalid={fieldIssue(field.key)}
                           rows={field.key === "summary" ? 6 : 4}
                           maxLength={12000}
                           value={String(payload.concept[field.key] ?? "")}
@@ -595,7 +634,10 @@ export function ApplicationEditor({
                                 ? adminLimit
                                 : undefined
                           }
-                          aria-invalid={Boolean(financial[field.key])}
+                          aria-invalid={
+                            Boolean(financial[field.key]) ||
+                            fieldIssue(field.key)
+                          }
                           step={field.type === "number" ? "0.01" : undefined}
                           maxLength={
                             field.type === "date" || field.type === "number"
@@ -617,6 +659,13 @@ export function ApplicationEditor({
                       )}{" "}
                       {financialHelp(field.key) && (
                         <small>{financialHelp(field.key)}</small>
+                      )}
+                      {currentIssues.missing.includes(field.key) && (
+                        <small className="error">
+                          {es
+                            ? "Complete este campo obligatorio."
+                            : "Complete this required field."}
+                        </small>
                       )}
                       {financial[field.key] && (
                         <span className="error" role="alert">
@@ -1363,11 +1412,44 @@ export function ApplicationEditor({
                     error ? "application-action-error" : undefined
                   }
                   onClick={() => {
-                    if (step === 0 && Object.keys(financial).length) {
+                    setCheckedStep(step);
+                    const issues = stepIssues(
+                      payload,
+                      rules,
+                      application.stage,
+                      step,
+                      call.phase2_schema,
+                    );
+                    if (issues.missing.length || issues.invalid.length) {
                       setError(
-                        es
-                          ? "Corrija los montos señalados antes de continuar."
-                          : "Correct the highlighted amounts before continuing.",
+                        [
+                          issues.missing.length
+                            ? (es
+                                ? "Complete los campos obligatorios: "
+                                : "Complete required fields: ") +
+                              issues.missing.map(issueLabel).join("; ")
+                            : "",
+                          issues.invalid.length
+                            ? (es
+                                ? "Corrija los valores: "
+                                : "Correct these values: ") +
+                              issues.invalid
+                                .map(
+                                  (key) =>
+                                    issueLabel(key) +
+                                    (financial[key as keyof Concept]
+                                      ? " — " +
+                                        message(
+                                          financial[key as keyof Concept]!,
+                                          es,
+                                        )
+                                      : ""),
+                                )
+                                .join("; ")
+                            : "",
+                        ]
+                          .filter(Boolean)
+                          .join("\n"),
                       );
                       return;
                     }
