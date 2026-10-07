@@ -3,6 +3,7 @@ import { getViewer } from "@/lib/data";
 import { getLocale } from "@/lib/locale";
 import { Shell } from "@/components/shell";
 import { updatePassword } from "@/app/auth/actions";
+import { SubmitButton } from "@/components/submit-button";
 export default async function PasswordPage() {
   if (!(await getViewer())) redirect("/login");
   const locale = await getLocale();
@@ -24,9 +25,11 @@ export default async function PasswordPage() {
               autoComplete="new-password"
             />
           </label>
-          <button className="button primary">
+          <SubmitButton
+            pendingLabel={locale === "es" ? "Actualizando…" : "Updating…"}
+          >
             {locale === "es" ? "Actualizar contraseña" : "Update password"}
-          </button>
+          </SubmitButton>
         </form>
       </section>
     </Shell>

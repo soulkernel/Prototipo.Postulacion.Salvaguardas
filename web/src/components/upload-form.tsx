@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Locale } from "@/lib/domain";
+import { ActionLabel } from "./submit-button";
 export function UploadForm({
   applicationId,
   locale,
@@ -17,6 +18,7 @@ export function UploadForm({
   const es = locale === "es";
   async function upload(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (busy) return;
     setBusy(true);
     setError("");
     try {
@@ -49,8 +51,13 @@ export function UploadForm({
           required
         />
       </label>
-      <button className="button secondary" disabled={busy}>
-        {es ? "Adjuntar archivo" : "Attach file"}
+      <button className="button secondary" disabled={busy} aria-busy={busy}>
+        <ActionLabel
+          busy={busy}
+          pendingLabel={es ? "Adjuntando…" : "Uploading…"}
+        >
+          {es ? "Adjuntar archivo" : "Attach file"}
+        </ActionLabel>
       </button>
       {error && (
         <p role="alert" className="auth-error">

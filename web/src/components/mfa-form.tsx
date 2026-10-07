@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import type { Locale } from "@/lib/domain";
 import { rememberVerifiedSession } from "@/app/auth/actions";
+import { ActionLabel } from "./submit-button";
 export function MfaForm({
   locale,
   factorId,
@@ -23,6 +24,7 @@ export function MfaForm({
   const [busy, setBusy] = useState(false);
   const [remember, setRemember] = useState(remembered);
   async function enroll() {
+    if (busy) return;
     setBusy(true);
     setError("");
     try {
@@ -50,6 +52,7 @@ export function MfaForm({
   }
   async function verify(e: React.FormEvent) {
     e.preventDefault();
+    if (busy) return;
     setBusy(true);
     setError("");
     try {
@@ -64,13 +67,12 @@ export function MfaForm({
       router.push("/internal");
       router.refresh();
     } catch {
+      setBusy(false);
       setError(
         es
           ? "Código inválido o vencido. Inténtelo de nuevo."
           : "Invalid or expired code. Please try again.",
       );
-    } finally {
-      setBusy(false);
     }
   }
   return (
@@ -81,10 +83,20 @@ export function MfaForm({
           : "GLF staff must confirm a second factor to access applications and decisions."}
       </p>
       {!id ? (
-        <button className="button primary" onClick={enroll} disabled={busy}>
-          {es
-            ? "Configurar aplicación autenticadora"
-            : "Set up authenticator app"}
+        <button
+          className="button primary"
+          onClick={enroll}
+          disabled={busy}
+          aria-busy={busy}
+        >
+          <ActionLabel
+            busy={busy}
+            pendingLabel={es ? "Configurando…" : "Setting up…"}
+          >
+            {es
+              ? "Configurar aplicación autenticadora"
+              : "Set up authenticator app"}
+          </ActionLabel>
         </button>
       ) : (
         <form className="live-form" onSubmit={verify}>
@@ -141,8 +153,14 @@ export function MfaForm({
           <button
             className="button primary"
             disabled={busy || code.length !== 6}
+            aria-busy={busy}
           >
-            {es ? "Verificar" : "Verify"}
+            <ActionLabel
+              busy={busy}
+              pendingLabel={es ? "Verificando…" : "Verifying…"}
+            >
+              {es ? "Verificar" : "Verify"}
+            </ActionLabel>
           </button>
         </form>
       )}

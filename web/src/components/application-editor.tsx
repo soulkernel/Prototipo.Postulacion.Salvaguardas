@@ -6,6 +6,7 @@ import { RequiredMark } from "./required-mark";
 import { stepIssues } from "@/lib/step-validation";
 import { GeographyFields } from "./geography-fields";
 import { SummaryFields } from "./summary-fields";
+import { ActionLabel } from "./submit-button";
 import { summaryText, summarySections } from "@/lib/summary";
 import { useRouter } from "next/navigation";
 import {
@@ -166,6 +167,9 @@ export function ApplicationEditor({
   const [saved, setSaved] = useState(JSON.stringify(application.payload));
   const [step, setStep] = useState(editable ? 0 : 3);
   const [busy, setBusy] = useState(false);
+  const [operation, setOperation] = useState<
+    "save" | "submit" | "upload" | "prepare"
+  >("save");
   const [feedback, setFeedback] = useState("");
   const [error, setError] = useState("");
   const [checkedStep, setCheckedStep] = useState<number | null>(null);
@@ -314,6 +318,7 @@ export function ApplicationEditor({
         return;
       }
     }
+    setOperation(submit ? "submit" : "save");
     setBusy(true);
     setError("");
     setFeedback("");
@@ -352,6 +357,7 @@ export function ApplicationEditor({
   async function upload(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy) return;
+    setOperation("upload");
     setBusy(true);
     setError("");
     const form = event.currentTarget;
@@ -1320,7 +1326,10 @@ export function ApplicationEditor({
           <button
             className="button secondary"
             disabled={busy || dirty}
+            aria-busy={busy && operation === "prepare"}
             onClick={async () => {
+              if (busy) return;
+              setOperation("prepare");
               setBusy(true);
               setError("");
               try {
@@ -1334,9 +1343,14 @@ export function ApplicationEditor({
               }
             }}
           >
-            {es
-              ? "Preparar documentos para firma"
-              : "Prepare documents for signing"}
+            <ActionLabel
+              busy={busy && operation === "prepare"}
+              pendingLabel={es ? "Preparando…" : "Preparing…"}
+            >
+              {es
+                ? "Preparar documentos para firma"
+                : "Prepare documents for signing"}
+            </ActionLabel>
           </button>
           {prepared && prepared.revision === revision && !dirty && (
             <div className="live-actions">
@@ -1417,8 +1431,17 @@ export function ApplicationEditor({
                   required
                 />
               </label>
-              <button className="button secondary" disabled={busy}>
-                {es ? "Guardar anexo" : "Save attachment"}
+              <button
+                className="button secondary"
+                disabled={busy}
+                aria-busy={busy && operation === "upload"}
+              >
+                <ActionLabel
+                  busy={busy && operation === "upload"}
+                  pendingLabel={es ? "Guardando anexo…" : "Saving attachment…"}
+                >
+                  {es ? "Guardar anexo" : "Save attachment"}
+                </ActionLabel>
               </button>
             </form>
           )}
@@ -1449,28 +1472,36 @@ export function ApplicationEditor({
               <button
                 className="button secondary"
                 disabled={busy || !dirty}
+                aria-busy={busy && operation === "save"}
                 onClick={() => persist()}
               >
-                <Save size={16} />
-                {busy
-                  ? es
-                    ? "Guardando…"
-                    : "Saving…"
-                  : es
-                    ? "Guardar borrador"
-                    : "Save draft"}
+                <ActionLabel
+                  busy={busy && operation === "save"}
+                  pendingLabel={es ? "Guardando…" : "Saving…"}
+                >
+                  <Save size={16} />
+                  {es ? "Guardar borrador" : "Save draft"}
+                </ActionLabel>
               </button>
               {step === 3 ? (
                 <button
                   className="button primary"
                   disabled={busy}
+                  aria-busy={busy && operation === "submit"}
                   onClick={() => persist(true)}
                   aria-describedby={
                     error ? "application-action-error" : undefined
                   }
                 >
-                  <Send size={16} />
-                  {es ? "Enviar al GLF" : "Submit to GLF"}
+                  <ActionLabel
+                    busy={busy && operation === "submit"}
+                    pendingLabel={
+                      es ? "Enviando al GLF…" : "Submitting to GLF…"
+                    }
+                  >
+                    <Send size={16} />
+                    {es ? "Enviar al GLF" : "Submit to GLF"}
+                  </ActionLabel>
                 </button>
               ) : (
                 <button

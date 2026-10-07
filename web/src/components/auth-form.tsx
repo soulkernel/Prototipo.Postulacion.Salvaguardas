@@ -9,6 +9,7 @@ import {
 import { LanguageSwitch } from "./language-switch";
 import type { Locale } from "@/lib/domain";
 import { LoginFields } from "./login-fields";
+import { SubmitButton } from "./submit-button";
 export function AuthForm({
   locale,
   register = false,
@@ -60,29 +61,6 @@ export function AuthForm({
               ? "Ingrese a su cuenta de Galápagos Life Fund para postular a sus subvenciones."
               : "Sign in to your Galápagos Life Fund account to apply for grants."}
         </p>
-        {params.error && (
-          <p role="alert" className="auth-error">
-            {params.error === "config"
-              ? es
-                ? "El acceso estará disponible al habilitar el portal."
-                : "Access will be available when the portal is enabled."
-              : params.error === "email_not_confirmed"
-                ? es
-                  ? "Confirme su correo electrónico antes de ingresar. Abra el mensaje de confirmación o solicite un nuevo enlace abajo."
-                  : "Confirm your email before signing in. Open the confirmation email or request a new link below."
-                : params.error === "confirmation_link"
-                  ? es
-                    ? "El enlace de confirmación no es válido o ha vencido. Si ya confirmó su correo, ingrese con su contraseña. Si no, solicite un nuevo enlace abajo."
-                    : "The confirmation link is invalid or expired. If you already confirmed your email, sign in with your password. Otherwise request a new link below."
-                  : params.error === "confirmation_send"
-                    ? es
-                      ? "No se pudo reenviar el correo ahora. Espere unos minutos y vuelva a solicitarlo."
-                      : "The email could not be resent now. Wait a few minutes and retry."
-                    : es
-                      ? "No se pudo completar la solicitud. Revise sus datos e intente de nuevo."
-                      : "The request could not be completed. Check your details and try again."}
-          </p>
-        )}
         {params.sent && (
           <p role="status" className="auth-success">
             {es
@@ -172,7 +150,40 @@ export function AuthForm({
                 : "Keep me signed in on this browser for 90 days"}
             </label>
           )}
-          <button className="button primary" type="submit">
+          {params.error && (
+            <p role="alert" className="auth-error">
+              {params.error === "config"
+                ? es
+                  ? "El acceso estará disponible al habilitar el portal."
+                  : "Access will be available when the portal is enabled."
+                : params.error === "email_not_confirmed"
+                  ? es
+                    ? "Confirme su correo electrónico antes de ingresar. Abra el mensaje de confirmación o solicite un nuevo enlace abajo."
+                    : "Confirm your email before signing in. Open the confirmation email or request a new link below."
+                  : params.error === "confirmation_link"
+                    ? es
+                      ? "El enlace de confirmación no es válido o ha vencido. Si ya confirmó su correo, ingrese con su contraseña. Si no, solicite un nuevo enlace abajo."
+                      : "The confirmation link is invalid or expired. If you already confirmed your email, sign in with your password. Otherwise request a new link below."
+                    : params.error === "confirmation_send"
+                      ? es
+                        ? "No se pudo reenviar el correo ahora. Espere unos minutos y vuelva a solicitarlo."
+                        : "The email could not be resent now. Wait a few minutes and retry."
+                      : es
+                        ? "No se pudo completar la solicitud. Revise sus datos e intente de nuevo."
+                        : "The request could not be completed. Check your details and try again."}
+            </p>
+          )}
+          <SubmitButton
+            pendingLabel={
+              register
+                ? es
+                  ? "Creando cuenta…"
+                  : "Creating account…"
+                : es
+                  ? "Ingresando…"
+                  : "Signing in…"
+            }
+          >
             {register
               ? es
                 ? "Crear cuenta"
@@ -180,7 +191,7 @@ export function AuthForm({
               : es
                 ? "Ingresar"
                 : "Sign in"}
-          </button>
+          </SubmitButton>
         </form>
         {!register && (
           <details>
@@ -195,9 +206,12 @@ export function AuthForm({
                   autoComplete="email"
                 />
               </label>
-              <button className="button secondary">
+              <SubmitButton
+                className="button secondary"
+                pendingLabel={es ? "Enviando…" : "Sending…"}
+              >
                 {es ? "Enviar instrucciones" : "Send instructions"}
-              </button>
+              </SubmitButton>
             </form>
           </details>
         )}
@@ -225,9 +239,12 @@ export function AuthForm({
                     maxLength={254}
                   />
                 </label>
-                <button className="button secondary">
+                <SubmitButton
+                  className="button secondary"
+                  pendingLabel={es ? "Enviando…" : "Sending…"}
+                >
                   {es ? "Enviar nuevo enlace" : "Send new link"}
-                </button>
+                </SubmitButton>
               </form>
             </details>
           )}
