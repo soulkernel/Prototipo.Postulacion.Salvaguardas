@@ -100,7 +100,10 @@ export function StaffInvitations({
   );
   return (
     <>
-      <section className="live-card" id="prepare-staff-invitation">
+      <section
+        className="live-card staff-invitations-panel"
+        id="prepare-staff-invitation"
+      >
         <h2>
           <UserPlus size={22} aria-hidden="true" />{" "}
           {es ? "Invitar personal interno del GLF" : "Invite GLF staff"}
@@ -256,7 +259,7 @@ export function StaffInvitations({
           </div>
         </form>
       </section>
-      <section className="live-card">
+      <section className="live-card staff-invitations-panel">
         <h2>
           <Mail size={22} aria-hidden="true" />{" "}
           {es

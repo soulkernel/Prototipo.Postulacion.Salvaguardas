@@ -137,3 +137,6 @@ Resumen estructurado: source Formatos y Normativa de postulación/Formato-de-Not
 - SMTP personalizado deshabilitado, confirmado en dashboard. Servicio de correo de pruebas puede rechazar destinatarios fuera del equipo Supabase. Consulta pendiente al titular sobre SMTP; no se enviaron invitaciones reales ni se crearon cuentas reales durante pruebas.
 - Pruebas locales: 21 DB y 14 dominio/PDF, lint y build pasan. Comprobación alojada de servicio y UI pendiente al publicar. Activación real/entrega a bandeja requieren prueba autorizada y destinatario humano.
 
+
+- QA alojada del módulo completada en Chrome con Schubert AAL2: seis invitaciones pendientes, edición Ulf conserva Sostenibilidad/delegación; revisión de envío muestra destinatario y checkbox obligatorio. Comprobar servicio devolvió Servicio conectado, sin correos enviados. Captura scratch/invitaciones-personal-glf.png. Vercel a841530 Success. Entrega real de correo y activación humana siguen pendientes por SMTP/prueba autorizada.
+

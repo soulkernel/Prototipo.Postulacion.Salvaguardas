@@ -918,3 +918,12 @@ a {
   border-radius: 8px;
   padding: 12px;
 }
+.staff-invitations-panel h2 > svg {
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+.staff-invitations-panel .field-help {
+  font-size: 14px;
+  line-height: 1.5;
+}
