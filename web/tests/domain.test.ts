@@ -19,6 +19,38 @@ import {
   sessionCookieOptions,
   rememberSeconds,
 } from "../src/lib/session-preference";
+test("staff invitation inputs reject invalid emails, applicant roles and incompatible delegation", () => {
+  const input = {
+    email: "STAFF@GLF.ORG.EC",
+    full_name: " Staff Test ",
+    role: "project_coordinator",
+    scope: "none",
+  };
+  const parsed = invitationInput.parse(input);
+  assert.equal(parsed.email, "staff@glf.org.ec");
+  assert.equal(parsed.full_name, "Staff Test");
+  for (const patch of [
+    { email: "not-an-email" },
+    { full_name: "X" },
+    { full_name: "Test\nName" },
+    { role: "applicant" },
+    { scope: "projects" },
+  ])
+    assert.equal(
+      invitationInput.safeParse({ ...input, ...patch }).success,
+      false,
+    );
+  assert.deepEqual(invitationRoles("grants_manager", "projects"), [
+    "project_coordinator",
+  ]);
+  assert.deepEqual(
+    invitationRoles("sustainability_reviewer", "sustainability"),
+    ["sustainability_reviewer"],
+  );
+  assert.deepEqual(invitationRoles("applicant", "projects"), []);
+  assert.deepEqual(invitationRoles("grants_manager", "none"), []);
+  assert.ok(!invitationRoles("administrator", "none").includes("applicant"));
+});
 test("remembered sessions preserve a fixed 90-day deadline and cookie deletion", () => {
   const now = 1700000000000;
   const options = { path: "/", maxAge: 400 * 86400, sameSite: "lax" as const };
@@ -252,3 +284,4 @@ test("files require matching signatures and safe names", () => {
   assert.equal(validateFile("../example.pdf", pdf), null);
   assert.equal(validateFile("example.exe", pdf), null);
 });
+import { invitationInput, invitationRoles } from "../src/lib/staff-invitations";

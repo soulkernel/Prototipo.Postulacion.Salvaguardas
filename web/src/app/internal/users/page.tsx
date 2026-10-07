@@ -1,6 +1,8 @@
+import { StaffInvitations } from "@/components/staff-invitations";
+import { invitationRoles, type StaffInvitation } from "@/lib/staff-invitations";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { requireViewer } from "@/lib/data";
+import { requireViewer, getRequestTime } from "@/lib/data";
 import { getLocale } from "@/lib/locale";
 import { Shell } from "@/components/shell";
 import { roles } from "@/lib/domain";
@@ -33,25 +35,11 @@ export default async function UsersPage({
   if (error) throw new Error("Users unavailable");
   const { data: invitations, error: invitationError } = await db
     .from("staff_invitation_drafts")
-    .select("id,email,full_name,assigned_role,user_admin_scope")
+    .select(
+      "id,email,full_name,assigned_role,user_admin_scope,status,updated_at,sent_at,expires_at,accepted_at,send_count,last_error,invited_user_id",
+    )
     .order("full_name");
   if (invitationError) throw new Error("Invitations unavailable");
-  async function prepareInvitation(form: FormData) {
-    "use server";
-    const { db } = await requireViewer([
-      "administrator",
-      "grants_manager",
-      "sustainability_reviewer",
-    ]);
-    const { error } = await db.rpc("prepare_staff_invitation", {
-      contact_email: form.get("email"),
-      contact_name: form.get("full_name"),
-      desired_role: form.get("role"),
-      desired_scope: form.get("scope") || "none",
-    });
-    if (error) redirect("/internal/users?error=1");
-    redirect("/internal/users");
-  }
   async function assign(form: FormData) {
     "use server";
     const { db } = await requireViewer([
@@ -92,84 +80,23 @@ export default async function UsersPage({
           ? "Cada cambio de rol queda registrado. No puede modificar su propio rol desde esta pantalla."
           : "Each role change is recorded. You cannot change your own role from this screen."}
       </p>
-      <section className="live-card">
-        <h2>{es ? "Preparar acceso interno" : "Prepare staff access"}</h2>
-        <p>
-          {es
-            ? "Se guarda una propuesta de acceso. No se crea una cuenta ni se envía un correo desde esta pantalla."
-            : "Saves a proposed staff access. This screen does not create an account or send email."}
-        </p>
-        <form action={prepareInvitation} className="live-form">
-          <div className="live-grid">
-            <label>
-              {es ? "Nombre completo" : "Full name"}
-              <input name="full_name" required maxLength={200} />
-            </label>
-            <label>
-              {es ? "Correo institucional" : "Institutional email"}
-              <input name="email" type="email" required maxLength={254} />
-            </label>
-            <label>
-              {es ? "Rol propuesto" : "Proposed role"}
-              <select name="role">
-                {permittedRoles
-                  .filter((r) => r !== "applicant")
-                  .map((r) => (
-                    <option key={r} value={r}>
-                      {roleLabels[r][es ? 0 : 1]}
-                    </option>
-                  ))}
-              </select>
-            </label>
-            {profile.role === "administrator" && (
-              <label>
-                {es ? "Administración por área" : "Area administration"}
-                <select name="scope">
-                  <option value="none">
-                    {es ? "Sin delegación" : "No delegation"}
-                  </option>
-                  <option value="projects">
-                    {es
-                      ? "Proyectos (responsable de Proyectos)"
-                      : "Projects (grants manager)"}
-                  </option>
-                  <option value="sustainability">
-                    {es
-                      ? "Sostenibilidad (responsable de Sostenibilidad)"
-                      : "Sustainability (reviewer)"}
-                  </option>
-                </select>
-              </label>
-            )}
-          </div>
-          <button className="button secondary">
-            {es ? "Guardar propuesta de acceso" : "Save proposed access"}
-          </button>
-        </form>
-        <h3>
-          {es
-            ? "Accesos preparados — sin invitación enviada"
-            : "Prepared access — no invitations sent"}
-        </h3>
-        {invitations?.map((i) => (
-          <p key={i.id}>
-            {i.full_name} · {i.email} ·{" "}
-            {roleLabels[i.assigned_role as keyof typeof roleLabels][es ? 0 : 1]}
-            {i.user_admin_scope !== "none"
-              ? es
-                ? " · Administración del área"
-                : " · Area administration"
-              : ""}
-          </p>
-        ))}
-      </section>
+      <StaffInvitations
+        locale={locale}
+        invitations={(invitations || []) as StaffInvitation[]}
+        permittedRoles={invitationRoles(profile.role, profile.user_admin_scope)}
+        administrator={profile.role === "administrator"}
+        requestTime={await getRequestTime()}
+      />
       <section className="live-card">
         <h2>{es ? "Cuentas existentes" : "Existing accounts"}</h2>
         {profiles
           ?.filter(
             (p) =>
-              profile.role === "administrator" ||
-              (p.user_admin_scope === "none" && p.id !== user.id),
+              !invitations?.some(
+                (i) => i.invited_user_id === p.id && i.status !== "accepted",
+              ) &&
+              (profile.role === "administrator" ||
+                (p.user_admin_scope === "none" && p.id !== user.id)),
           )
           .map((p) => (
             <div key={p.id}>

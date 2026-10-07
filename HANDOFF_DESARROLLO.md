@@ -128,3 +128,12 @@ Resumen estructurado: source Formatos y Normativa de postulación/Formato-de-Not
 - Login reconoce sesiones existentes; seguridad redirige si ya existe aal2. MFA y RLS permanecen obligatorios para personal interno; no se implementa bypass de segundo factor.
 - Preferencia aplicada a cookies SSR, proxy y cliente navegador; cierre de sesión elimina preferencia. Pruebas de política de cookies, DB, dominio, PDF, lint y build aprobadas. Prueba real con cuenta y autenticador pendiente.
 
+
+## Invitaciones de personal interno — 7 octubre 2026
+- Migración 202610070012 aplicada por SQL Editor, consulta 2bde6291-bd2e-4404-b0cd-b8f3094e6b83, Success. No rows returned. No repetirla ni ejecutar db push sin reconciliar historial.
+- Edge Function staff-invitations desplegada desde editor; usa secretos internos de Supabase, getUser/getClaims, AAL2 y validación de rol/delegación más RPC transaccional. Vercel no recibe service_role.
+- Módulo prepara/edita, revisa, confirma envío, reenvía y cancela; estados auditados. Envíos limitados y con bloqueo/concurrencia. Usuario invitado inactivo hasta activación, email confirmado y contraseña establecida; luego MFA obligatorio. No asignar roles desde metadata.
+- Ruta exacta https://glf-postulaciones.vercel.app/auth/activate añadida a Auth allowlist. La activación consume tokens de fragmento, limpia URL, verifica destinatario en DB y acepta desde Server Action. Puede abrirse en otro dispositivo.
+- SMTP personalizado deshabilitado, confirmado en dashboard. Servicio de correo de pruebas puede rechazar destinatarios fuera del equipo Supabase. Consulta pendiente al titular sobre SMTP; no se enviaron invitaciones reales ni se crearon cuentas reales durante pruebas.
+- Pruebas locales: 21 DB y 14 dominio/PDF, lint y build pasan. Comprobación alojada de servicio y UI pendiente al publicar. Activación real/entrega a bandeja requieren prueba autorizada y destinatario humano.
+

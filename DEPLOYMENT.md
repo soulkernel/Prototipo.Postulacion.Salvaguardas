@@ -77,3 +77,10 @@ El usuario autorizó crear proyectos específicos nuevos de Supabase y Vercel. N
 - GLF_E5_ENDPOINT configurado en Vercel Preview: https://schubertlm-glf-e5-inference.hf.space/embed.
 - Redeploy del commit 4b33b79 iniciado: 5r2W2qtN6zwm9feaxMCveoMoJ3Ks. Pendiente confirmación final y consulta autenticada.
 - Corpus todavía no importado/indexado/aprobado. No afirmar que el RAG completo ni generación de evaluación estén operativos.
+
+## Invitaciones internas (2026-10-07)
+- Migración 012 instalada manualmente. Edge Function staff-invitations desplegada con Verify JWT activado; además verifica Auth, AAL2 y permisos por área. Built-in secrets de Supabase, sin secretos administrativos en Vercel.
+- URL de activación exacta /auth/activate permitida. No abrir dominios comodín.
+- Invitaciones guardadas nunca envían automáticamente. Administrador revisa destinatario/rol y confirma cada envío. Cancelación bloquea activación, no borra cuentas.
+- Correo real requiere SMTP autorizado; actualmente custom SMTP está deshabilitado. No probar envíos al personal sin autorización explícita. El estado sent acredita aceptación del proveedor, no entrega a bandeja.
+

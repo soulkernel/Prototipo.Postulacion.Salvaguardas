@@ -85,9 +85,13 @@ export async function signIn(form: FormData) {
     });
   const { data: profile } = await db
     .from("profiles")
-    .select("role")
+    .select("role,active")
     .eq("id", user?.id || "")
     .maybeSingle();
+  if (profile && !profile.active) {
+    await db.auth.signOut({ scope: "local" });
+    redirect("/login?error=account_inactive");
+  }
   redirect(
     safeReturnPath(
       form.get("next"),

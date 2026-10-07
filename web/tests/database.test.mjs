@@ -102,6 +102,204 @@ test("staff invitation drafts do not create accounts and respect delegated scope
     ),
   );
 });
+test("staff invitation delivery is privileged and activation requires the correct verified recipient", async () => {
+  await assert.rejects(
+    rpc(
+      "prepare_staff_invitation",
+      {
+        contact_email: "admin@example.test",
+        contact_name: "Existing Admin",
+        desired_role: "administrator",
+      },
+      "admin",
+    ),
+    /GLF_ACCOUNT_EXISTS/,
+  );
+  const id = await rpc(
+    "prepare_staff_invitation",
+    {
+      contact_email: "activation@glf.org.ec",
+      contact_name: "Activation Test",
+      desired_role: "project_coordinator",
+    },
+    "admin",
+  );
+  const row = () =>
+    db
+      .query("select * from public.staff_invitation_drafts where id=$1", [id])
+      .then((r) => r.rows[0]);
+  const initial = await row();
+  await assert.rejects(
+    rpc(
+      "begin_staff_invitation",
+      { invitation_id: id, expected_updated_at: initial.updated_at },
+      "applicant",
+    ),
+    /GLF_FORBIDDEN/,
+  );
+  const claim = await rpc(
+    "begin_staff_invitation",
+    { invitation_id: id, expected_updated_at: initial.updated_at },
+    "admin",
+  );
+  await assert.rejects(
+    rpc(
+      "begin_staff_invitation",
+      { invitation_id: id, expected_updated_at: initial.updated_at },
+      "admin",
+    ),
+    /GLF_VERSION_CONFLICT|GLF_INVITATION_WAIT/,
+  );
+  const recipient = "00000000-0000-4000-8000-000000000099";
+  await db.query(
+    "insert into auth.users(id,email,invited_at,raw_user_meta_data) values($1,$2,now(),$3)",
+    [
+      recipient,
+      initial.email,
+      {
+        full_name: "Activation Test",
+        role: "administrator",
+        glf_invitation_id: id,
+      },
+    ],
+  );
+  const profileBefore = (
+    await db.query("select * from public.profiles where id=$1", [recipient])
+  ).rows[0];
+  assert.equal(profileBefore.active, false);
+  assert.equal(profileBefore.role, "applicant");
+  await assert.rejects(
+    rpc(
+      "finish_staff_invitation",
+      { invitation_id: id, attempt: claim.attempt_id, recipient_id: recipient },
+      "admin",
+    ),
+    /permission denied/,
+  );
+  await db.query("select public.finish_staff_invitation($1,$2,$3)", [
+    id,
+    claim.attempt_id,
+    recipient,
+  ]);
+  assert.equal((await row()).status, "sent");
+  await assert.rejects(
+    rpc("accept_staff_invitation", { invitation_id: id }, "other"),
+    /GLF_FORBIDDEN/,
+  );
+  await assert.rejects(
+    rpc("get_staff_activation", { invitation_id: id }, "other"),
+    /GLF_FORBIDDEN/,
+  );
+  await assert.rejects(
+    rpc("accept_staff_invitation", { invitation_id: id }, recipient),
+    /GLF_INVITATION_RECIPIENT/,
+  );
+  await db.query(
+    "update auth.users set email_confirmed_at=now(),encrypted_password='test-only-hash' where id=$1",
+    [recipient],
+  );
+  await rpc("accept_staff_invitation", { invitation_id: id }, recipient);
+  const activated = (
+    await db.query("select * from public.profiles where id=$1", [recipient])
+  ).rows[0];
+  assert.equal(activated.active, true);
+  assert.equal(activated.role, "project_coordinator");
+  assert.equal((await row()).status, "accepted");
+  await assert.rejects(
+    rpc("accept_staff_invitation", { invitation_id: id }, recipient),
+    /GLF_INVITATION_EXPIRED/,
+  );
+  await as(recipient, async () => {
+    await db.query("select set_config('request.jwt.claim.aal','aal1',true)");
+    assert.equal(
+      (await db.query("select private.current_role() as role")).rows[0].role,
+      null,
+    );
+    assert.equal(
+      (await db.query("select * from public.applications")).rows.length,
+      0,
+    );
+  });
+  assert.ok(
+    (
+      await db.query(
+        "select * from private.staff_invitation_events where invitation_id=$1",
+        [id],
+      )
+    ).rows.some((e) => e.event_type === "accepted"),
+  );
+});
+test("cancelled and expired staff invitations cannot activate accounts or change sent permissions", async () => {
+  for (const state of ["cancelled", "expired"]) {
+    const id = await rpc(
+      "prepare_staff_invitation",
+      {
+        contact_email: `${state}@glf.org.ec`,
+        contact_name: "Boundary Test",
+        desired_role: "sustainability_reviewer",
+      },
+      "admin",
+    );
+    const row = () =>
+      db
+        .query("select * from public.staff_invitation_drafts where id=$1", [id])
+        .then((r) => r.rows[0]);
+    const initial = await row();
+    const claim = await rpc(
+      "begin_staff_invitation",
+      { invitation_id: id, expected_updated_at: initial.updated_at },
+      "admin",
+    );
+    const recipient =
+      state === "cancelled"
+        ? "00000000-0000-4000-8000-000000000098"
+        : "00000000-0000-4000-8000-000000000097";
+    await db.query(
+      "insert into auth.users(id,email,invited_at,email_confirmed_at,encrypted_password) values($1,$2,now(),now(),'test-only-hash')",
+      [recipient, initial.email],
+    );
+    await db.query("select public.finish_staff_invitation($1,$2,$3)", [
+      id,
+      claim.attempt_id,
+      recipient,
+    ]);
+    await assert.rejects(
+      rpc(
+        "prepare_staff_invitation",
+        {
+          contact_email: initial.email,
+          contact_name: "Changed Test",
+          desired_role: "administrator",
+        },
+        "admin",
+      ),
+      /GLF_INVITATION_LOCKED/,
+    );
+    if (state === "cancelled")
+      await rpc(
+        "cancel_staff_invitation",
+        { invitation_id: id, expected_updated_at: (await row()).updated_at },
+        "admin",
+      );
+    else
+      await db.query(
+        "update public.staff_invitation_drafts set expires_at=now()-interval '1 second' where id=$1",
+        [id],
+      );
+    await assert.rejects(
+      rpc("accept_staff_invitation", { invitation_id: id }, recipient),
+      /GLF_INVITATION_EXPIRED/,
+    );
+    assert.equal(
+      (
+        await db.query("select active from public.profiles where id=$1", [
+          recipient,
+        ])
+      ).rows[0].active,
+      false,
+    );
+  }
+});
 test("corpus import requires administrator and preserves pending approval and versions", async () => {
   const item = {
     document_name: "Test source",
@@ -202,12 +400,12 @@ async function rpc(name, args, user = "applicant") {
 }
 before(async () => {
   await db.exec(String.raw`
- create role anon nologin; create role authenticated nologin;
+ create role anon nologin; create role authenticated nologin; create role service_role nologin bypassrls;
  create schema auth; create schema storage;
- create table auth.users(id uuid primary key,email text,raw_user_meta_data jsonb default '{}');
+ create table auth.users(id uuid primary key,email text,raw_user_meta_data jsonb default '{}',invited_at timestamptz,email_confirmed_at timestamptz,encrypted_password text);
  create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
  create function auth.jwt() returns jsonb language sql stable as $$select jsonb_build_object('aal',coalesce(nullif(current_setting('request.jwt.claim.aal',true),''),'aal2'))$$;
- grant usage on schema auth,storage to anon,authenticated;
+ grant usage on schema auth,storage,public to anon,authenticated,service_role;
  grant execute on function auth.uid() to anon,authenticated;
  create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);
  create table storage.objects(id uuid default gen_random_uuid(),bucket_id text,name text,metadata jsonb,primary key(bucket_id,name));

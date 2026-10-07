@@ -168,13 +168,17 @@ export function AuthForm({
                       ? es
                         ? "No se pudo reenviar el correo ahora. Espere unos minutos y vuelva a solicitarlo."
                         : "The email could not be resent now. Wait a few minutes and retry."
-                      : params.error === "credentials"
+                      : params.error === "account_inactive"
                         ? es
-                          ? "El usuario o la contraseña tienen un error. Revise sus datos e inténtelo nuevamente."
-                          : "The username or password is incorrect. Check your details and try again."
-                        : es
-                          ? "No se pudo completar la solicitud. Revise sus datos e intente de nuevo."
-                          : "The request could not be completed. Check your details and try again."}
+                          ? "Su cuenta todavía no está habilitada. Complete la activación desde su invitación o consulte al administrador GLF."
+                          : "Your account is not enabled yet. Complete activation from your invitation or contact the GLF administrator."
+                        : params.error === "credentials"
+                          ? es
+                            ? "El usuario o la contraseña tienen un error. Revise sus datos e inténtelo nuevamente."
+                            : "The username or password is incorrect. Check your details and try again."
+                          : es
+                            ? "No se pudo completar la solicitud. Revise sus datos e intente de nuevo."
+                            : "The request could not be completed. Check your details and try again."}
             </p>
           )}
           <SubmitButton

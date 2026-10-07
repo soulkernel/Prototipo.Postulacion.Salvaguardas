@@ -867,3 +867,54 @@ a {
     transform: none;
   }
 }
+.staff-invitation-list {
+  display: grid;
+  gap: 16px;
+}
+.staff-invitation-row {
+  padding: 18px;
+  border: 1px solid #d5dfeb;
+  border-radius: 12px;
+}
+.staff-invitation-row p {
+  margin: 8px 0;
+  overflow-wrap: anywhere;
+}
+.staff-invitation-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.staff-invitation-status {
+  font-size: 14px;
+  padding: 5px 10px;
+  border-radius: 20px;
+  background: #eef2f7;
+}
+.staff-invitation-status.status-accepted {
+  background: #e1f5ed;
+  color: #185642;
+}
+.staff-invitation-status.status-failed {
+  background: #fcebec;
+  color: #922b36;
+}
+.invitation-confirmation {
+  flex: 1 1 240px;
+}
+.invitation-confirmation summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #007c88;
+  padding: 10px 0;
+}
+.invitation-confirmation summary:hover {
+  text-decoration: underline;
+}
+.invitation-confirmation[open] {
+  background: #f5f8fc;
+  border-radius: 8px;
+  padding: 12px;
+}
