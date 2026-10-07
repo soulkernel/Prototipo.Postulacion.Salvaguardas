@@ -94,6 +94,32 @@ export type Payload = z.infer<typeof payloadSchema>;
 export type Risk = z.infer<typeof riskSchema>;
 export type Activity = z.infer<typeof activitySchema>;
 export type Concept = z.infer<typeof conceptSchema>;
+export function applicantDefaults(
+  previous: unknown,
+  accountEmail: string,
+  allowedTypes: string[],
+): Partial<Concept> {
+  const parsed = conceptSchema
+    .pick({
+      applicant_type: true,
+      applicant_name: true,
+      contact_name: true,
+      email: true,
+      phone: true,
+      address: true,
+    })
+    .strip()
+    .partial()
+    .safeParse(previous);
+  const defaults = parsed.success ? { ...parsed.data } : {};
+  if (
+    defaults.applicant_type &&
+    !allowedTypes.includes(defaults.applicant_type)
+  )
+    delete defaults.applicant_type;
+  if (!defaults.email?.trim()) defaults.email = accountEmail;
+  return defaults;
+}
 export type Category = {
   id: string;
   label_es: string;

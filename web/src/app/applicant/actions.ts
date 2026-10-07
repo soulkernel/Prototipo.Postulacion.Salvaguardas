@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireViewer } from "@/lib/data";
-import { payloadSchema, emptyPayload } from "@/lib/domain";
+import { payloadSchema, emptyPayload, applicantDefaults } from "@/lib/domain";
 import { normalizePhone } from "@/lib/phone";
 import type { SupabaseClient } from "@supabase/supabase-js";
 async function validStoredPhone(db: SupabaseClient, id: string) {
@@ -45,6 +45,17 @@ export async function createDraft(form: FormData) {
     )
   )
     redirect("/applicant?error=invalid_category");
+  const { data: previous, error: previousError } = await db
+    .from("applications")
+    .select("payload")
+    .eq("applicant_id", user.id)
+    .neq("payload->concept->>applicant_name", "")
+    .order("updated_at", { ascending: false })
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (previousError) redirect("/applicant?error=GLF_SAVE_FAILED");
   const { data, error } = await db.rpc("create_application", {
     call_id: id.data,
   });
@@ -53,7 +64,14 @@ export async function createDraft(form: FormData) {
       "/applicant?error=" + encodeURIComponent(safeError(error.message)),
     );
   const payload = emptyPayload();
-  payload.concept.email = user.email || "";
+  Object.assign(
+    payload.concept,
+    applicantDefaults(
+      previous?.payload?.concept,
+      user.email || "",
+      call.rules.applicant_types,
+    ),
+  );
   payload.concept.category_id = category.data;
   const { error: saveError } = await db.rpc("save_application", {
     application_id: data,

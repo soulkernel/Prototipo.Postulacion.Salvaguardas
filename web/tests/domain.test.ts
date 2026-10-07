@@ -7,10 +7,46 @@ import {
   emptyPayload,
   payloadSchema,
   financialErrors,
+  applicantDefaults,
   type Rules,
 } from "../src/lib/domain";
 import { csvCell, validateFile } from "../src/lib/files";
 import { normalizePhone } from "../src/lib/phone";
+test("new applications reuse editable applicant details without copying project data", () => {
+  const original = {
+    ...emptyPayload().concept,
+    applicant_type: "organization",
+    applicant_name: "Example NGO",
+    contact_name: "Example Contact",
+    email: "contact@example.org",
+    phone: "+593991234567",
+    address: "Example address",
+    title: "Previous project",
+    requested_amount: 100000,
+  };
+  const result = applicantDefaults(original, "account@example.org", [
+    "organization",
+    "individual",
+  ]);
+  assert.deepEqual(result, {
+    applicant_type: "organization",
+    applicant_name: "Example NGO",
+    contact_name: "Example Contact",
+    email: "contact@example.org",
+    phone: "+593991234567",
+    address: "Example address",
+  });
+  result.applicant_name = "Another organization";
+  assert.equal(original.applicant_name, "Example NGO");
+  assert.deepEqual(applicantDefaults(undefined, "account@example.org", []), {
+    email: "account@example.org",
+  });
+  assert.equal(
+    applicantDefaults(original, "account@example.org", ["individual"])
+      .applicant_type,
+    undefined,
+  );
+});
 test("financial limits reject excess amounts and accept exact boundaries", () => {
   const rules = {
     categories: [
