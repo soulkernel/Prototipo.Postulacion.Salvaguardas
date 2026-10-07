@@ -271,6 +271,58 @@ before(async () => {
   app = await rpc("create_application", { call_id: call });
 });
 after(async () => await db.close());
+test("one applicant can keep multiple independent applications in the same call", async () => {
+  const first = await rpc("create_application", { call_id: call });
+  const second = await rpc("create_application", { call_id: call });
+  assert.notEqual(first, second);
+  const firstPayload = {
+    concept: { title: "First independent project" },
+    activities: [],
+    phase2: {},
+  };
+  const secondPayload = {
+    concept: { title: "Second independent project" },
+    activities: [],
+    phase2: {},
+  };
+  await rpc("save_application", {
+    application_id: first,
+    expected_revision: 0,
+    payload: JSON.stringify(firstPayload),
+  });
+  await rpc("save_application", {
+    application_id: second,
+    expected_revision: 0,
+    payload: JSON.stringify(secondPayload),
+  });
+  const result = await as("applicant", () =>
+    db.query(
+      "select id,reference_code,payload from public.applications where id in ($1,$2)",
+      [first, second],
+    ),
+  );
+  assert.equal(result.rows.length, 2);
+  assert.equal(new Set(result.rows.map((row) => row.reference_code)).size, 2);
+  assert.equal(
+    result.rows.find((row) => row.id === first).payload.concept.title,
+    firstPayload.concept.title,
+  );
+  assert.equal(
+    result.rows.find((row) => row.id === second).payload.concept.title,
+    secondPayload.concept.title,
+  );
+  assert.equal(
+    (
+      await as("other", () =>
+        db.query("select id from public.applications where id in ($1,$2)", [
+          first,
+          second,
+        ]),
+      )
+    ).rows.length,
+    0,
+  );
+});
 test("anonymous sees only published calls and cannot invoke mutations", async () => {
   await db.exec("begin; set local role anon;");
   try {
