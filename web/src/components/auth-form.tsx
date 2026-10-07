@@ -22,13 +22,15 @@ export function AuthForm({
   return (
     <main className="auth-shell" id="main-content">
       <section className="auth-card">
-        <div className="live-actions">
+        <div className="auth-brand-panel">
           <Image
             src="/glf-logo.png"
             alt="Galápagos Life Fund"
             width={150}
             height={65}
           />
+        </div>
+        <div className="auth-language">
           <LanguageSwitch locale={locale} />
         </div>
         <h1>
@@ -37,13 +39,17 @@ export function AuthForm({
               ? "Crear cuenta"
               : "Create account"
             : es
-              ? "Ingresar"
-              : "Sign in"}
+              ? "Portal de subvenciones"
+              : "Grant application portal"}
         </h1>
         <p>
-          {es
-            ? "Acceda con su correo electrónico al portal GLF."
-            : "Access the GLF portal using your email."}
+          {register
+            ? es
+              ? "Registre su nombre, correo y una contraseña. Después confirme su correo mediante el enlace que recibirá para ingresar y preparar su postulación."
+              : "Enter your name, email and a password. Then confirm your email using the link you receive to sign in and prepare your application."
+            : es
+              ? "Ingrese a su cuenta de Galápagos Life Fund para postular a sus subvenciones."
+              : "Sign in to your Galápagos Life Fund account to apply for grants."}
         </p>
         {params.error && (
           <p role="alert" className="auth-error">
@@ -149,11 +155,10 @@ export function AuthForm({
                 ? "Ya tengo una cuenta"
                 : "I have an account"
               : es
-                ? "Crear cuenta de aplicante"
-                : "Create an applicant account"}
+                ? "¿No tiene una cuenta? Crear cuenta"
+                : "No account yet? Create account"}
           </Link>
         </p>
-        <Link href="/">{es ? "Volver al portal" : "Back to the portal"}</Link>
       </section>
     </main>
   );
