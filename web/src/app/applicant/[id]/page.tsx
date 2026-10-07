@@ -58,6 +58,7 @@ export default async function ApplicationPage({
         call={call as Call}
         locale={locale}
         editable={editable}
+        accountEmail={viewer.user.email || ""}
         catalog={catalog || []}
         versions={versions || []}
         documents={documents || []}

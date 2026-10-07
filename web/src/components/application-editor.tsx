@@ -125,6 +125,7 @@ export function ApplicationEditor({
   call,
   locale,
   editable,
+  accountEmail = "",
   catalog,
   versions,
   documents: initialDocuments,
@@ -133,13 +134,21 @@ export function ApplicationEditor({
   call: Call;
   locale: Locale;
   editable: boolean;
+  accountEmail?: string;
   catalog: Catalog[];
   versions: Version[];
   documents: DocumentRow[];
 }) {
   const es = locale === "es";
   const router = useRouter();
-  const [payload, setPayload] = useState<Payload>(application.payload);
+  const [payload, setPayload] = useState<Payload>(() =>
+    editable && !application.payload.concept.email.trim() && accountEmail
+      ? {
+          ...application.payload,
+          concept: { ...application.payload.concept, email: accountEmail },
+        }
+      : application.payload,
+  );
   const [revision, setRevision] = useState(application.revision);
   const [saved, setSaved] = useState(JSON.stringify(application.payload));
   const [step, setStep] = useState(editable ? 0 : 3);

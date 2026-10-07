@@ -25,7 +25,7 @@ function safeError(message: string) {
   return match?.[0] || "GLF_SAVE_FAILED";
 }
 export async function createDraft(form: FormData) {
-  const { db } = await requireViewer(["applicant"]);
+  const { db, user } = await requireViewer(["applicant"]);
   const id = z.uuid().safeParse(form.get("call_id"));
   if (!id.success) redirect("/applicant?error=invalid_call");
   const category = z
@@ -53,6 +53,7 @@ export async function createDraft(form: FormData) {
       "/applicant?error=" + encodeURIComponent(safeError(error.message)),
     );
   const payload = emptyPayload();
+  payload.concept.email = user.email || "";
   payload.concept.category_id = category.data;
   const { error: saveError } = await db.rpc("save_application", {
     application_id: data,
