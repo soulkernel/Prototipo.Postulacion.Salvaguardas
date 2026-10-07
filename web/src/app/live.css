@@ -625,3 +625,81 @@ a {
   margin: 24px 0 0;
   text-align: center;
 }
+/* Shared visual rhythm for every functional workspace. */
+.live-header {
+  min-height: 80px;
+  gap: 24px;
+}
+.live-header nav {
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.live-header nav a {
+  padding: 8px 0;
+}
+.live-main {
+  margin: 0 auto;
+  padding-top: 32px;
+}
+.live-main > h1 {
+  font-size: 30px;
+  color: #1e3a6c;
+  margin: 18px 0 22px;
+}
+.live-card {
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: none;
+}
+.live-card h2 {
+  font-size: 21px;
+}
+.live-card h3 {
+  font-size: 18px;
+}
+.live-grid.grant-categories {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.live-grid.grant-categories .live-card {
+  border-top: 3px solid #1e3a6c;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.live-grid.grant-categories .button {
+  margin-top: auto;
+}
+.live-nav {
+  flex-wrap: wrap;
+}
+.live-card > details {
+  border-top: 1px solid #e3e8ed;
+  padding: 16px 0;
+}
+.live-card > details > summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #1e3a6c;
+}
+@media (max-width: 760px) {
+  .live-header {
+    padding: 14px 18px;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .live-header nav {
+    order: 3;
+    justify-content: flex-start;
+    width: 100%;
+    gap: 16px;
+  }
+  .live-main {
+    padding: 24px 18px 40px;
+  }
+  .live-card {
+    padding: 20px;
+  }
+  .live-grid.grant-categories {
+    grid-template-columns: 1fr;
+  }
+}

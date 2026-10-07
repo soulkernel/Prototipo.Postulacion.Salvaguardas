@@ -30,21 +30,44 @@ export async function Shell({
             locale === "es" ? "Navegación principal" : "Main navigation"
           }
         >
-          <Link href="/#convocatorias">
-            {locale === "es" ? "Convocatorias" : "Calls"}
-          </Link>
-          <Link href="/#como-postular">
-            {locale === "es" ? "Cómo postular" : "How to apply"}
-          </Link>
           {viewer?.profile.role === "applicant" && (
-            <Link href="/applicant">
-              {locale === "es" ? "Mis postulaciones" : "My applications"}
-            </Link>
+            <>
+              <Link href="/applicant#convocatorias">
+                {locale === "es" ? "Nueva postulación" : "New application"}
+              </Link>
+              <Link href="/applicant#expedientes">
+                {locale === "es" ? "Mis postulaciones" : "My applications"}
+              </Link>
+            </>
           )}
           {viewer && viewer.profile.role !== "applicant" && (
-            <Link href="/internal">
-              {locale === "es" ? "Personal GLF" : "GLF staff"}
-            </Link>
+            <>
+              <Link href="/internal">
+                {locale === "es" ? "Expedientes" : "Applications"}
+              </Link>
+              {["grants_manager", "administrator"].includes(
+                viewer.profile.role,
+              ) && (
+                <Link href="/internal/calls">
+                  {locale === "es" ? "Convocatorias" : "Calls"}
+                </Link>
+              )}
+              {["sustainability_reviewer", "administrator"].includes(
+                viewer.profile.role,
+              ) && (
+                <Link href="/internal/evidence">
+                  {locale === "es" ? "Asistente RAG" : "RAG assistant"}
+                </Link>
+              )}
+              <Link href="/internal/reports">
+                {locale === "es" ? "Reportes" : "Reports"}
+              </Link>
+              {viewer.profile.role === "administrator" && (
+                <Link href="/internal/users">
+                  {locale === "es" ? "Usuarios" : "Users"}
+                </Link>
+              )}
+            </>
           )}
         </nav>
         <LanguageSwitch locale={locale} />

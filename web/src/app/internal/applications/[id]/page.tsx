@@ -51,7 +51,7 @@ export default async function ReviewPage({
       .order("created_at", { ascending: false }),
     viewer.db
       .from("application_versions")
-      .select("id,revision,stage")
+      .select("id,revision,stage,payload")
       .eq("application_id", id)
       .order("revision", { ascending: false }),
     viewer.db
@@ -64,6 +64,7 @@ export default async function ReviewPage({
       .eq("application_id", id)
       .order("created_at", { ascending: false }),
   ]);
+  if (versions?.[0]?.payload) a.payload = versions[0].payload;
   const role = viewer.profile.role;
   const underReview = [
     "submitted",

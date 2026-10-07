@@ -48,7 +48,7 @@ export default async function ApplicantPage({
             : "The draft could not be opened. Check that the call is open."}
         </div>
       )}
-      <section className="live-card">
+      <section className="live-card" id="convocatorias">
         <h2>{es ? "Iniciar una postulación" : "Start an application"}</h2>
         {calls.length ? (
           <div className="live-form">
@@ -56,7 +56,7 @@ export default async function ApplicantPage({
               <section key={call.id}>
                 <h3>{es ? call.title_es : call.title_en}</h3>
                 <p>{es ? call.description_es : call.description_en}</p>
-                <div className="live-grid">
+                <div className="live-grid grant-categories">
                   {call.rules.categories.map((category) => (
                     <form
                       className="live-card"
@@ -101,7 +101,7 @@ export default async function ApplicantPage({
           </p>
         )}
       </section>
-      <section className="live-card">
+      <section className="live-card" id="expedientes">
         <h2>{es ? "Expedientes" : "Applications"}</h2>
         {rows?.length ? (
           <div className="table-scroll">

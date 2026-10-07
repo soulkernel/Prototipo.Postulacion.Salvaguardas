@@ -5,10 +5,15 @@ import { getLocale } from "@/lib/locale";
 import { Shell } from "@/components/shell";
 import { roles } from "@/lib/domain";
 import { roleLabels } from "@/lib/fields";
-export default async function UsersPage() {
+export default async function UsersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
   const { db, user } = await requireViewer(["administrator"]);
   const locale = await getLocale();
   const es = locale === "es";
+  const params = await searchParams;
   const { data: profiles, error } = await db
     .from("profiles")
     .select("id,full_name,role,active")
@@ -28,6 +33,13 @@ export default async function UsersPage() {
     <Shell locale={locale} internal>
       <Link href="/internal">← GLF</Link>
       <h1>{es ? "Usuarios y roles" : "Users and roles"}</h1>
+      {params.error && (
+        <p role="alert" className="auth-error">
+          {es
+            ? "No se pudo actualizar el rol. Revise los permisos y vuelva a intentarlo."
+            : "The role could not be updated. Check permissions and retry."}
+        </p>
+      )}
       <p>
         {es
           ? "Cada cambio de rol queda registrado. No puede modificar su propio rol desde esta pantalla."
