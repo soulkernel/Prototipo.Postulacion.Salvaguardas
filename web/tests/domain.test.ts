@@ -6,9 +6,36 @@ import {
   riskScore,
   emptyPayload,
   payloadSchema,
+  financialErrors,
+  type Rules,
 } from "../src/lib/domain";
 import { csvCell, validateFile } from "../src/lib/files";
 import { normalizePhone } from "../src/lib/phone";
+test("financial limits reject excess amounts and accept exact boundaries", () => {
+  const rules = {
+    categories: [
+      { id: "small", min_amount: 0, max_amount: 100000, cofinance_percent: 0 },
+    ],
+    max_admin_percent: 10,
+  } as Rules;
+  const c = {
+    ...emptyPayload().concept,
+    category_id: "small",
+    requested_amount: 120000,
+    cofinance_amount: 12000,
+    admin_cost: 50000,
+  };
+  assert.equal(financialErrors(c, rules).requested_amount, "CATEGORY_AMOUNT");
+  assert.equal(financialErrors(c, rules).admin_cost, "ADMIN_LIMIT");
+  c.requested_amount = 100000;
+  c.admin_cost = 11200;
+  assert.deepEqual(financialErrors(c, rules), {});
+  c.admin_cost = 11200.01;
+  assert.equal(financialErrors(c, rules).admin_cost, "ADMIN_LIMIT");
+  rules.categories[0].cofinance_percent = 10;
+  c.cofinance_amount = 9999;
+  assert.equal(financialErrors(c, rules).cofinance_amount, "COFINANCE");
+});
 test("contact phones validate country lengths and normalize mobile and landline numbers", () => {
   assert.equal(normalizePhone("0991234567", "EC"), "+593991234567");
   assert.equal(normalizePhone("052526000", "EC"), "+59352526000");

@@ -249,6 +249,39 @@ export function safeReturnPath(value: unknown, fallback = "/applicant") {
 export function words(value: string) {
   return value.trim().split(/\s+/).filter(Boolean).length;
 }
+export function financialErrors(
+  c: Concept,
+  rules: Rules,
+): Partial<Record<keyof Concept, string>> {
+  const errors: Partial<Record<keyof Concept, string>> = {};
+  const category = rules.categories.find((item) => item.id === c.category_id);
+  if (
+    category &&
+    c.requested_amount !== null &&
+    (c.requested_amount <= 0 ||
+      c.requested_amount < category.min_amount ||
+      (category.max_amount !== null &&
+        c.requested_amount > category.max_amount))
+  )
+    errors.requested_amount = "CATEGORY_AMOUNT";
+  if (
+    category &&
+    c.requested_amount !== null &&
+    c.cofinance_amount !== null &&
+    c.cofinance_amount < (c.requested_amount * category.cofinance_percent) / 100
+  )
+    errors.cofinance_amount = "COFINANCE";
+  if (
+    c.admin_cost !== null &&
+    c.requested_amount !== null &&
+    c.cofinance_amount !== null &&
+    c.admin_cost >
+      ((c.requested_amount + c.cofinance_amount) * rules.max_admin_percent) /
+        100
+  )
+    errors.admin_cost = "ADMIN_LIMIT";
+  return errors;
+}
 export function validateComplete(
   payload: Payload,
   rules: Rules,
@@ -256,6 +289,7 @@ export function validateComplete(
 ): string[] {
   const missing: string[] = [];
   const c = payload.concept;
+  missing.push(...Object.keys(financialErrors(c, rules)));
   if (c.phone && !normalizePhone(c.phone)) missing.push("phone");
   for (const [key, value] of Object.entries(c)) {
     if (

@@ -24,6 +24,7 @@ import {
   riskScore,
   riskLevel,
   validateComplete,
+  financialErrors,
   words,
   type Application,
   type Call,
@@ -354,6 +355,39 @@ export function ApplicationEditor({
   }
   const fields = step === 0 ? identityFields : narrativeFields;
   const rules = application.rules_snapshot;
+  const financial = financialErrors(payload.concept, rules);
+  const selectedCategory = rules.categories.find(
+    (c) => c.id === payload.concept.category_id,
+  );
+  const totalCost =
+    (payload.concept.requested_amount || 0) +
+    (payload.concept.cofinance_amount || 0);
+  const adminLimit = (totalCost * rules.max_admin_percent) / 100;
+  const currency = (amount: number) =>
+    amount.toLocaleString(locale, { style: "currency", currency: "USD" });
+  const financialHelp = (key: keyof Concept) =>
+    key === "requested_amount" && selectedCategory
+      ? (es ? "Monto permitido: " : "Allowed amount: ") +
+        currency(selectedCategory.min_amount) +
+        (selectedCategory.max_amount !== null
+          ? " – " + currency(selectedCategory.max_amount)
+          : es
+            ? " en adelante"
+            : " and above")
+      : key === "admin_cost"
+        ? (es ? "Máximo: " : "Maximum: ") +
+          currency(adminLimit) +
+          " (" +
+          rules.max_admin_percent +
+          (es ? "% del costo total)." : "% of total cost).")
+        : key === "cofinance_amount" && selectedCategory
+          ? (es ? "Cofinanciamiento mínimo: " : "Minimum cofinancing: ") +
+            currency(
+              ((payload.concept.requested_amount || 0) *
+                selectedCategory.cofinance_percent) /
+                100,
+            )
+          : "";
   const initialTotal = payload.activities
     .flatMap((a) => a.risks)
     .reduce((sum, r) => sum + (riskScore(r.probability, r.severity) || 0), 0);
@@ -523,6 +557,14 @@ export function ApplicationEditor({
                         <input
                           type={field.type || "text"}
                           min={field.type === "number" ? 0 : undefined}
+                          max={
+                            field.key === "requested_amount"
+                              ? (selectedCategory?.max_amount ?? undefined)
+                              : field.key === "admin_cost"
+                                ? adminLimit
+                                : undefined
+                          }
+                          aria-invalid={Boolean(financial[field.key])}
                           step={field.type === "number" ? "0.01" : undefined}
                           maxLength={
                             field.type === "date" || field.type === "number"
@@ -542,6 +584,14 @@ export function ApplicationEditor({
                           }
                         />
                       )}{" "}
+                      {financialHelp(field.key) && (
+                        <small>{financialHelp(field.key)}</small>
+                      )}
+                      {financial[field.key] && (
+                        <span className="error" role="alert">
+                          {message(financial[field.key]!, es)}
+                        </span>
+                      )}
                       {field.key === "summary" && (
                         <small>
                           {words(payload.concept.summary)} /{" "}
@@ -553,15 +603,25 @@ export function ApplicationEditor({
                 )}
               </div>
               {step === 0 && (
-                <p className="field-help">
-                  {es ? "Costo total estimado" : "Estimated total cost"}: USD{" "}
-                  {(
-                    (payload.concept.requested_amount || 0) +
-                    (payload.concept.cofinance_amount || 0)
-                  ).toLocaleString(locale)}{" "}
-                  · {es ? "Tope administrativo" : "Administrative limit"}:{" "}
-                  {rules.max_admin_percent}%
-                </p>
+                <div className="activity-card" aria-live="polite">
+                  <span>
+                    {es ? "Costo total estimado" : "Estimated total cost"}
+                  </span>
+                  <strong
+                    style={{
+                      display: "block",
+                      fontSize: "1.8rem",
+                      marginTop: "0.3rem",
+                    }}
+                  >
+                    {currency(totalCost)}
+                  </strong>
+                  <small>
+                    {es
+                      ? "Monto solicitado al GLF + cofinanciamiento"
+                      : "GLF requested amount + cofinancing"}
+                  </small>
+                </div>
               )}
               {step === 1 && application.stage === 2 && (
                 <section>
@@ -1211,7 +1271,18 @@ export function ApplicationEditor({
             ) : (
               <button
                 className="button primary"
-                onClick={() => setStep((s) => Math.min(s + 1, 3))}
+                onClick={() => {
+                  if (step === 0 && Object.keys(financial).length) {
+                    setError(
+                      es
+                        ? "Corrija los montos señalados antes de continuar."
+                        : "Correct the highlighted amounts before continuing.",
+                    );
+                    return;
+                  }
+                  setError("");
+                  setStep((s) => Math.min(s + 1, 3));
+                }}
               >
                 {es ? "Continuar" : "Continue"} →
               </button>
