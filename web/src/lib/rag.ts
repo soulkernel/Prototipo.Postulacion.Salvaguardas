@@ -27,7 +27,7 @@ export async function embedTexts(inputs: string[], kind: "query" | "passage") {
     redirect: "error",
     signal: AbortSignal.timeout(25000),
   });
-  if (!response.ok) throw new Error("GLF_INFERENCE_UNAVAILABLE");
+  if (!response.ok) throw new Error(`GLF_INFERENCE_HTTP_${response.status}`);
   const data = await response.json();
   if (
     data.model !== EMBEDDING_MODEL ||

@@ -40,11 +40,13 @@ export async function POST(request: NextRequest) {
       { status: 400 },
     );
   }
+  let stage = "embedding";
   try {
     const vectors = await embedTexts(
       items.map((item) => item.content),
       "passage",
     );
+    stage = "database";
     const { data, error } = await db.rpc("import_evidence", {
       items: items.map((item, i) => ({ ...item, embedding: vectors[i] })),
     });
@@ -53,10 +55,23 @@ export async function POST(request: NextRequest) {
       { imported: data },
       { headers: { "Cache-Control": "no-store" } },
     );
-  } catch {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    const code =
+      stage === "embedding"
+        ? /^GLF_[A-Z0-9_]+$/.test(message)
+          ? message
+          : "GLF_INFERENCE_CONNECTION"
+        : "GLF_CORPUS_DATABASE";
+    // Only controlled codes: never log corpus text or credentials.
+    console.error("corpus_import_failed", { stage, code });
+    const retryable =
+      stage === "embedding" &&
+      (code === "GLF_INFERENCE_CONNECTION" ||
+        /^GLF_INFERENCE_HTTP_(429|500|502|503|504)$/.test(code));
     return NextResponse.json(
-      { error: "Import failed; this batch can be retried" },
-      { status: 503 },
+      { error: "Import failed", code, retryable },
+      { status: retryable ? 503 : 422 },
     );
   }
 }
