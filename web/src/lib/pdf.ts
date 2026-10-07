@@ -121,7 +121,12 @@ export async function applicationPdf({
   );
   if (kind === "concept") {
     for (const fieldSpec of [...identityFields, ...narrativeFields])
-      field(es ? fieldSpec.es : fieldSpec.en, payload.concept[fieldSpec.key]);
+      field(
+        es ? fieldSpec.es : fieldSpec.en,
+        Array.isArray(payload.concept[fieldSpec.key])
+          ? (payload.concept[fieldSpec.key] as string[]).join(", ")
+          : payload.concept[fieldSpec.key],
+      );
     field(
       es ? "Tipo de solicitante" : "Applicant type",
       payload.concept.applicant_type,

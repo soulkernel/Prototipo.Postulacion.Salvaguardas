@@ -5,6 +5,7 @@ import { z } from "zod";
 import { requireViewer } from "@/lib/data";
 import { payloadSchema, emptyPayload, applicantDefaults } from "@/lib/domain";
 import { normalizePhone } from "@/lib/phone";
+import { geographyIssues } from "@/lib/geography";
 import type { SupabaseClient } from "@supabase/supabase-js";
 async function validStoredPhone(db: SupabaseClient, id: string) {
   const { data, error } = await db
@@ -16,6 +17,19 @@ async function validStoredPhone(db: SupabaseClient, id: string) {
     !error &&
     typeof data?.payload?.concept?.phone === "string" &&
     Boolean(normalizePhone(data.payload.concept.phone))
+  );
+}
+async function validStoredGeography(db: SupabaseClient, id: string) {
+  const { data, error } = await db
+    .from("applications")
+    .select("payload")
+    .eq("id", id)
+    .maybeSingle();
+  const parsed = payloadSchema.safeParse(data?.payload);
+  return (
+    !error &&
+    parsed.success &&
+    geographyIssues(parsed.data.concept).length === 0
   );
 }
 export type MutationResult =
@@ -116,6 +130,8 @@ export async function prepareDocuments(id: string, revision: number) {
   if (!z.uuid().safeParse(id).success || !Number.isSafeInteger(revision))
     return { error: "GLF_INVALID_PAYLOAD" };
   if (!(await validStoredPhone(db, id))) return { error: "GLF_INVALID_PHONE" };
+  if (!(await validStoredGeography(db, id)))
+    return { error: "GLF_INVALID_GEOGRAPHY" };
   const { data, error } = await db.rpc("prepare_application_documents", {
     app_id: id,
     expected_revision: revision,
@@ -131,6 +147,8 @@ export async function submitDraft(
     return { ok: false, error: "GLF_INVALID_PAYLOAD" };
   if (!(await validStoredPhone(db, id)))
     return { ok: false, error: "GLF_INVALID_PHONE" };
+  if (!(await validStoredGeography(db, id)))
+    return { ok: false, error: "GLF_INVALID_GEOGRAPHY" };
   const { data, error } = await db.rpc("submit_application", {
     application_id: id,
     expected_revision: revision,

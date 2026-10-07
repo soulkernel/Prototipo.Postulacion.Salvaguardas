@@ -4,6 +4,7 @@ import Link from "next/link";
 import { PhoneField } from "./phone-field";
 import { RequiredMark } from "./required-mark";
 import { stepIssues } from "@/lib/step-validation";
+import { GeographyFields } from "./geography-fields";
 import { useRouter } from "next/navigation";
 import {
   Plus,
@@ -70,6 +71,10 @@ const levels = {
   },
 };
 function message(code: string, es: boolean) {
+  if (code.includes("GEOGRAPHY"))
+    return es
+      ? "Complete provincia, ciudad o localidad e islas de ejecución; especifique las otras islas si las seleccionó."
+      : "Complete province, city or locality and project islands; specify other islands if selected.";
   if (code.includes("PHONE"))
     return es
       ? "Revise el teléfono: seleccione el país e ingrese un número celular o convencional válido."
@@ -593,7 +598,26 @@ export function ApplicationEditor({
                 className={step === 0 ? "live-grid form-columns" : "live-form"}
               >
                 {fields.map((field) =>
-                  field.key === "phone" ? (
+                  [
+                    "province",
+                    "city",
+                    "project_islands",
+                    "other_islands",
+                  ].includes(field.key) ? null : field.key === "address" ||
+                    field.key === "location" ? (
+                    <GeographyFields
+                      key={field.key}
+                      concept={payload.concept}
+                      locale={locale}
+                      mode={field.key === "address" ? "address" : "project"}
+                      onChange={(patch) =>
+                        setPayload((p) => ({
+                          ...p,
+                          concept: { ...p.concept, ...patch },
+                        }))
+                      }
+                    />
+                  ) : field.key === "phone" ? (
                     <PhoneField
                       key={field.key}
                       locale={locale}
@@ -644,7 +668,7 @@ export function ApplicationEditor({
                               ? undefined
                               : 12000
                           }
-                          value={payload.concept[field.key] ?? ""}
+                          value={String(payload.concept[field.key] ?? "")}
                           onChange={(e) =>
                             updateConcept(
                               field.key,

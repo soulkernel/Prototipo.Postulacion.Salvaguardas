@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { normalizePhone } from "./phone";
+import { geographyIssues } from "./geography";
 import {
   financialErrors,
   validateComplete,
@@ -24,7 +25,8 @@ export function stepIssues(
         ? ["applicant_type", "category_id", ...identityFields.map((f) => f.key)]
         : narrativeFields.map((f) => f.key);
     for (const key of keys) {
-      if (key === "partners") continue;
+      if (["partners", "other_islands", "project_islands"].includes(key))
+        continue;
       const value = payload.concept[key as keyof Payload["concept"]];
       if (
         value === null ||
@@ -34,6 +36,7 @@ export function stepIssues(
         missing.push(key);
     }
     if (step === 0) {
+      missing.push(...geographyIssues(payload.concept));
       if (
         payload.concept.phone.trim() &&
         !normalizePhone(payload.concept.phone)

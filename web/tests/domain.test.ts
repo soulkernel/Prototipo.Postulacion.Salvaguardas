@@ -13,6 +13,40 @@ import {
 import { csvCell, validateFile } from "../src/lib/files";
 import { normalizePhone } from "../src/lib/phone";
 import { stepIssues } from "../src/lib/step-validation";
+import { geographyIssues } from "../src/lib/geography";
+test("geography requires address location and consistent project islands", () => {
+  assert.deepEqual(
+    geographyIssues({
+      province: "Galápagos",
+      city: "Puerto Ayora",
+      project_islands: ["Santa Cruz", "Isabela"],
+      other_islands: "",
+    }),
+    [],
+  );
+  assert.ok(
+    geographyIssues({
+      province: "Pichincha",
+      city: "Quito",
+      project_islands: ["Todo Galápagos", "Santa Cruz"],
+    }).includes("project_islands"),
+  );
+  assert.ok(
+    geographyIssues({
+      province: "Guayas",
+      city: "Guayaquil",
+      project_islands: ["Otras islas"],
+    }).includes("other_islands"),
+  );
+  assert.deepEqual(
+    geographyIssues({
+      province: "Pichincha",
+      city: "Otra ciudad",
+      project_islands: ["Todo Galápagos"],
+    }),
+    [],
+  );
+});
 test("continue reports missing required fields and financial errors together", () => {
   const rules = {
     categories: [
@@ -48,6 +82,8 @@ test("new applications reuse editable applicant details without copying project 
     email: "contact@example.org",
     phone: "+593991234567",
     address: "Example address",
+    province: "Galápagos",
+    city: "Puerto Ayora",
     title: "Previous project",
     requested_amount: 100000,
   };
@@ -62,6 +98,8 @@ test("new applications reuse editable applicant details without copying project 
     email: "contact@example.org",
     phone: "+593991234567",
     address: "Example address",
+    province: "Galápagos",
+    city: "Puerto Ayora",
   });
   result.applicant_name = "Another organization";
   assert.equal(original.applicant_name, "Example NGO");

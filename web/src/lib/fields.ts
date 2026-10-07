@@ -25,7 +25,23 @@ export const identityFields: Field[] = [
     en: "Contact phone",
     type: "tel",
   },
-  { key: "address", es: "Dirección del proponente", en: "Applicant address" },
+  { key: "province", es: "Provincia del proponente", en: "Applicant province" },
+  {
+    key: "city",
+    es: "Ciudad o localidad del proponente",
+    en: "Applicant city or locality",
+  },
+  {
+    key: "address",
+    es: "Dirección específica del proponente",
+    en: "Applicant street address",
+  },
+  { key: "project_islands", es: "Islas de ejecución", en: "Project islands" },
+  {
+    key: "other_islands",
+    es: "Otras islas de ejecución",
+    en: "Other project islands",
+  },
   {
     key: "partners",
     es: "Organizaciones asociadas (si aplica)",
@@ -33,8 +49,8 @@ export const identityFields: Field[] = [
   },
   {
     key: "location",
-    es: "Ubicación y ámbito del proyecto",
-    en: "Project location and scope",
+    es: "Ubicación específica y ámbito del proyecto",
+    en: "Specific project location and scope",
   },
   { key: "project_type", es: "Tipo de proyecto", en: "Project type" },
   {

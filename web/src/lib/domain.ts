@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { normalizePhone } from "./phone";
+import { geographyIssues } from "./geography";
 export const roles = [
   "applicant",
   "grants_manager",
@@ -22,6 +23,10 @@ export const conceptSchema = z
     email: text,
     phone: z.string().max(32),
     address: text,
+    province: text.default(""),
+    city: text.default(""),
+    project_islands: z.array(z.string().max(100)).max(7).default([]),
+    other_islands: text.default(""),
     partners: text,
     location: text,
     project_type: text,
@@ -107,6 +112,8 @@ export function applicantDefaults(
       email: true,
       phone: true,
       address: true,
+      province: true,
+      city: true,
     })
     .strip()
     .partial()
@@ -185,6 +192,10 @@ export function emptyPayload(): Payload {
       email: "",
       phone: "",
       address: "",
+      province: "",
+      city: "",
+      project_islands: [],
+      other_islands: "",
       partners: "",
       location: "",
       project_type: "",
@@ -316,10 +327,12 @@ export function validateComplete(
   const missing: string[] = [];
   const c = payload.concept;
   missing.push(...Object.keys(financialErrors(c, rules)));
+  missing.push(...geographyIssues(c));
   if (c.phone && !normalizePhone(c.phone)) missing.push("phone");
   for (const [key, value] of Object.entries(c)) {
     if (
       key !== "partners" &&
+      key !== "other_islands" &&
       (value === null || (typeof value === "string" && !value.trim()))
     )
       missing.push(key);
