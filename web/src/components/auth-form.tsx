@@ -8,6 +8,7 @@ import {
 } from "@/app/auth/actions";
 import { LanguageSwitch } from "./language-switch";
 import type { Locale } from "@/lib/domain";
+import { LoginFields } from "./login-fields";
 export function AuthForm({
   locale,
   register = false,
@@ -128,28 +129,34 @@ export function AuthForm({
               />
             </label>
           )}
-          <label>
-            {es ? "Correo electrónico" : "Email"}
-            <input
-              type="email"
-              name="email"
-              autoComplete={register ? "email" : "off"}
-              defaultValue={register ? "" : lastEmail}
-              required
-              maxLength={254}
-            />
-          </label>
-          <label>
-            {es ? "Contraseña" : "Password"}
-            <input
-              type="password"
-              name="password"
-              autoComplete={register ? "new-password" : "off"}
-              minLength={register ? 12 : undefined}
-              maxLength={128}
-              required
-            />
-          </label>
+          {!register ? (
+            <LoginFields locale={locale} lastEmail={lastEmail} />
+          ) : (
+            <>
+              <label>
+                {es ? "Correo electrónico" : "Email"}
+                <input
+                  type="email"
+                  name="email"
+                  autoComplete={register ? "email" : "off"}
+                  defaultValue={register ? "" : lastEmail}
+                  required
+                  maxLength={254}
+                />
+              </label>
+              <label>
+                {es ? "Contraseña" : "Password"}
+                <input
+                  type="password"
+                  name="password"
+                  autoComplete={register ? "new-password" : "off"}
+                  minLength={register ? 12 : undefined}
+                  maxLength={128}
+                  required
+                />
+              </label>
+            </>
+          )}
           {register && (
             <small>
               {es
