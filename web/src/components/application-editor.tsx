@@ -473,7 +473,7 @@ export function ApplicationEditor({
           </button>
         ))}
       </nav>
-      {error && (
+      {error && !editable && (
         <div className="auth-error" role="alert">
           {error}
         </div>
@@ -1319,49 +1319,66 @@ export function ApplicationEditor({
                 ? "Todos los cambios guardados"
                 : "All changes saved"}
           </span>
-          <div className="live-actions">
-            <button
-              className="button secondary"
-              disabled={busy || !dirty}
-              onClick={() => persist()}
-            >
-              <Save size={16} />
-              {busy
-                ? es
-                  ? "Guardando…"
-                  : "Saving…"
-                : es
-                  ? "Guardar borrador"
-                  : "Save draft"}
-            </button>
-            {step === 3 ? (
-              <button
-                className="button primary"
-                disabled={busy}
-                onClick={() => persist(true)}
+          <div className="editor-action-feedback">
+            {error && (
+              <div
+                id="application-action-error"
+                className="auth-error"
+                role="alert"
               >
-                <Send size={16} />
-                {es ? "Enviar al GLF" : "Submit to GLF"}
-              </button>
-            ) : (
-              <button
-                className="button primary"
-                onClick={() => {
-                  if (step === 0 && Object.keys(financial).length) {
-                    setError(
-                      es
-                        ? "Corrija los montos señalados antes de continuar."
-                        : "Correct the highlighted amounts before continuing.",
-                    );
-                    return;
-                  }
-                  setError("");
-                  setStep((s) => Math.min(s + 1, 3));
-                }}
-              >
-                {es ? "Continuar" : "Continue"} →
-              </button>
+                {error}
+              </div>
             )}
+            <div className="live-actions">
+              <button
+                className="button secondary"
+                disabled={busy || !dirty}
+                onClick={() => persist()}
+              >
+                <Save size={16} />
+                {busy
+                  ? es
+                    ? "Guardando…"
+                    : "Saving…"
+                  : es
+                    ? "Guardar borrador"
+                    : "Save draft"}
+              </button>
+              {step === 3 ? (
+                <button
+                  className="button primary"
+                  disabled={busy}
+                  onClick={() => persist(true)}
+                  aria-describedby={
+                    error ? "application-action-error" : undefined
+                  }
+                >
+                  <Send size={16} />
+                  {es ? "Enviar al GLF" : "Submit to GLF"}
+                </button>
+              ) : (
+                <button
+                  className="button primary"
+                  aria-describedby={
+                    error ? "application-action-error" : undefined
+                  }
+                  onClick={() => {
+                    if (step === 0 && Object.keys(financial).length) {
+                      setError(
+                        es
+                          ? "Corrija los montos señalados antes de continuar."
+                          : "Correct the highlighted amounts before continuing.",
+                      );
+                      return;
+                    }
+                    setError("");
+                    setStep((s) => Math.min(s + 1, 3));
+                  }}
+                >
+                  {es ? "Continuar" : "Continue"} →
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}

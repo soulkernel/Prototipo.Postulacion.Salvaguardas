@@ -349,6 +349,21 @@ a {
   font-size: 13px;
   color: #61717f;
 }
+.editor-action-feedback {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 580px;
+  min-width: 0;
+}
+.editor-action-feedback .auth-error {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.editor-action-feedback .live-actions {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
 .live-form .check-row {
   display: flex;
   align-items: flex-start;
