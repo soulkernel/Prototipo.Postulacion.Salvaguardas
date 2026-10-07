@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { PhoneField } from "./phone-field";
 import { useRouter } from "next/navigation";
 import {
   Plus,
@@ -66,6 +67,10 @@ const levels = {
   },
 };
 function message(code: string, es: boolean) {
+  if (code.includes("PHONE"))
+    return es
+      ? "Revise el teléfono: seleccione el país e ingrese un número celular o convencional válido."
+      : "Check the phone: select a country and enter a valid mobile or landline number.";
   if (code.includes("SIGNED_CONCEPT"))
     return es
       ? "Adjunte la Nota Conceptual firmada en PDF después de preparar los documentos."
@@ -491,52 +496,61 @@ export function ApplicationEditor({
               <div
                 className={step === 0 ? "live-grid form-columns" : "live-form"}
               >
-                {fields.map((field) => (
-                  <label
-                    key={field.key}
-                    className={field.type === "textarea" ? "full-width" : ""}
-                  >
-                    {es ? field.es : field.en}
-                    {field.type === "textarea" ? (
-                      <textarea
-                        rows={field.key === "summary" ? 6 : 4}
-                        maxLength={12000}
-                        value={String(payload.concept[field.key] ?? "")}
-                        onChange={(e) =>
-                          updateConcept(field.key, e.target.value)
-                        }
-                      />
-                    ) : (
-                      <input
-                        type={field.type || "text"}
-                        min={field.type === "number" ? 0 : undefined}
-                        step={field.type === "number" ? "0.01" : undefined}
-                        maxLength={
-                          field.type === "date" || field.type === "number"
-                            ? undefined
-                            : 12000
-                        }
-                        value={payload.concept[field.key] ?? ""}
-                        onChange={(e) =>
-                          updateConcept(
-                            field.key,
-                            field.type === "number"
-                              ? e.target.value === ""
-                                ? null
-                                : Number(e.target.value)
-                              : e.target.value,
-                          )
-                        }
-                      />
-                    )}{" "}
-                    {field.key === "summary" && (
-                      <small>
-                        {words(payload.concept.summary)} /{" "}
-                        {rules.summary_word_limit} {es ? "palabras" : "words"}
-                      </small>
-                    )}
-                  </label>
-                ))}
+                {fields.map((field) =>
+                  field.key === "phone" ? (
+                    <PhoneField
+                      key={field.key}
+                      locale={locale}
+                      value={payload.concept.phone}
+                      onChange={(value) => updateConcept("phone", value)}
+                    />
+                  ) : (
+                    <label
+                      key={field.key}
+                      className={field.type === "textarea" ? "full-width" : ""}
+                    >
+                      {es ? field.es : field.en}
+                      {field.type === "textarea" ? (
+                        <textarea
+                          rows={field.key === "summary" ? 6 : 4}
+                          maxLength={12000}
+                          value={String(payload.concept[field.key] ?? "")}
+                          onChange={(e) =>
+                            updateConcept(field.key, e.target.value)
+                          }
+                        />
+                      ) : (
+                        <input
+                          type={field.type || "text"}
+                          min={field.type === "number" ? 0 : undefined}
+                          step={field.type === "number" ? "0.01" : undefined}
+                          maxLength={
+                            field.type === "date" || field.type === "number"
+                              ? undefined
+                              : 12000
+                          }
+                          value={payload.concept[field.key] ?? ""}
+                          onChange={(e) =>
+                            updateConcept(
+                              field.key,
+                              field.type === "number"
+                                ? e.target.value === ""
+                                  ? null
+                                  : Number(e.target.value)
+                                : e.target.value,
+                            )
+                          }
+                        />
+                      )}{" "}
+                      {field.key === "summary" && (
+                        <small>
+                          {words(payload.concept.summary)} /{" "}
+                          {rules.summary_word_limit} {es ? "palabras" : "words"}
+                        </small>
+                      )}
+                    </label>
+                  ),
+                )}
               </div>
               {step === 0 && (
                 <p className="field-help">

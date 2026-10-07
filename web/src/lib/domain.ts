@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { normalizePhone } from "./phone";
 export const roles = [
   "applicant",
   "grants_manager",
@@ -19,7 +20,7 @@ export const conceptSchema = z
     applicant_name: text,
     contact_name: text,
     email: text,
-    phone: text,
+    phone: z.string().max(32),
     address: text,
     partners: text,
     location: text,
@@ -255,6 +256,7 @@ export function validateComplete(
 ): string[] {
   const missing: string[] = [];
   const c = payload.concept;
+  if (c.phone && !normalizePhone(c.phone)) missing.push("phone");
   for (const [key, value] of Object.entries(c)) {
     if (
       key !== "partners" &&

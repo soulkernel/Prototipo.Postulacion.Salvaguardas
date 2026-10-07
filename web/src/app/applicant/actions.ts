@@ -4,6 +4,20 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireViewer } from "@/lib/data";
 import { payloadSchema, emptyPayload } from "@/lib/domain";
+import { normalizePhone } from "@/lib/phone";
+import type { SupabaseClient } from "@supabase/supabase-js";
+async function validStoredPhone(db: SupabaseClient, id: string) {
+  const { data, error } = await db
+    .from("applications")
+    .select("payload")
+    .eq("id", id)
+    .maybeSingle();
+  return (
+    !error &&
+    typeof data?.payload?.concept?.phone === "string" &&
+    Boolean(normalizePhone(data.payload.concept.phone))
+  );
+}
 export type MutationResult =
   { ok: true; revision: number } | { ok: false; error: string };
 function safeError(message: string) {
@@ -64,7 +78,15 @@ export async function saveDraft(
   const { data, error } = await db.rpc("save_application", {
     application_id: id,
     expected_revision: revision,
-    payload: parsed.data,
+    payload: {
+      ...parsed.data,
+      concept: {
+        ...parsed.data.concept,
+        phone:
+          normalizePhone(parsed.data.concept.phone) ||
+          parsed.data.concept.phone,
+      },
+    },
   });
   if (error) return { ok: false, error: safeError(error.message) };
   revalidatePath("/applicant");
@@ -74,6 +96,7 @@ export async function prepareDocuments(id: string, revision: number) {
   const { db } = await requireViewer(["applicant"]);
   if (!z.uuid().safeParse(id).success || !Number.isSafeInteger(revision))
     return { error: "GLF_INVALID_PAYLOAD" };
+  if (!(await validStoredPhone(db, id))) return { error: "GLF_INVALID_PHONE" };
   const { data, error } = await db.rpc("prepare_application_documents", {
     app_id: id,
     expected_revision: revision,
@@ -87,6 +110,8 @@ export async function submitDraft(
   const { db } = await requireViewer(["applicant"]);
   if (!z.uuid().safeParse(id).success || !Number.isSafeInteger(revision))
     return { ok: false, error: "GLF_INVALID_PAYLOAD" };
+  if (!(await validStoredPhone(db, id)))
+    return { ok: false, error: "GLF_INVALID_PHONE" };
   const { data, error } = await db.rpc("submit_application", {
     application_id: id,
     expected_revision: revision,

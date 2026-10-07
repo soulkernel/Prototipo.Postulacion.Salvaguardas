@@ -408,7 +408,7 @@ const fullPayload = {
     applicant_name: "Organización de prueba",
     contact_name: "Persona de prueba",
     email: "applicant@example.test",
-    phone: "123456789",
+    phone: "+593991234567",
     address: "Galápagos",
     partners: "",
     location: "Santa Cruz",
@@ -477,6 +477,23 @@ test("screening rejects mitigation fields before phase two", async () => {
       payload: fullPayload,
     }),
     /GLF_SCREENING_ONLY/,
+  );
+});
+test("database blocks malformed phones when completing an application", async () => {
+  for (const phone of ["123456789", "+593" + "9".repeat(30), "contact me"]) {
+    const invalid = structuredClone(payload);
+    invalid.concept.phone = phone;
+    await assert.rejects(
+      db.query("select private.validate_payload($1::jsonb,$2::jsonb,true,1)", [
+        JSON.stringify(invalid),
+        JSON.stringify(rules),
+      ]),
+      /GLF_INVALID_PHONE/,
+    );
+  }
+  await db.query(
+    "select private.validate_payload($1::jsonb,$2::jsonb,true,1)",
+    [JSON.stringify(payload), JSON.stringify(rules)],
   );
 });
 test("draft saving calculates risks and rejects stale writes", async () => {

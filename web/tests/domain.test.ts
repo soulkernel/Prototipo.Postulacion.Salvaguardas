@@ -8,6 +8,21 @@ import {
   payloadSchema,
 } from "../src/lib/domain";
 import { csvCell, validateFile } from "../src/lib/files";
+import { normalizePhone } from "../src/lib/phone";
+test("contact phones validate country lengths and normalize mobile and landline numbers", () => {
+  assert.equal(normalizePhone("0991234567", "EC"), "+593991234567");
+  assert.equal(normalizePhone("052526000", "EC"), "+59352526000");
+  assert.equal(normalizePhone("2025550123", "US"), "+12025550123");
+  assert.equal(normalizePhone("+593991234567"), "+593991234567");
+  for (const invalid of [
+    "123",
+    "099123456789999999999",
+    "hello 0991234567",
+    "+000991234567",
+    "",
+  ])
+    assert.equal(normalizePhone(invalid), null);
+});
 
 test("authentication redirects cannot leave the application", () => {
   for (const value of [
