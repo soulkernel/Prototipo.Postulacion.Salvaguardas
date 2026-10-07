@@ -8,6 +8,8 @@ export default async function LoginPage({
     next?: string;
     reset?: string;
     updated?: string;
+    sent?: string;
+    confirmation?: string;
   }>;
 }) {
   return <AuthForm locale={await getLocale()} params={await searchParams} />;

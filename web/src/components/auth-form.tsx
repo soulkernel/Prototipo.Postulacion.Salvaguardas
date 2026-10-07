@@ -1,6 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
-import { signIn, signUp, requestPasswordReset } from "@/app/auth/actions";
+import {
+  signIn,
+  signUp,
+  requestPasswordReset,
+  resendConfirmation,
+} from "@/app/auth/actions";
 import { LanguageSwitch } from "./language-switch";
 import type { Locale } from "@/lib/domain";
 export function AuthForm({
@@ -16,6 +21,7 @@ export function AuthForm({
     sent?: string;
     reset?: string;
     updated?: string;
+    confirmation?: string;
   };
 }) {
   const es = locale === "es";
@@ -57,12 +63,38 @@ export function AuthForm({
               ? es
                 ? "El acceso estará disponible al habilitar el portal."
                 : "Access will be available when the portal is enabled."
-              : es
-                ? "No se pudo completar la solicitud. Revise sus datos e intente de nuevo."
-                : "The request could not be completed. Check your details and try again."}
+              : params.error === "email_not_confirmed"
+                ? es
+                  ? "Confirme su correo electrónico antes de ingresar. Abra el mensaje de confirmación o solicite un nuevo enlace abajo."
+                  : "Confirm your email before signing in. Open the confirmation email or request a new link below."
+                : params.error === "confirmation_link"
+                  ? es
+                    ? "El enlace de confirmación no es válido o ha vencido. Si ya confirmó su correo, ingrese con su contraseña. Si no, solicite un nuevo enlace abajo."
+                    : "The confirmation link is invalid or expired. If you already confirmed your email, sign in with your password. Otherwise request a new link below."
+                  : params.error === "confirmation_send"
+                    ? es
+                      ? "No se pudo reenviar el correo ahora. Espere unos minutos y vuelva a solicitarlo."
+                      : "The email could not be resent now. Wait a few minutes and retry."
+                    : es
+                      ? "No se pudo completar la solicitud. Revise sus datos e intente de nuevo."
+                      : "The request could not be completed. Check your details and try again."}
           </p>
         )}
-        {(params.sent || params.reset) && (
+        {params.sent && (
+          <p role="status" className="auth-success">
+            {es
+              ? "Verifique su correo electrónico: abra el mensaje de confirmación que le enviamos y pulse el enlace para activar su cuenta. Revise también la carpeta de spam. Después ingrese con su correo y contraseña."
+              : "Verify your email: open the confirmation message we sent and follow its link to activate your account. Also check your spam folder. Then sign in with your email and password."}
+          </p>
+        )}
+        {params.confirmation && (
+          <p role="status" className="auth-success">
+            {es
+              ? "Para continuar después de confirmar su correo, ingrese con el correo electrónico y la contraseña que registró. Si necesita otro enlace, puede solicitarlo abajo."
+              : "To continue after confirming your email, sign in with the email and password you registered. You can request another confirmation link below if needed."}
+          </p>
+        )}
+        {params.reset && (
           <p role="status" className="auth-success">
             {es
               ? "Si el correo puede recibir esta solicitud, encontrará allí las instrucciones para continuar."
@@ -148,6 +180,36 @@ export function AuthForm({
             </form>
           </details>
         )}
+        {!register &&
+          (params.confirmation ||
+            [
+              "email_not_confirmed",
+              "confirmation_link",
+              "confirmation_send",
+            ].includes(params.error || "")) && (
+            <details>
+              <summary>
+                {es
+                  ? "Reenviar correo de confirmación"
+                  : "Resend confirmation email"}
+              </summary>
+              <form action={resendConfirmation}>
+                <label>
+                  {es ? "Correo electrónico" : "Email"}
+                  <input
+                    type="email"
+                    name="email"
+                    required
+                    autoComplete="email"
+                    maxLength={254}
+                  />
+                </label>
+                <button className="button secondary">
+                  {es ? "Enviar nuevo enlace" : "Send new link"}
+                </button>
+              </form>
+            </details>
+          )}
         <p>
           <Link href={register ? "/login" : "/register"}>
             {register

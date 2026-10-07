@@ -20,7 +20,12 @@ export async function signIn(form: FormData) {
     email: email.data,
     password,
   });
-  if (error) redirect("/login?error=credentials");
+  if (error)
+    redirect(
+      error.code === "email_not_confirmed"
+        ? "/login?error=email_not_confirmed"
+        : "/login?error=credentials",
+    );
   const {
     data: { user },
   } = await db.auth.getUser();
@@ -58,11 +63,26 @@ export async function signUp(form: FormData) {
     password: parsed.data.password,
     options: {
       data: { full_name: parsed.data.name },
-      emailRedirectTo: siteUrl() + "/auth/callback?next=/applicant",
+      // Supabase verifies the email before returning here. Sign-in is explicit,
+      // so confirmation also works on another device without a PKCE verifier.
+      emailRedirectTo: siteUrl() + "/login?confirmation=return",
     },
   });
   if (error) redirect("/register?error=signup");
   redirect("/register?sent=1");
+}
+export async function resendConfirmation(form: FormData) {
+  const db = await createSupabaseServerClient();
+  if (!db) redirect("/login?error=config");
+  const email = z.email().safeParse(String(form.get("email") || "").trim());
+  if (!email.success) redirect("/login?error=required");
+  const { error } = await db.auth.resend({
+    type: "signup",
+    email: email.data,
+    options: { emailRedirectTo: siteUrl() + "/login?confirmation=return" },
+  });
+  if (error) redirect("/login?error=confirmation_send");
+  redirect("/login?sent=1");
 }
 export async function signOut() {
   const db = await createSupabaseServerClient();
