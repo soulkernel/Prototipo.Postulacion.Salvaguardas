@@ -54,7 +54,8 @@ export default async function InternalPage() {
             {es ? "Evidencia y asistente RAG" : "Evidence and RAG assistant"}
           </Link>
         )}
-        {profile.role === "administrator" && (
+        {(profile.role === "administrator" ||
+          profile.user_admin_scope !== "none") && (
           <Link href="/internal/users">
             {es ? "Usuarios y roles" : "Users and roles"}
           </Link>

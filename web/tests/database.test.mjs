@@ -13,6 +13,95 @@ const ids = {
   committee: "00000000-0000-4000-8000-000000000006",
   admin: "00000000-0000-4000-8000-000000000007",
 };
+test("staff invitation drafts do not create accounts and respect delegated scope", async () => {
+  const proposal = {
+    contact_email: "test.staff@example.org",
+    contact_name: "Test Staff",
+    desired_role: "project_coordinator",
+    desired_scope: "none",
+  };
+  const beforeCount = (
+    await db.query("select count(*)::int as n from auth.users")
+  ).rows[0].n;
+  await assert.rejects(
+    rpc("prepare_staff_invitation", proposal, "applicant"),
+    /GLF_FORBIDDEN/,
+  );
+  await assert.rejects(
+    rpc("prepare_staff_invitation", proposal, "coordinator"),
+    /GLF_FORBIDDEN/,
+  );
+  await rpc("prepare_staff_invitation", proposal, "admin");
+  assert.equal(
+    (await db.query("select count(*)::int as n from auth.users")).rows[0].n,
+    beforeCount,
+  );
+  assert.equal(
+    (
+      await as("applicant", () =>
+        db.query("select * from public.staff_invitation_drafts"),
+      )
+    ).rows.length,
+    0,
+  );
+  await assert.rejects(
+    as("admin", () =>
+      db.query(
+        "update public.staff_invitation_drafts set full_name='Tampered'",
+      ),
+    ),
+    /permission denied/,
+  );
+  await rpc(
+    "set_user_admin_scope",
+    { target_user: ids.reviewer, scope: "sustainability" },
+    "admin",
+  );
+  await assert.rejects(
+    rpc("prepare_staff_invitation", proposal, "reviewer"),
+    /GLF_FORBIDDEN/,
+  );
+  await rpc(
+    "prepare_staff_invitation",
+    {
+      ...proposal,
+      contact_email: "sustainability.staff@example.org",
+      desired_role: "sustainability_reviewer",
+    },
+    "reviewer",
+  );
+  assert.equal(
+    (
+      await as("reviewer", () =>
+        db.query("select * from public.staff_invitation_drafts"),
+      )
+    ).rows.length,
+    1,
+  );
+  await assert.rejects(
+    rpc(
+      "prepare_staff_invitation",
+      { ...proposal, desired_scope: "projects" },
+      "admin",
+    ),
+    /GLF_INVALID_INVITATION/,
+  );
+  await rpc(
+    "set_user_admin_scope",
+    { target_user: ids.reviewer, scope: "none" },
+    "admin",
+  );
+  const events = await db.query(
+    "select * from private.user_scope_events where target_id=$1",
+    [ids.reviewer],
+  );
+  assert.ok(
+    events.rows.some(
+      (e) =>
+        e.previous_scope === "sustainability" && e.assigned_scope === "none",
+    ),
+  );
+});
 test("corpus import requires administrator and preserves pending approval and versions", async () => {
   const item = {
     document_name: "Test source",
@@ -730,4 +819,58 @@ test("signed agreements cannot exceed the approved amount", async () => {
   assert.equal(report.signed, 1);
   assert.equal(report.signed_total, 44000);
   assert.equal(report.approved_total, 45000);
+});
+
+test("area administration is delegated independently of technical roles", async () => {
+  await assert.rejects(
+    rpc(
+      "assign_staff_role",
+      { target_user: ids.other, assigned_role: "sustainability_reviewer" },
+      "reviewer",
+    ),
+    /GLF_FORBIDDEN/,
+  );
+  await rpc(
+    "set_user_admin_scope",
+    { target_user: ids.reviewer, scope: "sustainability" },
+    "admin",
+  );
+  await assert.rejects(
+    rpc(
+      "assign_staff_role",
+      { target_user: ids.other, assigned_role: "administrator" },
+      "reviewer",
+    ),
+    /GLF_FORBIDDEN/,
+  );
+  await assert.rejects(
+    rpc(
+      "assign_staff_role",
+      { target_user: ids.grants, assigned_role: "sustainability_reviewer" },
+      "reviewer",
+    ),
+    /GLF_FORBIDDEN/,
+  );
+  await assert.rejects(
+    rpc(
+      "set_user_admin_scope",
+      { target_user: ids.other, scope: "sustainability" },
+      "reviewer",
+    ),
+    /GLF_FORBIDDEN/,
+  );
+  await rpc(
+    "assign_staff_role",
+    { target_user: ids.other, assigned_role: "sustainability_reviewer" },
+    "reviewer",
+  );
+  const other = await as("other", () =>
+    db.query("select id from public.profiles"),
+  );
+  assert.equal(other.rows.length, 1);
+  await rpc(
+    "assign_staff_role",
+    { target_user: ids.other, assigned_role: "applicant" },
+    "admin",
+  );
 });

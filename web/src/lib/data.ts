@@ -19,7 +19,7 @@ export const getViewer = cache(async () => {
   if (error || !user) return null;
   const { data: profile } = await db
     .from("profiles")
-    .select("id,full_name,role,active")
+    .select("id,full_name,role,active,user_admin_scope")
     .eq("id", user.id)
     .maybeSingle();
   if (!profile?.active || !roles.includes(profile.role)) return null;

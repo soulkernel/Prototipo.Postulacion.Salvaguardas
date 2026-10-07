@@ -63,3 +63,17 @@ El usuario autorizó crear proyectos específicos nuevos de Supabase y Vercel. N
 - Supabase Site URL y redirect exacto /auth/callback configurados a esa URL. Confirm email activado, anonymous sign-in desactivado y longitud mínima de contraseña 12 guardada.
 - Commit 9eac0f8 subido. Vercel hizo un primer despliegue como Production (BEeGNLXxqh6e78WujJ8tw9yBSwnW), sin variables Production. No usar ese despliegue: iniciado redeploy explícito Preview 2sDkHSFeuZTbJxdZkgFjnHbw3KEc con las tres variables. Main/GitHub Pages permanecen intactos.
 - Dominio automático antiguo project-v1no4.vercel.app aún asociado a Production; no es el enlace de pruebas.
+
+## Administrador inicial — 2026-10-06
+- El titular autorizó expresamente habilitar su cuenta confirmada como administrator.
+- Aplicado por SQL Editor en transacción, comprobando identidad/correo confirmado, ausencia de otro administrador inicial y registrando previous_role/assigned_role en private.role_events. Resultado verificado: Schubert Lombeida Manjarrez, administrator, active=true.
+- No se modificaron credenciales ni se redujo la exigencia AAL2 para personal interno. El titular debe completar personalmente su autenticador para acceder al panel.
+- Sigue pendiente completar invitaciones de personal interno, desactivación con auditoría y prueba integrada del módulo. No se han enviado invitaciones a terceros.
+
+
+## Servicio E5 en la nube — 2026-10-06
+- Hugging Face Space Schubertlm/glf-e5-inference: Protected, CPU Basic gratuito, app.py/requirements.txt/Dockerfile cargados por el titular; estado Running verificado.
+- El titular guardó GLF_E5_API_KEY como secreto tanto en HF como en Vercel Preview para feat/full-grants-platform. No se leyó el valor.
+- GLF_E5_ENDPOINT configurado en Vercel Preview: https://schubertlm-glf-e5-inference.hf.space/embed.
+- Redeploy del commit 4b33b79 iniciado: 5r2W2qtN6zwm9feaxMCveoMoJ3Ks. Pendiente confirmación final y consulta autenticada.
+- Corpus todavía no importado/indexado/aprobado. No afirmar que el RAG completo ni generación de evaluación estén operativos.

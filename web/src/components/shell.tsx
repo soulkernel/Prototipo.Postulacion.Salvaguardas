@@ -62,7 +62,8 @@ export async function Shell({
               <Link href="/internal/reports">
                 {locale === "es" ? "Reportes" : "Reports"}
               </Link>
-              {viewer.profile.role === "administrator" && (
+              {(viewer.profile.role === "administrator" ||
+                viewer.profile.user_admin_scope !== "none") && (
                 <Link href="/internal/users">
                   {locale === "es" ? "Usuarios" : "Users"}
                 </Link>
