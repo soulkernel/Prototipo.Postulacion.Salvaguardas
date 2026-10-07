@@ -11,10 +11,12 @@ import type { Locale } from "@/lib/domain";
 export function AuthForm({
   locale,
   register = false,
+  lastEmail = "",
   params,
 }: {
   locale: Locale;
   register?: boolean;
+  lastEmail?: string;
   params: {
     error?: string;
     next?: string;
@@ -108,7 +110,10 @@ export function AuthForm({
               : "Password updated. Please sign in again."}
           </p>
         )}
-        <form action={register ? signUp : signIn}>
+        <form
+          action={register ? signUp : signIn}
+          autoComplete={register ? "on" : "off"}
+        >
           {!register && (
             <input type="hidden" name="next" value={params.next || ""} />
           )}{" "}
@@ -128,7 +133,8 @@ export function AuthForm({
             <input
               type="email"
               name="email"
-              autoComplete="email"
+              autoComplete={register ? "email" : "off"}
+              defaultValue={register ? "" : lastEmail}
               required
               maxLength={254}
             />
@@ -138,7 +144,7 @@ export function AuthForm({
             <input
               type="password"
               name="password"
-              autoComplete={register ? "new-password" : "current-password"}
+              autoComplete={register ? "new-password" : "off"}
               minLength={register ? 12 : undefined}
               maxLength={128}
               required

@@ -75,6 +75,14 @@ export async function signIn(form: FormData) {
   const {
     data: { user },
   } = await db.auth.getUser();
+  if (user)
+    (await cookies()).set("glf_last_email", email.data, {
+      path: "/",
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: rememberSeconds,
+    });
   const { data: profile } = await db
     .from("profiles")
     .select("role")
