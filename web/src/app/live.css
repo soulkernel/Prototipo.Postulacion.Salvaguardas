@@ -703,3 +703,8 @@ a {
     grid-template-columns: 1fr;
   }
 }
+
+.required-mark {
+  color: #9f2424;
+  font-weight: 700;
+}

@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { PhoneField } from "./phone-field";
+import { RequiredMark } from "./required-mark";
 import { useRouter } from "next/navigation";
 import {
   Plus,
@@ -200,7 +201,9 @@ export function ApplicationEditor({
   ) => (
     <label>
       {label}
+      <RequiredMark locale={locale} />
       <select
+        aria-required="true"
         value={value ?? ""}
         onChange={(e) =>
           onChange(e.target.value ? Number(e.target.value) : null)
@@ -227,7 +230,9 @@ export function ApplicationEditor({
   ) => (
     <label>
       {label}
+      <RequiredMark locale={locale} />
       <select
+        aria-required="true"
         value={value ?? ""}
         onChange={(e) =>
           onChange(e.target.value ? Number(e.target.value) : null)
@@ -434,6 +439,12 @@ export function ApplicationEditor({
           </p>
         </div>
       )}
+      <p className="field-help">
+        <RequiredMark locale={locale} />{" "}
+        {es
+          ? "Campo obligatorio para enviar la postulación. Puede guardar un borrador incompleto. Los campos opcionales se indican expresamente."
+          : "Required to submit the application. You can save an incomplete draft. Optional fields are explicitly identified."}
+      </p>
       <nav
         className="wizard-tabs"
         aria-label={es ? "Pasos de la postulación" : "Application steps"}
@@ -494,7 +505,9 @@ export function ApplicationEditor({
                 <div className="live-grid">
                   <label>
                     {es ? "Tipo de solicitante" : "Applicant type"}
+                    <RequiredMark locale={locale} />
                     <select
+                      aria-required="true"
                       value={payload.concept.applicant_type}
                       onChange={(e) =>
                         updateConcept("applicant_type", e.target.value)
@@ -518,7 +531,9 @@ export function ApplicationEditor({
                   </label>
                   <label>
                     {es ? "Categoría de subvención" : "Grant category"}
+                    <RequiredMark locale={locale} />
                     <select
+                      aria-required="true"
                       value={payload.concept.category_id}
                       onChange={(e) =>
                         updateConcept("category_id", e.target.value)
@@ -553,8 +568,14 @@ export function ApplicationEditor({
                       className={field.type === "textarea" ? "full-width" : ""}
                     >
                       {es ? field.es : field.en}
+                      {field.key === "partners" ? (
+                        <small> ({es ? "Opcional" : "Optional"})</small>
+                      ) : (
+                        <RequiredMark locale={locale} />
+                      )}
                       {field.type === "textarea" ? (
                         <textarea
+                          aria-required={field.key !== "partners"}
                           rows={field.key === "summary" ? 6 : 4}
                           maxLength={12000}
                           value={String(payload.concept[field.key] ?? "")}
@@ -564,6 +585,7 @@ export function ApplicationEditor({
                         />
                       ) : (
                         <input
+                          aria-required={field.key !== "partners"}
                           type={field.type || "text"}
                           min={field.type === "number" ? 0 : undefined}
                           max={
@@ -642,8 +664,13 @@ export function ApplicationEditor({
                   {call.phase2_schema.map((f) => (
                     <label key={f.id}>
                       {es ? f.label_es : f.label_en}
-                      {f.required ? " *" : ""}
+                      {f.required ? (
+                        <RequiredMark locale={locale} />
+                      ) : (
+                        <small> ({es ? "Opcional" : "Optional"})</small>
+                      )}
                       <textarea
+                        aria-required={f.required}
                         value={payload.phase2[f.id] || ""}
                         onChange={(e) =>
                           setPayload((p) => ({
@@ -698,7 +725,9 @@ export function ApplicationEditor({
                   <div className="live-form">
                     <label>
                       {es ? "Nombre de actividad" : "Activity name"}
+                      <RequiredMark locale={locale} />
                       <input
+                        aria-required="true"
                         value={activity.title}
                         onChange={(e) =>
                           updateActivity(ai, { title: e.target.value })
@@ -707,7 +736,9 @@ export function ApplicationEditor({
                     </label>
                     <label>
                       {es ? "Descripción" : "Description"}
+                      <RequiredMark locale={locale} />
                       <textarea
+                        aria-required="true"
                         rows={2}
                         value={activity.description}
                         onChange={(e) =>
@@ -720,7 +751,9 @@ export function ApplicationEditor({
                         {es
                           ? "Justificación si no identifica riesgos"
                           : "Explanation if no risks are identified"}
+                        <RequiredMark locale={locale} />
                         <textarea
+                          aria-required="true"
                           value={activity.no_risks_reason}
                           onChange={(e) =>
                             updateActivity(ai, {
@@ -762,7 +795,9 @@ export function ApplicationEditor({
                         <div className="live-grid form-columns">
                           <label>
                             {es ? "Dimensión" : "Dimension"}
+                            <RequiredMark locale={locale} />
                             <select
+                              aria-required="true"
                               value={risk.dimension}
                               onChange={(e) =>
                                 updateRisk(ai, ri, {
@@ -779,7 +814,9 @@ export function ApplicationEditor({
                           </label>
                           <label>
                             {es ? "Riesgo o impacto" : "Risk or impact"}
+                            <RequiredMark locale={locale} />
                             <input
+                              aria-required="true"
                               value={risk.name}
                               onChange={(e) =>
                                 updateRisk(ai, ri, { name: e.target.value })
@@ -790,7 +827,9 @@ export function ApplicationEditor({
                             {es
                               ? "Descripción concisa del riesgo"
                               : "Concise risk description"}
+                            <RequiredMark locale={locale} />
                             <textarea
+                              aria-required="true"
                               rows={2}
                               value={risk.description}
                               onChange={(e) =>
@@ -860,7 +899,9 @@ export function ApplicationEditor({
                                       {es
                                         ? "Medida propuesta"
                                         : "Proposed measure"}
+                                      <RequiredMark locale={locale} />
                                       <textarea
+                                        aria-required="true"
                                         rows={2}
                                         value={m.text || ""}
                                         onChange={(e) =>
@@ -971,7 +1012,9 @@ export function ApplicationEditor({
                               )}
                               <label>
                                 {es ? "Ubicación" : "Location"}
+                                <RequiredMark locale={locale} />
                                 <input
+                                  aria-required="true"
                                   value={risk.location}
                                   onChange={(e) =>
                                     updateRisk(ai, ri, {
@@ -984,7 +1027,9 @@ export function ApplicationEditor({
                                 {es
                                   ? "Costo estimado (USD)"
                                   : "Estimated cost (USD)"}
+                                <RequiredMark locale={locale} />
                                 <input
+                                  aria-required="true"
                                   type="number"
                                   min="0"
                                   step="0.01"
@@ -1003,7 +1048,9 @@ export function ApplicationEditor({
                                 {es
                                   ? "Responsable de la medida"
                                   : "Person responsible for the measure"}
+                                <RequiredMark locale={locale} />
                                 <input
+                                  aria-required="true"
                                   value={risk.responsible}
                                   onChange={(e) =>
                                     updateRisk(ai, ri, {
@@ -1116,6 +1163,7 @@ export function ApplicationEditor({
                 <input
                   type="checkbox"
                   checked={payload.truthful}
+                  aria-required="true"
                   onChange={(e) =>
                     setPayload((p) => ({ ...p, truthful: e.target.checked }))
                   }
@@ -1123,11 +1171,13 @@ export function ApplicationEditor({
                 {es
                   ? "Confirmo que la información refleja la propuesta que presento."
                   : "I confirm that this information reflects the proposal I am submitting."}
+                <RequiredMark locale={locale} />
               </label>
               <label className="check-row">
                 <input
                   type="checkbox"
                   checked={payload.consent}
+                  aria-required="true"
                   onChange={(e) =>
                     setPayload((p) => ({ ...p, consent: e.target.checked }))
                   }
@@ -1135,6 +1185,7 @@ export function ApplicationEditor({
                 {es
                   ? "He leído y acepto el aviso de privacidad de esta convocatoria."
                   : "I have read and accept this call's privacy notice."}
+                <RequiredMark locale={locale} />
               </label>
             </div>
           )}
@@ -1192,6 +1243,19 @@ export function ApplicationEditor({
       {step === 3 && (
         <section className="live-card">
           <h2>{es ? "Anexos separados" : "Separate attachments"}</h2>
+          <p className="field-help">
+            {es ? "Anexos obligatorios: " : "Required attachments: "}
+            {[
+              ...(application.stage === 1
+                ? [
+                    es
+                      ? "Nota Conceptual firmada (PDF)"
+                      : "Signed Concept Note (PDF)",
+                  ]
+                : []),
+              ...rules.required_attachments,
+            ].join(", ") || (es ? "Ninguno adicional" : "None additional")}
+          </p>
           {documents.map((d) => (
             <div className="document-row" key={d.id}>
               <span>
@@ -1204,6 +1268,7 @@ export function ApplicationEditor({
             <form onSubmit={upload} className="live-form">
               <label>
                 {es ? "Tipo de anexo" : "Attachment type"}
+                <RequiredMark locale={locale} />
                 <select name="kind">
                   {[
                     ...new Set([
@@ -1228,6 +1293,7 @@ export function ApplicationEditor({
               </label>
               <label>
                 {es ? "Archivo (máximo 4 MB)" : "File (maximum 4 MB)"}
+                <RequiredMark locale={locale} />
                 <input
                   type="file"
                   name="file"

@@ -8,6 +8,7 @@ import {
 } from "libphonenumber-js/max";
 import { normalizePhone } from "@/lib/phone";
 import type { Locale } from "@/lib/domain";
+import { RequiredMark } from "./required-mark";
 export function PhoneField({
   value,
   onChange,
@@ -49,11 +50,15 @@ export function PhoneField({
   };
   return (
     <fieldset className="activity-card">
-      <legend>{es ? "Teléfono de contacto" : "Contact phone"}</legend>
+      <legend>
+        {es ? "Teléfono de contacto" : "Contact phone"}
+        <RequiredMark locale={locale} />
+      </legend>
       <div className="live-grid">
         <label>
           {es ? "País y código" : "Country and code"}
           <select
+            aria-required="true"
             value={country}
             autoComplete="tel-country-code"
             onChange={(e) => update(e.target.value as CountryCode, number)}
@@ -68,6 +73,7 @@ export function PhoneField({
         <label>
           {es ? "Número celular o convencional" : "Mobile or landline number"}
           <input
+            aria-required="true"
             type="tel"
             inputMode="tel"
             autoComplete="tel-national"
