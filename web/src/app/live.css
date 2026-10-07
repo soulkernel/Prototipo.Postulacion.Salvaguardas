@@ -726,6 +726,18 @@ a {
   color: #9f2424;
   font-weight: 700;
 }
+.required-fields-help {
+  font-size: 16px;
+  line-height: 1.6;
+  color: #46586a;
+}
+.application-project-title {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #1e3a6c;
+  overflow-wrap: anywhere;
+}
 /* Text navigation: light turquoise on blue, darker teal on white. */
 .live-header nav a,
 .live-main a:not(.button),

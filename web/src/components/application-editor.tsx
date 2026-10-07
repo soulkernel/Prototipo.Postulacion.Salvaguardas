@@ -460,9 +460,17 @@ export function ApplicationEditor({
             {application.stage}
           </p>
           <h1>
-            {payload.concept.title ||
-              (es ? "Nueva postulación" : "New application")}
+            {application.stage === 1
+              ? es
+                ? "Formulario de Nota Conceptual"
+                : "Concept Note Form"
+              : es
+                ? "Formulario de Proyecto Completo"
+                : "Full Proposal Form"}
           </h1>
+          {payload.concept.title.trim() && (
+            <p className="application-project-title">{payload.concept.title}</p>
+          )}
           <p>
             {es ? call.title_es : call.title_en} · {es ? "Reglas" : "Rules"}{" "}
             {rules.version || call.rules_version}
@@ -482,7 +490,7 @@ export function ApplicationEditor({
           </p>
         </div>
       )}
-      <p className="field-help">
+      <p className="field-help required-fields-help">
         <RequiredMark locale={locale} />{" "}
         {es
           ? "Campo obligatorio para enviar la postulación. Puede guardar un borrador incompleto. Los campos opcionales se indican expresamente."
@@ -495,13 +503,13 @@ export function ApplicationEditor({
         {(es
           ? [
               "Datos generales",
-              "Nota Conceptual",
+              application.stage === 1 ? "Nota Conceptual" : "Proyecto completo",
               "Actividades y riesgos",
               "Revisar y enviar",
             ]
           : [
               "Project details",
-              "Concept Note",
+              application.stage === 1 ? "Concept Note" : "Full proposal",
               "Activities and risks",
               "Review and submit",
             ]
