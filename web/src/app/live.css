@@ -726,3 +726,79 @@ a {
   color: #9f2424;
   font-weight: 700;
 }
+/* Text navigation: light turquoise on blue, darker teal on white. */
+.live-header nav a,
+.live-main a:not(.button),
+.language-switch button,
+.wizard-tabs button {
+  cursor: pointer;
+  text-decoration-line: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 6px;
+  text-decoration-thickness: 2px;
+  transition:
+    color 160ms ease,
+    text-decoration-color 160ms ease,
+    background-color 160ms ease;
+}
+.live-header nav a:hover,
+.live-header nav a[aria-current="page"] {
+  color: #7cebd2;
+  text-decoration-color: currentColor;
+}
+.live-main a:not(.button):hover,
+.live-main a:not(.button)[aria-current],
+.wizard-tabs button:hover {
+  color: #00695c;
+  text-decoration-color: currentColor;
+}
+.live-main .text-button {
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: 600;
+}
+.live-header nav a {
+  font-size: 16px;
+}
+.language-switch button {
+  font-size: 13px;
+  padding: 7px 9px;
+}
+.language-switch button:hover,
+.language-switch button[aria-pressed="true"] {
+  color: #00695c;
+  background: #e3faf2;
+  text-decoration-color: currentColor;
+}
+.live-header .language-switch {
+  background: transparent;
+  border-color: #ffffff60;
+}
+.live-header .language-switch button {
+  color: #fff;
+}
+.live-header .language-switch button:hover,
+.live-header .language-switch button[aria-pressed="true"] {
+  color: #7cebd2;
+  background: #ffffff14;
+  text-decoration-color: currentColor;
+  box-shadow: none;
+}
+.live-main a:not(.button):focus-visible,
+.language-switch button:focus-visible,
+.wizard-tabs button:focus-visible {
+  outline: 2px solid #00695c;
+  border-radius: 3px;
+}
+.live-header nav a:focus-visible,
+.live-header .language-switch button:focus-visible {
+  outline: 2px solid #7cebd2;
+}
+@media (prefers-reduced-motion: reduce) {
+  .live-header nav a,
+  .live-main a:not(.button),
+  .language-switch button,
+  .wizard-tabs button {
+    transition: none;
+  }
+}

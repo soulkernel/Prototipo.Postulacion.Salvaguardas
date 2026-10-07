@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { MenuLink } from "./menu-link";
 import { LanguageSwitch } from "./language-switch";
 import type { Locale } from "@/lib/domain";
 import { getViewer } from "@/lib/data";
@@ -32,41 +33,41 @@ export async function Shell({
         >
           {viewer?.profile.role === "applicant" && (
             <>
-              <Link href="/applicant#convocatorias">
+              <MenuLink href="/applicant#convocatorias">
                 {locale === "es" ? "Nueva postulación" : "New application"}
-              </Link>
-              <Link href="/applicant#expedientes">
+              </MenuLink>
+              <MenuLink href="/applicant#expedientes">
                 {locale === "es" ? "Mis postulaciones" : "My applications"}
-              </Link>
+              </MenuLink>
             </>
           )}
           {viewer && viewer.profile.role !== "applicant" && (
             <>
-              <Link href="/internal">
+              <MenuLink href="/internal">
                 {locale === "es" ? "Expedientes" : "Applications"}
-              </Link>
+              </MenuLink>
               {["grants_manager", "administrator"].includes(
                 viewer.profile.role,
               ) && (
-                <Link href="/internal/calls">
+                <MenuLink href="/internal/calls">
                   {locale === "es" ? "Convocatorias" : "Calls"}
-                </Link>
+                </MenuLink>
               )}
               {["sustainability_reviewer", "administrator"].includes(
                 viewer.profile.role,
               ) && (
-                <Link href="/internal/evidence">
+                <MenuLink href="/internal/evidence">
                   {locale === "es" ? "Asistente RAG" : "RAG assistant"}
-                </Link>
+                </MenuLink>
               )}
-              <Link href="/internal/reports">
+              <MenuLink href="/internal/reports">
                 {locale === "es" ? "Reportes" : "Reports"}
-              </Link>
+              </MenuLink>
               {(viewer.profile.role === "administrator" ||
                 viewer.profile.user_admin_scope !== "none") && (
-                <Link href="/internal/users">
+                <MenuLink href="/internal/users">
                   {locale === "es" ? "Usuarios" : "Users"}
-                </Link>
+                </MenuLink>
               )}
             </>
           )}
