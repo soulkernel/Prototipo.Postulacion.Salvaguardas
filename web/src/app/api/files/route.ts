@@ -6,8 +6,7 @@ import { z } from "zod";
 export const runtime = "nodejs";
 export async function POST(request: NextRequest) {
   const origin = request.headers.get("origin");
-  const site = process.env.NEXT_PUBLIC_SITE_URL || request.nextUrl.origin;
-  if (!origin || origin !== new URL(site).origin)
+  if (!origin || origin !== request.nextUrl.origin)
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const viewer = await getViewer();
   if (!viewer)
@@ -38,6 +37,11 @@ export async function POST(request: NextRequest) {
   const valid = validateFile(file.name, bytes);
   if (!valid)
     return NextResponse.json({ error: "Invalid file" }, { status: 400 });
+  if (kind === "concept_signed" && valid.extension !== "pdf")
+    return NextResponse.json(
+      { error: "Signed concept must be PDF" },
+      { status: 400 },
+    );
   const folder = kind === "agreement" ? "agreement" : "attachment";
   const path = [
     app.data,

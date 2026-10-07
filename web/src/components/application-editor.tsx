@@ -11,7 +11,11 @@ import {
   LockKeyhole,
   FileDown,
 } from "lucide-react";
-import { saveDraft, submitDraft } from "@/app/applicant/actions";
+import {
+  saveDraft,
+  submitDraft,
+  prepareDocuments,
+} from "@/app/applicant/actions";
 import { identityFields, narrativeFields, statusLabel } from "@/lib/fields";
 import {
   newActivity,
@@ -62,6 +66,14 @@ const levels = {
   },
 };
 function message(code: string, es: boolean) {
+  if (code.includes("SIGNED_CONCEPT"))
+    return es
+      ? "Adjunte la Nota Conceptual firmada en PDF después de preparar los documentos."
+      : "Attach the signed Concept Note PDF after preparing documents.";
+  if (code.includes("PREPARE_DOCUMENTS"))
+    return es
+      ? "Prepare los documentos de la versión actual antes de enviar."
+      : "Prepare documents for the current version before submitting.";
   if (code.includes("VERSION_CONFLICT"))
     return es
       ? "Hay una versión más reciente. Recargue el expediente antes de guardar; copie primero cualquier cambio que desee conservar."
@@ -129,6 +141,10 @@ export function ApplicationEditor({
   const [feedback, setFeedback] = useState("");
   const [error, setError] = useState("");
   const [documents, setDocuments] = useState(initialDocuments);
+  const [prepared, setPrepared] = useState<{
+    id: string;
+    revision: number;
+  } | null>(null);
   const dirty = JSON.stringify(payload) !== saved;
   useEffect(() => {
     if (!dirty) return;
@@ -1041,6 +1057,55 @@ export function ApplicationEditor({
           )}
         </div>
       </fieldset>
+      {step === 3 && editable && (
+        <section className="live-card">
+          <h2>
+            {es ? "Preparar, firmar y adjuntar" : "Prepare, sign and attach"}
+          </h2>
+          <p>
+            {es
+              ? "Guarde todos los campos y declaraciones. Prepare los documentos, descargue la Nota Conceptual y la evaluación A&S por separado, firme electrónicamente la Nota Conceptual fuera del portal y adjunte el PDF firmado. Si modifica el formulario, deberá preparar y firmar nuevamente. La validez de la firma será revisada por GLF."
+              : "Save all fields and declarations. Prepare and download the Concept Note and E&S screening separately, sign the Concept Note electronically outside this portal and attach the signed PDF. After editing, prepare and sign again. GLF will review signature validity."}
+          </p>
+          <button
+            className="button secondary"
+            disabled={busy || dirty}
+            onClick={async () => {
+              setBusy(true);
+              setError("");
+              try {
+                const result = await prepareDocuments(application.id, revision);
+                if (result.id) setPrepared({ id: result.id, revision });
+                else setError(message(result.error || "", es));
+              } catch {
+                setError(message("", es));
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            {es
+              ? "Preparar documentos para firma"
+              : "Prepare documents for signing"}
+          </button>
+          {prepared && prepared.revision === revision && !dirty && (
+            <div className="live-actions">
+              <a
+                className="button secondary"
+                href={`/documents/${prepared.id}/concept?prepared=1&lang=${locale}`}
+              >
+                {es ? "Descargar Nota Conceptual" : "Download Concept Note"}
+              </a>
+              <a
+                className="button secondary"
+                href={`/documents/${prepared.id}/matrix?prepared=1&lang=${locale}`}
+              >
+                {es ? "Descargar evaluación A&S" : "Download E&S screening"}
+              </a>
+            </div>
+          )}
+        </section>
+      )}
       {step === 3 && (
         <section className="live-card">
           <h2>{es ? "Anexos separados" : "Separate attachments"}</h2>
@@ -1057,17 +1122,25 @@ export function ApplicationEditor({
               <label>
                 {es ? "Tipo de anexo" : "Attachment type"}
                 <select name="kind">
-                  {[...new Set(["other", ...rules.required_attachments])].map(
-                    (k) => (
-                      <option value={k} key={k}>
-                        {k === "other"
+                  {[
+                    ...new Set([
+                      "concept_signed",
+                      "other",
+                      ...rules.required_attachments,
+                    ]),
+                  ].map((k) => (
+                    <option value={k} key={k}>
+                      {k === "concept_signed"
+                        ? es
+                          ? "Nota Conceptual firmada (PDF)"
+                          : "Signed Concept Note (PDF)"
+                        : k === "other"
                           ? es
                             ? "Otro anexo"
                             : "Other attachment"
                           : k}
-                      </option>
-                    ),
-                  )}
+                    </option>
+                  ))}
                 </select>
               </label>
               <label>

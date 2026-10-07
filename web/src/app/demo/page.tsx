@@ -1,4 +1,4 @@
-import { DemoClient } from "./view";
+import { redirect } from "next/navigation";
 export default function DemoPage() {
-  return <DemoClient />;
+  redirect("/");
 }

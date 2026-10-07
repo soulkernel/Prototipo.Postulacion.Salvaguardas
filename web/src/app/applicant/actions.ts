@@ -70,6 +70,16 @@ export async function saveDraft(
   revalidatePath("/applicant");
   return { ok: true, revision: data };
 }
+export async function prepareDocuments(id: string, revision: number) {
+  const { db } = await requireViewer(["applicant"]);
+  if (!z.uuid().safeParse(id).success || !Number.isSafeInteger(revision))
+    return { error: "GLF_INVALID_PAYLOAD" };
+  const { data, error } = await db.rpc("prepare_application_documents", {
+    app_id: id,
+    expected_revision: revision,
+  });
+  return error ? { error: safeError(error.message) } : { id: String(data) };
+}
 export async function submitDraft(
   id: string,
   revision: number,

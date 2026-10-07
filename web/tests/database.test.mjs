@@ -14,15 +14,49 @@ const ids = {
   admin: "00000000-0000-4000-8000-000000000007",
 };
 test("corpus import requires administrator and preserves pending approval and versions", async () => {
-  const item = { document_name: "Test source", document_version: "test-v1", locator: "page 1", content: "Test normative evidence", source_kind: "official", embedding: Array(384).fill(0.05) };
-  await assert.rejects(rpc("import_evidence", {items:JSON.stringify([item])}, "applicant"), /GLF_FORBIDDEN/);
-  await assert.rejects(rpc("import_evidence", {items:JSON.stringify([item])}, "reviewer"), /GLF_FORBIDDEN/);
-  assert.equal(await rpc("import_evidence", {items:JSON.stringify([item])}, "admin"), 1);
-  assert.equal(await rpc("import_evidence", {items:JSON.stringify([item])}, "admin"), 0);
-  await assert.rejects(rpc("import_evidence", {items:JSON.stringify([{...item,content:"changed"}])}, "admin"), /GLF_CORPUS_VERSION_CONFLICT/);
-  const hidden = await as("reviewer", () => db.query("select * from public.knowledge_chunks where document_name='Test source'"));
+  const item = {
+    document_name: "Test source",
+    document_version: "test-v1",
+    locator: "page 1",
+    content: "Test normative evidence",
+    source_kind: "official",
+    embedding: Array(384).fill(0.05),
+  };
+  await assert.rejects(
+    rpc("import_evidence", { items: JSON.stringify([item]) }, "applicant"),
+    /GLF_FORBIDDEN/,
+  );
+  await assert.rejects(
+    rpc("import_evidence", { items: JSON.stringify([item]) }, "reviewer"),
+    /GLF_FORBIDDEN/,
+  );
+  assert.equal(
+    await rpc("import_evidence", { items: JSON.stringify([item]) }, "admin"),
+    1,
+  );
+  assert.equal(
+    await rpc("import_evidence", { items: JSON.stringify([item]) }, "admin"),
+    0,
+  );
+  await assert.rejects(
+    rpc(
+      "import_evidence",
+      { items: JSON.stringify([{ ...item, content: "changed" }]) },
+      "admin",
+    ),
+    /GLF_CORPUS_VERSION_CONFLICT/,
+  );
+  const hidden = await as("reviewer", () =>
+    db.query(
+      "select * from public.knowledge_chunks where document_name='Test source'",
+    ),
+  );
   assert.equal(hidden.rows.length, 0);
-  const visible = await as("admin", () => db.query("select * from public.knowledge_chunks where document_name='Test source'"));
+  const visible = await as("admin", () =>
+    db.query(
+      "select * from public.knowledge_chunks where document_name='Test source'",
+    ),
+  );
   assert.equal(visible.rows[0].approved, false);
 });
 const rules = {
@@ -336,6 +370,31 @@ test("draft saving calculates risks and rejects stale writes", async () => {
   );
 });
 test("submission freezes a version and blocks all later applicant writes", async () => {
+  await assert.rejects(
+    rpc("submit_application", { application_id: app, expected_revision: 1 }),
+    /GLF_PREPARE_DOCUMENTS_REQUIRED/,
+  );
+  const prepared = await rpc("prepare_application_documents", {
+    app_id: app,
+    expected_revision: 1,
+  });
+  assert.ok(prepared);
+  await assert.rejects(
+    rpc(
+      "prepare_application_documents",
+      { app_id: app, expected_revision: 1 },
+      "other",
+    ),
+    /GLF_APPLICATION_LOCKED/,
+  );
+  await assert.rejects(
+    rpc("submit_application", { application_id: app, expected_revision: 1 }),
+    /GLF_SIGNED_CONCEPT_REQUIRED/,
+  );
+  await db.query(
+    "insert into public.application_documents(application_id,kind,storage_path,file_name,content_type,size_bytes,sha256,uploaded_by) values($1,'concept_signed','test/signed.pdf','signed.pdf','application/pdf',100,$2,$3)",
+    [app, "a".repeat(64), ids.applicant],
+  );
   assert.equal(
     await rpc("submit_application", {
       application_id: app,
@@ -650,7 +709,8 @@ test("signed agreements cannot exceed the approved amount", async () => {
     },
     "grants",
   );
-  const date = new Date().toISOString().slice(0, 10);
+  const date = (await db.query("select current_date::text as date")).rows[0]
+    .date;
   const agreement = {
     app_id: app,
     expected_revision: 10,

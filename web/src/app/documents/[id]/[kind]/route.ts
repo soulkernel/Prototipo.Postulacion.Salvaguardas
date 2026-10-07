@@ -21,8 +21,9 @@ export async function GET(
         request.url,
       ),
     );
+  const prepared = request.nextUrl.searchParams.get("prepared") === "1";
   const { data: version } = await viewer.db
-    .from("application_versions")
+    .from(prepared ? "prepared_documents" : "application_versions")
     .select("*")
     .eq("id", id)
     .maybeSingle();
@@ -38,13 +39,20 @@ export async function GET(
     requested === "en" || requested === "es" ? requested : await getLocale();
   const base = process.env.NEXT_PUBLIC_SITE_URL || request.nextUrl.origin;
   const downloadUrl =
-    base + "/documents/" + id + "/" + kind + "?lang=" + locale;
+    base +
+    "/documents/" +
+    id +
+    "/" +
+    kind +
+    "?lang=" +
+    locale +
+    (prepared ? "&prepared=1" : "");
   const result = await applicationPdf({
     payload: version.payload as Payload,
     stage: version.stage,
     reference: app.reference_code,
     revision: version.revision,
-    submittedAt: version.submitted_at,
+    submittedAt: prepared ? version.created_at : version.submitted_at,
     kind: kind as "concept" | "matrix",
     locale,
     downloadUrl,
