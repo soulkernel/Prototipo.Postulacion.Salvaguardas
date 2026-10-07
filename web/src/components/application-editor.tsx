@@ -459,7 +459,7 @@ export function ApplicationEditor({
             {application.reference_code} · {es ? "Fase" : "Phase"}{" "}
             {application.stage}
           </p>
-          <h1>
+          <h1 className="application-form-title">
             {application.stage === 1
               ? es
                 ? "Formulario de Nota Conceptual"
@@ -469,7 +469,10 @@ export function ApplicationEditor({
                 : "Full Proposal Form"}
           </h1>
           {payload.concept.title.trim() && (
-            <p className="application-project-title">{payload.concept.title}</p>
+            <p className="application-project-title">
+              {es ? "Proyecto: " : "Project: "}
+              {payload.concept.title}
+            </p>
           )}
           <p>
             {es ? call.title_es : call.title_en} · {es ? "Reglas" : "Rules"}{" "}
