@@ -165,8 +165,9 @@ export type Call = {
   title_en: string;
   description_es: string;
   description_en: string;
-  opens_at: string;
-  closes_at: string;
+  opens_at: string | null;
+  closes_at: string | null;
+  revision: number;
   status: string;
   rules_version: string;
   rules: Rules;

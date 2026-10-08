@@ -927,3 +927,14 @@ a {
   font-size: 14px;
   line-height: 1.5;
 }
+.call-fields { border:0; padding:0; margin:0; min-width:0; display:grid; gap:1rem; }
+.call-actions { display:flex; flex-wrap:wrap; gap:.75rem; margin:1rem 0; }
+.call-actions button:disabled { opacity:.5; cursor:not-allowed; box-shadow:none; }
+.call-validation { padding:1rem; border-left:4px solid #a43a35; background:#fff6f5; }
+.call-dialog { width:min(960px,94vw); max-height:90dvh; padding:0; border:0; border-radius:16px; color:#15345f; box-shadow:0 16px 60px #0004; }
+.call-dialog::backdrop { background:#102b4ab3; }
+.call-dialog-content { padding:clamp(1rem,3vw,2rem); }
+.call-dialog .call-actions { position:sticky; top:0; background:white; padding:.75rem 0; z-index:1; }
+.call-preserve-lines { white-space:pre-wrap; overflow-wrap:anywhere; }
+.call-preview dd { margin:0 0 .8rem; }
+.call-preview dt { font-weight:700; }

@@ -84,3 +84,6 @@ El usuario autorizó crear proyectos específicos nuevos de Supabase y Vercel. N
 - Invitaciones guardadas nunca envían automáticamente. Administrador revisa destinatario/rol y confirma cada envío. Cancelación bloquea activación, no borra cuentas.
 - Correo real requiere SMTP autorizado; actualmente custom SMTP está deshabilitado. No probar envíos al personal sin autorización explícita. El estado sent acredita aceptación del proveedor, no entrega a bandeja.
 
+
+### Migración 013: convocatorias
+Instalada por SQL Editor el 2026-10-07 (consulta d088a0f5-a58d-481b-be46-0997ebd5e410), con resultado Success. No rows returned. Permite fechas sin completar en borradores, edición con revisión y publicación revisada. No repetir sobre el proyecto remoto.

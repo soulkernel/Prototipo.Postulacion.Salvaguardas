@@ -140,3 +140,12 @@ Resumen estructurado: source Formatos y Normativa de postulación/Formato-de-Not
 
 - QA alojada del módulo completada en Chrome con Schubert AAL2: seis invitaciones pendientes, edición Ulf conserva Sostenibilidad/delegación; revisión de envío muestra destinatario y checkbox obligatorio. Comprobar servicio devolvió Servicio conectado, sin correos enviados. Captura scratch/invitaciones-personal-glf.png. Vercel a841530 Success. Entrega real de correo y activación humana siguen pendientes por SMTP/prueba autorizada.
 
+## 2026-10-07 — Convocatorias: borrador, vista previa y publicación
+- Editor conservado tras guardar; permite retomar borradores desde el listado.
+- Guardar / Vista previa / Publicar juntos. La vista previa y publicación se deshabilitan si hay cambios sin guardar; publicar también exige campos y reglas válidos.
+- Se guardan borradores incompletos con un código identificador. Fechas nulas exclusivamente en borrador.
+- Vista previa ES/EN con fechas en Galápagos, categorías, montos, plazos, requisitos, anexos y privacidad. No inicia postulaciones.
+- Confirmación explícita con resumen y casilla obligatoria antes de publicar. Publicado queda sin edición de bases en este módulo.
+- Migración 013 aplicada remotamente en una transacción mediante SQL Editor (consulta d088a0f5-a58d-481b-be46-0997ebd5e410), éxito confirmado. No ejecutar de nuevo.
+- RPCs save_call_draft y publish_call_reviewed: permisos y MFA existentes, bloqueo de fila, control revision, registro privado de eventos. La ruta publish_call también valida contenido y fechas; publish_call_rules no se concede a usuarios.
+- No se envían correos ni se publican convocatorias oficiales mediante esta verificación.

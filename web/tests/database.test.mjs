@@ -449,6 +449,8 @@ before(async () => {
         code: "TEST",
         title_es: "Convocatoria prueba",
         title_en: "Test call",
+        description_es: "Convocatoria de prueba",
+        description_en: "Test description",
         opens_at: "2020-01-01T00:00:00Z",
         closes_at: "2099-12-31T00:00:00Z",
         rules,
@@ -1139,5 +1141,131 @@ test("area administration is delegated independently of technical roles", async 
     "assign_staff_role",
     { target_user: ids.other, assigned_role: "applicant" },
     "admin",
+  );
+});
+test("call drafts preserve incomplete content, reject stale edits and require complete reviewed publication", async () => {
+  const details = {
+    code: "DRAFT-REVIEW-TEST",
+    title_es: "",
+    title_en: "",
+    description_es: "",
+    description_en: "",
+    rules_version: "",
+    opens_at: null,
+    closes_at: null,
+    rules: { ...rules, applicant_types: [], privacy_es: "", privacy_en: "" },
+    phase2_schema: [],
+  };
+  await assert.rejects(
+    rpc("save_call_draft", { details }, "applicant"),
+    /GLF_FORBIDDEN/,
+  );
+  let draft = await rpc("save_call_draft", { details }, "grants");
+  assert.equal(draft.status, "draft");
+  assert.equal(draft.opens_at, null);
+  assert.equal(
+    (
+      await as("applicant", () =>
+        db.query("select id from public.calls where id=$1", [draft.id]),
+      )
+    ).rows.length,
+    0,
+  );
+  await assert.rejects(
+    rpc(
+      "publish_call_reviewed",
+      { call_id: draft.id, expected_revision: draft.revision },
+      "grants",
+    ),
+    /GLF_INVALID_CALL_STATE/,
+  );
+  const complete = {
+    ...details,
+    title_es: "Convocatoria prueba interna",
+    title_en: "Internal test call",
+    description_es: "Descripción de prueba",
+    description_en: "Test description",
+    rules_version: "1.0",
+    opens_at: "2020-01-01T00:00:00Z",
+    closes_at: "2099-01-01T00:00:00Z",
+    rules,
+  };
+  const oldRevision = draft.revision;
+  draft = await rpc(
+    "save_call_draft",
+    { details: complete, call_id: draft.id, expected_revision: oldRevision },
+    "grants",
+  );
+  await assert.rejects(
+    rpc(
+      "save_call_draft",
+      { details: complete, call_id: draft.id, expected_revision: oldRevision },
+      "grants",
+    ),
+    /GLF_REVISION_CONFLICT/,
+  );
+  await assert.rejects(
+    rpc(
+      "publish_call_reviewed",
+      { call_id: draft.id, expected_revision: oldRevision },
+      "grants",
+    ),
+    /GLF_REVISION_CONFLICT/,
+  );
+  await assert.rejects(
+    rpc(
+      "publish_call_reviewed",
+      { call_id: draft.id, expected_revision: draft.revision },
+      "coordinator",
+    ),
+    /GLF_FORBIDDEN/,
+  );
+  const published = await rpc(
+    "publish_call_reviewed",
+    { call_id: draft.id, expected_revision: draft.revision },
+    "grants",
+  );
+  assert.equal(published.status, "published");
+  await assert.rejects(
+    rpc(
+      "save_call_draft",
+      {
+        details: complete,
+        call_id: draft.id,
+        expected_revision: published.revision,
+      },
+      "grants",
+    ),
+    /GLF_INVALID_CALL_STATE/,
+  );
+  assert.equal(
+    (
+      await db.query(
+        "select event_type from private.call_events where call_id=$1",
+        [draft.id],
+      )
+    ).rows.length,
+    3,
+  );
+  const missing = await rpc(
+    "save_call_draft",
+    {
+      details: {
+        ...complete,
+        code: "DRAFT-MISSING-CONTENT",
+        description_en: "",
+      },
+    },
+    "grants",
+  );
+  await assert.rejects(
+    rpc("publish_call", { call_id: missing.id }, "grants"),
+    /GLF_CALL_CONTENT_REQUIRED/,
+  );
+  await assert.rejects(
+    as("grants", () =>
+      db.query("select public.publish_call_rules($1)", [missing.id]),
+    ),
+    /permission denied/,
   );
 });

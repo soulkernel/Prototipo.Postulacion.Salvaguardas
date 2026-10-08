@@ -19,6 +19,8 @@ export default async function ApplicantPage({
   const calls = (await getCalls()).filter(
     (c) =>
       c.status === "published" &&
+      c.opens_at !== null &&
+      c.closes_at !== null &&
       Date.parse(c.opens_at) <= requestTime &&
       Date.parse(c.closes_at) > requestTime,
   );
