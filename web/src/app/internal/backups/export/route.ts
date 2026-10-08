@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { getViewer } from "@/lib/data";
 import { strToU8 } from "fflate";
 import { createHash } from "node:crypto";
-import { z } from "zod";
+import { backupSelectionSchema } from "@/lib/backup-selection";
 export const runtime = "nodejs";
 export const maxDuration = 60;
-export async function GET(request: NextRequest) {
+export async function POST(request: NextRequest) {
+  if (request.headers.get("origin") !== request.nextUrl.origin)
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const viewer = await getViewer();
   if (!viewer || viewer.profile.role !== "administrator")
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -13,9 +15,21 @@ export async function GET(request: NextRequest) {
     await viewer.db.auth.mfa.getAuthenticatorAssuranceLevel();
   if (mfaError || assurance?.currentLevel !== "aal2")
     return NextResponse.json({ error: "MFA required" }, { status: 403 });
-  const call = request.nextUrl.searchParams.get("call");
-  if (call && !z.uuid().safeParse(call).success)
-    return NextResponse.json({ error: "Invalid call" }, { status: 400 });
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
+  const selection = backupSelectionSchema.safeParse(body);
+  if (!selection.success)
+    return NextResponse.json(
+      { error: "Invalid backup selection" },
+      { status: 400 },
+    );
+  const call = selection.data.scope === "call" ? selection.data.call : null;
+  const selected =
+    selection.data.scope === "selected" ? selection.data.applications : [];
   try {
     let query = viewer.db
       .from("applications")
@@ -24,8 +38,17 @@ export async function GET(request: NextRequest) {
       .order("id")
       .limit(201);
     if (call) query = query.eq("call_id", call);
+    if (selected.length) query = query.in("id", selected);
     const { data: applications, error } = await query;
     if (error) throw error;
+    if (selected.length && applications?.length !== selected.length)
+      return NextResponse.json(
+        {
+          error:
+            "Uno o más expedientes ya no están disponibles. Actualice la selección.",
+        },
+        { status: 409 },
+      );
     if ((applications?.length || 0) > 200)
       return NextResponse.json(
         {
@@ -140,7 +163,10 @@ export async function GET(request: NextRequest) {
     const manifest = {
       format: "glf-dossier-backup/1",
       created_at: new Date().toISOString(),
-      scope: call || "received-applications",
+      scope: selected.length
+        ? "selected-applications"
+        : call || "received-applications",
+      selected_application_ids: selected,
       actor_id: viewer.user.id,
       application_count: ids.length,
       consistency:

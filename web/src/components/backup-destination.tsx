@@ -58,13 +58,27 @@ export function BackupDestination({
   userId,
   locale,
   calls,
+  applications,
 }: {
+  applications: {
+    id: string;
+    call_id: string;
+    reference_code: string;
+    title: string;
+  }[];
   userId: string;
   locale: Locale;
   calls: { id: string; title: string }[];
 }) {
   const es = locale === "es";
   const [folder, setFolder] = useState<Destination>();
+  const [scope, setScope] = useState<"all" | "call" | "selected">("all");
+  const [selected, setSelected] = useState<string[]>([]);
+  const [search, setSearch] = useState("");
+  const [destination, setDestination] = useState<"folder" | "download">(
+    "download",
+  );
+  const [folderMessage, setFolderMessage] = useState("");
   const [call, setCall] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -79,6 +93,7 @@ export function BackupDestination({
         showDirectoryPicker?: (options: {
           mode: string;
           id: string;
+          startIn: string;
         }) => Promise<Destination>;
       }
     ).showDirectoryPicker;
@@ -94,24 +109,27 @@ export function BackupDestination({
       const handle = await picker.call(window, {
         mode: "readwrite",
         id: "glf-backups",
+        startIn: "documents",
       });
       await destinationStore(userId, handle);
       setFolder(handle);
-      setMessage(
+      setDestination("folder");
+      setFolderMessage(
         es
           ? "Destino guardado en este navegador. Google Drive sincronizará los archivos si esta carpeta pertenece a su unidad sincronizada."
           : "Destination saved in this browser. Google Drive will sync files if this is a synced folder.",
       );
     } catch (error) {
       if ((error as Error).name !== "AbortError")
-        setMessage(
+        setFolderMessage(
           es
-            ? "No se pudo guardar el destino. Revise el permiso de la carpeta."
+            ? "No se pudo guardar el destino. Seleccione una subcarpeta dedicada y revise su permiso de escritura."
             : "Unable to save destination. Check folder permission.",
         );
     }
   }
   async function backup(toFolder: boolean) {
+    if (!ready) return;
     setBusy(true);
     setMessage(es ? "Preparando el respaldo…" : "Preparing backup…");
     try {
@@ -125,11 +143,18 @@ export function BackupDestination({
             ? "Autorice el acceso a la carpeta seleccionada."
             : "Allow access to the selected folder.",
         );
-      const response = await fetch(
-        "/internal/backups/export" +
-          (call ? "?call=" + encodeURIComponent(call) : ""),
-        { cache: "no-store" },
-      );
+      const selection =
+        scope === "call"
+          ? { scope, call }
+          : scope === "selected"
+            ? { scope, applications: selected }
+            : { scope };
+      const response = await fetch("/internal/backups/export", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(selection),
+        cache: "no-store",
+      });
       if (!response.ok) {
         const detail = await response.json();
         throw new Error(detail.error || "Export failed");
@@ -241,72 +266,298 @@ export function BackupDestination({
       setBusy(false);
     }
   }
+  const chosen =
+    scope === "all"
+      ? applications
+      : scope === "call"
+        ? applications.filter((a) => a.call_id === call)
+        : applications.filter((a) => selected.includes(a.id));
+  const visible = applications.filter(
+    (a) =>
+      (!call || a.call_id === call) &&
+      (a.title + " " + a.reference_code)
+        .toLowerCase()
+        .includes(search.toLowerCase()),
+  );
+  const ready =
+    !busy &&
+    chosen.length > 0 &&
+    chosen.length <= 200 &&
+    (scope !== "call" || !!call) &&
+    (destination !== "folder" || !!folder);
+  const callTitle = (id: string) => calls.find((c) => c.id === id)?.title || id;
   return (
     <>
       <h1>{es ? "Respaldos" : "Backups"}</h1>
       <section className="live-card">
-        <h2>{es ? "Destino del respaldo" : "Backup destination"}</h2>
+        <h2>{es ? "1. Qué respaldar" : "1. What to back up"}</h2>
+        <fieldset disabled={busy}>
+          <legend>{es ? "Alcance del respaldo" : "Backup scope"}</legend>
+          {(
+            [
+              [
+                "all",
+                es
+                  ? "Todos los expedientes recibidos"
+                  : "All received applications",
+              ],
+              ["call", es ? "Una convocatoria" : "One call"],
+              [
+                "selected",
+                es ? "Expedientes específicos" : "Specific applications",
+              ],
+            ] as const
+          ).map(([value, label]) => (
+            <label
+              key={value}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: ".5rem",
+                marginRight: "1.5rem",
+                marginBottom: ".75rem",
+              }}
+            >
+              <input
+                style={{ width: "auto" }}
+                type="radio"
+                name="backup-scope"
+                checked={scope === value}
+                onChange={() => {
+                  setScope(value);
+                  setMessage("");
+                }}
+              />
+              {label}
+            </label>
+          ))}
+        </fieldset>
+        {scope !== "all" && (
+          <label>
+            {es ? "Convocatoria" : "Call"}
+            <select
+              disabled={busy}
+              value={call}
+              onChange={(e) => {
+                setCall(e.target.value);
+                setMessage("");
+              }}
+            >
+              <option value="">
+                {scope === "call"
+                  ? es
+                    ? "Seleccione una convocatoria"
+                    : "Select a call"
+                  : es
+                    ? "Todas las convocatorias"
+                    : "All calls"}
+              </option>
+              {calls.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.title} (
+                  {applications.filter((a) => a.call_id === c.id).length})
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        {scope === "selected" && (
+          <>
+            <label>
+              {es
+                ? "Buscar por referencia o proyecto"
+                : "Search reference or project"}
+              <input
+                value={search}
+                disabled={busy}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </label>
+            <p>
+              {es ? "Seleccionados: " : "Selected: "}
+              {selected.length}{" "}
+              <button
+                className="button secondary"
+                disabled={busy || !selected.length}
+                onClick={() => setSelected([])}
+              >
+                {es ? "Limpiar selección" : "Clear selection"}
+              </button>
+            </p>
+            <div
+              className="table-scroll"
+              style={{ maxHeight: "360px", overflow: "auto" }}
+            >
+              <table>
+                <thead>
+                  <tr>
+                    <th>{es ? "Elegir" : "Select"}</th>
+                    <th>{es ? "Referencia" : "Reference"}</th>
+                    <th>{es ? "Proyecto" : "Project"}</th>
+                    <th>{es ? "Convocatoria" : "Call"}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {visible.map((a) => (
+                    <tr key={a.id}>
+                      <td>
+                        <input
+                          type="checkbox"
+                          aria-label={
+                            (es ? "Seleccionar " : "Select ") + a.reference_code
+                          }
+                          disabled={
+                            busy ||
+                            (!selected.includes(a.id) && selected.length >= 200)
+                          }
+                          checked={selected.includes(a.id)}
+                          onChange={(e) =>
+                            setSelected((current) =>
+                              e.target.checked
+                                ? [...current, a.id]
+                                : current.filter((id) => id !== a.id),
+                            )
+                          }
+                        />
+                      </td>
+                      <td>{a.reference_code}</td>
+                      <td>{a.title}</td>
+                      <td>{callTitle(a.call_id)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {!visible.length && (
+              <p>
+                {es
+                  ? "No hay expedientes recibidos que coincidan con estos filtros."
+                  : "No received applications match these filters."}
+              </p>
+            )}
+          </>
+        )}
         <p>
-          {es
-            ? "Seleccione una carpeta de su computador, de Google Drive para escritorio o de un dispositivo externo conectado. No se solicita ni se guarda la contraseña de Google. El destino se recuerda únicamente en este navegador."
-            : "Select a local folder, a Google Drive for desktop folder or a connected external device folder. Your Google password is never requested or stored. The destination is remembered only in this browser."}
+          {es ? "Expedientes incluidos: " : "Included applications: "}
+          <strong>{chosen.length}</strong>
         </p>
-        <p>
-          <strong>{es ? "Carpeta: " : "Folder: "}</strong>
-          {folder?.name || (es ? "Sin seleccionar" : "Not selected")}
-        </p>
-        <button className="button secondary" disabled={busy} onClick={choose}>
-          {es ? "Seleccionar carpeta" : "Select folder"}
-        </button>
+        {chosen.length === 0 && (
+          <p>
+            {es
+              ? "Seleccione expedientes recibidos para habilitar el respaldo. Los borradores aún no enviados no se incluyen."
+              : "Select received applications to enable backup. Unsubmitted drafts are excluded."}
+          </p>
+        )}
+        {chosen.length > 200 && (
+          <p role="alert">
+            {es
+              ? "Elija una convocatoria o hasta 200 expedientes por copia."
+              : "Choose a call or up to 200 applications per backup."}
+          </p>
+        )}
       </section>
       <section className="live-card">
-        <h2>{es ? "Crear copia manual" : "Create manual backup"}</h2>
-        <label>
-          {es ? "Alcance" : "Scope"}
-          <select
-            value={call}
-            onChange={(e) => setCall(e.target.value)}
-            disabled={busy}
+        <h2>{es ? "2. Dónde guardar" : "2. Where to save"}</h2>
+        <fieldset disabled={busy}>
+          <legend>{es ? "Destino" : "Destination"}</legend>
+          <label
+            style={{
+              display: "inline-flex",
+              gap: ".5rem",
+              marginRight: "1.5rem",
+            }}
           >
-            <option value="">
+            <input
+              style={{ width: "auto" }}
+              type="radio"
+              name="backup-destination"
+              checked={destination === "download"}
+              onChange={() => setDestination("download")}
+            />
+            {es ? "Descargar ZIP" : "Download ZIP"}
+          </label>
+          <label style={{ display: "inline-flex", gap: ".5rem" }}>
+            <input
+              style={{ width: "auto" }}
+              type="radio"
+              name="backup-destination"
+              checked={destination === "folder"}
+              onChange={() => setDestination("folder")}
+            />
+            {es ? "Guardar en una carpeta" : "Save to folder"}
+          </label>
+        </fieldset>
+        {destination === "folder" && (
+          <>
+            <p>
               {es
-                ? "Todos los expedientes recibidos"
-                : "All received applications"}
-            </option>
-            {calls.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.title}
-              </option>
-            ))}
-          </select>
-        </label>
+                ? "Seleccione una subcarpeta dedicada en su computador, Google Drive sincronizado o dispositivo externo; por ejemplo, Respaldos GLF. Chrome puede bloquear la raíz de una unidad y las carpetas protegidas del sistema. Si aparece ese aviso, elija otra carpeta."
+                : "Select a dedicated subfolder on your computer, synced Google Drive or external device, for example GLF Backups. Chrome may block a drive root or protected system folders. If that warning appears, choose another folder."}
+            </p>
+            <p>
+              <strong>{es ? "Carpeta: " : "Folder: "}</strong>
+              {folder?.name || (es ? "Sin seleccionar" : "Not selected")}
+            </p>
+            <button
+              className="button secondary"
+              disabled={busy}
+              onClick={choose}
+            >
+              {folder
+                ? es
+                  ? "Cambiar carpeta"
+                  : "Change folder"
+                : es
+                  ? "Seleccionar carpeta"
+                  : "Select folder"}
+            </button>
+            <p role="status">{folderMessage}</p>
+            <p>
+              {es
+                ? "No se solicita la contraseña de Google. El destino se recuerda por usuario en este navegador."
+                : "Google passwords are not requested. The destination is remembered per user in this browser."}
+            </p>
+          </>
+        )}
+      </section>
+      <section className="live-card">
+        <h2>{es ? "3. Revisar y respaldar" : "3. Review and back up"}</h2>
+        <p>
+          <strong>
+            {es ? "Se respaldarán " : "Backup will include "}
+            {chosen.length}
+            {es ? " expedientes" : " applications"}
+          </strong>
+          {scope === "call" && call ? " · " + callTitle(call) : ""} ·{" "}
+          {destination === "folder"
+            ? folder?.name ||
+              (es ? "Seleccione una carpeta" : "Select a folder")
+            : es
+              ? "Descarga ZIP"
+              : "ZIP download"}
+        </p>
         <p>
           {es
-            ? "Incluye los datos del expediente, versiones remitidas, revisiones, decisiones y archivos originales disponibles. Se verifican las huellas SHA-256 de los archivos. El ZIP no lleva contraseña ni cifrado adicional."
-            : "Includes application data, submitted versions, reviews, decisions and available original files. File SHA-256 fingerprints are verified. The ZIP has no password or additional encryption."}
+            ? "Incluye datos, versiones remitidas, revisiones, decisiones y archivos originales. Se verifica la integridad de los archivos antes de guardar. El ZIP no tiene contraseña ni cifrado adicional."
+            : "Includes data, submitted versions, reviews, decisions and original files. File integrity is checked before saving. The ZIP has no password or additional encryption."}
         </p>
-        <div className="live-nav">
-          <button
-            className="button"
-            disabled={busy || !folder}
-            onClick={() => backup(true)}
-          >
-            {busy
+        <button
+          className="button"
+          disabled={!ready}
+          onClick={() => backup(destination === "folder")}
+        >
+          {busy
+            ? es
+              ? "Preparando respaldo…"
+              : "Preparing backup…"
+            : destination === "folder"
               ? es
-                ? "Preparando…"
-                : "Preparing…"
-              : es
                 ? "Respaldar en carpeta"
-                : "Back up to folder"}
-          </button>
-          <button
-            className="button secondary"
-            disabled={busy}
-            onClick={() => backup(false)}
-          >
-            {es ? "Descargar ZIP" : "Download ZIP"}
-          </button>
-        </div>
+                : "Back up to folder"
+              : es
+                ? "Crear y descargar respaldo"
+                : "Create and download backup"}
+        </button>
         <p role="status" aria-live="polite">
           {message}
         </p>
