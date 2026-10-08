@@ -158,3 +158,10 @@ Resumen estructurado: source Formatos y Normativa de postulación/Formato-de-Not
 - Guardado normaliza a mayúsculas y comprueba duplicados. Si otro usuario tomó el código, conserva los campos y propone uno disponible para revisar y reintentar. La restricción UNIQUE de Supabase resuelve colisiones simultáneas; no se reserva un número al abrir el formulario.
 - Sin migración ni consulta SQL nueva. Serie de código es nomenclatura, no cambia por sí sola elegibilidad o validez de una convocatoria.
 - 37 pruebas pasaron, incluidos independencia de series, cambio de año Galápagos, más de 999 y unicidad de la base de datos. Lint y TypeScript correctos.
+
+## 2026-10-07 — Destino local de respaldos
+- Decisión expresa: elegir carpeta local, Google Drive para escritorio o dispositivo externo; no pedir usuario/contraseña Google. Sin cifrado adicional del ZIP.
+- /internal/backups requiere administrator y MFA (página y exportación). No se amplían roles. Selector File System Access en Chrome/Edge con permiso explícito; handle IndexedDB separado por usuario y navegador. Destino recordado no significa copia ni sincronización completada.
+- Copia manual todos los expedientes recibidos o por convocatoria: JSON relacional, versiones, documentos originales, eventos/revisiones/decisiones/acuerdos. Anexos se descargan directamente de Storage con URLs firmadas 15 minutos; nunca incluir las URLs en ZIP. SHA-256 y tamaño se verifican antes de escribir. ZIP asíncrono en navegador, manifiesto de hashes, fallback descarga estándar.
+- Límites actuales: 200 expedientes / 128 MB sin comprimir; datos del plan máximo 4 MB. Lecturas secuenciales, no snapshot transaccional. No incluir borradores sin remitir, Auth/secretos, configuración ni corpus RAG. No equiparar esta copia al respaldo técnico completo.
+- Automatización diaria/semanal y retención 30 días/8 semanas NO activadas: requieren runner independiente o servicio cloud configurado. Copias manuales no se borran. Delegación de permiso backup, auditoría de jobs, exportación Excel y dossier ZIP individual continúan pendientes del alcance anterior. No afirmar que todo el módulo de expedientes está terminado.
