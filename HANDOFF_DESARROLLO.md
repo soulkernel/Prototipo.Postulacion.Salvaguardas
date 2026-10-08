@@ -149,3 +149,5 @@ Resumen estructurado: source Formatos y Normativa de postulación/Formato-de-Not
 - Migración 013 aplicada remotamente en una transacción mediante SQL Editor (consulta d088a0f5-a58d-481b-be46-0997ebd5e410), éxito confirmado. No ejecutar de nuevo.
 - RPCs save_call_draft y publish_call_reviewed: permisos y MFA existentes, bloqueo de fila, control revision, registro privado de eventos. La ruta publish_call también valida contenido y fechas; publish_call_rules no se concede a usuarios.
 - No se envían correos ni se publican convocatorias oficiales mediante esta verificación.
+- QA publicada de d1633cf: 36 pruebas, lint, TypeScript y build correctos. Verificación con Chrome: guardado incompleto, retomar borrador, datos conservados, ES/EN, confirmación con casilla sin activar y bloqueo tras modificaciones. No se confirmó ninguna publicación.
+- Borrador técnico QA-VISTA-PREVIA-20261007 (id 0dfd0147-9bde-49a3-9774-f675a41cbbaf), sin validez oficial, permanece sin publicar para revisión. Imagen de prueba local scratch/convocatoria-vista-previa.png; no incluir en Git.

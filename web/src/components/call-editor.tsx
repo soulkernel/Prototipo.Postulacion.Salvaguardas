@@ -38,6 +38,14 @@ export function CallEditor({
         : values[name] === value;
   const issues = call ? callIssues(call, locale, now) : [];
   const canPublish = call?.status === "draft" && !dirty && !issues.length;
+  const missingField = (name: string) =>
+    !dirty && call && !field(name).trim() ? (
+      <span className="auth-error">
+        {es
+          ? "Complete este campo para publicar."
+          : "Complete this field before publishing."}
+      </span>
+    ) : null;
   return (
     <section className="live-card call-editor">
       <h2>
@@ -76,7 +84,13 @@ export function CallEditor({
             ].map(([name, label]) => (
               <label key={name}>
                 {label}
-                <input name={name} defaultValue={field(name)} maxLength={200} />
+                <input
+                  name={name}
+                  defaultValue={field(name)}
+                  maxLength={200}
+                  aria-invalid={!dirty && !!call && !field(name).trim()}
+                />
+                {missingField(name)}
               </label>
             ))}
             <label>
@@ -86,6 +100,7 @@ export function CallEditor({
                 name="opens_at"
                 defaultValue={field("opens_at")}
               />
+              {missingField("opens_at")}
             </label>
             <label>
               {es ? "Cierre (hora Galápagos)" : "Closes (Galápagos time)"}
@@ -94,6 +109,7 @@ export function CallEditor({
                 name="closes_at"
                 defaultValue={field("closes_at")}
               />
+              {missingField("closes_at")}
             </label>
           </div>
           <label>
@@ -102,6 +118,7 @@ export function CallEditor({
               name="description_es"
               defaultValue={field("description_es")}
             />
+            {missingField("description_es")}
           </label>
           <label>
             Description in English
@@ -109,6 +126,7 @@ export function CallEditor({
               name="description_en"
               defaultValue={field("description_en")}
             />
+            {missingField("description_en")}
           </label>
           <h3>
             {es ? "Tipos de solicitante admitidos" : "Eligible applicant types"}
@@ -237,10 +255,12 @@ export function CallEditor({
           <label>
             Aviso de privacidad en español
             <textarea name="privacy_es" defaultValue={field("privacy_es")} />
+            {missingField("privacy_es")}
           </label>
           <label>
             Privacy notice in English
             <textarea name="privacy_en" defaultValue={field("privacy_en")} />
+            {missingField("privacy_en")}
           </label>
           <details>
             <summary>
