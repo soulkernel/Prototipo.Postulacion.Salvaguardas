@@ -6,14 +6,18 @@ import { callIssues, callFormValues } from "@/lib/calls";
 import { saveOrPublishCall } from "@/app/internal/calls/actions";
 import { ActionLabel } from "@/components/submit-button";
 import { CallPreview } from "@/components/call-preview";
+import { CallCodeField } from "@/components/call-code-field";
+import type { CallCodeSuggestions } from "@/lib/call-codes";
 export function CallEditor({
   initialCall,
   locale,
   now,
+  codeSuggestions,
 }: {
   initialCall: Call | null;
   locale: Locale;
   now: number;
+  codeSuggestions: CallCodeSuggestions;
 }) {
   const es = locale === "es";
   const [state, action, pending] = useActionState(saveOrPublishCall, {
@@ -59,8 +63,8 @@ export function CallEditor({
       </h2>
       <p>
         {es
-          ? "Puede guardar un borrador incompleto. Para identificarlo, indique un código. La publicación exige completar todos los parámetros obligatorios."
-          : "You can save an incomplete draft. Enter a code to identify it. Publishing requires all mandatory parameters."}
+          ? "Puede guardar un borrador incompleto. El sistema sugiere un código que puede modificar antes de publicar. La publicación exige completar todos los parámetros obligatorios."
+          : "You can save an incomplete draft. The system suggests a code you can edit before publishing. Publishing requires all mandatory parameters."}
       </p>
       <form
         key={state.sequence}
@@ -75,9 +79,21 @@ export function CallEditor({
           disabled={pending || call?.status === "published"}
           className="call-fields"
         >
+          <CallCodeField
+            defaultCode={field("code")}
+            suggestions={codeSuggestions}
+            locale={locale}
+            onEdit={() => setDirtySequence(state.sequence)}
+            defaultSeries={
+              values.code_series === "test"
+                ? "test"
+                : values.code_series === "official"
+                  ? "official"
+                  : undefined
+            }
+          />
           <div className="live-grid">
             {[
-              ["code", "Código / Code"],
               ["rules_version", "Versión de bases / Rules version"],
               ["title_es", "Título en español"],
               ["title_en", "Title in English"],

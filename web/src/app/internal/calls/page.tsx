@@ -5,6 +5,7 @@ import { getLocale } from "@/lib/locale";
 import { Shell } from "@/components/shell";
 import { CallEditor } from "@/components/call-editor";
 import { CallPreview } from "@/components/call-preview";
+import { suggestCallCodes } from "@/lib/call-codes";
 export default async function CallsPage({
   searchParams,
 }: {
@@ -105,6 +106,10 @@ export default async function CallsPage({
             initialCall={selected ?? null}
             locale={locale}
             now={now}
+            codeSuggestions={suggestCallCodes(
+              calls.map((c) => c.code),
+              now,
+            )}
           />
         </>
       )}

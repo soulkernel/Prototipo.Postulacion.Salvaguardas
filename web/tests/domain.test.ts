@@ -285,3 +285,37 @@ test("files require matching signatures and safe names", () => {
   assert.equal(validateFile("example.exe", pdf), null);
 });
 import { invitationInput, invitationRoles } from "../src/lib/staff-invitations";
+import { suggestCallCodes } from "../src/lib/call-codes";
+test("call codes keep official and test sequences independent and use the Galapagos year", () => {
+  const now = Date.parse("2026-10-07T12:00:00Z");
+  assert.deepEqual(suggestCallCodes([], now), {
+    official: "GLF-2026-001",
+    test: "GLF-PRUEBA-2026-001",
+  });
+  assert.deepEqual(
+    suggestCallCodes(
+      [
+        "GLF-2026-001",
+        "glf-2026-004",
+        "GLF-PRUEBA-2026-017",
+        "GLF-2025-999",
+        "QA-VISTA-PREVIA-20261007",
+        "GLF-2026-NOTA",
+      ],
+      now,
+    ),
+    { official: "GLF-2026-005", test: "GLF-PRUEBA-2026-018" },
+  );
+  assert.equal(
+    suggestCallCodes(["GLF-2026-999"], now).official,
+    "GLF-2026-1000",
+  );
+  assert.equal(
+    suggestCallCodes([], Date.parse("2027-01-01T05:59:59Z")).official,
+    "GLF-2026-001",
+  );
+  assert.equal(
+    suggestCallCodes([], Date.parse("2027-01-01T06:00:00Z")).official,
+    "GLF-2027-001",
+  );
+});

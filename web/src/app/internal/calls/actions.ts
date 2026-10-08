@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { callIssues, type CallEditorState } from "@/lib/calls";
 import type { Call } from "@/lib/domain";
+import { suggestCallCodes } from "@/lib/call-codes";
 export async function saveOrPublishCall(
   previous: CallEditorState,
   form: FormData,
@@ -74,12 +75,39 @@ export async function saveOrPublishCall(
       sequence,
     };
   }
-  if (!str("code"))
+  const { data: codeRows, error: codeReadError } = await db
+    .from("calls")
+    .select("id,code");
+  if (codeReadError)
     return failed(
       es
-        ? "Indique un código para identificar el borrador. Los demás campos pueden completarse después."
-        : "Enter a code to identify the draft. Other fields can be completed later.",
+        ? "No se pudo comprobar el código. Intente guardar nuevamente."
+        : "Could not verify the code. Try saving again.",
     );
+  const codeList = (codeRows ?? []) as { id: string; code: string }[];
+  const suggestions = suggestCallCodes(
+    codeList.map((c) => c.code),
+    Date.now(),
+  );
+  const series = str("code_series") === "test" ? "test" : "official";
+  const code = (str("code") || suggestions[series]).toUpperCase();
+  values.code = code;
+  if (code.length > 200 || /[\u0000-\u001f\u007f]/.test(code))
+    return failed(
+      es
+        ? "El código debe tener hasta 200 caracteres y no incluir caracteres de control."
+        : "The code must contain at most 200 characters and no control characters.",
+    );
+  const duplicate = (suggested: string) => {
+    values.code = suggested;
+    return failed(
+      es
+        ? `Ese código ya está utilizado. Se ha propuesto ${suggested}; revise el código y vuelva a guardar. Sus datos se conservaron.`
+        : `That code is already in use. ${suggested} has been suggested; review the code and save again. Your entries were preserved.`,
+    );
+  };
+  if (codeList.some((c) => c.id !== id && c.code.trim().toUpperCase() === code))
+    return duplicate(suggestions[series]);
   const lines = (k: string) =>
     str(k)
       .split("\n")
@@ -88,7 +116,7 @@ export async function saveOrPublishCall(
   const phaseEs = lines("phase2_es"),
     phaseEn = lines("phase2_en");
   const details = {
-    code: str("code"),
+    code,
     title_es: str("title_es"),
     title_en: str("title_en"),
     description_es: str("description_es"),
@@ -137,6 +165,18 @@ export async function saveOrPublishCall(
     call_id: id || null,
     expected_revision: id ? revision : null,
   });
+  if (error?.code === "23505") {
+    const { data: freshCodes, error: freshError } = await db
+      .from("calls")
+      .select("code");
+    if (!freshError)
+      return duplicate(
+        suggestCallCodes(
+          (freshCodes ?? []).map((c) => c.code as string),
+          Date.now(),
+        )[series],
+      );
+  }
   if (error)
     return failed(
       error.code === "23505"

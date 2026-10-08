@@ -938,3 +938,6 @@ a {
 .call-preserve-lines { white-space:pre-wrap; overflow-wrap:anywhere; }
 .call-preview dd { margin:0 0 .8rem; }
 .call-preview dt { font-weight:700; }
+.call-code-field { display:grid; gap:.75rem; padding:1rem; background:#f5f8fb; border:1px solid #dce4ee; border-radius:12px; }
+.call-code-field p { margin:0; font-size:.95rem; }
+.call-code-field .button { justify-self:start; }

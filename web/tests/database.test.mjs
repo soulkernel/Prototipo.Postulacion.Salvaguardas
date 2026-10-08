@@ -1190,6 +1190,10 @@ test("call drafts preserve incomplete content, reject stale edits and require co
     closes_at: "2099-01-01T00:00:00Z",
     rules,
   };
+  await assert.rejects(
+    rpc("save_call_draft", { details: complete }, "grants"),
+    /duplicate key value violates unique constraint/,
+  );
   const oldRevision = draft.revision;
   draft = await rpc(
     "save_call_draft",

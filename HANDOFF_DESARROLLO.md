@@ -151,3 +151,10 @@ Resumen estructurado: source Formatos y Normativa de postulación/Formato-de-Not
 - No se envían correos ni se publican convocatorias oficiales mediante esta verificación.
 - QA publicada de d1633cf: 36 pruebas, lint, TypeScript y build correctos. Verificación con Chrome: guardado incompleto, retomar borrador, datos conservados, ES/EN, confirmación con casilla sin activar y bloqueo tras modificaciones. No se confirmó ninguna publicación.
 - Borrador técnico QA-VISTA-PREVIA-20261007 (id 0dfd0147-9bde-49a3-9774-f675a41cbbaf), sin validez oficial, permanece sin publicar para revisión. Imagen de prueba local scratch/convocatoria-vista-previa.png; no incluir en Git.
+
+## 2026-10-07 — Código sugerido de convocatoria
+- Nueva convocatoria propone GLF-AAAA-NNN según año de Galápagos y el mayor consecutivo ya existente. Serie de pruebas independiente GLF-PRUEBA-AAAA-NNN, seleccionable en el formulario.
+- Código editable hasta publicar; botón para recuperar la sugerencia. Cambiar serie/código/sugerencia requiere guardar nuevamente antes de vista previa/publicación. Códigos previos se conservan al editar.
+- Guardado normaliza a mayúsculas y comprueba duplicados. Si otro usuario tomó el código, conserva los campos y propone uno disponible para revisar y reintentar. La restricción UNIQUE de Supabase resuelve colisiones simultáneas; no se reserva un número al abrir el formulario.
+- Sin migración ni consulta SQL nueva. Serie de código es nomenclatura, no cambia por sí sola elegibilidad o validez de una convocatoria.
+- 37 pruebas pasaron, incluidos independencia de series, cambio de año Galápagos, más de 999 y unicidad de la base de datos. Lint y TypeScript correctos.
