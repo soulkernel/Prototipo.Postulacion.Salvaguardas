@@ -110,7 +110,9 @@ export function CallEditor({
               </label>
             ))}
             <label>
-              {es ? "Apertura (hora Galápagos)" : "Opens (Galápagos time)"}
+              {es
+                ? "Apertura (fecha y hora Galápagos)"
+                : "Opens (Galápagos date and time)"}
               <input
                 type="datetime-local"
                 name="opens_at"
@@ -119,7 +121,9 @@ export function CallEditor({
               {missingField("opens_at")}
             </label>
             <label>
-              {es ? "Cierre (hora Galápagos)" : "Closes (Galápagos time)"}
+              {es
+                ? "Cierre (fecha y hora Galápagos)"
+                : "Closes (Galápagos date and time)"}
               <input
                 type="datetime-local"
                 name="closes_at"
