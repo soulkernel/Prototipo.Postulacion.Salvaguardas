@@ -13,6 +13,24 @@ const ids = {
   committee: "00000000-0000-4000-8000-000000000006",
   admin: "00000000-0000-4000-8000-000000000007",
 };
+test("browser roles cannot truncate or directly modify prepared documents", async () => {
+  for (const role of ["anon", "authenticated"]) {
+    for (const privilege of [
+      "TRUNCATE",
+      "INSERT",
+      "UPDATE",
+      "DELETE",
+      "TRIGGER",
+      "REFERENCES",
+    ]) {
+      const result = await db.query(
+        "select has_table_privilege($1, 'public.prepared_documents', $2) as allowed",
+        [role, privilege],
+      );
+      assert.equal(result.rows[0].allowed, false, `${role}: ${privilege}`);
+    }
+  }
+});
 test("staff invitation drafts do not create accounts and respect delegated scope", async () => {
   const proposal = {
     contact_email: "test.staff@example.org",

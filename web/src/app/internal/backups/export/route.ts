@@ -99,19 +99,39 @@ export async function POST(request: NextRequest) {
     if (callError) throw callError;
     records.calls = calls || [];
     const risks = records.risks as { id: string }[];
-    const safeguards: unknown[] = [];
+    const safeguards: { catalog_id: string | null }[] = [];
     for (let offset = 0; offset < risks.length; offset += 100) {
-      const { data, error } = await viewer.db
-        .from("risk_safeguards")
-        .select("*")
-        .in(
-          "risk_id",
-          risks.slice(offset, offset + 100).map((r) => r.id),
-        );
-      if (error) throw error;
-      safeguards.push(...(data || []));
+      for (let page = 0; ; page += 250) {
+        const { data, error } = await viewer.db
+          .from("risk_safeguards")
+          .select("*")
+          .in(
+            "risk_id",
+            risks.slice(offset, offset + 100).map((r) => r.id),
+          )
+          .order("id")
+          .range(page, page + 249);
+        if (error) throw error;
+        safeguards.push(...(data || []));
+        if (!data || data.length < 250) break;
+      }
     }
     records.risk_safeguards = safeguards;
+    const catalogIds = [
+      ...new Set(
+        safeguards.flatMap((s) => (s.catalog_id ? [s.catalog_id] : [])),
+      ),
+    ];
+    const catalog: unknown[] = [];
+    for (let offset = 0; offset < catalogIds.length; offset += 100) {
+      const { data, error } = await viewer.db
+        .from("safeguard_catalog")
+        .select("*")
+        .in("id", catalogIds.slice(offset, offset + 100));
+      if (error) throw error;
+      catalog.push(...(data || []));
+    }
+    records.safeguard_catalog = catalog;
     for (const [name, rows] of Object.entries(records)) {
       const bytes = strToU8(JSON.stringify(rows, null, 2));
       total += bytes.length;
@@ -172,7 +192,7 @@ export async function POST(request: NextRequest) {
       consistency:
         "Tables read sequentially; not a transactional database snapshot",
       excludes: [
-        "Unsubmitted drafts",
+        "Applications that have never been submitted",
         "Auth accounts and secrets",
         "Deployment configuration",
         "RAG corpus",

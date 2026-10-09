@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireViewer } from "@/lib/data";
+import { getViewer } from "@/lib/data";
 import { embedTexts } from "@/lib/rag";
 import { z } from "zod";
 
@@ -26,7 +26,14 @@ const schema = z
 export async function POST(request: NextRequest) {
   if (request.headers.get("origin") !== request.nextUrl.origin)
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  const { db } = await requireViewer(["administrator"]);
+  const viewer = await getViewer();
+  if (!viewer || viewer.profile.role !== "administrator")
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const { db } = viewer;
+  const { data: assurance, error: assuranceError } =
+    await db.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (assuranceError || assurance?.currentLevel !== "aal2")
+    return NextResponse.json({ error: "MFA required" }, { status: 403 });
   if (Number(request.headers.get("content-length")) > 40000)
     return NextResponse.json({ error: "Too large" }, { status: 413 });
   let items;

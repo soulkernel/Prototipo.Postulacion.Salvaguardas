@@ -14,12 +14,52 @@ export default async function InternalPage() {
   ]);
   const locale = await getLocale();
   const es = locale === "es";
-  const { data: apps, error } = await db
-    .from("applications")
-    .select("id,reference_code,payload,status,stage,updated_at")
-    .not("submitted_at", "is", null)
-    .order("updated_at", { ascending: false });
-  if (error) throw new Error("Cannot read applications");
+  const apps: {
+    id: string;
+    reference_code: string;
+    status: string;
+    title: string;
+  }[] = [];
+  for (let offset = 0; ; offset += 250) {
+    const { data, error } = await db
+      .from("applications")
+      .select("id,reference_code,status")
+      .not("submitted_at", "is", null)
+      .order("updated_at", { ascending: false })
+      .order("id")
+      .range(offset, offset + 249);
+    if (error) throw new Error("Cannot read applications");
+    if (!data?.length) break;
+    const titles = new Map<string, string>();
+    for (let versionOffset = 0; ; versionOffset += 250) {
+      const { data: versions, error: versionError } = await db
+        .from("application_versions")
+        .select("application_id,revision,payload")
+        .in(
+          "application_id",
+          data.map((a) => a.id),
+        )
+        .order("revision", { ascending: false })
+        .order("id")
+        .range(versionOffset, versionOffset + 249);
+      if (versionError) throw new Error("Cannot read submitted versions");
+      for (const version of versions || []) {
+        if (!titles.has(version.application_id))
+          titles.set(
+            version.application_id,
+            String(version.payload?.concept?.title || ""),
+          );
+      }
+      if (!versions || versions.length < 250) break;
+    }
+    apps.push(
+      ...data.map((a) => ({
+        ...a,
+        title: titles.get(a.id) || a.reference_code,
+      })),
+    );
+    if (data.length < 250) break;
+  }
   const calls = await getCalls();
   return (
     <Shell locale={locale} internal>
@@ -57,7 +97,7 @@ export default async function InternalPage() {
         {(profile.role === "administrator" ||
           profile.user_admin_scope !== "none") && (
           <Link href="/internal/users">
-            {es ? "Usuarios y roles" : "Users and roles"}
+            {es ? "Gestión de usuarios" : "User management"}
           </Link>
         )}
       </nav>
@@ -104,7 +144,7 @@ export default async function InternalPage() {
                 {apps.map((a) => (
                   <tr key={a.id}>
                     <td>{a.reference_code}</td>
-                    <td>{a.payload?.concept?.title}</td>
+                    <td>{a.title}</td>
                     <td>{statusLabel(a.status, locale)}</td>
                     <td>
                       <Link href={"/internal/applications/" + a.id}>
