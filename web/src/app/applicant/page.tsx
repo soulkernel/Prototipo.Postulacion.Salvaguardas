@@ -85,9 +85,11 @@ export default async function ApplicantPage({
                       />
                       <h3>{es ? category.label_es : category.label_en}</h3>
                       <p>
-                        USD {category.min_amount.toLocaleString(locale)} –{" "}
-                        {category.max_amount?.toLocaleString(locale) ??
-                          (es ? "según las bases" : "see call rules")}
+                        {category.max_amount === null
+                          ? (es ? "Desde USD " : "From USD ") +
+                            category.min_amount.toLocaleString(locale)
+                          : (es ? "Hasta USD " : "Up to USD ") +
+                            category.max_amount.toLocaleString(locale)}
                       </p>
                       <p>
                         {es ? "Duración máxima: " : "Maximum duration: "}
@@ -98,13 +100,19 @@ export default async function ApplicantPage({
                       <p>
                         {category.cofinance_percent === 0
                           ? es
-                            ? "Cofinanciamiento no obligatorio según estas bases."
-                            : "Co-financing is optional under these rules."
-                          : (es
-                              ? "Cofinanciamiento mínimo: "
-                              : "Minimum co-financing: ") +
-                            category.cofinance_percent +
-                            "%"}
+                            ? "La cofinanciación no es obligatoria; se recomienda una contribución en especie."
+                            : "Co-financing is optional; an in-kind contribution is recommended."
+                          : category.cofinance_percent === 10
+                            ? es
+                              ? "Se requiere cofinanciación en especie o efectivo equivalente al 10% del valor solicitado al Fondo."
+                              : "Co-financing in kind or cash equivalent to 10% of the amount requested from the Fund is required."
+                            : (es
+                                ? "Se requiere cofinanciación equivalente al "
+                                : "Co-financing equivalent to ") +
+                              category.cofinance_percent +
+                              (es
+                                ? "% del valor solicitado al Fondo."
+                                : "% of the amount requested from the Fund is required.")}
                       </p>
                       <button className="button primary">
                         {es
@@ -124,6 +132,11 @@ export default async function ApplicantPage({
               : "No calls are currently open for applications."}
           </p>
         )}
+        <p>
+          {es
+            ? "Galápagos Life Fund promueve la inclusión y el acceso a sus recursos. Da prioridad y apoyo a las organizaciones comunitarias por su papel en el cuidado de los recursos costeros y marinos de Galápagos."
+            : "Galápagos Life Fund promotes inclusion and access to its resources. It prioritizes and supports community organizations for their role in caring for Galápagos’ coastal and marine resources."}
+        </p>
       </section>
     </Shell>
   );
