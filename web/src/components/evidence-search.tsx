@@ -5,6 +5,7 @@ import {
   type EvidenceState,
 } from "@/app/internal/evidence/actions";
 import type { Locale } from "@/lib/domain";
+import { ActionLabel } from "./submit-button";
 
 const initial: EvidenceState = { status: "idle", results: [] };
 export function EvidenceSearch({
@@ -35,14 +36,17 @@ export function EvidenceSearch({
             ? "Consulte actividades y riesgos sin nombres, correos ni otros datos personales. El texto se procesa en el servicio de inferencia configurado."
             : "Describe activities and risks without names, emails or other personal data. The configured inference service processes this text."}
         </p>
-        <button className="button primary" disabled={!enabled || pending}>
-          {pending
-            ? es
-              ? "Buscando evidencia…"
-              : "Searching…"
-            : es
-              ? "Buscar evidencia normativa"
-              : "Search normative evidence"}
+        <button
+          className="button primary"
+          disabled={!enabled || pending}
+          aria-busy={pending}
+        >
+          <ActionLabel
+            busy={pending}
+            pendingLabel={es ? "Buscando evidencia…" : "Searching…"}
+          >
+            {es ? "Buscar evidencia normativa" : "Search normative evidence"}
+          </ActionLabel>
         </button>
       </form>
       <div aria-live="polite">

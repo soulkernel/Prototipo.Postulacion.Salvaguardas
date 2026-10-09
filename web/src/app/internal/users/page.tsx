@@ -1,3 +1,4 @@
+import { SubmitButton } from "@/components/submit-button";
 import { StaffInvitations } from "@/components/staff-invitations";
 import { invitationRoles, type StaffInvitation } from "@/lib/staff-invitations";
 import Link from "next/link";
@@ -124,12 +125,13 @@ export default async function UsersPage({
                     </option>
                   ))}
                 </select>
-                <button
+                <SubmitButton
+                  pendingLabel={es ? "Procesando…" : "Processing…"}
                   disabled={p.id === user.id}
                   className="button secondary"
                 >
                   {es ? "Actualizar rol" : "Update role"}
-                </button>
+                </SubmitButton>
               </form>
               {profile.role === "administrator" &&
                 p.id !== user.id &&
@@ -163,9 +165,12 @@ export default async function UsersPage({
                         </option>
                       </select>
                     </label>
-                    <button className="button secondary">
+                    <SubmitButton
+                      pendingLabel={es ? "Procesando…" : "Processing…"}
+                      className="button secondary"
+                    >
                       {es ? "Guardar delegación" : "Save delegation"}
-                    </button>
+                    </SubmitButton>
                   </form>
                 )}
             </div>

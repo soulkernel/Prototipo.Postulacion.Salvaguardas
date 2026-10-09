@@ -1,3 +1,4 @@
+import { SubmitButton } from "@/components/submit-button";
 import Link from "next/link";
 import { requireViewer, getCalls } from "@/lib/data";
 import { getLocale } from "@/lib/locale";
@@ -73,9 +74,12 @@ export default async function InternalPage() {
           </p>
         </div>
         <form action={signOut}>
-          <button className="button secondary">
+          <SubmitButton
+            pendingLabel={es ? "Procesando…" : "Processing…"}
+            className="button secondary"
+          >
             {es ? "Cerrar sesión" : "Sign out"}
-          </button>
+          </SubmitButton>
         </form>
       </div>
       <nav className="live-nav">

@@ -1,3 +1,4 @@
+import { SubmitButton } from "@/components/submit-button";
 import { getRequestTime } from "@/lib/data";
 import Link from "next/link";
 import { getApplication, requireViewer } from "@/lib/data";
@@ -297,9 +298,12 @@ export default async function ReviewPage({
                   </small>
                 </label>
               )}
-              <button className="button primary">
+              <SubmitButton
+                pendingLabel={es ? "Procesando…" : "Processing…"}
+                className="button primary"
+              >
                 {es ? "Guardar revisión" : "Save review"}
-              </button>
+              </SubmitButton>
             </form>
           </section>
         )}
@@ -318,9 +322,12 @@ export default async function ReviewPage({
                 : "Correction requested from applicant"}
               <textarea name="reason" required />
             </label>
-            <button className="button secondary">
+            <SubmitButton
+              pendingLabel={es ? "Procesando…" : "Processing…"}
+              className="button secondary"
+            >
               {es ? "Autorizar reapertura" : "Authorize reopening"}
-            </button>
+            </SubmitButton>
           </form>
         </section>
       )}
@@ -399,9 +406,12 @@ export default async function ReviewPage({
                 <input type="datetime-local" name="deadline" />
               </label>
             )}
-            <button className="button primary">
+            <SubmitButton
+              pendingLabel={es ? "Procesando…" : "Processing…"}
+              className="button primary"
+            >
               {es ? "Registrar resolución" : "Record decision"}
-            </button>
+            </SubmitButton>
           </form>
         </section>
       )}
@@ -458,9 +468,12 @@ export default async function ReviewPage({
                 <input type="date" name="applicant_date" required />
               </label>
             </div>
-            <button className="button primary">
+            <SubmitButton
+              pendingLabel={es ? "Procesando…" : "Processing…"}
+              className="button primary"
+            >
               {es ? "Registrar convenio firmado" : "Record signed agreement"}
-            </button>
+            </SubmitButton>
           </form>
         </section>
       )}

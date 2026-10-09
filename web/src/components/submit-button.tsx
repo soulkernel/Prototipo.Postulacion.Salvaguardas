@@ -25,17 +25,19 @@ export function SubmitButton({
   children,
   pendingLabel,
   className = "button primary",
+  disabled = false,
 }: {
   children: ReactNode;
   pendingLabel: string;
   className?: string;
+  disabled?: boolean;
 }) {
   const { pending } = useFormStatus();
   return (
     <button
       type="submit"
       className={className}
-      disabled={pending}
+      disabled={disabled || pending}
       aria-busy={pending}
     >
       <ActionLabel busy={pending} pendingLabel={pendingLabel}>

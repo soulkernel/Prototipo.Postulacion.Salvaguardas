@@ -27,9 +27,12 @@ export default async function MyApplicationsPage() {
           </p>
         </div>
         <form action={signOut}>
-          <button className="button secondary">
+          <SubmitButton
+            className="button secondary"
+            pendingLabel={es ? "Cerrando sesión…" : "Signing out…"}
+          >
             {es ? "Cerrar sesión" : "Sign out"}
-          </button>
+          </SubmitButton>
         </form>
       </div>
       <section className="live-card" id="expedientes">
@@ -75,3 +78,4 @@ export default async function MyApplicationsPage() {
     </Shell>
   );
 }
+import { SubmitButton } from "@/components/submit-button";

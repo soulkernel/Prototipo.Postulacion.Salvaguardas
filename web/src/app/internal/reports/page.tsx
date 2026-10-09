@@ -1,4 +1,6 @@
 import Link from "next/link";
+import Form from "next/form";
+import { SubmitButton } from "@/components/submit-button";
 import { requireViewer, getCalls } from "@/lib/data";
 import { getLocale } from "@/lib/locale";
 import { Shell } from "@/components/shell";
@@ -32,7 +34,7 @@ export default async function Reports({
           ? "Insumo interno para Comunicación. Selección, aprobación y firma se informan por separado. No incluye seguimiento de ejecución ni impactos alcanzados."
           : "Internal input for Communications. Selection, approval and signing are reported separately. It does not include implementation monitoring or achieved impacts."}
       </p>
-      <form className="live-actions">
+      <Form action="/internal/reports" className="live-actions">
         <label>
           {es ? "Convocatoria" : "Call"}{" "}
           <select name="call" defaultValue={id}>
@@ -43,10 +45,13 @@ export default async function Reports({
             ))}
           </select>
         </label>
-        <button className="button secondary">
+        <SubmitButton
+          className="button secondary"
+          pendingLabel={es ? "Consultando…" : "Loading…"}
+        >
           {es ? "Consultar" : "View"}
-        </button>
-      </form>
+        </SubmitButton>
+      </Form>
       {report && (
         <>
           <p>

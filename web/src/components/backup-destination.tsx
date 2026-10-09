@@ -1,4 +1,5 @@
 "use client";
+import { ActionLabel } from "./submit-button";
 import { useEffect, useState } from "react";
 import { zip, strToU8 } from "fflate";
 import type { Locale } from "@/lib/domain";
@@ -544,19 +545,21 @@ export function BackupDestination({
         <button
           className="button"
           disabled={!ready}
+          aria-busy={busy}
           onClick={() => backup(destination === "folder")}
         >
-          {busy
-            ? es
-              ? "Preparando respaldo…"
-              : "Preparing backup…"
-            : destination === "folder"
+          <ActionLabel
+            busy={busy}
+            pendingLabel={es ? "Preparando respaldo…" : "Preparing backup…"}
+          >
+            {destination === "folder"
               ? es
                 ? "Respaldar en carpeta"
                 : "Back up to folder"
               : es
                 ? "Crear y descargar respaldo"
                 : "Create and download backup"}
+          </ActionLabel>
         </button>
         <p role="status" aria-live="polite">
           {message}

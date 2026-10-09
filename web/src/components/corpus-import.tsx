@@ -1,4 +1,5 @@
 "use client";
+import { ActionLabel } from "./submit-button";
 import { useRef, useState, type FormEvent } from "react";
 import { sendCorpusBatch } from "@/lib/corpus-upload";
 import type { Locale } from "@/lib/domain";
@@ -83,8 +84,15 @@ export function CorpusImport({ locale }: { locale: Locale }) {
             disabled={busy}
           />
         </label>
-        <button className="button primary" disabled={busy}>
-          {es ? "Importar e indexar" : "Import and index"}
+        <button className="button primary" disabled={busy} aria-busy={busy}>
+          <ActionLabel
+            busy={busy}
+            pendingLabel={
+              es ? "Importando e indexando…" : "Importing and indexing…"
+            }
+          >
+            {es ? "Importar e indexar" : "Import and index"}
+          </ActionLabel>
         </button>
       </form>
       <p role="status">{message}</p>

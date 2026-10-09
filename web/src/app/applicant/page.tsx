@@ -5,6 +5,7 @@ import { getLocale } from "@/lib/locale";
 import { Shell } from "@/components/shell";
 import { createDraft } from "./actions";
 import { signOut } from "@/app/auth/actions";
+import { SubmitButton } from "@/components/submit-button";
 export default async function ApplicantPage({
   searchParams,
 }: {
@@ -31,9 +32,12 @@ export default async function ApplicantPage({
           <h1>{es ? "Nueva postulación" : "New application"}</h1>
         </div>
         <form action={signOut}>
-          <button className="button secondary">
+          <SubmitButton
+            className="button secondary"
+            pendingLabel={es ? "Cerrando sesión…" : "Signing out…"}
+          >
             {es ? "Cerrar sesión" : "Sign out"}
-          </button>
+          </SubmitButton>
         </form>
       </div>
       {params.error && (
@@ -114,11 +118,13 @@ export default async function ApplicantPage({
                                 ? "% del valor solicitado al Fondo."
                                 : "% of the amount requested from the Fund is required.")}
                       </p>
-                      <button className="button primary">
+                      <SubmitButton
+                        pendingLabel={es ? "Preparando…" : "Preparing…"}
+                      >
                         {es
                           ? "Preparar nota conceptual"
                           : "Prepare concept note"}
-                      </button>
+                      </SubmitButton>
                     </form>
                   ))}
                 </div>

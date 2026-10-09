@@ -235,3 +235,9 @@ Resumen estructurado: source Formatos y Normativa de postulación/Formato-de-Not
 - Narrativas y PDF usan numeración derivada del registro; matriz incluye código asociado. UUID persiste aunque se renumeren filas al eliminar. Medidas y PGAS continúan únicamente en fase 2.
 - Migración 016 aplicada en transacción en SQL Editor: Success; consulta posterior confirma wrapper y 3 expedientes conservados. No repetir migración. Permisos no se amplían.
 - Lint y 51 pruebas pasan (25 BD, 26 TypeScript). Chrome verifica añadir/quitar filas ambientales y sociales y ancho móvil sin desbordamiento. Ruta local temporal retirada antes de publicar.
+
+## Respuesta visual uniforme — versión 0.3.1
+- Preparar nota conceptual y cierre de sesión usan SubmitButton compartido; formularios internos de revisión, reapertura, decisiones, convenios y roles/delegaciones también. Prop disabled conserva restricciones anteriores además de pending.
+- Reportes usa Next Form GET con estado pendiente. RAG, importación corpus y respaldo muestran spinner ActionLabel y aria-busy; los flujos de autenticación, MFA y edición ya lo implementaban.
+- Criterio permanente documentado en web/AGENTS.md: progreso visible inmediato, bloqueo de repetición y recuperación al terminar; sin demoras artificiales en producción.
+- Chrome verificó componente compartido con operación temporal: Preparando… y botón deshabilitado durante espera; recupera etiqueta/habilitación al terminar. Ruta temporal retirada. Sin cambios de datos, permisos ni invitaciones.
