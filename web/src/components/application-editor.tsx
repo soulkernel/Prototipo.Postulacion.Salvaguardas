@@ -2,6 +2,8 @@
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { PhoneField } from "./phone-field";
+import { PartnerFields } from "./partner-fields";
+import { partnerText } from "@/lib/partners";
 import { RequiredMark } from "./required-mark";
 import { stepIssues } from "@/lib/step-validation";
 import { GeographyFields } from "./geography-fields";
@@ -900,6 +902,23 @@ export function ApplicationEditor({
                         }))
                       }
                     />
+                  ) : field.key === "partners" ? (
+                    <PartnerFields
+                      key={field.key}
+                      concept={payload.concept}
+                      locale={locale}
+                      invalid={fieldIssue("partners")}
+                      onChange={(names) =>
+                        setPayload((p) => ({
+                          ...p,
+                          concept: {
+                            ...p.concept,
+                            associated_organizations: names,
+                            partners: partnerText(names),
+                          },
+                        }))
+                      }
+                    />
                   ) : field.key === "alignment" ? null : field.key ===
                     "phone" ? (
                     <PhoneField
@@ -914,14 +933,10 @@ export function ApplicationEditor({
                       className={field.type === "textarea" ? "full-width" : ""}
                     >
                       {es ? field.es : field.en}
-                      {field.key === "partners" ? (
-                        <small> ({es ? "Opcional" : "Optional"})</small>
-                      ) : (
-                        <RequiredMark locale={locale} />
-                      )}
+                      <RequiredMark locale={locale} />
                       {field.type === "textarea" ? (
                         <textarea
-                          aria-required={field.key !== "partners"}
+                          aria-required="true"
                           aria-invalid={fieldIssue(field.key)}
                           rows={4}
                           maxLength={12000}
@@ -932,7 +947,7 @@ export function ApplicationEditor({
                         />
                       ) : (
                         <input
-                          aria-required={field.key !== "partners"}
+                          aria-required="true"
                           type={field.type || "text"}
                           min={field.type === "number" ? 0 : undefined}
                           max={

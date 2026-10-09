@@ -13,6 +13,7 @@ import {
 import { identityFields, narrativeFields } from "./fields";
 import { alignmentIssues } from "./strategic-alignment";
 import { potentialRiskIssues } from "./potential-risks";
+import { partnerIssues } from "./partners";
 export function stepIssues(
   payload: Payload,
   rules: Rules,
@@ -39,6 +40,7 @@ export function stepIssues(
         missing.push(key);
     }
     if (step === 0) {
+      missing.push(...partnerIssues(payload.concept));
       missing.push(...geographyIssues(payload.concept));
       if (
         payload.concept.phone.trim() &&

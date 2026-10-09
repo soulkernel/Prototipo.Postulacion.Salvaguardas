@@ -5,6 +5,7 @@ import { z } from "zod";
 import { requireViewer } from "@/lib/data";
 import { payloadSchema, emptyPayload, applicantDefaults } from "@/lib/domain";
 import { normalizePhone } from "@/lib/phone";
+import { partnerIssues, partnerText } from "@/lib/partners";
 import { synchronizeRisks } from "@/lib/potential-risks";
 import { geographyIssues } from "@/lib/geography";
 import { hasSummaryParts, summaryText } from "@/lib/summary";
@@ -38,6 +39,17 @@ async function validStoredGeography(db: SupabaseClient, id: string) {
     !error &&
     parsed.success &&
     geographyIssues(parsed.data.concept).length === 0
+  );
+}
+async function validStoredPartners(db: SupabaseClient, id: string) {
+  const { data, error } = await db
+    .from("applications")
+    .select("payload")
+    .eq("id", id)
+    .maybeSingle();
+  const parsed = payloadSchema.safeParse(data?.payload);
+  return (
+    !error && parsed.success && partnerIssues(parsed.data.concept).length === 0
   );
 }
 async function validStoredSummary(db: SupabaseClient, id: string) {
@@ -147,6 +159,13 @@ export async function saveDraft(
       ...synchronizeRisks(parsed.data),
       concept: {
         ...synchronizeRisks(parsed.data).concept,
+        ...(parsed.data.concept.associated_organizations
+          ? {
+              partners: partnerText(
+                parsed.data.concept.associated_organizations,
+              ),
+            }
+          : {}),
         ...(parsed.data.concept.strategic_alignment
           ? strategicText(parsed.data.concept.strategic_alignment)
           : {}),
@@ -192,6 +211,8 @@ export async function prepareDocuments(id: string, revision: number) {
   const { db } = await requireViewer(["applicant"]);
   if (!z.uuid().safeParse(id).success || !Number.isSafeInteger(revision))
     return { error: "GLF_INVALID_PAYLOAD" };
+  if (!(await validStoredPartners(db, id)))
+    return { error: "GLF_REQUIRED:partners" };
   if (!(await validStoredPhone(db, id))) return { error: "GLF_INVALID_PHONE" };
   if (!(await validStoredSummary(db, id)))
     return { error: "GLF_INVALID_SUMMARY" };
@@ -210,6 +231,8 @@ export async function submitDraft(
   const { db } = await requireViewer(["applicant"]);
   if (!z.uuid().safeParse(id).success || !Number.isSafeInteger(revision))
     return { ok: false, error: "GLF_INVALID_PAYLOAD" };
+  if (!(await validStoredPartners(db, id)))
+    return { ok: false, error: "GLF_REQUIRED:partners" };
   if (!(await validStoredPhone(db, id)))
     return { ok: false, error: "GLF_INVALID_PHONE" };
   if (!(await validStoredSummary(db, id)))

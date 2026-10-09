@@ -4,6 +4,7 @@ import { geographyIssues } from "./geography";
 import { emptySummary, hasSummaryParts } from "./summary";
 import { strategicSchema, alignmentIssues } from "./strategic-alignment";
 import { potentialRiskIssues } from "./potential-risks";
+import { partnerIssues } from "./partners";
 export const roles = [
   "applicant",
   "grants_manager",
@@ -31,6 +32,7 @@ export const conceptSchema = z
     project_islands: z.array(z.string().max(100)).max(7).default([]),
     other_islands: text.default(""),
     partners: text,
+    associated_organizations: z.array(z.string().max(200)).max(50).optional(),
     location: text,
     project_type: text,
     category_id: text,
@@ -387,6 +389,7 @@ export function validateComplete(
 ): string[] {
   const missing: string[] = [];
   const c = payload.concept;
+  missing.push(...partnerIssues(c));
   missing.push(...potentialRiskIssues(payload));
   missing.push(...alignmentIssues(c.strategic_alignment));
   missing.push(...Object.keys(financialErrors(c, rules)));

@@ -319,3 +319,37 @@ test("call codes keep official and test sequences independent and use the Galapa
     "GLF-2027-001",
   );
 });
+
+import {
+  partnerOrganizations,
+  partnerIssues,
+  partnerText,
+} from "../src/lib/partners";
+test("partner organizations preserve historical text and optional empty lists", () => {
+  assert.deepEqual(
+    partnerOrganizations({ partners: "Fundación A, sede Galápagos" }),
+    ["Fundación A, sede Galápagos"],
+  );
+  assert.deepEqual(
+    partnerOrganizations({
+      partners: "Texto previo",
+      associated_organizations: [],
+    }),
+    [],
+  );
+  assert.deepEqual(
+    partnerIssues({ partners: "", associated_organizations: [] }),
+    [],
+  );
+  assert.deepEqual(
+    partnerIssues({ partners: "1. A", associated_organizations: ["A", " "] }),
+    ["partners"],
+  );
+  assert.equal(partnerText([" A ", "B"]), "1. A\n2. B");
+  const payload = emptyPayload();
+  payload.concept.associated_organizations = ["A", "B"];
+  assert.deepEqual(
+    payloadSchema.parse(payload).concept.associated_organizations,
+    ["A", "B"],
+  );
+});

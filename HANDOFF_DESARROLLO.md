@@ -251,3 +251,9 @@ Resumen estructurado: source Formatos y Normativa de postulación/Formato-de-Not
 
 ## Botones de borrador — versión 0.4.1
 - Continuar y Eliminar con mismo tamaño, borde gris/rojo, separación de 16px y apilados en móvil. Confirmación y permisos sin cambios. Lint y build pasan; vista visual local con CSS real verificada.
+
+## Organizaciones asociadas — versión 0.4.4
+- Sección opcional con filas numeradas, agregar y quitar; array concept.associated_organizations opcional, hasta 50 nombres de 200 caracteres. Texto histórico se conserva como una fila sin dividir por comas. partners mantiene representación numerada compatible con exportaciones existentes.
+- Autoguardado conserva filas incompletas. Continuar/enviar/preparar PDF exige completar nombres o quitar filas vacías. Validación cliente y Server Actions, sin cambios de permisos ni esquema SQL.
+- PDF usa lista estructurada cuando existe, incluyendo lista vacía explícita. 16 pruebas de dominio/PDF pasan; PDF con dos organizaciones extraído y verificado. Compilación final correcta.
+- Versiones 0.4.2/0.4.3: aclaración exacta del usuario, negritas en navegación y fecha/hora de guardado junto a estado Borrador; hora Galápagos.
