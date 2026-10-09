@@ -248,3 +248,6 @@ Resumen estructurado: source Formatos y Normativa de postulación/Formato-de-Not
 - Eliminación solo propietario externo, fase 1, borrador nunca enviado y sin versiones. Dos RPC con bloqueo/revisión y marca deletion_pending; retiran archivos antes de finalizar. Fallos permiten Completar eliminación. RLS y trigger impiden eliminar enviados incluso tras reapertura.
 - Migración 017 aplicada en Supabase: Success; consulta confirmó columna y ambas funciones, 6 aplicaciones existentes. No repetir migración. No se eliminaron registros reales.
 - 53 pruebas pasan: 27 base de datos y 26 TypeScript. Pruebas locales de eliminación validan propiedad, revisión, archivos huérfanos, bloqueo y protección de enviados. Chrome con persistencia simulada verificó autoguardado, fallo, recuperación manual y confirmación/cancelación sin eliminar datos. Ruta temporal retirada.
+
+## Botones de borrador — versión 0.4.1
+- Continuar y Eliminar con mismo tamaño, borde gris/rojo, separación de 16px y apilados en móvil. Confirmación y permisos sin cambios. Lint y build pasan; vista visual local con CSS real verificada.

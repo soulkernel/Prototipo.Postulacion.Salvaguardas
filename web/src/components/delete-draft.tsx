@@ -67,7 +67,7 @@ export function DeleteDraft({
   return (
     <>
       <button
-        className="button ghost danger-text"
+        className="button draft-row-action draft-delete-action"
         type="button"
         onClick={() => dialog.current?.showModal()}
       >

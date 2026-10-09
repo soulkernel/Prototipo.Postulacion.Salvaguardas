@@ -75,49 +75,55 @@ export default async function MyApplicationsPage({
                       })}
                     </td>
                     <td>
-                      {!row.deletion_pending && (
-                        <Link href={"/applicant/" + row.id}>
-                          {row.status === "draft" && !row.submitted_at
-                            ? es
-                              ? "Continuar borrador"
-                              : "Continue draft"
-                            : es
-                              ? "Abrir"
-                              : "Open"}
-                        </Link>
-                      )}
-                      {row.status === "draft" &&
-                        row.stage === 1 &&
-                        !row.submitted_at &&
-                        !row.application_versions?.length && (
-                          <DeleteDraft
-                            id={row.id}
-                            revision={row.revision}
-                            title={
-                              row.payload?.concept?.title ||
-                              (es ? "Sin título" : "Untitled")
-                            }
-                            reference={row.reference_code}
-                            category={
-                              row.payload?.concept?.category_id === "small"
-                                ? es
-                                  ? "Pequeña"
-                                  : "Small"
-                                : row.payload?.concept?.category_id === "medium"
-                                  ? es
-                                    ? "Mediana"
-                                    : "Medium"
-                                  : row.payload?.concept?.category_id ===
-                                      "large"
-                                    ? es
-                                      ? "Grande"
-                                      : "Large"
-                                    : row.payload?.concept?.category_id || ""
-                            }
-                            locale={locale}
-                            pending={row.deletion_pending}
-                          />
+                      <div className="draft-row-actions">
+                        {!row.deletion_pending && (
+                          <Link
+                            className="button secondary draft-row-action"
+                            href={"/applicant/" + row.id}
+                          >
+                            {row.status === "draft" && !row.submitted_at
+                              ? es
+                                ? "Continuar borrador"
+                                : "Continue draft"
+                              : es
+                                ? "Abrir"
+                                : "Open"}
+                          </Link>
                         )}
+                        {row.status === "draft" &&
+                          row.stage === 1 &&
+                          !row.submitted_at &&
+                          !row.application_versions?.length && (
+                            <DeleteDraft
+                              id={row.id}
+                              revision={row.revision}
+                              title={
+                                row.payload?.concept?.title ||
+                                (es ? "Sin título" : "Untitled")
+                              }
+                              reference={row.reference_code}
+                              category={
+                                row.payload?.concept?.category_id === "small"
+                                  ? es
+                                    ? "Pequeña"
+                                    : "Small"
+                                  : row.payload?.concept?.category_id ===
+                                      "medium"
+                                    ? es
+                                      ? "Mediana"
+                                      : "Medium"
+                                    : row.payload?.concept?.category_id ===
+                                        "large"
+                                      ? es
+                                        ? "Grande"
+                                        : "Large"
+                                      : row.payload?.concept?.category_id || ""
+                              }
+                              locale={locale}
+                              pending={row.deletion_pending}
+                            />
+                          )}
+                      </div>
                     </td>
                   </tr>
                 ))}
