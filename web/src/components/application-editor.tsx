@@ -466,7 +466,7 @@ export function ApplicationEditor({
     .reduce((sum, r) => sum + (riskScore(r.probability, r.severity) || 0), 0);
   return (
     <>
-      <Link href="/applicant" className="text-button">
+      <Link href="/applicant/applications" className="text-button">
         ← {es ? "Mis postulaciones" : "My applications"}
       </Link>
       <div className="live-title">

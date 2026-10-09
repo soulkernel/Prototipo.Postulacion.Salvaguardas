@@ -27,7 +27,12 @@ export function MenuLink({
   const active = anchor
     ? pathname === path && hash === "#" + anchor
     : pathname === path ||
-      (path !== "/internal" && pathname.startsWith(path + "/")) ||
+      (path !== "/internal" &&
+        path !== "/applicant" &&
+        pathname.startsWith(path + "/")) ||
+      (path === "/applicant/applications" &&
+        pathname.startsWith("/applicant/") &&
+        pathname !== "/applicant") ||
       (path === "/internal" && pathname.startsWith("/internal/applications/"));
   return (
     <Link href={href} aria-current={active ? "page" : undefined}>

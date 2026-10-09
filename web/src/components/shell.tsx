@@ -33,10 +33,10 @@ export async function Shell({
         >
           {viewer?.profile.role === "applicant" && (
             <>
-              <MenuLink href="/applicant#convocatorias">
+              <MenuLink href="/applicant">
                 {locale === "es" ? "Nueva postulación" : "New application"}
               </MenuLink>
-              <MenuLink href="/applicant#expedientes">
+              <MenuLink href="/applicant/applications">
                 {locale === "es" ? "Mis postulaciones" : "My applications"}
               </MenuLink>
             </>

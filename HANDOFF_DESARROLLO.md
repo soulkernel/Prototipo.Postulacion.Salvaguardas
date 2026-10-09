@@ -173,3 +173,9 @@ Resumen estructurado: source Formatos y Normativa de postulación/Formato-de-Not
 - Exportación POST mismo origen, administrator+AAL2, esquema discriminado estricto; rechaza selección vacía, duplicada, inválida o ambigua. IDs seleccionados comprobados antes de emitir URLs: faltantes producen 409. RLS intacta.
 - 38 pruebas pasan, incluido riesgo de convertir selección vacía en exportación completa; lint, TypeScript y compilación pasan. QA alojada pendiente tras publicación.
 - Vercel 385c26d Success. QA Chrome administrador AAL2: tres radios visibles, convocatoria muestra conteo y resumen; selección específica muestra filtro/buscador/tabla; destino carpeta muestra orientación. Ambos calls actualmente tienen 0 expedientes remitidos: botón deshabilitado verificado. No se generaron expedientes ficticios para forzar prueba. Descarga con selección no vacía y selector nativo/escritura requieren expediente remitido y prueba humana. Captura local scratch/respaldos-seleccion-expedientes.png (no subir a Git).
+
+## 2026-10-08 — Portal externo separado
+- /applicant es Nueva postulación: sólo convocatorias abiertas/categorías. No consulta ni muestra expedientes.
+- /applicant/applications es Mis postulaciones: exclusivamente aplicaciones del usuario conectado, con filtro explícito applicant_id y RLS existente. Incluye borradores para retomarlos, estados remitidos y propuesta completa cuando corresponde.
+- Navegación usa rutas distintas; marca activa diferenciada. Enlace de regreso del editor apunta al listado propio. Usuarios internos siguen fuera de estas rutas por requireViewer applicant.
+- 38 pruebas pasan incluyendo aislamiento de usuarios en DB, lint y build; QA alojada pendiente publicación y sesión externa.
