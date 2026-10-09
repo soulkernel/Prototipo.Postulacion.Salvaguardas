@@ -129,17 +129,6 @@ export default async function ApplicationGuide() {
               : "View your dossier under My applications. The submitted version is locked; corrections require GLF authorization and resubmission within the enabled deadline."}
           </p>
         </details>
-        <p>
-          <a
-            href="https://galapagoslifefund.org.ec/es/2convocatoria/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {es
-              ? "Información institucional del GLF"
-              : "GLF institutional information"}
-          </a>
-        </p>
       </section>
     </Shell>
   );

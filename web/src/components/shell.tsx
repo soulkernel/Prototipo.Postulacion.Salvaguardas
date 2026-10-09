@@ -92,11 +92,6 @@ export async function Shell({
       </main>
       <footer className="live-footer">
         <span>Galápagos Life Fund</span>
-        <span>
-          {locale === "es"
-            ? "Postulaciones · Salvaguardas · Decisiones trazables"
-            : "Applications · Safeguards · Accountable decisions"}
-        </span>
       </footer>
     </div>
   );
