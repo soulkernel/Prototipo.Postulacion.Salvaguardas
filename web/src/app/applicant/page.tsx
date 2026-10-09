@@ -119,7 +119,7 @@ export default async function ApplicantPage({
                                 : "% of the amount requested from the Fund is required.")}
                       </p>
                       <SubmitButton
-                        pendingLabel={es ? "Preparando…" : "Preparing…"}
+                        pendingLabel={es ? "Procesando…" : "Processing…"}
                       >
                         {es
                           ? "Preparar nota conceptual"
