@@ -220,3 +220,4 @@ Resumen estructurado: source Formatos y Normativa de postulación/Formato-de-Not
 - Migración 015 aplicada manualmente en SQL Editor, transacción con Success. Consulta posterior confirma wrapper anterior presente y 3 expedientes conservados. No repetir ni db push sin conciliar historial CLI.
 - Pruebas: 24 de base y 24 TypeScript pasan, incluyendo referencias falsas, duplicados, cobertura y PDF con alineación. UI probada en Chrome mediante ruta local temporal, retirada antes de compilar/publicar.
 - No se enviaron invitaciones ni se alteraron expedientes existentes. No se añadió planificación del Parque Nacional Galápagos.
+- Despliegue verificado: commit e9c5d9e; Vercel CpEXjzuJ2aXStqK8aR4LXqjFANHE Ready, Preview con alias glf-postulaciones.vercel.app. Página publicada confirma footer v0.2.0. No confundir este estado de revisión con apertura oficial de una convocatoria.

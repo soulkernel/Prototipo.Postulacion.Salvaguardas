@@ -1,6 +1,6 @@
 # Alineación estratégica del portal GLF
 
-Fecha: 8 de octubre de 2026. Estado: diseño funcional y técnico; no desplegado.
+Fecha: 8 de octubre de 2026. Estado: diseño de referencia. Implementación inicial desplegada en versión 0.2.0: objetivos separados, políticas del Plan, objetivos ODS, líneas GLF, sugerencias documentadas, contribución prevista, vínculo con actividades y PDF. El catálogo completo de estrategias y metas específicas, y las tablas normalizadas propuestas abajo, son ampliaciones; no se presentan como ya implementados.
 
 ## Decisión recomendada
 
