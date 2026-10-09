@@ -652,8 +652,8 @@ export function ApplicationEditor({
         <aside className="live-card draft-save-status">
           <p>
             {es
-              ? "Su avance se guarda automáticamente después de dejar de escribir. Puede salir y continuar desde Mis postulaciones → Continuar borrador. Solo se enviará al GLF cuando pulse Enviar al GLF."
-              : "Your progress is saved automatically after you stop typing. Resume from My applications → Continue draft. It is only submitted to GLF when you select Submit to GLF."}
+              ? "Su avance se guarda automáticamente después de dejar de escribir. Puede salir y postergar la consignación de los datos de su nota conceptual, y continuar después desde este o cualquier dispositivo, accediendo desde la opción del menú: Mis postulaciones → Continuar borrador. Solo se enviará la nota conceptual final, cuando pulse Enviar al GLF."
+              : "Your progress is saved automatically after you stop typing. You can leave and postpone entering your concept note information, then continue later from this or any other device using the menu option: My applications → Continue draft. Your final concept note will only be submitted when you select Submit to GLF."}
           </p>
           <p role="status" aria-live="polite">
             <ActionLabel
@@ -681,9 +681,6 @@ export function ApplicationEditor({
                     })}
             </ActionLabel>
           </p>
-          <Link href="/applicant/applications">
-            {es ? "Ir a Mis postulaciones" : "Go to My applications"}
-          </Link>
         </aside>
       )}
       {application.deletion_pending && (
