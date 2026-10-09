@@ -108,8 +108,8 @@ export default async function ApplicantPage({
                       </p>
                       <button className="button primary">
                         {es
-                          ? "Elegir y preparar Nota Conceptual"
-                          : "Choose and prepare Concept Note"}
+                          ? "Preparar nota conceptual"
+                          : "Prepare concept note"}
                       </button>
                     </form>
                   ))}
