@@ -5,6 +5,7 @@ import { z } from "zod";
 import { requireViewer } from "@/lib/data";
 import { payloadSchema, emptyPayload, applicantDefaults } from "@/lib/domain";
 import { normalizePhone } from "@/lib/phone";
+import { synchronizeRisks } from "@/lib/potential-risks";
 import { geographyIssues } from "@/lib/geography";
 import { hasSummaryParts, summaryText } from "@/lib/summary";
 import { words } from "@/lib/domain";
@@ -104,6 +105,7 @@ export async function createDraft(form: FormData) {
       "/applicant?error=" + encodeURIComponent(safeError(error.message)),
     );
   const payload = emptyPayload();
+  payload.concept.risk_register = [];
   payload.concept.strategic_alignment = {
     version: alignmentVersion,
     objectives: [newObjective("general"), newObjective("specific")],
@@ -142,9 +144,9 @@ export async function saveDraft(
     application_id: id,
     expected_revision: revision,
     payload: {
-      ...parsed.data,
+      ...synchronizeRisks(parsed.data),
       concept: {
-        ...parsed.data.concept,
+        ...synchronizeRisks(parsed.data).concept,
         ...(parsed.data.concept.strategic_alignment
           ? strategicText(parsed.data.concept.strategic_alignment)
           : {}),

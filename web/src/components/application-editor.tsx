@@ -7,6 +7,8 @@ import { stepIssues } from "@/lib/step-validation";
 import { GeographyFields } from "./geography-fields";
 import { SummaryFields } from "./summary-fields";
 import { StrategicFields } from "./strategic-fields";
+import { PotentialRiskFields } from "./potential-risk-fields";
+import { riskCode } from "@/lib/potential-risks";
 import { strategicText } from "@/lib/strategic-alignment";
 import { ActionLabel } from "./submit-button";
 import { summaryText, summarySections } from "@/lib/summary";
@@ -76,6 +78,10 @@ const levels = {
   },
 };
 function message(code: string, es: boolean) {
+  if (code.includes("RISK_REGISTER") || code.includes("RISK_REFERENCE"))
+    return es
+      ? "Revise los riesgos registrados: cada riesgo debe vincularse con al menos una actividad y calificarse sin duplicados."
+      : "Check registered risks: link each risk to at least one activity and assess it without duplicates.";
   if (code.includes("ALIGNMENT"))
     return es
       ? "Complete los objetivos, la contribución esperada y la alineación del proyecto con Plan Galápagos 2030, ODS y GLF."
@@ -401,6 +407,14 @@ export function ApplicationEditor({
   const fieldIssue = (key: string) =>
     currentIssues.missing.includes(key) || currentIssues.invalid.includes(key);
   const issueLabel = (key: string) => {
+    if (key === "risk_unlinked")
+      return es
+        ? "Vincule cada riesgo registrado con al menos una actividad"
+        : "Link each registered risk to at least one activity";
+    if (key === "potential_risks")
+      return es
+        ? "Complete cada riesgo registrado"
+        : "Complete each registered risk";
     if (key.startsWith("summary:")) {
       const s = summarySections.find((s) => s.key === key.slice(8));
       return (es ? "Resumen: " : "Summary: ") + (s ? (es ? s.es : s.en) : key);
@@ -631,7 +645,15 @@ export function ApplicationEditor({
                 className={step === 0 ? "live-grid form-columns" : "live-form"}
               >
                 {fields.map((field) =>
-                  field.key === "summary" ? (
+                  field.key === "environmental_risks" ? (
+                    <PotentialRiskFields
+                      key={field.key}
+                      payload={payload}
+                      locale={locale}
+                      onChange={setPayload}
+                    />
+                  ) : field.key === "social_risks" ? null : field.key ===
+                    "summary" ? (
                     <SummaryFields
                       key={field.key}
                       parts={payload.concept.summary_parts}
@@ -973,6 +995,16 @@ export function ApplicationEditor({
                           <h4>
                             <ShieldCheck size={17} /> {es ? "Riesgo" : "Risk"}{" "}
                             {ai + 1}.{ri + 1}
+                            {risk.source_id && (
+                              <>
+                                {" "}
+                                ·{" "}
+                                {riskCode(
+                                  payload.concept.risk_register || [],
+                                  risk.source_id,
+                                )}
+                              </>
+                            )}
                           </h4>
                           <button
                             type="button"
@@ -990,12 +1022,80 @@ export function ApplicationEditor({
                           </button>
                         </div>
                         <div className="live-grid form-columns">
+                          {payload.concept.risk_register && (
+                            <label className="full-width">
+                              {es
+                                ? "Seleccione un riesgo registrado"
+                                : "Select a registered risk"}
+                              <RequiredMark locale={locale} />
+                              <select
+                                aria-required="true"
+                                value={risk.source_id || ""}
+                                onChange={(e) => {
+                                  const source =
+                                    payload.concept.risk_register?.find(
+                                      (r) => r.id === e.target.value,
+                                    );
+                                  updateRisk(
+                                    ai,
+                                    ri,
+                                    source
+                                      ? {
+                                          source_id: source.id,
+                                          name: source.name,
+                                          dimension: source.dimension,
+                                          probability: null,
+                                          severity: null,
+                                          residual_probability: null,
+                                          residual_severity: null,
+                                        }
+                                      : {
+                                          source_id: undefined,
+                                          name: "",
+                                          probability: null,
+                                          severity: null,
+                                          residual_probability: null,
+                                          residual_severity: null,
+                                        },
+                                  );
+                                }}
+                              >
+                                <option value="">
+                                  {es ? "Seleccione" : "Select"}
+                                </option>
+                                {payload.concept.risk_register
+                                  .filter(
+                                    (r) =>
+                                      r.name.trim() &&
+                                      (!activity.risks.some(
+                                        (x) => x.source_id === r.id,
+                                      ) ||
+                                        risk.source_id === r.id),
+                                  )
+                                  .map((r) => (
+                                    <option key={r.id} value={r.id}>
+                                      {riskCode(
+                                        payload.concept.risk_register!,
+                                        r.id,
+                                      )}{" "}
+                                      · {r.name}
+                                    </option>
+                                  ))}
+                              </select>
+                              <small>
+                                {es
+                                  ? "El puntaje corresponde a este riesgo en esta actividad. Si cambia el riesgo seleccionado, vuelva a calificarlo."
+                                  : "The score applies to this risk in this activity. Reassess it if you change the selected risk."}
+                              </small>
+                            </label>
+                          )}
                           <label>
                             {es ? "Dimensión" : "Dimension"}
                             <RequiredMark locale={locale} />
                             <select
                               aria-required="true"
                               value={risk.dimension}
+                              disabled={Boolean(payload.concept.risk_register)}
                               onChange={(e) =>
                                 updateRisk(ai, ri, {
                                   dimension: e.target
@@ -1015,6 +1115,7 @@ export function ApplicationEditor({
                             <input
                               aria-required="true"
                               value={risk.name}
+                              readOnly={Boolean(payload.concept.risk_register)}
                               onChange={(e) =>
                                 updateRisk(ai, ri, { name: e.target.value })
                               }

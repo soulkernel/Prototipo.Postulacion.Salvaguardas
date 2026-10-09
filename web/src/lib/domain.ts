@@ -3,6 +3,7 @@ import { normalizePhone } from "./phone";
 import { geographyIssues } from "./geography";
 import { emptySummary, hasSummaryParts } from "./summary";
 import { strategicSchema, alignmentIssues } from "./strategic-alignment";
+import { potentialRiskIssues } from "./potential-risks";
 export const roles = [
   "applicant",
   "grants_manager",
@@ -59,11 +60,24 @@ export const conceptSchema = z
     monitoring: text,
     environmental_risks: text,
     social_risks: text,
+    risk_register: z
+      .array(
+        z
+          .object({
+            id: z.uuid(),
+            dimension: z.enum(["environmental", "social"]),
+            name: z.string().max(2000),
+          })
+          .strict(),
+      )
+      .max(100)
+      .optional(),
   })
   .strict();
 export const riskSchema = z
   .object({
     id: z.uuid(),
+    source_id: z.uuid().optional(),
     name: text,
     description: text,
     dimension: z.enum(["environmental", "social"]),
@@ -109,7 +123,36 @@ export const payloadSchema = z
     consent: z.boolean(),
     truthful: z.boolean(),
   })
-  .strict();
+  .strict()
+  .superRefine((p, ctx) => {
+    const rows = p.concept.risk_register;
+    if (!rows) return;
+    if (new Set(rows.map((r) => r.id)).size !== rows.length)
+      ctx.addIssue({ code: "custom", message: "Duplicate potential risk IDs" });
+    p.activities.forEach((a) => {
+      const ids = a.risks.map((r) => r.source_id).filter(Boolean);
+      if (new Set(ids).size !== ids.length)
+        ctx.addIssue({
+          code: "custom",
+          message: "Duplicate activity risk reference",
+        });
+      a.risks.forEach((r) => {
+        if (
+          r.source_id &&
+          !rows.some(
+            (s) =>
+              s.id === r.source_id &&
+              s.name === r.name &&
+              s.dimension === r.dimension,
+          )
+        )
+          ctx.addIssue({
+            code: "custom",
+            message: "Invalid potential risk reference",
+          });
+      });
+    });
+  });
 export type Payload = z.infer<typeof payloadSchema>;
 export type Risk = z.infer<typeof riskSchema>;
 export type Activity = z.infer<typeof activitySchema>;
@@ -343,6 +386,7 @@ export function validateComplete(
 ): string[] {
   const missing: string[] = [];
   const c = payload.concept;
+  missing.push(...potentialRiskIssues(payload));
   missing.push(...alignmentIssues(c.strategic_alignment));
   missing.push(...Object.keys(financialErrors(c, rules)));
   missing.push(...geographyIssues(c));

@@ -6,6 +6,7 @@ import path from "node:path";
 import { identityFields, narrativeFields } from "./fields";
 import { hasSummaryParts, summarySections } from "./summary";
 import { strategicText } from "./strategic-alignment";
+import { riskCode, synchronizeRisks } from "./potential-risks";
 import { riskScore, riskLevel, type Payload, type Locale } from "./domain";
 export async function applicationPdf({
   payload,
@@ -27,6 +28,7 @@ export async function applicationPdf({
   stage: number;
 }) {
   const es = locale === "es";
+  payload = synchronizeRisks(payload);
   if (payload.concept.strategic_alignment)
     payload = {
       ...payload,
@@ -204,7 +206,17 @@ export async function applicationPdf({
           a.no_risks_reason,
         );
       a.risks.forEach((r, ri) => {
-        draw((es ? "Riesgo " : "Risk ") + (ai + 1) + "." + (ri + 1), true);
+        draw(
+          (es ? "Riesgo " : "Risk ") +
+            (ai + 1) +
+            "." +
+            (ri + 1) +
+            (r.source_id
+              ? " · " +
+                riskCode(payload.concept.risk_register || [], r.source_id)
+              : ""),
+          true,
+        );
         field(
           es ? "Nombre y dimensión" : "Name and dimension",
           r.name +

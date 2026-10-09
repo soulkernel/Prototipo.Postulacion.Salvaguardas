@@ -489,6 +489,37 @@ before(async () => {
   app = await rpc("create_application", { call_id: call });
 });
 after(async () => await db.close());
+test("database rejects forged and duplicate registered activity risks", async () => {
+  const p = structuredClone(fullPayload);
+  const id = "40000000-0000-4000-8000-000000000001";
+  const r = p.activities[0].risks[0];
+  p.concept.risk_register = [{ id, name: r.name, dimension: r.dimension }];
+  r.source_id = id;
+  await db.query(
+    "select private.validate_payload($1::jsonb,$2::jsonb,false,2)",
+    [JSON.stringify(p), JSON.stringify(rules)],
+  );
+  r.source_id = "40000000-0000-4000-8000-000000000099";
+  await assert.rejects(
+    db.query("select private.validate_payload($1::jsonb,$2::jsonb,false,2)", [
+      JSON.stringify(p),
+      JSON.stringify(rules),
+    ]),
+    /GLF_INVALID_RISK_REFERENCE/,
+  );
+  r.source_id = id;
+  p.activities[0].risks.push({
+    ...r,
+    id: "40000000-0000-4000-8000-000000000002",
+  });
+  await assert.rejects(
+    db.query("select private.validate_payload($1::jsonb,$2::jsonb,false,2)", [
+      JSON.stringify(p),
+      JSON.stringify(rules),
+    ]),
+    /GLF_INVALID_RISK_REFERENCE/,
+  );
+});
 test("database validates structured alignment and rejects forged references and missing contribution", async () => {
   const p = {
     concept: {

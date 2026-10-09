@@ -12,6 +12,7 @@ import {
 } from "./domain";
 import { identityFields, narrativeFields } from "./fields";
 import { alignmentIssues } from "./strategic-alignment";
+import { potentialRiskIssues } from "./potential-risks";
 export function stepIssues(
   payload: Payload,
   rules: Rules,
@@ -51,6 +52,11 @@ export function stepIssues(
         invalid.push("email");
       invalid.push(...Object.keys(financialErrors(payload.concept, rules)));
     } else {
+      missing.push(
+        ...potentialRiskIssues(payload).filter(
+          (k) => !k.startsWith("risk_") && !k.startsWith("activity_"),
+        ),
+      );
       missing.push(...alignmentIssues(payload.concept.strategic_alignment));
       if (hasSummaryParts(payload.concept.summary_parts))
         for (const section of summarySections)

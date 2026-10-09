@@ -227,3 +227,11 @@ Resumen estructurado: source Formatos y Normativa de postulación/Formato-de-Not
 - Botón + para añadir específicos; eliminación independiente. Un objetivo general permanece único. La contribución prevista se registra en un campo separado del objetivo.
 - En móvil los selectores quedan debajo. Chrome verifica añadir/eliminar específicos, quitar/reseleccionar referencias y ausencia de desbordamiento a 390 px. Lint aprobado; ruta de prueba temporal retirada.
 - Sin cambios de esquema, permisos ni expedientes; migración 015 no se repite. No se envían invitaciones.
+
+## Registro individual de riesgos — versión 0.3.0, 2026-10-09
+- concept.risk_register opcional contiene UUID, dimensión y nombre; numeración visible RA/RS por dimensión. Nuevos borradores inicializan registro vacío. Históricos conservan texto y requieren acción Organizar; no se altera su contenido automáticamente.
+- Riesgos de actividades referencian source_id del registro; nombre/dimensión se sincronizan al editar y guardar. Una actividad admite varios riesgos y un riesgo varias actividades, cada asociación mantiene probabilidad/gravedad/puntaje independiente. Al cambiar la selección se reinicia la calificación inicial y residual.
+- Registro vinculado no puede eliminarse hasta retirar asociaciones. Completar exige vincular cada registro al menos a una actividad; referencias falsas y duplicados en la misma actividad se rechazan. Borradores permiten campos pendientes.
+- Narrativas y PDF usan numeración derivada del registro; matriz incluye código asociado. UUID persiste aunque se renumeren filas al eliminar. Medidas y PGAS continúan únicamente en fase 2.
+- Migración 016 aplicada en transacción en SQL Editor: Success; consulta posterior confirma wrapper y 3 expedientes conservados. No repetir migración. Permisos no se amplían.
+- Lint y 51 pruebas pasan (25 BD, 26 TypeScript). Chrome verifica añadir/quitar filas ambientales y sociales y ancho móvil sin desbordamiento. Ruta local temporal retirada antes de publicar.
