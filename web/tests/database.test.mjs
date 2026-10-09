@@ -489,6 +489,85 @@ before(async () => {
   app = await rpc("create_application", { call_id: call });
 });
 after(async () => await db.close());
+test("draft deletion requires ownership and an unchanged revision; files must be removed before finalization", async () => {
+  const id = await rpc("create_application", { call_id: call });
+  await assert.rejects(
+    rpc("begin_delete_draft", { app_id: id, expected_revision: 0 }, "other"),
+    /GLF_DELETE_FORBIDDEN/,
+  );
+  await assert.rejects(
+    rpc("begin_delete_draft", { app_id: id, expected_revision: 9 }),
+    /GLF_REVISION_CONFLICT/,
+  );
+  const path = id + "/" + ids.applicant + "/attachment/test.pdf";
+  await db.query(
+    "insert into storage.objects(bucket_id,name,metadata) values('application-files',$1,'{}')",
+    [path],
+  );
+  assert.deepEqual(
+    await rpc("begin_delete_draft", { app_id: id, expected_revision: 0 }),
+    [path],
+  );
+  await assert.rejects(
+    rpc("save_application", {
+      application_id: id,
+      expected_revision: 0,
+      payload,
+    }),
+    /GLF_APPLICATION_LOCKED/,
+  );
+  await assert.rejects(
+    rpc("finish_delete_draft", { app_id: id }),
+    /GLF_DELETE_FILES_PENDING/,
+  );
+  await as("other", () =>
+    db.query("delete from storage.objects where name=$1", [path]),
+  );
+  assert.equal(
+    (
+      await db.query(
+        "select count(*)::int as n from storage.objects where name=$1",
+        [path],
+      )
+    ).rows[0].n,
+    1,
+  );
+  await as("applicant", () =>
+    db.query("delete from storage.objects where name=$1", [path]),
+  );
+  await rpc("finish_delete_draft", { app_id: id });
+  assert.equal(
+    (
+      await db.query(
+        "select count(*)::int as n from public.applications where id=$1",
+        [id],
+      )
+    ).rows[0].n,
+    0,
+  );
+});
+test("first submission permanently protects an application from deletion", async () => {
+  const id = await rpc("create_application", { call_id: call });
+  await db.query(
+    "update public.applications set submitted_at=now() where id=$1",
+    [id],
+  );
+  await assert.rejects(
+    rpc("begin_delete_draft", { app_id: id, expected_revision: 0 }),
+    /GLF_SUBMITTED_RECORD_PROTECTED/,
+  );
+  await assert.rejects(
+    db.query("delete from public.applications where id=$1", [id]),
+    /GLF_SUBMITTED_RECORD_PROTECTED/,
+  );
+  // Reset only this synthetic test fixture so later report totals stay isolated.
+  await db.query(
+    "update public.applications set submitted_at=null where id=$1",
+    [id],
+  );
+  await rpc("begin_delete_draft", { app_id: id, expected_revision: 0 });
+  await rpc("finish_delete_draft", { app_id: id });
+});
 test("database rejects forged and duplicate registered activity risks", async () => {
   const p = structuredClone(fullPayload);
   const id = "40000000-0000-4000-8000-000000000001";

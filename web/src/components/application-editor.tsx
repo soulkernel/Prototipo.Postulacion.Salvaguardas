@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { PhoneField } from "./phone-field";
 import { RequiredMark } from "./required-mark";
@@ -155,6 +155,7 @@ export function ApplicationEditor({
   catalog,
   versions,
   documents: initialDocuments,
+  saveAction = saveDraft,
 }: {
   application: Application;
   call: Call;
@@ -164,6 +165,7 @@ export function ApplicationEditor({
   catalog: Catalog[];
   versions: Version[];
   documents: DocumentRow[];
+  saveAction?: typeof saveDraft;
 }) {
   const es = locale === "es";
   const router = useRouter();
@@ -177,6 +179,11 @@ export function ApplicationEditor({
   );
   const [revision, setRevision] = useState(application.revision);
   const [saved, setSaved] = useState(JSON.stringify(application.payload));
+  const revisionRef = useRef(application.revision);
+  const autoFlight = useRef<Promise<void> | null>(null);
+  const [autoSaving, setAutoSaving] = useState(false);
+  const [autoError, setAutoError] = useState("");
+  const [lastSaved, setLastSaved] = useState(application.updated_at);
   const [step, setStep] = useState(editable ? 0 : 3);
   const [busy, setBusy] = useState(false);
   const [operation, setOperation] = useState<
@@ -192,13 +199,75 @@ export function ApplicationEditor({
   } | null>(null);
   const dirty = JSON.stringify(payload) !== saved;
   useEffect(() => {
+    if (!editable || !dirty || busy || autoSaving || autoError) return;
+    const timer = setTimeout(() => {
+      const snapshot = payload,
+        serialized = JSON.stringify(snapshot);
+      setAutoSaving(true);
+      const task = (async () => {
+        try {
+          const result = await saveAction(
+            application.id,
+            revisionRef.current,
+            snapshot,
+          );
+          if (!result.ok) {
+            setAutoError(result.error);
+            return;
+          }
+          revisionRef.current = result.revision;
+          setRevision(result.revision);
+          setSaved(serialized);
+          setLastSaved(new Date().toISOString());
+          setPrepared(null);
+        } catch {
+          setAutoError("GLF_SAVE_FAILED");
+        } finally {
+          setAutoSaving(false);
+          autoFlight.current = null;
+        }
+      })();
+      autoFlight.current = task;
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [
+    payload,
+    saved,
+    dirty,
+    busy,
+    autoSaving,
+    autoError,
+    editable,
+    application.id,
+    saveAction,
+  ]);
+  useEffect(() => {
     if (!dirty) return;
     const warn = (e: BeforeUnloadEvent) => {
       e.preventDefault();
     };
     window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
-  }, [dirty]);
+    const leave = (event: MouseEvent) => {
+      const anchor = (event.target as Element).closest?.("a[href]");
+      if (
+        anchor &&
+        !anchor.hasAttribute("download") &&
+        !window.confirm(
+          es
+            ? "Hay cambios sin guardar. ¿Desea salir de esta página?"
+            : "There are unsaved changes. Leave this page?",
+        )
+      ) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+    document.addEventListener("click", leave, true);
+    return () => {
+      window.removeEventListener("beforeunload", warn);
+      document.removeEventListener("click", leave, true);
+    };
+  }, [dirty, es]);
   const updateConcept = (key: keyof Concept, value: string | number | null) =>
     setPayload((p) => ({ ...p, concept: { ...p.concept, [key]: value } }));
   const updateActivity = (
@@ -335,16 +404,21 @@ export function ApplicationEditor({
     setError("");
     setFeedback("");
     try {
-      let nextRevision = revision;
+      if (autoFlight.current) await autoFlight.current;
+      let nextRevision = revisionRef.current;
       if (dirty) {
-        const result = await saveDraft(application.id, revision, payload);
+        const result = await saveAction(application.id, nextRevision, payload);
         if (!result.ok) {
           setError(message(result.error, es));
           return;
         }
         nextRevision = result.revision;
+        revisionRef.current = nextRevision;
         setRevision(nextRevision);
         setSaved(JSON.stringify(payload));
+        setAutoError("");
+        setLastSaved(new Date().toISOString());
+        setPrepared(null);
       }
       if (submit) {
         const result = await submitDraft(application.id, nextRevision);
@@ -353,6 +427,7 @@ export function ApplicationEditor({
           return;
         }
         setRevision(result.revision);
+        revisionRef.current = result.revision;
         router.refresh();
       } else
         setFeedback(
@@ -571,6 +646,51 @@ export function ApplicationEditor({
       {feedback && (
         <p className="auth-success" role="status">
           {feedback}
+        </p>
+      )}
+      {editable && (
+        <aside className="live-card draft-save-status">
+          <p>
+            {es
+              ? "Su avance se guarda automáticamente después de dejar de escribir. Puede salir y continuar desde Mis postulaciones → Continuar borrador. Solo se enviará al GLF cuando pulse Enviar al GLF."
+              : "Your progress is saved automatically after you stop typing. Resume from My applications → Continue draft. It is only submitted to GLF when you select Submit to GLF."}
+          </p>
+          <p role="status" aria-live="polite">
+            <ActionLabel
+              busy={autoSaving || (busy && operation === "save")}
+              pendingLabel={es ? "Guardando…" : "Saving…"}
+            >
+              {autoError
+                ? autoError === "GLF_VERSION_CONFLICT" ||
+                  autoError === "GLF_REVISION_CONFLICT"
+                  ? es
+                    ? "El borrador cambió en otra sesión. Actualice la página antes de continuar."
+                    : "This draft changed in another session. Refresh before continuing."
+                  : es
+                    ? "No se pudieron guardar los cambios. Revise su conexión y pulse Guardar borrador para volver a intentarlo."
+                    : "Changes could not be saved. Check your connection and select Save draft to retry."
+                : dirty
+                  ? es
+                    ? "Cambios sin guardar"
+                    : "Unsaved changes"
+                  : (es ? "Borrador guardado · " : "Draft saved · ") +
+                    new Date(lastSaved).toLocaleTimeString("en-GB", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      timeZone: "Pacific/Galapagos",
+                    })}
+            </ActionLabel>
+          </p>
+          <Link href="/applicant/applications">
+            {es ? "Ir a Mis postulaciones" : "Go to My applications"}
+          </Link>
+        </aside>
+      )}
+      {application.deletion_pending && (
+        <p role="alert">
+          {es
+            ? "Este borrador está pendiente de eliminación. Complete la eliminación desde Mis postulaciones."
+            : "This draft is pending deletion. Complete deletion from My applications."}
         </p>
       )}
       <fieldset disabled={!editable || busy} className="live-fieldset">

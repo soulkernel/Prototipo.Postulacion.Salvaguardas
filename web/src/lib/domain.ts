@@ -226,6 +226,7 @@ export type Call = {
   }[];
 };
 export type Application = {
+  deletion_pending?: boolean;
   id: string;
   reference_code: string;
   call_id: string;

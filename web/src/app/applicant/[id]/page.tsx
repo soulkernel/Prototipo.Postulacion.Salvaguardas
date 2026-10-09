@@ -42,6 +42,7 @@ export default async function ApplicationPage({
   const deadline =
     application.stage === 1 ? call.closes_at : application.phase2_deadline;
   const editable = Boolean(
+    !application.deletion_pending &&
     deadline &&
     Date.parse(deadline) > requestTime &&
     (["draft", "selected_for_phase2", "phase2_draft"].includes(

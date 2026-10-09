@@ -160,8 +160,33 @@ export async function saveDraft(
     },
   });
   if (error) return { ok: false, error: safeError(error.message) };
-  revalidatePath("/applicant");
+  revalidatePath("/applicant/applications");
   return { ok: true, revision: data };
+}
+export async function deleteDraft(
+  id: string,
+  revision: number,
+): Promise<{ ok: boolean; error?: string }> {
+  const { db } = await requireViewer(["applicant"]);
+  if (!z.uuid().safeParse(id).success || !Number.isSafeInteger(revision))
+    return { ok: false, error: "GLF_INVALID_PAYLOAD" };
+  const { data: paths, error: beginError } = await db.rpc(
+    "begin_delete_draft",
+    { app_id: id, expected_revision: revision },
+  );
+  if (beginError) return { ok: false, error: safeError(beginError.message) };
+  if (Array.isArray(paths))
+    for (let i = 0; i < paths.length; i += 100) {
+      const { error } = await db.storage
+        .from("application-files")
+        .remove(paths.slice(i, i + 100));
+      if (error) return { ok: false, error: "GLF_DELETE_FILES_PENDING" };
+    }
+  const { error } = await db.rpc("finish_delete_draft", { app_id: id });
+  if (error) return { ok: false, error: safeError(error.message) };
+  revalidatePath("/applicant/applications");
+  revalidatePath("/applicant");
+  return { ok: true };
 }
 export async function prepareDocuments(id: string, revision: number) {
   const { db } = await requireViewer(["applicant"]);

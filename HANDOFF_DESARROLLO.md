@@ -241,3 +241,10 @@ Resumen estructurado: source Formatos y Normativa de postulación/Formato-de-Not
 - Reportes usa Next Form GET con estado pendiente. RAG, importación corpus y respaldo muestran spinner ActionLabel y aria-busy; los flujos de autenticación, MFA y edición ya lo implementaban.
 - Criterio permanente documentado en web/AGENTS.md: progreso visible inmediato, bloqueo de repetición y recuperación al terminar; sin demoras artificiales en producción.
 - Chrome verificó componente compartido con operación temporal: Preparando… y botón deshabilitado durante espera; recupera etiqueta/habilitación al terminar. Ruta temporal retirada. Sin cambios de datos, permisos ni invitaciones.
+
+## Borradores — versión 0.4.0 (2026-10-09)
+- Autoguardado tras 2 segundos sin editar, estado visible y hora Galápagos, guardado manual y aviso al salir con cambios pendientes. Errores detienen reintentos automáticos; guardado manual permite recuperar. Conflictos de revisión requieren recargar. Edición durante guardado conserva cambios posteriores.
+- Mis postulaciones: último guardado, Continuar borrador y eliminación con confirmación explícita. Nueva postulación avisa si hay borradores.
+- Eliminación solo propietario externo, fase 1, borrador nunca enviado y sin versiones. Dos RPC con bloqueo/revisión y marca deletion_pending; retiran archivos antes de finalizar. Fallos permiten Completar eliminación. RLS y trigger impiden eliminar enviados incluso tras reapertura.
+- Migración 017 aplicada en Supabase: Success; consulta confirmó columna y ambas funciones, 6 aplicaciones existentes. No repetir migración. No se eliminaron registros reales.
+- 53 pruebas pasan: 27 base de datos y 26 TypeScript. Pruebas locales de eliminación validan propiedad, revisión, archivos huérfanos, bloqueo y protección de enviados. Chrome con persistencia simulada verificó autoguardado, fallo, recuperación manual y confirmación/cancelación sin eliminar datos. Ruta temporal retirada.

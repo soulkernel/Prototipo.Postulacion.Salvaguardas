@@ -16,6 +16,12 @@ export default async function ApplicantPage({
   const locale = await getLocale();
   const es = locale === "es";
   const params = await searchParams;
+  const { count: draftCount } = await viewer.db
+    .from("applications")
+    .select("id", { count: "exact", head: true })
+    .eq("applicant_id", viewer.user.id)
+    .eq("status", "draft")
+    .is("submitted_at", null);
   const calls = (await getCalls()).filter(
     (c) =>
       c.status === "published" &&
@@ -48,6 +54,17 @@ export default async function ApplicantPage({
         </div>
       )}
       <section className="live-card" id="convocatorias">
+        {Boolean(draftCount) && (
+          <p>
+            {es
+              ? "Tiene postulaciones en borrador. Puede continuarlas en "
+              : "You have draft applications. Continue them in "}
+            <Link href="/applicant/applications">
+              {es ? "Mis postulaciones" : "My applications"}
+            </Link>
+            {es ? " o iniciar una nueva." : " or start a new one."}
+          </p>
+        )}
         <h2>
           {es ? "Prepare su nota conceptual" : "Prepare your concept note"}
         </h2>
