@@ -200,3 +200,10 @@ Resumen estructurado: source Formatos y Normativa de postulación/Formato-de-Not
 ## 2026-10-08 — Pie y versión
 - Pie aprobado: © 2026 Galápagos Life Fund · v0.1.0, sin Todos los derechos reservados. Mismo contenido ES/EN.
 - Versión se importa desde web/package.json (fuente única), actualmente 0.1.0. Commit exacto continúa en historial Git/Vercel.
+
+## 2026-10-08 — Convocatoria presentada sin avisos de prueba
+- Solicitud expresa: retirar Prueba interna y descripción de datos ficticios; versión preparada para pruebas reales. Cambio en datos, sin ocultar por CSS ni sustituir lógica.
+- Ejecutada operación supabase/operations/20261008_call_presentation.sql en SQL Editor. Título Convocatoria de subvenciones GLF / GLF grant call; descripción vacía ES/EN. ID 9e195a21-938c-459c-8a08-f955bfdc4d05; status published conservado, reglas/fechas/código sin cambios. Revisión incrementada y evento privado presentation_text_updated. Consulta a5445272-c90d-4d71-b50b-84f2c1aca876 guardada; no repetir operación por su guardia de contenido.
+- Al hidratar sql/new se abrió snippet anterior 013; primer fill dejó texto parcial. Consulta produjo exclusivamente error de sintaxis, sin cambios DB. Snippet original 013 restaurado desde repo y guardado SIN ejecutarlo. Luego se abrió consulta independiente y se aplicó operación correcta con resultado verificado.
+- Evidencia local scratch/convocatoria-texto-depurado.png, no subir.
+- Usuario quiere reinicio de datos DESPUÉS de pruebas reales, no ahora. No hay eliminación realizada ni programada. Antes de limpieza: inventario, copia verificada y acuerdo de alcance (expedientes/anexos/cuentas de prueba/corpus); preservar esquema, permisos, configuración y accesos administrativos necesarios. No interpretar el plan futuro como orden inmediata de eliminar base completa.
