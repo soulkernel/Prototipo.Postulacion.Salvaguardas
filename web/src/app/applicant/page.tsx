@@ -1,4 +1,5 @@
 import { getRequestTime } from "@/lib/data";
+import Link from "next/link";
 import { requireViewer, getCalls } from "@/lib/data";
 import { getLocale } from "@/lib/locale";
 import { Shell } from "@/components/shell";
@@ -43,13 +44,32 @@ export default async function ApplicantPage({
         </div>
       )}
       <section className="live-card" id="convocatorias">
-        <h2>{es ? "Iniciar una postulación" : "Start an application"}</h2>
+        <h2>
+          {es ? "Prepare su nota conceptual" : "Prepare your concept note"}
+        </h2>
+        <p>
+          {es
+            ? "La nota conceptual es la primera presentación de su proyecto: explique qué propone, para qué, dónde y con qué presupuesto, e identifique sus riesgos ambientales y sociales. Si GLF la preselecciona, le invitará a presentar una propuesta completa."
+            : "The concept note is your first project submission: explain what you propose, why, where and with what budget, and identify environmental and social risks. If GLF shortlists it, you will be invited to submit a full proposal."}
+        </p>
+        <p>
+          <Link href="/applicant/guide">
+            {es
+              ? "Cómo postular · Etapas, categorías y requisitos"
+              : "How to apply · Stages, categories and requirements"}
+          </Link>
+        </p>
         {calls.length ? (
           <div className="live-form">
             {calls.map((call) => (
               <section key={call.id}>
                 <h3>{es ? call.title_es : call.title_en}</h3>
                 <p>{es ? call.description_es : call.description_en}</p>
+                <h3>
+                  {es
+                    ? "Escoja la categoría de subvención a la que desea aplicar"
+                    : "Choose the grant category you wish to apply for"}
+                </h3>
                 <div className="live-grid grant-categories">
                   {call.rules.categories.map((category) => (
                     <form
@@ -70,11 +90,21 @@ export default async function ApplicantPage({
                           (es ? "según las bases" : "see call rules")}
                       </p>
                       <p>
-                        {category.max_months}{" "}
-                        {es
-                          ? "meses · Cofinanciamiento mínimo"
-                          : "months · Minimum cofinancing"}
-                        : {category.cofinance_percent}%
+                        {es ? "Duración máxima: " : "Maximum duration: "}
+                        <strong>
+                          {category.max_months} {es ? "meses" : "months"}
+                        </strong>
+                      </p>
+                      <p>
+                        {category.cofinance_percent === 0
+                          ? es
+                            ? "Cofinanciamiento no obligatorio según estas bases."
+                            : "Co-financing is optional under these rules."
+                          : (es
+                              ? "Cofinanciamiento mínimo: "
+                              : "Minimum co-financing: ") +
+                            category.cofinance_percent +
+                            "%"}
                       </p>
                       <button className="button primary">
                         {es

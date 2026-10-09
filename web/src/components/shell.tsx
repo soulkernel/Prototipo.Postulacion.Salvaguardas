@@ -39,6 +39,9 @@ export async function Shell({
               <MenuLink href="/applicant/applications">
                 {locale === "es" ? "Mis postulaciones" : "My applications"}
               </MenuLink>
+              <MenuLink href="/applicant/guide">
+                {locale === "es" ? "Cómo postular" : "How to apply"}
+              </MenuLink>
             </>
           )}
           {viewer && viewer.profile.role !== "applicant" && (

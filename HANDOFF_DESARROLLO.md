@@ -179,3 +179,11 @@ Resumen estructurado: source Formatos y Normativa de postulación/Formato-de-Not
 - /applicant/applications es Mis postulaciones: exclusivamente aplicaciones del usuario conectado, con filtro explícito applicant_id y RLS existente. Incluye borradores para retomarlos, estados remitidos y propuesta completa cuando corresponde.
 - Navegación usa rutas distintas; marca activa diferenciada. Enlace de regreso del editor apunta al listado propio. Usuarios internos siguen fuera de estas rutas por requireViewer applicant.
 - 38 pruebas pasan incluyendo aislamiento de usuarios en DB, lint y build; QA alojada pendiente publicación y sesión externa.
+
+## 2026-10-08 — Guía de postulación e icono institucional
+- Fuente revisada https://galapagoslifefund.org.ec/es/2convocatoria/ y Manual de Procedimientos GLF 2025 vinculado. Segunda convocatoria cerrada 02-02-2026; tabla/eligibilidad se presentan como referencia identificada. Reglas operativas de tarjetas provienen de la convocatoria configurada, sin alterar límites ni eligibilidad ni publicar convocatorias.
+- /applicant/guide (sólo applicant): etapas 1/2, categorías, consulta breve de elegibilidad/documentos/envío/correcciones y enlace institucional. Nuevo menú Cómo postular. Identificación/evaluación inicial sin mitigación fase1; PGAS fase2 conforme última instrucción Ulf.
+- /applicant: explicación breve Nota Conceptual antes de tarjetas; instrucción de escoger categoría; duración y cofinanciamiento separados. No reintroducir expedientes.
+- Icono SVG usa el símbolo del logo existente, con colores originales; se elimina favicon estándar Next. No reconstruir marca con IA.
+- Nota de ambigüedad límite USD250k web(ambas categorías) frente a manual(grande >250k): no inventar regla; manda configuración de la convocatoria.
+- Lint/TypeScript/build correctos; QA visual portal externo pendiente sesión applicant.

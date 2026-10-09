@@ -31,8 +31,7 @@ export function MenuLink({
         path !== "/applicant" &&
         pathname.startsWith(path + "/")) ||
       (path === "/applicant/applications" &&
-        pathname.startsWith("/applicant/") &&
-        pathname !== "/applicant") ||
+        /^\/applicant\/[0-9a-f-]{36}$/i.test(pathname)) ||
       (path === "/internal" && pathname.startsWith("/internal/applications/"));
   return (
     <Link href={href} aria-current={active ? "page" : undefined}>
