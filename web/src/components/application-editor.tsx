@@ -590,9 +590,54 @@ export function ApplicationEditor({
             {rules.version || call.rules_version}
           </p>
         </div>
-        <span className="status-pill neutral">
-          {statusLabel(application.status, locale)}
-        </span>
+        <div className="application-save-heading">
+          <span className="status-pill neutral">
+            {statusLabel(application.status, locale)}
+          </span>
+          {editable && (
+            <span
+              className="application-save-time"
+              role="status"
+              aria-live="polite"
+            >
+              <ActionLabel
+                busy={autoSaving || (busy && operation === "save")}
+                pendingLabel={es ? "Guardando…" : "Saving…"}
+              >
+                {autoError ? (
+                  es ? (
+                    "No guardado"
+                  ) : (
+                    "Not saved"
+                  )
+                ) : dirty ? (
+                  es ? (
+                    "Cambios sin guardar"
+                  ) : (
+                    "Unsaved changes"
+                  )
+                ) : (
+                  <>
+                    {es ? "Guardado " : "Saved "}
+                    <time dateTime={lastSaved}>
+                      {new Date(lastSaved)
+                        .toLocaleString("en-GB", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hourCycle: "h23",
+                          timeZone: "Pacific/Galapagos",
+                        })
+                        .replace(",", "")}
+                    </time>
+                  </>
+                )}
+              </ActionLabel>
+            </span>
+          )}
+        </div>
       </div>
       {!editable && (
         <div className="live-notice">
@@ -651,36 +696,55 @@ export function ApplicationEditor({
       {editable && (
         <aside className="live-card draft-save-status">
           <p>
-            {es
-              ? "Su avance se guarda automáticamente después de dejar de escribir. Puede salir y postergar la consignación de los datos de su nota conceptual, y continuar después desde este o cualquier dispositivo, accediendo desde la opción del menú: Mis postulaciones → Continuar borrador. Solo se enviará la nota conceptual final, cuando pulse Enviar al GLF."
-              : "Your progress is saved automatically after you stop typing. You can leave and postpone entering your concept note information, then continue later from this or any other device using the menu option: My applications → Continue draft. Your final concept note will only be submitted when you select Submit to GLF."}
+            {es ? (
+              <>
+                Su avance se guarda automáticamente después de dejar de
+                escribir. Puede salir y postergar la consignación de los datos
+                de su nota conceptual, y continuar después desde este o
+                cualquier dispositivo, accediendo desde la opción del menú:{" "}
+                <strong>Mis postulaciones</strong> →{" "}
+                <strong>Continuar borrador</strong>. Solo se enviará la nota
+                conceptual final, cuando pulse Enviar al GLF.
+              </>
+            ) : (
+              <>
+                Your progress is saved automatically after you stop typing. You
+                can leave and postpone entering your concept note information,
+                then continue later from this or any other device using the menu
+                option: <strong>My applications</strong> →{" "}
+                <strong>Continue draft</strong>. Your final concept note will
+                only be submitted when you select Submit to GLF.
+              </>
+            )}
           </p>
-          <p role="status" aria-live="polite">
-            <ActionLabel
-              busy={autoSaving || (busy && operation === "save")}
-              pendingLabel={es ? "Guardando…" : "Saving…"}
-            >
-              {autoError
-                ? autoError === "GLF_VERSION_CONFLICT" ||
-                  autoError === "GLF_REVISION_CONFLICT"
-                  ? es
-                    ? "El borrador cambió en otra sesión. Actualice la página antes de continuar."
-                    : "This draft changed in another session. Refresh before continuing."
-                  : es
-                    ? "No se pudieron guardar los cambios. Revise su conexión y pulse Guardar borrador para volver a intentarlo."
-                    : "Changes could not be saved. Check your connection and select Save draft to retry."
-                : dirty
-                  ? es
-                    ? "Cambios sin guardar"
-                    : "Unsaved changes"
-                  : (es ? "Borrador guardado · " : "Draft saved · ") +
-                    new Date(lastSaved).toLocaleTimeString("en-GB", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      timeZone: "Pacific/Galapagos",
-                    })}
-            </ActionLabel>
-          </p>
+          {autoError && (
+            <p role="alert">
+              <ActionLabel
+                busy={autoSaving || (busy && operation === "save")}
+                pendingLabel={es ? "Guardando…" : "Saving…"}
+              >
+                {autoError
+                  ? autoError === "GLF_VERSION_CONFLICT" ||
+                    autoError === "GLF_REVISION_CONFLICT"
+                    ? es
+                      ? "El borrador cambió en otra sesión. Actualice la página antes de continuar."
+                      : "This draft changed in another session. Refresh before continuing."
+                    : es
+                      ? "No se pudieron guardar los cambios. Revise su conexión y pulse Guardar borrador para volver a intentarlo."
+                      : "Changes could not be saved. Check your connection and select Save draft to retry."
+                  : dirty
+                    ? es
+                      ? "Cambios sin guardar"
+                      : "Unsaved changes"
+                    : (es ? "Borrador guardado · " : "Draft saved · ") +
+                      new Date(lastSaved).toLocaleTimeString("en-GB", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        timeZone: "Pacific/Galapagos",
+                      })}
+              </ActionLabel>
+            </p>
+          )}
         </aside>
       )}
       {application.deletion_pending && (
