@@ -1,0 +1,4 @@
+project_id = "glf-postulaciones"
+
+[functions.staff-invitations]
+verify_jwt = true
