@@ -57,8 +57,8 @@ export default async function ApplicationGuide() {
         <h2>{es ? "Categorías de subvención" : "Grant categories"}</h2>
         <p>
           {es
-            ? "Referencia: segunda convocatoria, cerrada el 2 de febrero de 2026. Para una nueva solicitud, consulte los valores y condiciones de la convocatoria abierta en «Nueva postulación»."
-            : "Reference: second call, closed on 2 February 2026. For a new application, consult the values and conditions of the open call under New application."}
+            ? "Estas son las categorías, montos, plazos y condiciones de cofinanciamiento vigentes para las postulaciones al Galápagos Life Fund."
+            : "These are the current categories, amounts, durations and co-financing conditions for applications to Galápagos Life Fund."}
         </p>
         <div className="table-scroll">
           <table>
@@ -98,19 +98,12 @@ export default async function ApplicationGuide() {
             </tbody>
           </table>
         </div>
-        <p>
-          {es
-            ? "La publicación sitúa USD 250.000 en ambas categorías; seleccione según las bases configuradas para la convocatoria vigente."
-            : "The publication places USD 250,000 in both categories; select according to the configured rules of the current call."}
-        </p>
       </section>
       <section className="live-card">
         <h2>{es ? "Consulta rápida" : "Quick reference"}</h2>
         <details>
           <summary>
-            {es
-              ? "Elegibilidad en la segunda convocatoria"
-              : "Eligibility in the second call"}
+            {es ? "¿Quiénes pueden postular?" : "Who can apply?"}
           </summary>
           <p>
             {es
@@ -143,8 +136,8 @@ export default async function ApplicationGuide() {
             rel="noopener noreferrer"
           >
             {es
-              ? "Fuente institucional · Segunda convocatoria"
-              : "Institutional source · Second call"}
+              ? "Información institucional del GLF"
+              : "GLF institutional information"}
           </a>
         </p>
       </section>

@@ -187,3 +187,8 @@ Resumen estructurado: source Formatos y Normativa de postulación/Formato-de-Not
 - Icono SVG usa el símbolo del logo existente, con colores originales; se elimina favicon estándar Next. No reconstruir marca con IA.
 - Nota de ambigüedad límite USD250k web(ambas categorías) frente a manual(grande >250k): no inventar regla; manda configuración de la convocatoria.
 - Lint/TypeScript/build correctos; QA visual portal externo pendiente sesión applicant.
+
+## 2026-10-08 — Reglas generales confirmadas por Schubert
+- El usuario confirma montos, categorías y elegibilidad vigentes para convocatorias anteriores y futuras; no presentarlos como reglas históricas/exclusivas de segunda convocatoria. Cambios futuros requieren decisión del directorio y actualización del portal.
+- Guía ES/EN: elimina fecha de cierre y referencia histórica de categorías; Consulta rápida usa Quiénes pueden postular. Conserva datos y fuente institucional, sin nota sobre solapamiento USD250k en la interfaz. No alterar fechas de convocatorias ni estados.
+- Esta instrucción reemplaza el tratamiento histórico del apartado previo de relevo.
