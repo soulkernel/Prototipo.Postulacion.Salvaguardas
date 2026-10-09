@@ -6,6 +6,8 @@ import { RequiredMark } from "./required-mark";
 import { stepIssues } from "@/lib/step-validation";
 import { GeographyFields } from "./geography-fields";
 import { SummaryFields } from "./summary-fields";
+import { StrategicFields } from "./strategic-fields";
+import { strategicText } from "@/lib/strategic-alignment";
 import { ActionLabel } from "./submit-button";
 import { summaryText, summarySections } from "@/lib/summary";
 import { useRouter } from "next/navigation";
@@ -74,6 +76,10 @@ const levels = {
   },
 };
 function message(code: string, es: boolean) {
+  if (code.includes("ALIGNMENT"))
+    return es
+      ? "Complete los objetivos, la contribución esperada y la alineación del proyecto con Plan Galápagos 2030, ODS y GLF."
+      : "Complete objectives, expected contribution and project alignment with Plan Galápagos 2030, SDGs and GLF.";
   if (code.includes("SUMMARY"))
     return es
       ? "Complete las seis secciones del resumen y respete el límite total de palabras."
@@ -662,7 +668,37 @@ export function ApplicationEditor({
                         }))
                       }
                     />
-                  ) : field.key === "phone" ? (
+                  ) : field.key === "objectives" ? (
+                    <StrategicFields
+                      key={field.key}
+                      value={payload.concept.strategic_alignment}
+                      legacy={
+                        payload.concept.objectives +
+                        "\n" +
+                        payload.concept.alignment
+                      }
+                      locale={locale}
+                      onChange={(value) =>
+                        setPayload((p) => ({
+                          ...p,
+                          activities: p.activities.map((a) => ({
+                            ...a,
+                            objective_ids: a.objective_ids?.filter((id) =>
+                              value.objectives.some(
+                                (o) => o.id === id && o.kind === "specific",
+                              ),
+                            ),
+                          })),
+                          concept: {
+                            ...p.concept,
+                            strategic_alignment: value,
+                            ...strategicText(value, locale),
+                          },
+                        }))
+                      }
+                    />
+                  ) : field.key === "alignment" ? null : field.key ===
+                    "phone" ? (
                     <PhoneField
                       key={field.key}
                       locale={locale}
@@ -845,6 +881,45 @@ export function ApplicationEditor({
                     </button>
                   </div>
                   <div className="live-form">
+                    {payload.concept.strategic_alignment && (
+                      <fieldset className="full-width strategic-fields">
+                        <legend>
+                          {es
+                            ? "Objetivos específicos a los que contribuye esta actividad"
+                            : "Specific objectives this activity contributes to"}
+                        </legend>
+                        {payload.concept.strategic_alignment.objectives
+                          .filter((o) => o.kind === "specific")
+                          .map((o, i) => (
+                            <label
+                              key={o.id}
+                              style={{ display: "flex", gap: 8 }}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={
+                                  activity.objective_ids?.includes(o.id) ||
+                                  false
+                                }
+                                onChange={() =>
+                                  updateActivity(ai, {
+                                    objective_ids:
+                                      activity.objective_ids?.includes(o.id)
+                                        ? activity.objective_ids.filter(
+                                            (id) => id !== o.id,
+                                          )
+                                        : [
+                                            ...(activity.objective_ids || []),
+                                            o.id,
+                                          ],
+                                  })
+                                }
+                              />
+                              OE{i + 1} · {o.text}
+                            </label>
+                          ))}
+                      </fieldset>
+                    )}
                     <label>
                       {es ? "Nombre de actividad" : "Activity name"}
                       <RequiredMark locale={locale} />

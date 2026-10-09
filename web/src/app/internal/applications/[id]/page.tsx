@@ -6,6 +6,7 @@ import { Shell } from "@/components/shell";
 import { UploadForm } from "@/components/upload-form";
 import { identityFields, narrativeFields, statusLabel } from "@/lib/fields";
 import { riskScore, riskLevel } from "@/lib/domain";
+import { strategicText } from "@/lib/strategic-alignment";
 import type { Call } from "@/lib/domain";
 import {
   recordReview,
@@ -83,6 +84,11 @@ export default async function ReviewPage({
   if (!versions?.[0]?.payload)
     throw new Error("Submitted dossier has no submitted version");
   a.payload = versions[0].payload;
+  if (a.payload.concept.strategic_alignment)
+    a.payload.concept = {
+      ...a.payload.concept,
+      ...strategicText(a.payload.concept.strategic_alignment, locale),
+    };
   const submittedStage = versions[0].stage;
   const phase2Fields = (call?.phase2_schema || []) as Call["phase2_schema"];
   const role = viewer.profile.role;

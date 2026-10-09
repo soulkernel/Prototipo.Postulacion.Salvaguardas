@@ -489,6 +489,77 @@ before(async () => {
   app = await rpc("create_application", { call_id: call });
 });
 after(async () => await db.close());
+test("database validates structured alignment and rejects forged references and missing contribution", async () => {
+  const p = {
+    concept: {
+      strategic_alignment: {
+        version: "pg2030-anexo6-glf2024-ods2015-v1",
+        objectives: [
+          {
+            id: "30000000-0000-4000-8000-000000000001",
+            kind: "general",
+            text: "",
+            plan: ["E1"],
+            ods: [14],
+            glf: ["GLF-L07"],
+            contribution: "",
+          },
+        ],
+      },
+    },
+    activities: [],
+  };
+  const validate = (value) =>
+    db.query("select private.validate_payload($1::jsonb,$2::jsonb,false,1)", [
+      JSON.stringify(value),
+      JSON.stringify(rules),
+    ]);
+  await validate(p);
+  for (const patch of [
+    { plan: ["FAKE"] },
+    { ods: [18] },
+    { ods: [14, 14] },
+    { glf: ["GLF-L99"] },
+  ]) {
+    const bad = structuredClone(p);
+    Object.assign(bad.concept.strategic_alignment.objectives[0], patch);
+    await assert.rejects(validate(bad), /GLF_INVALID_ALIGNMENT/);
+  }
+  const badActivity = structuredClone(p);
+  badActivity.activities = [
+    {
+      id: "10000000-0000-4000-8000-000000000001",
+      risks: [],
+      objective_ids: ["30000000-0000-4000-8000-000000000001"],
+    },
+  ];
+  await assert.rejects(validate(badActivity), /GLF_INVALID_ALIGNMENT/);
+  const completePayload = structuredClone(fullPayload);
+  completePayload.concept.strategic_alignment = structuredClone(
+    p.concept.strategic_alignment,
+  );
+  completePayload.concept.strategic_alignment.objectives[0].text =
+    "Conservar hábitats";
+  completePayload.concept.strategic_alignment.objectives.push({
+    ...completePayload.concept.strategic_alignment.objectives[0],
+    id: "30000000-0000-4000-8000-000000000002",
+    kind: "specific",
+  });
+  await assert.rejects(
+    db.query("select private.validate_payload($1::jsonb,$2::jsonb,true,2)", [
+      JSON.stringify(completePayload),
+      JSON.stringify(rules),
+    ]),
+    /GLF_ALIGNMENT_REQUIRED/,
+  );
+  completePayload.concept.strategic_alignment.objectives.forEach(
+    (o) => (o.contribution = "Restaurar zonas degradadas"),
+  );
+  await db.query(
+    "select private.validate_payload($1::jsonb,$2::jsonb,true,2)",
+    [JSON.stringify(completePayload), JSON.stringify(rules)],
+  );
+});
 test("one applicant can keep multiple independent applications in the same call", async () => {
   const first = await rpc("create_application", { call_id: call });
   const second = await rpc("create_application", { call_id: call });

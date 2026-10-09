@@ -4,6 +4,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { PDFDocument } from "pdf-lib";
 import { applicationPdf } from "../src/lib/pdf";
 import { emptyPayload, newActivity, newRisk } from "../src/lib/domain";
+import { alignmentVersion, newObjective } from "../src/lib/strategic-alignment";
 
 test("concept and matrix PDFs embed fonts, paginate and contain a QR image", async () => {
   const payload = emptyPayload();
@@ -27,6 +28,28 @@ test("concept and matrix PDFs embed fonts, paginate and contain a QR image", asy
     results: "Resultados ficticios",
   };
   payload.concept.requested_amount = 50000;
+  payload.concept.strategic_alignment = {
+    version: alignmentVersion,
+    objectives: [
+      {
+        ...newObjective("general"),
+        text: "Restaurar hábitats costeros",
+        plan: ["E1"],
+        ods: [14],
+        glf: ["GLF-L07"],
+        contribution:
+          "Recuperación de ecosistemas con participación comunitaria",
+      },
+      {
+        ...newObjective("specific"),
+        text: "Restaurar dos zonas degradadas",
+        plan: ["E1"],
+        ods: [14],
+        glf: ["GLF-L07"],
+        contribution: "Recuperación ecológica de sitios intervenidos",
+      },
+    ],
+  };
   const activity = newActivity();
   activity.title = "Restauración costera";
   activity.description = "Actividad ficticia para verificar exportación.";

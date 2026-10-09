@@ -2,6 +2,7 @@ import { z } from "zod";
 import { normalizePhone } from "./phone";
 import { geographyIssues } from "./geography";
 import { emptySummary, hasSummaryParts } from "./summary";
+import { strategicSchema, alignmentIssues } from "./strategic-alignment";
 export const roles = [
   "applicant",
   "grants_manager",
@@ -54,6 +55,7 @@ export const conceptSchema = z
     results: text,
     sustainability: text,
     alignment: text,
+    strategic_alignment: strategicSchema.optional(),
     monitoring: text,
     environmental_risks: text,
     social_risks: text,
@@ -95,6 +97,7 @@ export const activitySchema = z
     title: text,
     description: text,
     no_risks_reason: text,
+    objective_ids: z.array(z.uuid()).max(10).optional(),
     risks: z.array(riskSchema).max(100),
   })
   .strict();
@@ -340,6 +343,7 @@ export function validateComplete(
 ): string[] {
   const missing: string[] = [];
   const c = payload.concept;
+  missing.push(...alignmentIssues(c.strategic_alignment));
   missing.push(...Object.keys(financialErrors(c, rules)));
   missing.push(...geographyIssues(c));
   if (c.phone && !normalizePhone(c.phone)) missing.push("phone");
@@ -360,6 +364,15 @@ export function validateComplete(
     missing.push("summary");
   if (!payload.activities.length) missing.push("activities");
   payload.activities.forEach((a, i) => {
+    if (
+      a.objective_ids?.some(
+        (id) =>
+          !c.strategic_alignment?.objectives.some(
+            (o) => o.id === id && o.kind === "specific",
+          ),
+      )
+    )
+      missing.push("activity_" + (i + 1));
     if (!a.title.trim() || !a.description.trim())
       missing.push("activity_" + (i + 1));
     if (!a.risks.length && !a.no_risks_reason.trim())

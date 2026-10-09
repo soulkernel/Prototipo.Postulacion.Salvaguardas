@@ -2773,3 +2773,20 @@ select {
     animation: none !important;
   }
 }
+.strategic-fields input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  min-height: 18px;
+  flex: 0 0 18px;
+  margin: 3px 0 0;
+  padding: 0;
+  accent-color: #1f3d70;
+}
+.strategic-fields details { margin: 10px 0; }
+.strategic-fields summary { cursor: pointer; padding: 7px 0; }
+.strategic-fields summary:hover { color: #087b73; }
+.strategic-fields summary:focus-visible { outline: 2px solid #087b73; outline-offset: 3px; }
+.strategic-objective { border: 1px solid #dce4eb; border-radius: 12px; padding: 18px; background: #fff; min-width: 0; }
+.strategic-objective legend { padding: 0 8px; color: #1f3d70; }
+.strategic-fields textarea { margin-top: 6px; }
+.strategic-fields > p { color: #536473; }

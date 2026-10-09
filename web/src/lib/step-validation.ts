@@ -11,6 +11,7 @@ import {
   type Call,
 } from "./domain";
 import { identityFields, narrativeFields } from "./fields";
+import { alignmentIssues } from "./strategic-alignment";
 export function stepIssues(
   payload: Payload,
   rules: Rules,
@@ -50,6 +51,7 @@ export function stepIssues(
         invalid.push("email");
       invalid.push(...Object.keys(financialErrors(payload.concept, rules)));
     } else {
+      missing.push(...alignmentIssues(payload.concept.strategic_alignment));
       if (hasSummaryParts(payload.concept.summary_parts))
         for (const section of summarySections)
           if (!payload.concept.summary_parts[section.key].trim())

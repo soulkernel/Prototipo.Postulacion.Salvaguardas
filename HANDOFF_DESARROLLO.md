@@ -207,3 +207,16 @@ Resumen estructurado: source Formatos y Normativa de postulación/Formato-de-Not
 - Al hidratar sql/new se abrió snippet anterior 013; primer fill dejó texto parcial. Consulta produjo exclusivamente error de sintaxis, sin cambios DB. Snippet original 013 restaurado desde repo y guardado SIN ejecutarlo. Luego se abrió consulta independiente y se aplicó operación correcta con resultado verificado.
 - Evidencia local scratch/convocatoria-texto-depurado.png, no subir.
 - Usuario quiere reinicio de datos DESPUÉS de pruebas reales, no ahora. No hay eliminación realizada ni programada. Antes de limpieza: inventario, copia verificada y acuerdo de alcance (expedientes/anexos/cuentas de prueba/corpus); preservar esquema, permisos, configuración y accesos administrativos necesarios. No interpretar el plan futuro como orden inmediata de eliminar base completa.
+
+## Alineación estratégica — 2026-10-08, versión 0.2.0
+- Selecciones estructuradas dentro de concept.strategic_alignment, almacenadas en el JSONB del expediente y sus versiones; sin borrar datos ni crear una segunda fuente de verdad.
+- Objetivo general y hasta 10 específicos, identificadores UUID, contribución prevista por objetivo, selección múltiple de políticas Plan Galápagos 2030, objetivos ODS y líneas generales GLF.
+- Catálogo inicial comprobado: 17 políticas del anexo 6 del Plan, sus relaciones con los 17 ODS y 7 líneas del Manual GLF sección 3. Etiquetas abreviadas bilingües; enlaces a fuentes. Los cruces son a nivel de política/objetivo ODS, no de las 169 metas. No se declara completo el catálogo de estrategias del Plan.
+- Sugerencias ODS deterministas según políticas elegidas; no autoselección ni puntuaciones. Se mantienen selecciones previas si cambia una política; el aplicante decide retirarlas.
+- Conjunto del proyecto cubre los tres marcos, cada objetivo tiene contribución y alguna referencia; no se fuerzan los tres marcos en cada específico. Borradores incompletos siguen guardándose.
+- Actividades permiten asociar objetivos específicos; al retirar un objetivo se limpian sus asociaciones en el editor. Validación de referencias también en servidor/BD.
+- Compatibilidad: texto anterior se conserva en legacy_text al organizarlo. No se convierte automáticamente en selecciones. Los expedientes anteriores sin estructura siguen compatibles.
+- PDF bilingüe y revisión interna generan texto desde identificadores y catálogo, sin confiar en etiquetas enviadas por cliente. Priorización específica de convocatorias y elegibilidad permanecen distintas de las líneas generales seleccionables.
+- Migración 015 aplicada manualmente en SQL Editor, transacción con Success. Consulta posterior confirma wrapper anterior presente y 3 expedientes conservados. No repetir ni db push sin conciliar historial CLI.
+- Pruebas: 24 de base y 24 TypeScript pasan, incluyendo referencias falsas, duplicados, cobertura y PDF con alineación. UI probada en Chrome mediante ruta local temporal, retirada antes de compilar/publicar.
+- No se enviaron invitaciones ni se alteraron expedientes existentes. No se añadió planificación del Parque Nacional Galápagos.

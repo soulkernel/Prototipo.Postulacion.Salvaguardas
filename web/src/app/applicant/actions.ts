@@ -8,6 +8,11 @@ import { normalizePhone } from "@/lib/phone";
 import { geographyIssues } from "@/lib/geography";
 import { hasSummaryParts, summaryText } from "@/lib/summary";
 import { words } from "@/lib/domain";
+import {
+  strategicText,
+  alignmentVersion,
+  newObjective,
+} from "@/lib/strategic-alignment";
 import type { SupabaseClient } from "@supabase/supabase-js";
 async function validStoredPhone(db: SupabaseClient, id: string) {
   const { data, error } = await db
@@ -99,6 +104,10 @@ export async function createDraft(form: FormData) {
       "/applicant?error=" + encodeURIComponent(safeError(error.message)),
     );
   const payload = emptyPayload();
+  payload.concept.strategic_alignment = {
+    version: alignmentVersion,
+    objectives: [newObjective("general"), newObjective("specific")],
+  };
   Object.assign(
     payload.concept,
     applicantDefaults(
@@ -136,6 +145,9 @@ export async function saveDraft(
       ...parsed.data,
       concept: {
         ...parsed.data.concept,
+        ...(parsed.data.concept.strategic_alignment
+          ? strategicText(parsed.data.concept.strategic_alignment)
+          : {}),
         summary: hasSummaryParts(parsed.data.concept.summary_parts)
           ? summaryText(parsed.data.concept.summary_parts)
           : parsed.data.concept.summary,

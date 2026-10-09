@@ -5,6 +5,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { identityFields, narrativeFields } from "./fields";
 import { hasSummaryParts, summarySections } from "./summary";
+import { strategicText } from "./strategic-alignment";
 import { riskScore, riskLevel, type Payload, type Locale } from "./domain";
 export async function applicationPdf({
   payload,
@@ -26,6 +27,14 @@ export async function applicationPdf({
   stage: number;
 }) {
   const es = locale === "es";
+  if (payload.concept.strategic_alignment)
+    payload = {
+      ...payload,
+      concept: {
+        ...payload.concept,
+        ...strategicText(payload.concept.strategic_alignment, locale),
+      },
+    };
   const pdf = await PDFDocument.create();
   pdf.registerFontkit(fontkit);
   const levelLabel = (score: number | null) =>
@@ -153,6 +162,20 @@ export async function applicationPdf({
     draw(es ? "ACTIVIDADES" : "ACTIVITIES", true);
     payload.activities.forEach((a, i) => {
       field(i + 1 + ". " + a.title, a.description);
+      if (a.objective_ids?.length)
+        field(
+          es
+            ? "Objetivos específicos asociados"
+            : "Associated specific objectives",
+          a.objective_ids
+            .map(
+              (id) =>
+                payload.concept.strategic_alignment?.objectives.find(
+                  (o) => o.id === id,
+                )?.text || id,
+            )
+            .join("; "),
+        );
       if (!a.risks.length)
         field(
           es
