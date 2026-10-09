@@ -1,5 +1,7 @@
 # Auditoría del portal GLF — 8 de octubre de 2026
 
+Versión de aplicación: 0.1.1. Las 18 comprobaciones HTTP del despliegue aprobaron después de la corrección de la API del corpus.
+
 ## Alcance y conclusión
 
 Revisión de código, pruebas de PostgreSQL con todas las migraciones, controles en la base Supabase real, navegación interna autenticada y pruebas HTTP anónimas sobre el despliegue. Se conservaron los datos existentes. No se publicaron nuevas convocatorias, no se enviaron invitaciones y no se adoptaron decisiones sobre expedientes.
@@ -17,6 +19,7 @@ La auditoría encontró defectos corregibles y funcionalidades aún pendientes. 
 | La API del corpus devolvía una redirección HTML ante acceso anónimo. | Respuesta JSON 403; exige administrador activo y AAL2 antes de procesar. | Prueba HTTP anónima después del despliegue. |
 | Dos archivos de pruebas no se ejecutaban con `npm test`. | Se incorporan las pruebas de embeddings y reintentos de carga del corpus. | 43 pruebas: 23 de base de datos y 20 de dominio, PDF, selección de respaldo, embeddings y carga. |
 | Enlace secundario de usuarios conservaba una denominación anterior. | Se uniforma a Gestión de usuarios. | Compilación y navegación. |
+| La revisión interna omitía los campos de la propuesta completa y podía continuar con consultas incompletas. | Se muestran los campos de Fase 2, se identifica su PDF correctamente y se usa la fase de la última versión enviada para los riesgos. Ante un error de consulta o ausencia de versión se detiene la visualización. | Lint y compilación; comprobación con un expediente de Fase 2 pendiente. |
 
 ## Base Supabase real
 

@@ -6,6 +6,7 @@ import { Shell } from "@/components/shell";
 import { UploadForm } from "@/components/upload-form";
 import { identityFields, narrativeFields, statusLabel } from "@/lib/fields";
 import { riskScore, riskLevel } from "@/lib/domain";
+import type { Call } from "@/lib/domain";
 import {
   recordReview,
   recordDecision,
@@ -33,11 +34,12 @@ export default async function ReviewPage({
   const es = locale === "es";
   const feedback = await searchParams;
   const [
-    { data: reviews },
-    { data: decisions },
-    { data: versions },
-    { data: docs },
-    { data: events },
+    { data: reviews, error: reviewError },
+    { data: decisions, error: decisionError },
+    { data: versions, error: versionError },
+    { data: docs, error: documentError },
+    { data: events, error: eventError },
+    { data: call, error: callError },
   ] = await Promise.all([
     viewer.db
       .from("technical_reviews")
@@ -63,8 +65,26 @@ export default async function ReviewPage({
       .select("event_type,detail,created_at")
       .eq("application_id", id)
       .order("created_at", { ascending: false }),
+    viewer.db
+      .from("calls")
+      .select("phase2_schema")
+      .eq("id", a.call_id)
+      .single(),
   ]);
-  if (versions?.[0]?.payload) a.payload = versions[0].payload;
+  if (
+    reviewError ||
+    decisionError ||
+    versionError ||
+    documentError ||
+    eventError ||
+    callError
+  )
+    throw new Error("Cannot load the complete submitted dossier");
+  if (!versions?.[0]?.payload)
+    throw new Error("Submitted dossier has no submitted version");
+  a.payload = versions[0].payload;
+  const submittedStage = versions[0].stage;
+  const phase2Fields = (call?.phase2_schema || []) as Call["phase2_schema"];
   const role = viewer.profile.role;
   const underReview = [
     "submitted",
@@ -122,7 +142,13 @@ export default async function ReviewPage({
             </span>
             <div className="live-actions">
               <a href={"/documents/" + v.id + "/concept"}>
-                {es ? "Nota Conceptual PDF" : "Concept Note PDF"}
+                {v.stage === 2
+                  ? es
+                    ? "Propuesta completa PDF"
+                    : "Full Proposal PDF"
+                  : es
+                    ? "Nota Conceptual PDF"
+                    : "Concept Note PDF"}
               </a>
               <a href={"/documents/" + v.id + "/matrix"}>
                 {es ? "Matriz PDF" : "Matrix PDF"}
@@ -154,6 +180,28 @@ export default async function ReviewPage({
           </dl>
         </details>
       </section>
+      {submittedStage === 2 && (
+        <section className="live-card">
+          <details>
+            <summary>
+              {es ? "Propuesta completa remitida" : "Submitted full proposal"}
+            </summary>
+            <dl className="summary-list">
+              {Object.entries(a.payload.phase2 || {}).map(([key, value]) => {
+                const field = phase2Fields.find((f) => f.id === key);
+                return (
+                  <div key={key}>
+                    <dt>
+                      {field ? (es ? field.label_es : field.label_en) : key}
+                    </dt>
+                    <dd>{value || "—"}</dd>
+                  </div>
+                );
+              })}
+            </dl>
+          </details>
+        </section>
+      )}
       <section className="live-card">
         <h2>
           {es
@@ -175,7 +223,7 @@ export default async function ReviewPage({
                   {es ? "Riesgo inicial" : "Initial risk"}:{" "}
                   {riskScore(r.probability, r.severity)} (
                   {riskLevel(riskScore(r.probability, r.severity))})
-                  {a.stage === 2 && (
+                  {submittedStage === 2 && (
                     <>
                       {" "}
                       / {es ? "Residual" : "Residual"}:{" "}
@@ -187,7 +235,7 @@ export default async function ReviewPage({
                     </>
                   )}
                 </p>
-                {a.stage === 2 && (
+                {submittedStage === 2 && (
                   <>
                     <ul>
                       {r.measures.map((m, i) => (
