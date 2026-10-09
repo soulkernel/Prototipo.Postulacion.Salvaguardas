@@ -1,11 +1,8 @@
 "use client";
-import { useState } from "react";
+import { Plus, X } from "lucide-react";
 import {
   glfLines,
-  glfSource,
-  planAxes,
   planPolicies,
-  planSource,
   sdgGoals,
   suggestedOds,
   newObjective,
@@ -26,7 +23,6 @@ export function StrategicFields({
   onChange: (value: StrategicAlignment) => void;
 }) {
   const es = locale === "es";
-  const [allOds, setAllOds] = useState<Record<string, boolean>>({});
   const update = (id: string, patch: Partial<ProjectObjective>) =>
     onChange({
       ...value!,
@@ -42,19 +38,12 @@ export function StrategicFields({
             ? "Objetivos y alineación estratégica"
             : "Objectives and strategic alignment"}
         </h3>
-        {legacy && (
-          <details>
-            <summary>
-              {es ? "Texto guardado anteriormente" : "Previously saved text"}
-            </summary>
-            <p style={{ whiteSpace: "pre-wrap" }}>{legacy}</p>
-          </details>
-        )}
-        <p>
-          {es
-            ? "Defina sus objetivos y seleccione su contribución a Plan Galápagos 2030, ODS y GLF."
-            : "Define your objectives and select their contribution to Plan Galápagos 2030, SDGs and GLF."}
-        </p>
+        <details>
+          <summary>
+            {es ? "Consultar texto anterior" : "View previous text"}
+          </summary>
+          <p style={{ whiteSpace: "pre-wrap" }}>{legacy}</p>
+        </details>
         <button
           type="button"
           onClick={() =>
@@ -65,6 +54,7 @@ export function StrategicFields({
             })
           }
         >
+          <Plus size={16} />
           {es
             ? "Organizar objetivos y alineación"
             : "Organize objectives and alignment"}
@@ -74,6 +64,16 @@ export function StrategicFields({
   let specific = 0;
   return (
     <section className="full-width strategic-fields">
+      <h3>
+        {es
+          ? "Objetivos y alineación estratégica"
+          : "Objectives and strategic alignment"}
+      </h3>
+      <p>
+        {es
+          ? "Escriba un objetivo por caja y seleccione a qué referencias contribuye. El Plan Galápagos 2030 le sugerirá los ODS relacionados."
+          : "Write one objective per box and select the references it contributes to. Plan Galápagos 2030 will suggest related SDGs."}
+      </p>
       {value.legacy_text && (
         <details>
           <summary>
@@ -82,203 +82,164 @@ export function StrategicFields({
           <p style={{ whiteSpace: "pre-wrap" }}>{value.legacy_text}</p>
         </details>
       )}
-      <h3>
-        {es
-          ? "Objetivos y alineación estratégica"
-          : "Objectives and strategic alignment"}
-      </h3>
-      <p>
-        {es
-          ? "Seleccione las referencias a las que contribuye cada objetivo. En conjunto, el proyecto debe vincularse a los tres marcos. Las sugerencias no constituyen una validación del GLF."
-          : "Select the references to which each objective contributes. The project as a whole must address all three frameworks. Suggestions do not constitute GLF validation."}
-      </p>
       {value.objectives.map((o) => {
-        const suggested = suggestedOds(o.plan);
-        const toggle = (key: "plan" | "glf", id: string) =>
-          update(o.id, {
-            [key]: o[key].includes(id)
-              ? o[key].filter((x) => x !== id)
-              : [...o[key], id],
-          });
-        return (
-          <fieldset key={o.id} className="strategic-objective" style={{ marginBottom: 16 }}>
-            <legend>
-              <strong>
-                {o.kind === "general"
-                  ? es
-                    ? "Objetivo general"
-                    : "General objective"
-                  : `${es ? "Objetivo específico" : "Specific objective"} ${++specific}`}
-              </strong>
-            </legend>
-            <label>
-              {es ? "Objetivo del proyecto *" : "Project objective *"}
-              <textarea
-                rows={3}
-                maxLength={2000}
-                value={o.text}
-                onChange={(e) => update(o.id, { text: e.target.value })}
-              />
-            </label>
-            <details open>
-              <summary>
-                <strong>Plan Galápagos 2030</strong> · {o.plan.length}{" "}
-                {es ? "seleccionadas" : "selected"}
-              </summary>
-              <p>
-                <small>
-                  {es
-                    ? "Seleccione la política que apoya su objetivo. Etiquetas resumidas."
-                    : "Select the policy your objective supports. Summarized labels."}{" "}
-                  <a href={planSource} target="_blank" rel="noreferrer">
-                    {es ? "Consultar fuente" : "View source"}
-                  </a>
-                </small>
-              </p>
-              {planAxes.map(([id, labelEs, labelEn]) => (
-                <details key={id} open={o.plan.some((p) => p.startsWith(id))}>
-                  <summary>{es ? labelEs : labelEn}</summary>
-                  {planPolicies
-                    .filter((p) => p.id.startsWith(id))
-                    .map((p) => (
-                      <label
-                        key={p.id}
-                        style={{ display: "flex", gap: 8, margin: "8px 0" }}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={o.plan.includes(p.id)}
-                          onChange={() => toggle("plan", p.id)}
-                        />
-                        {p.id} · {p[locale]}
-                      </label>
-                    ))}
-                </details>
-              ))}
-            </details>
-            <details open>
-              <summary>
-                <strong>
-                  {es
-                    ? "Objetivos de Desarrollo Sostenible (ODS)"
-                    : "Sustainable Development Goals (SDGs)"}
-                </strong>{" "}
-                · {o.ods.length}
-              </summary>
-              <p>
-                <small>
-                  {suggested.length
-                    ? es
-                      ? "ODS relacionados con las políticas seleccionadas, según el anexo del Plan. Confirme los que correspondan."
-                      : "SDGs linked to selected policies in the Plan annex. Confirm those that apply."
-                    : es
-                      ? "Seleccione una política del Plan para obtener sugerencias, o consulte todos los ODS."
-                      : "Select a Plan policy for suggestions, or browse all SDGs."}
-                </small>
-              </p>
-              {sdgGoals
-                .filter(
-                  (g) =>
-                    allOds[o.id] ||
-                    suggested.includes(g.id) ||
-                    o.ods.includes(g.id),
-                )
-                .map((g) => (
-                  <label
-                    key={g.id}
-                    style={{ display: "flex", gap: 8, margin: "8px 0" }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={o.ods.includes(g.id)}
-                      onChange={() =>
-                        update(o.id, {
-                          ods: o.ods.includes(g.id)
-                            ? o.ods.filter((x) => x !== g.id)
-                            : [...o.ods, g.id],
-                        })
+        const title =
+          o.kind === "general"
+            ? es
+              ? "Objetivo general"
+              : "General objective"
+            : `${es ? "Objetivo específico" : "Specific objective"} ${++specific}`;
+        const related = suggestedOds(o.plan);
+        const selector = (key: "plan" | "ods" | "glf", label: string) => {
+          const items =
+            key === "plan" ? planPolicies : key === "glf" ? glfLines : sdgGoals;
+          const selected = o[key].map(String);
+          const remaining = items.filter(
+            (i) => !selected.includes(String(i.id)),
+          );
+          const options = (list: typeof remaining) =>
+            list.map((i) => (
+              <option key={i.id} value={i.id}>
+                {key === "glf" ? "" : `${i.id} · `}
+                {i[locale]}
+              </option>
+            ));
+          return (
+            <div className="alignment-selector" key={key}>
+              <label htmlFor={`${key}-${o.id}`}>{label}</label>
+              <select
+                id={`${key}-${o.id}`}
+                value=""
+                onChange={(e) => {
+                  const id = e.target.value;
+                  if (!id) return;
+                  if (key === "ods")
+                    update(o.id, { ods: [...o.ods, Number(id)] });
+                  else update(o.id, { [key]: [...o[key], id] });
+                }}
+              >
+                <option value="">
+                  {es ? "Seleccione una opción" : "Select an option"}
+                </option>
+                {key === "ods" && related.length ? (
+                  <>
+                    <optgroup
+                      label={
+                        es
+                          ? "Relacionados con el Plan seleccionado"
+                          : "Related to the selected Plan"
                       }
-                    />
-                    {es ? "ODS" : "SDG"} {g.id} · {g[locale]}
-                    {suggested.includes(g.id)
-                      ? es
-                        ? " · relacionado"
-                        : " · related"
-                      : ""}
-                  </label>
+                    >
+                      {options(
+                        remaining.filter((i) => related.includes(Number(i.id))),
+                      )}
+                    </optgroup>
+                    <optgroup label={es ? "Otros ODS" : "Other SDGs"}>
+                      {options(
+                        remaining.filter(
+                          (i) => !related.includes(Number(i.id)),
+                        ),
+                      )}
+                    </optgroup>
+                  </>
+                ) : (
+                  options(remaining)
+                )}
+              </select>
+              <div className="alignment-chips">
+                {selected.map((id) => (
+                  <span key={id}>
+                    {key === "ods" ? `${es ? "ODS" : "SDG"} ` : ""}
+                    {id} · {items.find((i) => String(i.id) === id)?.[locale]}
+                    <button
+                      type="button"
+                      aria-label={`${es ? "Quitar" : "Remove"} ${label} ${id} · ${title}`}
+                      onClick={() =>
+                        key === "ods"
+                          ? update(o.id, {
+                              ods: o.ods.filter((x) => String(x) !== id),
+                            })
+                          : update(o.id, {
+                              [key]: o[key].filter((x) => x !== id),
+                            })
+                      }
+                    >
+                      <X size={14} />
+                    </button>
+                  </span>
                 ))}
-              <button
-                type="button"
-                onClick={() => setAllOds({ ...allOds, [o.id]: !allOds[o.id] })}
-              >
-                {allOds[o.id]
-                  ? es
-                    ? "Mostrar sugeridos"
-                    : "Show suggested"
-                  : es
-                    ? "Consultar los 17 ODS"
-                    : "Browse all 17 SDGs"}
-              </button>{" "}
-              <a
-                href="https://sdgs.un.org/es/goals"
-                target="_blank"
-                rel="noreferrer"
-              >
-                {es ? "Fuente ONU" : "UN source"}
-              </a>
-            </details>
-            <details>
-              <summary>
-                <strong>
-                  {es ? "Líneas de financiamiento GLF" : "GLF funding lines"}
-                </strong>{" "}
-                · {o.glf.length}
-              </summary>
-              <p>
+              </div>
+            </div>
+          );
+        };
+        return (
+          <fieldset className="strategic-objective" key={o.id}>
+            <legend>{title}</legend>
+            <div className="strategic-objective-row">
+              <div className="strategic-objective-text">
+                <label htmlFor={`objective-${o.id}`}>{title} *</label>
+                <textarea
+                  id={`objective-${o.id}`}
+                  aria-required="true"
+                  rows={4}
+                  maxLength={2000}
+                  value={o.text}
+                  placeholder={
+                    es
+                      ? "Escriba aquí este objetivo"
+                      : "Write this objective here"
+                  }
+                  onChange={(e) => update(o.id, { text: e.target.value })}
+                />
+                <small>
+                  {o.text.length}/2000 {es ? "caracteres" : "characters"}
+                </small>
+                <label
+                  className="alignment-benefit-label"
+                  htmlFor={`benefit-${o.id}`}
+                >
+                  {es
+                    ? "Contribución o beneficio esperado *"
+                    : "Expected contribution or benefit *"}
+                </label>
+                <textarea
+                  id={`benefit-${o.id}`}
+                  aria-required="true"
+                  rows={2}
+                  maxLength={600}
+                  value={o.contribution}
+                  placeholder={
+                    es
+                      ? "¿Qué resultado aportará a las referencias elegidas?"
+                      : "What result will contribute to the selected references?"
+                  }
+                  onChange={(e) =>
+                    update(o.id, { contribution: e.target.value })
+                  }
+                />
+                <small>
+                  {o.contribution.length}/600 {es ? "caracteres" : "characters"}
+                </small>
+              </div>
+              <div className="strategic-objective-selectors">
+                {selector("plan", "Plan Galápagos 2030")}
+                {selector(
+                  "ods",
+                  es
+                    ? "Objetivos de Desarrollo Sostenible (ODS)"
+                    : "Sustainable Development Goals (SDGs)",
+                )}
                 <small>
                   {es
-                    ? "La selección identifica la contribución estratégica; la elegibilidad depende de las bases y prioridades de la convocatoria."
-                    : "This selection identifies strategic contribution; eligibility depends on the call's rules and priorities."}{" "}
-                  <a href={glfSource} target="_blank" rel="noreferrer">
-                    {es ? "Consultar manual" : "View manual"}
-                  </a>
+                    ? "Los ODS relacionados se muestran primero. Usted confirma cuáles corresponden."
+                    : "Related SDGs are shown first. You confirm which apply."}
                 </small>
-              </p>
-              {glfLines.map((g) => (
-                <label
-                  key={g.id}
-                  style={{ display: "flex", gap: 8, margin: "8px 0" }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={o.glf.includes(g.id)}
-                    onChange={() => toggle("glf", g.id)}
-                  />
-                  {g[locale]}
-                </label>
-              ))}
-            </details>
-            <label>
-              {es
-                ? "Contribución o beneficio esperado *"
-                : "Expected contribution or benefit *"}
-              <textarea
-                rows={2}
-                maxLength={600}
-                value={o.contribution}
-                placeholder={
-                  es
-                    ? "¿Qué resultado concreto aportará a las referencias seleccionadas?"
-                    : "What concrete result will contribute to the selected references?"
-                }
-                onChange={(e) => update(o.id, { contribution: e.target.value })}
-              />
-              <small>
-                {o.contribution.length}/600 {es ? "caracteres" : "characters"}
-              </small>
-            </label>
+                {selector("glf", es ? "Línea GLF" : "GLF funding line")}
+              </div>
+            </div>
             {o.kind === "specific" && (
               <button
+                className="objective-remove"
                 type="button"
                 onClick={() =>
                   onChange({
@@ -287,9 +248,8 @@ export function StrategicFields({
                   })
                 }
               >
-                {es
-                  ? "Eliminar objetivo específico"
-                  : "Remove specific objective"}
+                <X size={14} />
+                {es ? "Eliminar este objetivo" : "Remove this objective"}
               </button>
             )}
           </fieldset>
@@ -297,6 +257,7 @@ export function StrategicFields({
       })}
       {value.objectives.length < 11 && (
         <button
+          className="objective-add"
           type="button"
           onClick={() =>
             onChange({
@@ -305,14 +266,15 @@ export function StrategicFields({
             })
           }
         >
+          <Plus size={18} />
           {es ? "Añadir objetivo específico" : "Add specific objective"}
         </button>
       )}
       {alignmentIssues(value).length > 0 && (
         <p className="help">
           {es
-            ? "Complete los objetivos, su contribución y al menos una referencia de cada marco en el conjunto del proyecto. Puede guardar el borrador incompleto."
-            : "Complete objectives, their contribution and at least one reference from each framework across the project. You may save an incomplete draft."}
+            ? "Complete cada objetivo y su contribución. El conjunto del proyecto debe vincularse a Plan Galápagos 2030, ODS y GLF. Puede guardar un borrador incompleto."
+            : "Complete each objective and its contribution. The project as a whole must address Plan Galápagos 2030, SDGs and GLF. You may save an incomplete draft."}
         </p>
       )}
     </section>

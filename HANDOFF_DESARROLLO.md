@@ -221,3 +221,9 @@ Resumen estructurado: source Formatos y Normativa de postulación/Formato-de-Not
 - Pruebas: 24 de base y 24 TypeScript pasan, incluyendo referencias falsas, duplicados, cobertura y PDF con alineación. UI probada en Chrome mediante ruta local temporal, retirada antes de compilar/publicar.
 - No se enviaron invitaciones ni se alteraron expedientes existentes. No se añadió planificación del Parque Nacional Galápagos.
 - Despliegue verificado: commit e9c5d9e; Vercel CpEXjzuJ2aXStqK8aR4LXqjFANHE Ready, Preview con alias glf-postulaciones.vercel.app. Página publicada confirma footer v0.2.0. No confundir este estado de revisión con apertura oficial de una convocatoria.
+
+## Objetivos y selectores laterales — versión 0.2.1
+- Cada objetivo tiene su propia caja de texto y, al lado, selectores compactos de Plan Galápagos 2030, ODS y GLF. Las selecciones múltiples se muestran como etiquetas removibles; los ODS relacionados con las políticas elegidas aparecen primero.
+- Botón + para añadir específicos; eliminación independiente. Un objetivo general permanece único. La contribución prevista se registra en un campo separado del objetivo.
+- En móvil los selectores quedan debajo. Chrome verifica añadir/eliminar específicos, quitar/reseleccionar referencias y ausencia de desbordamiento a 390 px. Lint aprobado; ruta de prueba temporal retirada.
+- Sin cambios de esquema, permisos ni expedientes; migración 015 no se repite. No se envían invitaciones.
