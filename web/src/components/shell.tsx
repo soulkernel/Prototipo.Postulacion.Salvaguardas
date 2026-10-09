@@ -4,6 +4,7 @@ import { MenuLink } from "./menu-link";
 import { LanguageSwitch } from "./language-switch";
 import type { Locale } from "@/lib/domain";
 import { getViewer } from "@/lib/data";
+import { version } from "../../package.json";
 export async function Shell({
   locale,
   children,
@@ -91,7 +92,7 @@ export async function Shell({
         {children}
       </main>
       <footer className="live-footer">
-        <span>Galápagos Life Fund</span>
+        <span>© 2026 Galápagos Life Fund · v{version}</span>
       </footer>
     </div>
   );

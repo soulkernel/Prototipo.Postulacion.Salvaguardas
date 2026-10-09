@@ -196,3 +196,7 @@ Resumen estructurado: source Formatos y Normativa de postulación/Formato-de-Not
 ## 2026-10-08 — Limpieza institucional y prioridades
 - Retirados de guía ES/EN enlace Información institucional del GLF y del pie global la frase Postulaciones / Salvaguardas / Decisiones trazables. Pie conserva nombre institucional únicamente.
 - Aclaración Schubert: prioridades temáticas y lineamientos sí cambian por convocatoria; categorías, montos, elegibilidad y plazos de categorías siguen comunes hasta decisión de directorio. Evitar referencias/comentarios editoriales innecesarios en interfaz lista para revisión GLF.
+
+## 2026-10-08 — Pie y versión
+- Pie aprobado: © 2026 Galápagos Life Fund · v0.1.0, sin Todos los derechos reservados. Mismo contenido ES/EN.
+- Versión se importa desde web/package.json (fuente única), actualmente 0.1.0. Commit exacto continúa en historial Git/Vercel.
