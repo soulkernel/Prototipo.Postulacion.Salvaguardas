@@ -54,7 +54,7 @@ export default async function ApplicationPage({
   return (
     <Shell locale={locale}>
       <ApplicationEditor
-        key={application.id + application.revision}
+        key={`${application.id}:${application.stage}:${application.status}:${editable}:${locale}`}
         application={application}
         call={call as Call}
         locale={locale}
