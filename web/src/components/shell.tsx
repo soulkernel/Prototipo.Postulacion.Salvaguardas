@@ -2,6 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { MenuLink } from "./menu-link";
 import { LanguageSwitch } from "./language-switch";
+import { SubmitButton } from "./submit-button";
+import { signOut } from "@/app/auth/actions";
 import type { Locale } from "@/lib/domain";
 import { getViewer } from "@/lib/data";
 import { version } from "../../package.json";
@@ -81,7 +83,19 @@ export async function Shell({
             </>
           )}
         </nav>
-        <LanguageSwitch locale={locale} />
+        <div className="header-account-controls">
+          <LanguageSwitch locale={locale} />
+          {viewer && (
+            <form action={signOut}>
+              <SubmitButton
+                className="header-sign-out"
+                pendingLabel={locale === "es" ? "Cerrando sesión…" : "Signing out…"}
+              >
+                {locale === "es" ? "Cerrar sesión" : "Sign out"}
+              </SubmitButton>
+            </form>
+          )}
+        </div>
       </header>
       <main className="live-main" id="main-content">
         {internal && (

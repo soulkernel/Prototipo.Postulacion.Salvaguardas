@@ -3,7 +3,6 @@ import { requireViewer } from "@/lib/data";
 import { getLocale } from "@/lib/locale";
 import { statusLabel } from "@/lib/fields";
 import { Shell } from "@/components/shell";
-import { signOut } from "@/app/auth/actions";
 import { DeleteDraft } from "@/components/delete-draft";
 export default async function MyApplicationsPage({
   searchParams,
@@ -34,14 +33,6 @@ export default async function MyApplicationsPage({
               : "Your drafts and submitted applications."}
           </p>
         </div>
-        <form action={signOut}>
-          <SubmitButton
-            className="button secondary"
-            pendingLabel={es ? "Cerrando sesión…" : "Signing out…"}
-          >
-            {es ? "Cerrar sesión" : "Sign out"}
-          </SubmitButton>
-        </form>
       </div>
       <section className="live-card" id="expedientes">
         {params.deleted === "1" && (
@@ -141,4 +132,3 @@ export default async function MyApplicationsPage({
     </Shell>
   );
 }
-import { SubmitButton } from "@/components/submit-button";

@@ -1,10 +1,8 @@
-import { SubmitButton } from "@/components/submit-button";
 import Link from "next/link";
 import { requireViewer, getCalls } from "@/lib/data";
 import { getLocale } from "@/lib/locale";
 import { Shell } from "@/components/shell";
 import { roleLabels, statusLabel } from "@/lib/fields";
-import { signOut } from "@/app/auth/actions";
 export default async function InternalPage() {
   const { db, profile } = await requireViewer([
     "grants_manager",
@@ -73,14 +71,6 @@ export default async function InternalPage() {
             {profile.full_name} · {roleLabels[profile.role][es ? 0 : 1]}
           </p>
         </div>
-        <form action={signOut}>
-          <SubmitButton
-            pendingLabel={es ? "Procesando…" : "Processing…"}
-            className="button secondary"
-          >
-            {es ? "Cerrar sesión" : "Sign out"}
-          </SubmitButton>
-        </form>
       </div>
       <nav className="live-nav">
         {["grants_manager", "administrator"].includes(profile.role) && (

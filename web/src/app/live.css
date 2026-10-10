@@ -941,3 +941,12 @@ a {
 .call-code-field { display:grid; gap:.75rem; padding:1rem; background:#f5f8fb; border:1px solid #dce4ee; border-radius:12px; }
 .call-code-field p { margin:0; font-size:.95rem; }
 .call-code-field .button { justify-self:start; }
+
+/* Account actions stay available on every authenticated screen. */
+.header-account-controls { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; margin-left: auto; }
+.header-account-controls form { margin: 0; }
+.header-sign-out { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 36px; padding: 6px 12px; border: 1px solid #a9bddb; border-radius: 7px; background: transparent; color: #fff; font: inherit; font-size: 14px; cursor: pointer; }
+.header-sign-out:hover { background: #294b80; border-color: #83ead6; color: #83ead6; }
+.header-sign-out:focus-visible { outline: 3px solid #83ead6; outline-offset: 3px; }
+.header-sign-out:active { transform: translateY(1px); }
+.header-sign-out:disabled { opacity: .7; cursor: wait; }

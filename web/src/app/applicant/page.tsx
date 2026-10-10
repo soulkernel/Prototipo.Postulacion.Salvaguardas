@@ -4,7 +4,6 @@ import { requireViewer, getCalls } from "@/lib/data";
 import { getLocale } from "@/lib/locale";
 import { Shell } from "@/components/shell";
 import { createDraft } from "./actions";
-import { signOut } from "@/app/auth/actions";
 import { SubmitButton } from "@/components/submit-button";
 export default async function ApplicantPage({
   searchParams,
@@ -37,14 +36,6 @@ export default async function ApplicantPage({
           <p className="eyebrow">{viewer.profile.full_name}</p>
           <h1>{es ? "Nueva postulación" : "New application"}</h1>
         </div>
-        <form action={signOut}>
-          <SubmitButton
-            className="button secondary"
-            pendingLabel={es ? "Cerrando sesión…" : "Signing out…"}
-          >
-            {es ? "Cerrar sesión" : "Sign out"}
-          </SubmitButton>
-        </form>
       </div>
       {params.error && (
         <div role="alert" className="auth-error">

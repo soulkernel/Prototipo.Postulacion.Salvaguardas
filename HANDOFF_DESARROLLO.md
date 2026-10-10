@@ -264,3 +264,9 @@ Resumen estructurado: source Formatos y Normativa de postulación/Formato-de-Not
 - Objetivos se muestran con texto completo y número; objetivos sin texto no seleccionables. Cada actividad de planificación estructurada debe tener objetivo específico válido antes de continuar/preparar/enviar; validación cliente y Server Actions. Compatibilidad con objetivos históricos no estructurados.
 - Quitar actividad se bloquea si tiene riesgos asociados; se explica retirar asociaciones primero. Cambiar nombres/descripciones conserva riesgos y puntajes, con recordatorio de revisar screening. Quitar objetivos limpia referencias existentes y obliga revisar asociaciones faltantes antes de enviar.
 - 55 pruebas pasan (27 BD, 28 TypeScript), lint y compilación final correctos. Navegador local con componente real verificó agregar/quitar, editar, objetivo completo y eliminación bloqueada con riesgos. Ruta temporal retirada, sin cambios a datos reales ni permisos SQL.
+
+## Cierre de sesión global — versión 0.4.6
+- Shell compartido presenta Cerrar sesión debajo de ES/EN para cualquier usuario autenticado, en todas las pantallas internas y externas. Se retiraron tres botones duplicados de páginas individuales.
+- Conserva Server Action signOut, cierre local y limpieza de preferencia de sesión; SubmitButton bloquea repetición y muestra progreso ES/EN. No cambia roles ni base de datos.
+- ESLint y compilación TypeScript/Next correctos. Los seis expedientes reales siguen pendientes de carga como borradores de schubertlm.reg@gmail.com; preparación local en Trabajo_Carga_6_Expedientes, sin subir documentos a GitHub.
+
