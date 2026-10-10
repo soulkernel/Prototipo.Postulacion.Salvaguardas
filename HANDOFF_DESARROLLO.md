@@ -257,3 +257,10 @@ Resumen estructurado: source Formatos y Normativa de postulación/Formato-de-Not
 - Autoguardado conserva filas incompletas. Continuar/enviar/preparar PDF exige completar nombres o quitar filas vacías. Validación cliente y Server Actions, sin cambios de permisos ni esquema SQL.
 - PDF usa lista estructurada cuando existe, incluyendo lista vacía explícita. 16 pruebas de dominio/PDF pasan; PDF con dos organizaciones extraído y verificado. Compilación final correcta.
 - Versiones 0.4.2/0.4.3: aclaración exacta del usuario, negritas en navegación y fecha/hora de guardado junto a estado Borrador; hora Galápagos.
+
+## Planificación y screening separados — versión 0.4.5 (2026-10-10)
+- Actividades principales se registran en paso 2 Nota conceptual: nombre, descripción y objetivos específicos completos. Screening reutiliza mismos UUID, nombres, descripciones y objetivos; allí solo se evalúan riesgos (PGAS se mantiene en fase 2).
+- Pestañas permiten regresar/editar sin perder el payload compartido. Screening ofrece retorno directo a planificación. Autoguardado y bloqueo de expedientes enviados conservados.
+- Objetivos se muestran con texto completo y número; objetivos sin texto no seleccionables. Cada actividad de planificación estructurada debe tener objetivo específico válido antes de continuar/preparar/enviar; validación cliente y Server Actions. Compatibilidad con objetivos históricos no estructurados.
+- Quitar actividad se bloquea si tiene riesgos asociados; se explica retirar asociaciones primero. Cambiar nombres/descripciones conserva riesgos y puntajes, con recordatorio de revisar screening. Quitar objetivos limpia referencias existentes y obliga revisar asociaciones faltantes antes de enviar.
+- 55 pruebas pasan (27 BD, 28 TypeScript), lint y compilación final correctos. Navegador local con componente real verificó agregar/quitar, editar, objetivo completo y eliminación bloqueada con riesgos. Ruta temporal retirada, sin cambios a datos reales ni permisos SQL.

@@ -14,6 +14,7 @@ import { identityFields, narrativeFields } from "./fields";
 import { alignmentIssues } from "./strategic-alignment";
 import { potentialRiskIssues } from "./potential-risks";
 import { partnerIssues } from "./partners";
+import { activityPlanningIssues } from "./activity-planning";
 export function stepIssues(
   payload: Payload,
   rules: Rules,
@@ -54,6 +55,7 @@ export function stepIssues(
         invalid.push("email");
       invalid.push(...Object.keys(financialErrors(payload.concept, rules)));
     } else {
+      missing.push(...activityPlanningIssues(payload));
       missing.push(
         ...potentialRiskIssues(payload).filter(
           (k) => !k.startsWith("risk_") && !k.startsWith("activity_"),

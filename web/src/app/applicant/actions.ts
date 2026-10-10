@@ -6,6 +6,7 @@ import { requireViewer } from "@/lib/data";
 import { payloadSchema, emptyPayload, applicantDefaults } from "@/lib/domain";
 import { normalizePhone } from "@/lib/phone";
 import { partnerIssues, partnerText } from "@/lib/partners";
+import { activityPlanningIssues } from "@/lib/activity-planning";
 import { synchronizeRisks } from "@/lib/potential-risks";
 import { geographyIssues } from "@/lib/geography";
 import { hasSummaryParts, summaryText } from "@/lib/summary";
@@ -50,6 +51,17 @@ async function validStoredPartners(db: SupabaseClient, id: string) {
   const parsed = payloadSchema.safeParse(data?.payload);
   return (
     !error && parsed.success && partnerIssues(parsed.data.concept).length === 0
+  );
+}
+async function validStoredActivities(db: SupabaseClient, id: string) {
+  const { data, error } = await db
+    .from("applications")
+    .select("payload")
+    .eq("id", id)
+    .maybeSingle();
+  const parsed = payloadSchema.safeParse(data?.payload);
+  return (
+    !error && parsed.success && activityPlanningIssues(parsed.data).length === 0
   );
 }
 async function validStoredSummary(db: SupabaseClient, id: string) {
@@ -213,6 +225,8 @@ export async function prepareDocuments(id: string, revision: number) {
     return { error: "GLF_INVALID_PAYLOAD" };
   if (!(await validStoredPartners(db, id)))
     return { error: "GLF_REQUIRED:partners" };
+  if (!(await validStoredActivities(db, id)))
+    return { error: "GLF_REQUIRED:activities" };
   if (!(await validStoredPhone(db, id))) return { error: "GLF_INVALID_PHONE" };
   if (!(await validStoredSummary(db, id)))
     return { error: "GLF_INVALID_SUMMARY" };
@@ -233,6 +247,8 @@ export async function submitDraft(
     return { ok: false, error: "GLF_INVALID_PAYLOAD" };
   if (!(await validStoredPartners(db, id)))
     return { ok: false, error: "GLF_REQUIRED:partners" };
+  if (!(await validStoredActivities(db, id)))
+    return { ok: false, error: "GLF_REQUIRED:activities" };
   if (!(await validStoredPhone(db, id)))
     return { ok: false, error: "GLF_INVALID_PHONE" };
   if (!(await validStoredSummary(db, id)))

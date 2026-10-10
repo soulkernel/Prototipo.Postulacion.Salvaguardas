@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { PhoneField } from "./phone-field";
+import { ActivityPlanningFields } from "./activity-planning-fields";
 import { PartnerFields } from "./partner-fields";
 import { partnerText } from "@/lib/partners";
 import { RequiredMark } from "./required-mark";
@@ -31,7 +32,6 @@ import {
 } from "@/app/applicant/actions";
 import { identityFields, narrativeFields, statusLabel } from "@/lib/fields";
 import {
-  newActivity,
   newRisk,
   riskScore,
   riskLevel,
@@ -360,6 +360,13 @@ export function ApplicationEditor({
           (es ? "Complete o revise: " : "Complete or review: ") +
             missing
               .map((key) => {
+                if (key.startsWith("activity_objectives_"))
+                  return (
+                    (es
+                      ? "Objetivos específicos de la actividad "
+                      : "Specific objectives for activity ") +
+                    key.split("_").at(-1)
+                  );
                 const field = [...identityFields, ...narrativeFields].find(
                   (f) => f.key === key,
                 );
@@ -508,6 +515,12 @@ export function ApplicationEditor({
       const f = call.phase2_schema.find((f) => f.id === key.slice(7));
       return f ? (es ? f.label_es : f.label_en) : key;
     }
+    if (key.startsWith("activity_objectives_"))
+      return (
+        (es
+          ? "Seleccione objetivos específicos para la actividad "
+          : "Select specific objectives for activity ") + key.split("_").at(-1)
+      );
     if (key === "activities")
       return es ? "Al menos una actividad" : "At least one activity";
     const numbers = key.match(/\d+/g)?.join(".") || "";
@@ -679,7 +692,10 @@ export function ApplicationEditor({
             key={label}
             type="button"
             aria-current={step === i ? "step" : undefined}
-            onClick={() => setStep(i)}
+            onClick={() => {
+              setStep(i);
+              setError("");
+            }}
           >
             {i + 1}. {label}
           </button>
@@ -1030,6 +1046,16 @@ export function ApplicationEditor({
                   </small>
                 </div>
               )}
+              {step === 1 && (
+                <ActivityPlanningFields
+                  payload={payload}
+                  locale={locale}
+                  checked={checkedStep === 1}
+                  onChange={(activities) =>
+                    setPayload((p) => ({ ...p, activities }))
+                  }
+                />
+              )}
               {step === 1 && application.stage === 2 && (
                 <section>
                   <h2>
@@ -1080,105 +1106,59 @@ export function ApplicationEditor({
               </p>
               {payload.activities.map((activity, ai) => (
                 <section className="activity-card" key={activity.id}>
-                  <div className="live-title">
-                    <h3>
-                      {es ? "Actividad" : "Activity"} {ai + 1}
-                    </h3>
-                    <button
-                      type="button"
-                      className="button ghost"
-                      onClick={() =>
-                        setPayload((p) => ({
-                          ...p,
-                          activities: p.activities.filter((_, i) => i !== ai),
-                        }))
-                      }
-                    >
-                      <Trash2 size={16} />
-                      {es ? "Quitar actividad" : "Remove activity"}
-                    </button>
-                  </div>
-                  <div className="live-form">
-                    {payload.concept.strategic_alignment && (
-                      <fieldset className="full-width strategic-fields">
-                        <legend>
-                          {es
-                            ? "Objetivos específicos a los que contribuye esta actividad"
-                            : "Specific objectives this activity contributes to"}
-                        </legend>
-                        {payload.concept.strategic_alignment.objectives
-                          .filter((o) => o.kind === "specific")
-                          .map((o, i) => (
-                            <label
-                              key={o.id}
-                              style={{ display: "flex", gap: 8 }}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={
-                                  activity.objective_ids?.includes(o.id) ||
-                                  false
-                                }
-                                onChange={() =>
-                                  updateActivity(ai, {
-                                    objective_ids:
-                                      activity.objective_ids?.includes(o.id)
-                                        ? activity.objective_ids.filter(
-                                            (id) => id !== o.id,
-                                          )
-                                        : [
-                                            ...(activity.objective_ids || []),
-                                            o.id,
-                                          ],
-                                  })
-                                }
-                              />
-                              OE{i + 1} · {o.text}
-                            </label>
-                          ))}
-                      </fieldset>
+                  <h3>
+                    {es ? "Actividad" : "Activity"} {ai + 1}:{" "}
+                    {activity.title.trim() || (es ? "Sin nombre" : "Unnamed")}
+                  </h3>
+                  <p className="screening-activity-description">
+                    {activity.description}
+                  </p>
+                  {payload.concept.strategic_alignment?.objectives
+                    .filter((o) => o.kind === "specific")
+                    .map((o, i) =>
+                      activity.objective_ids?.includes(o.id) ? (
+                        <p
+                          className="screening-activity-description"
+                          key={o.id}
+                        >
+                          <strong>
+                            {es ? "Objetivo específico" : "Specific objective"}{" "}
+                            {i + 1}:
+                          </strong>{" "}
+                          {o.text}
+                        </p>
+                      ) : null,
                     )}
+                  <button
+                    type="button"
+                    className="button secondary"
+                    onClick={() => {
+                      setStep(1);
+                      setError("");
+                    }}
+                  >
+                    {es
+                      ? "Editar actividad y objetivos en Nota conceptual"
+                      : "Edit activity and objectives in project description"}
+                  </button>
+                  {activity.risks.length === 0 && (
                     <label>
-                      {es ? "Nombre de actividad" : "Activity name"}
-                      <RequiredMark locale={locale} />
-                      <input
-                        aria-required="true"
-                        value={activity.title}
-                        onChange={(e) =>
-                          updateActivity(ai, { title: e.target.value })
-                        }
-                      />
-                    </label>
-                    <label>
-                      {es ? "Descripción" : "Description"}
+                      {es
+                        ? "Justificación si no identifica riesgos"
+                        : "Explanation if no risks are identified"}
                       <RequiredMark locale={locale} />
                       <textarea
                         aria-required="true"
-                        rows={2}
-                        value={activity.description}
+                        value={activity.no_risks_reason}
+                        maxLength={12000}
                         onChange={(e) =>
-                          updateActivity(ai, { description: e.target.value })
+                          updateActivity(ai, {
+                            no_risks_reason: e.target.value,
+                          })
                         }
                       />
                     </label>
-                    {activity.risks.length === 0 && (
-                      <label>
-                        {es
-                          ? "Justificación si no identifica riesgos"
-                          : "Explanation if no risks are identified"}
-                        <RequiredMark locale={locale} />
-                        <textarea
-                          aria-required="true"
-                          value={activity.no_risks_reason}
-                          onChange={(e) =>
-                            updateActivity(ai, {
-                              no_risks_reason: e.target.value,
-                            })
-                          }
-                        />
-                      </label>
-                    )}
-                  </div>
+                  )}
                   {activity.risks.map((risk, ri) => {
                     const score = riskScore(risk.probability, risk.severity);
                     const residual = riskScore(
@@ -1605,16 +1585,15 @@ export function ApplicationEditor({
               ))}
               <button
                 type="button"
-                className="button primary"
-                onClick={() =>
-                  setPayload((p) => ({
-                    ...p,
-                    activities: [...p.activities, newActivity()],
-                  }))
-                }
+                className="button secondary"
+                onClick={() => {
+                  setStep(1);
+                  setError("");
+                }}
               >
-                <Plus size={16} />
-                {es ? "Agregar actividad" : "Add activity"}
+                {es
+                  ? "Editar o agregar actividades en Nota conceptual"
+                  : "Edit or add activities in project description"}
               </button>
               <div className="live-notice">
                 <p>

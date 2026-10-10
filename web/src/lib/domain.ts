@@ -5,6 +5,7 @@ import { emptySummary, hasSummaryParts } from "./summary";
 import { strategicSchema, alignmentIssues } from "./strategic-alignment";
 import { potentialRiskIssues } from "./potential-risks";
 import { partnerIssues } from "./partners";
+import { activityPlanningIssues } from "./activity-planning";
 export const roles = [
   "applicant",
   "grants_manager",
@@ -390,6 +391,7 @@ export function validateComplete(
   const missing: string[] = [];
   const c = payload.concept;
   missing.push(...partnerIssues(c));
+  missing.push(...activityPlanningIssues(payload));
   missing.push(...potentialRiskIssues(payload));
   missing.push(...alignmentIssues(c.strategic_alignment));
   missing.push(...Object.keys(financialErrors(c, rules)));

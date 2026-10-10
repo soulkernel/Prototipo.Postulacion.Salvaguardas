@@ -353,3 +353,37 @@ test("partner organizations preserve historical text and optional empty lists", 
     ["A", "B"],
   );
 });
+
+import { activityPlanningIssues } from "../src/lib/activity-planning";
+import { newActivity, newRisk } from "../src/lib/domain";
+import { newObjective, alignmentVersion } from "../src/lib/strategic-alignment";
+test("activity planning validates links without requiring screening early or losing risks after edits", () => {
+  const p = emptyPayload();
+  assert.deepEqual(activityPlanningIssues(p), ["activities"]);
+  const objective = {
+    ...newObjective("specific"),
+    text: "Recuperar hábitats costeros",
+  };
+  p.concept.strategic_alignment = {
+    version: alignmentVersion,
+    objectives: [newObjective("general"), objective],
+  };
+  const a = newActivity();
+  a.title = "Restauración";
+  a.description = "Restaurar sitios seleccionados";
+  p.activities = [a];
+  assert.deepEqual(activityPlanningIssues(p), ["activity_objectives_1"]);
+  a.objective_ids = [objective.id];
+  assert.deepEqual(activityPlanningIssues(p), []);
+  const risk = newRisk();
+  risk.probability = 3;
+  risk.severity = 4;
+  a.risks = [risk];
+  objective.text = "Recuperar hábitats con participación comunitaria";
+  a.title = "Restauración participativa";
+  assert.deepEqual(activityPlanningIssues(p), []);
+  assert.equal(a.risks[0].id, risk.id);
+  assert.equal(a.risks[0].severity, 4);
+  p.concept.strategic_alignment.objectives = [];
+  assert.deepEqual(activityPlanningIssues(p), ["activity_objectives_1"]);
+});
