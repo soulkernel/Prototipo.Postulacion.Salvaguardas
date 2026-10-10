@@ -950,3 +950,11 @@ a {
 .header-sign-out:focus-visible { outline: 3px solid #83ead6; outline-offset: 3px; }
 .header-sign-out:active { transform: translateY(1px); }
 .header-sign-out:disabled { opacity: .7; cursor: wait; }
+.header-account-controls { width: 160px; }
+.header-account-controls .language-switch,
+.header-account-controls form,
+.header-account-controls .header-sign-out { width: 100%; box-sizing: border-box; }
+.header-account-controls .language-switch,
+.header-account-controls .header-sign-out { height: 40px; min-height: 40px; border-radius: 7px; }
+.header-account-controls .language-switch { margin-left: 0; justify-content: center; }
+.header-account-controls .language-switch button { flex: 1; }
