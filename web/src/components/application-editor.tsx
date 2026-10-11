@@ -13,7 +13,7 @@ import { StrategicFields } from "./strategic-fields";
 import { ProjectResultFields } from "./project-result-fields";
 import { resultText } from "@/lib/project-results";
 import { PotentialRiskFields } from "./potential-risk-fields";
-import { riskCode } from "@/lib/potential-risks";
+import { riskLabel } from "@/lib/potential-risks";
 import { strategicText } from "@/lib/strategic-alignment";
 import { ActionLabel } from "./submit-button";
 import { summaryText, summarySections } from "@/lib/summary";
@@ -1212,9 +1212,10 @@ export function ApplicationEditor({
                               <>
                                 {" "}
                                 ·{" "}
-                                {riskCode(
+                                {riskLabel(
                                   payload.concept.risk_register || [],
                                   risk.source_id,
+                                  locale,
                                 )}
                               </>
                             )}
@@ -1287,9 +1288,10 @@ export function ApplicationEditor({
                                   )
                                   .map((r) => (
                                     <option key={r.id} value={r.id}>
-                                      {riskCode(
+                                      {riskLabel(
                                         payload.concept.risk_register!,
                                         r.id,
+                                        locale,
                                       )}{" "}
                                       · {r.name}
                                     </option>

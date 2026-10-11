@@ -13,6 +13,25 @@ export function riskCode(rows: PotentialRisk[], id: string) {
       1)
   );
 }
+export function riskLabel(
+  rows: PotentialRisk[],
+  id: string,
+  locale: "es" | "en",
+) {
+  const code = riskCode(rows, id);
+  const row = rows.find((r) => r.id === id);
+  if (!row) return code;
+  const number = code.split("-").pop();
+  const name =
+    locale === "es"
+      ? row.dimension === "environmental"
+        ? "Riesgo ambiental"
+        : "Riesgo social"
+      : row.dimension === "environmental"
+        ? "Environmental risk"
+        : "Social risk";
+  return `${code} (${name} ${number})`;
+}
 export function riskNarrative(
   rows: PotentialRisk[],
   dimension: PotentialRisk["dimension"],

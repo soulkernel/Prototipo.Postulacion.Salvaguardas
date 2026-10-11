@@ -2,7 +2,7 @@
 import { Plus, Trash2 } from "lucide-react";
 import type { Payload, Locale } from "@/lib/domain";
 import {
-  riskCode,
+  riskLabel,
   synchronizeRisks,
   type PotentialRisk,
 } from "@/lib/potential-risks";
@@ -157,7 +157,7 @@ export function PotentialRiskFields({
               return (
                 <div key={r.id} className="potential-risk-row">
                   <label htmlFor={"potential-" + r.id}>
-                    {riskCode(rows, r.id)} *
+                    {riskLabel(rows, r.id, es ? "es" : "en")} *
                     <textarea
                       id={"potential-" + r.id}
                       rows={2}
@@ -180,7 +180,8 @@ export function PotentialRiskFields({
                     type="button"
                     className="button ghost"
                     aria-label={
-                      (es ? "Quitar " : "Remove ") + riskCode(rows, r.id)
+                      (es ? "Quitar " : "Remove ") +
+                      riskLabel(rows, r.id, es ? "es" : "en")
                     }
                     disabled={used}
                     title={
