@@ -282,3 +282,10 @@ Resumen estructurado: source Formatos y Normativa de postulación/Formato-de-Not
 - Ambos PDF deben ser posteriores a la preparación vigente; editar exige preparar, firmar y adjuntar ambos nuevamente. Estados y descarga de archivos adjuntos disponibles.
 - Migración 202610110024 aplicada en Supabase en transacción; comprobación devolvió both_pdfs_required=true y pdf_validation_active=true. Consulta guardada. No repetir ni eliminar datos.
 - Pruebas de base de datos incluyen falta de evaluación, formato incorrecto y versión antigua. 63 pruebas pasaron; lint, TypeScript y compilación correctos. Fase 2 conserva su formulario de anexos.
+
+## Comprobante de recepción — versión 0.4.14 (2026-10-10)
+- GET /receipts/[versionId] genera PDF desde application_versions y su lista congelada de anexos. Número GLF-REC-UUID único; fecha oficial del servidor, código, título, responsable, categoría, fase/revisión y cuenta remitente identificada por UUID estable.
+- QR apuntan a /files/ID de los PDF efectivamente adjuntos: solo IDs y SHA-256 del snapshot; escoger la carga más reciente de cada tipo dentro del envío. Nunca toma anexos nuevos de una corrección posterior. Descargas respetan Auth/RLS/MFA existentes, no-store, sin URLs temporales incrustadas.
+- Al enviar se navega a confirmación con receipt=ID e intenta descargar; botón con progreso y recuperación siempre disponible. Historial externo e interno ofrece comprobante de cada envío, conservando anteriores. Fallo de descarga no se informa como fallo de recepción.
+- Registros históricos sin alguno de los anexos muestran su ausencia; no se fabrica un QR ni una firma. No se alteran DB ni documentos enviados.
+- 65 pruebas pasan, lint y build correctos. PDF ES/EN de una página verificado con datos ficticios; nombre de archivos conservado. No se enviaron los borradores del usuario para probar.

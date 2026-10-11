@@ -88,7 +88,8 @@ async function validStoredSummary(db: SupabaseClient, id: string) {
   );
 }
 export type MutationResult =
-  { ok: true; revision: number } | { ok: false; error: string };
+  | { ok: true; revision: number; receiptId?: string }
+  | { ok: false; error: string };
 function safeError(message: string) {
   const match = message.match(/GLF_[A-Z_]+(?::[a-z0-9_]+)?/);
   return match?.[0] || "GLF_SAVE_FAILED";
@@ -225,7 +226,10 @@ export async function deleteDraft(
   revalidatePath("/applicant");
   return { ok: true };
 }
-export async function prepareDocuments(id: string, revision: number): Promise<{ id?: string; created_at?: string; error?: string }> {
+export async function prepareDocuments(
+  id: string,
+  revision: number,
+): Promise<{ id?: string; created_at?: string; error?: string }> {
   const { db } = await requireViewer(["applicant"]);
   if (!z.uuid().safeParse(id).success || !Number.isSafeInteger(revision))
     return { error: "GLF_INVALID_PAYLOAD" };
@@ -276,5 +280,12 @@ export async function submitDraft(
   if (error) return { ok: false, error: safeError(error.message) };
   revalidatePath("/applicant");
   revalidatePath("/applicant/" + id);
-  return { ok: true, revision: data };
+  revalidatePath("/applicant/applications");
+  const { data: submitted } = await db
+    .from("application_versions")
+    .select("id")
+    .eq("application_id", id)
+    .eq("revision", data)
+    .maybeSingle();
+  return { ok: true, revision: data, receiptId: submitted?.id };
 }

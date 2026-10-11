@@ -6,6 +6,7 @@ import { getApplication, requireViewer } from "@/lib/data";
 import { getLocale } from "@/lib/locale";
 import { Shell } from "@/components/shell";
 import { UploadForm } from "@/components/upload-form";
+import { ReceiptDownload } from "@/components/receipt-download";
 import { identityFields, narrativeFields, statusLabel } from "@/lib/fields";
 import { riskScore, riskLevel } from "@/lib/domain";
 import { strategicText } from "@/lib/strategic-alignment";
@@ -149,6 +150,7 @@ export default async function ReviewPage({
               {es ? "Fase" : "Phase"} {v.stage}
             </span>
             <div className="live-actions">
+              <ReceiptDownload id={v.id} locale={locale} />
               <a href={"/documents/" + v.id + "/concept"}>
                 {v.stage === 2
                   ? es

@@ -4,11 +4,15 @@ import { getApplication } from "@/lib/data";
 import { getLocale } from "@/lib/locale";
 import { Shell } from "@/components/shell";
 import { ApplicationEditor } from "@/components/application-editor";
+import { ReceiptDownload } from "@/components/receipt-download";
+import { receiptDate } from "@/lib/receipt";
 import type { Call } from "@/lib/domain";
 export default async function ApplicationPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ receipt?: string }>;
 }) {
   const requestTime = await getRequestTime();
   const { id } = await params;
@@ -16,6 +20,7 @@ export default async function ApplicationPage({
   if (viewer.profile.role !== "applicant")
     redirect("/internal/applications/" + id);
   const locale = await getLocale();
+  const query = await searchParams;
   const [
     { data: call },
     { data: catalog },
@@ -63,6 +68,37 @@ export default async function ApplicationPage({
   );
   return (
     <Shell locale={locale}>
+      {versions?.[0] && (
+        <section
+          className="live-card"
+          aria-label={
+            locale === "es"
+              ? "Confirmación de recepción"
+              : "Receipt confirmation"
+          }
+        >
+          <h2>
+            {locale === "es"
+              ? "Postulación recibida por el GLF"
+              : "Application received by GLF"}
+          </h2>
+          <p>
+            {application.reference_code} ·{" "}
+            {receiptDate(versions[0].submitted_at, locale)}{" "}
+            {locale === "es" ? "(hora Galápagos)" : "(Galapagos time)"}
+          </p>
+          <p>
+            {locale === "es"
+              ? "Puede descargar su comprobante aquí. Si el navegador bloquea la descarga automática, utilice el botón."
+              : "Download your receipt here. If your browser blocks the automatic download, use the button."}
+          </p>
+          <ReceiptDownload
+            id={versions[0].id}
+            locale={locale}
+            automatic={query.receipt === versions[0].id}
+          />
+        </section>
+      )}
       <ApplicationEditor
         key={`${application.id}:${application.stage}:${application.status}:${editable}:${locale}`}
         application={application}

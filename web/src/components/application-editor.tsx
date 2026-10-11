@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { SignedDocumentUpload } from "./signed-document-upload";
+import { ReceiptDownload } from "./receipt-download";
 import { PhoneField } from "./phone-field";
 import { ActivityPlanningFields } from "./activity-planning-fields";
 import { PartnerFields } from "./partner-fields";
@@ -514,7 +515,11 @@ export function ApplicationEditor({
         }
         setRevision(result.revision);
         revisionRef.current = result.revision;
-        router.refresh();
+        if (result.receiptId)
+          router.replace(
+            `/applicant/${application.id}?receipt=${result.receiptId}`,
+          );
+        else router.refresh();
       } else
         setFeedback(
           es
@@ -2311,6 +2316,7 @@ export function ApplicationEditor({
                 {es ? "Fase" : "Phase"} {v.stage}
               </span>
               <div className="live-actions">
+                <ReceiptDownload id={v.id} locale={locale} />
                 <a
                   className="button secondary"
                   href={"/documents/" + v.id + "/concept"}
