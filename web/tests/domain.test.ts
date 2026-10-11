@@ -1,5 +1,19 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { submissionError } from "../src/lib/submission-error";
+test("submission failures preserve actionable validation and hide internal SQL details", () => {
+  assert.equal(
+    submissionError(
+      "function public.submit_application_core(uuid, integer) does not exist",
+    ),
+    "GLF_SUBMISSION_UNAVAILABLE",
+  );
+  assert.equal(submissionError("GLF_VERSION_CONFLICT"), "GLF_VERSION_CONFLICT");
+  assert.equal(
+    submissionError("GLF_ATTACHMENT_REQUIRED:concept_signed"),
+    "GLF_ATTACHMENT_REQUIRED:concept_signed",
+  );
+});
 import {
   safeReturnPath,
   riskLevel,

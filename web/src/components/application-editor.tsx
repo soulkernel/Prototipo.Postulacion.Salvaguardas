@@ -90,6 +90,10 @@ const levels = {
   },
 };
 function message(code: string, es: boolean) {
+  if (code.includes("SUBMISSION_UNAVAILABLE"))
+    return es
+      ? "No se pudo confirmar el envío por un problema técnico del sistema. Sus documentos continúan guardados. Revise el estado en Mis postulaciones antes de volver a enviar; si persiste, contacte al GLF indicando la referencia del expediente."
+      : "Your submission could not be confirmed due to a technical system issue. Your documents remain saved. Check the status in My applications before trying again; if the problem persists, contact GLF with your application reference.";
   if (code.includes("SIGNATURE_MISSING"))
     return es
       ? "Atención: no se detectó una firma electrónica incorporada en su anexo. Presentarlo sin firma podría ser motivo de descalificación de su postulación de nota conceptual. Firme electrónicamente el PDF y vuelva a cargarlo."
@@ -535,7 +539,7 @@ export function ApplicationEditor({
             : "Draft saved to your account.",
         );
     } catch {
-      setError(message("", es));
+      setError(message(submit ? "GLF_SUBMISSION_UNAVAILABLE" : "", es));
     } finally {
       setBusy(false);
     }

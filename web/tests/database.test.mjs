@@ -13,6 +13,25 @@ const ids = {
   committee: "00000000-0000-4000-8000-000000000006",
   admin: "00000000-0000-4000-8000-000000000007",
 };
+test("submission core repair restores a missing dependency without exposing a bypass RPC", async () => {
+  await db.exec("drop function public.submit_application_core(uuid,integer)");
+  await db.exec(
+    await readFile(
+      new URL(
+        "../../supabase/migrations/202610110026_restore_submission_core.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  );
+  for (const role of ["anon", "authenticated"]) {
+    const result = await db.query(
+      "select has_function_privilege($1,'public.submit_application_core(uuid,integer)','EXECUTE') as allowed",
+      [role],
+    );
+    assert.equal(result.rows[0].allowed, false);
+  }
+});
 test("browser roles cannot truncate or directly modify prepared documents", async () => {
   for (const role of ["anon", "authenticated"]) {
     for (const privilege of [

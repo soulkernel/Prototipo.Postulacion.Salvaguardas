@@ -296,3 +296,11 @@ Resumen estructurado: source Formatos y Normativa de postulación/Formato-de-Not
 - Detección estructural mediante diccionario Sig/campo FT Sig, ByteRange y Contents no vacío con forma DER. No valida criptografía CMS, identidad, confianza, revocación ni vigencia del certificado; no equivale a certificar una firma válida. GLF conserva revisión final. Una imagen o recuadro de firma no es una firma incorporada.
 - Advertencia: no se detectó firma; presentarlo sin firma podría ser motivo de descalificación; firmar y volver a cargar. PDF no legible se distingue de PDF sin firma.
 - 68 pruebas aprobadas (28 SQL + 40 dominio/PDF). Pendiente prueba con PDF firmado real de un proveedor usado por GLF. No se enviaron ni eliminaron expedientes.
+
+## 2026-10-11 — v0.4.18: reparación del envío real
+- Diagnóstico en Supabase del expediente 6e97dd1e: error PostgreSQL 42883, función public.submit_application_core(uuid,integer) inexistente. El wrapper de envío sí existía. Desajuste del despliegue respecto a las migraciones locales; no era un rechazo de firma.
+- Migración 026 restaura el núcleo con todas las validaciones vigentes. EXECUTE revocado a public/anon/authenticated; no expone un camino que evada los dos PDF preparados exigidos por el wrapper.
+- Prueba real en subtransacción con excepción deliberada: operación completada y revertida; expediente conservado en draft, revisión 7, cero versiones enviadas. No se realizó envío real.
+- Ambos anexos firmados existentes descargados desde el portal y comprobados con detectPdfSignature: detected. No equivale a validar certificados.
+- Error RPC inesperado devuelve GLF_SUBMISSION_UNAVAILABLE con mensaje explícito; registro de diagnóstico en servidor con código y motivo seguro sin contenido del expediente.
+- 70 pruebas aprobadas (29 SQL + 41 dominio/PDF), incluyendo restauración de núcleo ausente sin privilegios de bypass y traducción segura de errores.

@@ -13,6 +13,7 @@ import { geographyIssues } from "@/lib/geography";
 import { hasSummaryParts, summaryText } from "@/lib/summary";
 import { words } from "@/lib/domain";
 import { detectPdfSignature } from "@/lib/pdf-signature";
+import { submissionError } from "@/lib/submission-error";
 import {
   strategicText,
   alignmentVersion,
@@ -321,7 +322,13 @@ export async function submitDraft(
     application_id: id,
     expected_revision: revision,
   });
-  if (error) return { ok: false, error: safeError(error.message) };
+  if (error) {
+    console.error("GLF submission rejected", {
+      code: error.code,
+      reason: submissionError(error.message),
+    });
+    return { ok: false, error: submissionError(error.message) };
+  }
   revalidatePath("/applicant");
   revalidatePath("/applicant/" + id);
   revalidatePath("/applicant/applications");
