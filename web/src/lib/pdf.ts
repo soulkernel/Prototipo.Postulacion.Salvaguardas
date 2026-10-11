@@ -1,3 +1,4 @@
+import { resultText } from "@/lib/project-results";
 import { PDFDocument, rgb, type PDFFont } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import QRCode from "qrcode";
@@ -148,13 +149,16 @@ export async function applicationPdf({
       }
       field(
         es ? fieldSpec.es : fieldSpec.en,
-        fieldSpec.key === "partners" && payload.concept.associated_organizations
-          ? payload.concept.associated_organizations
-              .map((name, i) => `${i + 1}. ${name}`)
-              .join("\n")
-          : Array.isArray(payload.concept[fieldSpec.key])
-            ? (payload.concept[fieldSpec.key] as string[]).join(", ")
-            : payload.concept[fieldSpec.key],
+        fieldSpec.key === "results"
+          ? resultText(payload.concept, locale)
+          : fieldSpec.key === "partners" &&
+              payload.concept.associated_organizations
+            ? payload.concept.associated_organizations
+                .map((name, i) => `${i + 1}. ${name}`)
+                .join("\n")
+            : Array.isArray(payload.concept[fieldSpec.key])
+              ? (payload.concept[fieldSpec.key] as string[]).join(", ")
+              : payload.concept[fieldSpec.key],
       );
     }
     field(

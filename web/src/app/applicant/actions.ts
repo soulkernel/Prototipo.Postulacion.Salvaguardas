@@ -7,6 +7,7 @@ import { payloadSchema, emptyPayload, applicantDefaults } from "@/lib/domain";
 import { normalizePhone } from "@/lib/phone";
 import { partnerIssues, partnerText } from "@/lib/partners";
 import { activityPlanningIssues } from "@/lib/activity-planning";
+import { resultIssues, resultText } from "@/lib/project-results";
 import { synchronizeRisks } from "@/lib/potential-risks";
 import { geographyIssues } from "@/lib/geography";
 import { hasSummaryParts, summaryText } from "@/lib/summary";
@@ -61,7 +62,10 @@ async function validStoredActivities(db: SupabaseClient, id: string) {
     .maybeSingle();
   const parsed = payloadSchema.safeParse(data?.payload);
   return (
-    !error && parsed.success && activityPlanningIssues(parsed.data).length === 0
+    !error &&
+    parsed.success &&
+    activityPlanningIssues(parsed.data).length === 0 &&
+    resultIssues(parsed.data.concept).length === 0
   );
 }
 async function validStoredSummary(db: SupabaseClient, id: string) {
@@ -171,6 +175,7 @@ export async function saveDraft(
       ...synchronizeRisks(parsed.data),
       concept: {
         ...synchronizeRisks(parsed.data).concept,
+        results: resultText(parsed.data.concept),
         ...(parsed.data.concept.associated_organizations
           ? {
               partners: partnerText(

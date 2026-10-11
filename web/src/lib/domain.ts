@@ -6,6 +6,7 @@ import { strategicSchema, alignmentIssues } from "./strategic-alignment";
 import { potentialRiskIssues } from "./potential-risks";
 import { partnerIssues } from "./partners";
 import { activityPlanningIssues } from "./activity-planning";
+import { projectResultSchema, resultIssues } from "./project-results";
 export const roles = [
   "applicant",
   "grants_manager",
@@ -57,6 +58,8 @@ export const conceptSchema = z
     objectives: text,
     beneficiaries: text,
     results: text,
+    results_source: text.optional(),
+    project_results: z.array(projectResultSchema).max(30).optional(),
     sustainability: text,
     alignment: text,
     strategic_alignment: strategicSchema.optional(),
@@ -273,6 +276,7 @@ export function emptyPayload(): Payload {
       objectives: "",
       beneficiaries: "",
       results: "",
+      project_results: [],
       sustainability: "",
       alignment: "",
       monitoring: "",
@@ -391,6 +395,7 @@ export function validateComplete(
   const missing: string[] = [];
   const c = payload.concept;
   missing.push(...partnerIssues(c));
+  missing.push(...resultIssues(c));
   missing.push(...activityPlanningIssues(payload));
   missing.push(...potentialRiskIssues(payload));
   missing.push(...alignmentIssues(c.strategic_alignment));
@@ -400,6 +405,7 @@ export function validateComplete(
   for (const [key, value] of Object.entries(c)) {
     if (
       key !== "partners" &&
+      key !== "results_source" &&
       key !== "other_islands" &&
       (value === null || (typeof value === "string" && !value.trim()))
     )

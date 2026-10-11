@@ -10,6 +10,8 @@ import { stepIssues } from "@/lib/step-validation";
 import { GeographyFields } from "./geography-fields";
 import { SummaryFields } from "./summary-fields";
 import { StrategicFields } from "./strategic-fields";
+import { ProjectResultFields } from "./project-result-fields";
+import { resultText } from "@/lib/project-results";
 import { PotentialRiskFields } from "./potential-risk-fields";
 import { riskCode } from "@/lib/potential-risks";
 import { strategicText } from "@/lib/strategic-alignment";
@@ -511,6 +513,11 @@ export function ApplicationEditor({
       return es ? "Tipo de solicitante" : "Applicant type";
     if (key === "category_id")
       return es ? "Categoría de subvención" : "Grant category";
+    if (key.startsWith("result_"))
+      return (
+        (es ? "Complete resultado " : "Complete result ") +
+        key.split("_").at(-1)
+      );
     if (key.startsWith("phase2:")) {
       const f = call.phase2_schema.find((f) => f.id === key.slice(7));
       return f ? (es ? f.label_es : f.label_en) : key;
@@ -916,6 +923,36 @@ export function ApplicationEditor({
                             ...strategicText(value, locale),
                           },
                         }))
+                      }
+                    />
+                  ) : field.key === "results" ? (
+                    <ProjectResultFields
+                      key={field.key}
+                      es={es}
+                      value={payload.concept.project_results}
+                      legacy={
+                        payload.concept.results_source ??
+                        payload.concept.results
+                      }
+                      objectives={
+                        payload.concept.strategic_alignment?.objectives || []
+                      }
+                      onChange={(value) =>
+                        setPayload((p) => {
+                          const concept = {
+                            ...p.concept,
+                            project_results: value,
+                            results_source:
+                              p.concept.results_source ?? p.concept.results,
+                          };
+                          return {
+                            ...p,
+                            concept: {
+                              ...concept,
+                              results: resultText(concept, locale),
+                            },
+                          };
+                        })
                       }
                     />
                   ) : field.key === "partners" ? (
@@ -1615,7 +1652,11 @@ export function ApplicationEditor({
                 {[...identityFields, ...narrativeFields].map((f) => (
                   <div key={f.key}>
                     <dt>{es ? f.es : f.en}</dt>
-                    <dd>{String(payload.concept[f.key] ?? "—") || "—"}</dd>
+                    <dd>
+                      {f.key === "results"
+                        ? resultText(payload.concept, locale)
+                        : String(payload.concept[f.key] ?? "—") || "—"}
+                    </dd>
                   </div>
                 ))}
               </dl>

@@ -15,6 +15,7 @@ import { alignmentIssues } from "./strategic-alignment";
 import { potentialRiskIssues } from "./potential-risks";
 import { partnerIssues } from "./partners";
 import { activityPlanningIssues } from "./activity-planning";
+import { resultIssues } from "./project-results";
 export function stepIssues(
   payload: Payload,
   rules: Rules,
@@ -55,6 +56,7 @@ export function stepIssues(
         invalid.push("email");
       invalid.push(...Object.keys(financialErrors(payload.concept, rules)));
     } else {
+      missing.push(...resultIssues(payload.concept));
       missing.push(...activityPlanningIssues(payload));
       missing.push(
         ...potentialRiskIssues(payload).filter(

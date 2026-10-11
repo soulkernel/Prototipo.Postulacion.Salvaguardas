@@ -270,3 +270,9 @@ Resumen estructurado: source Formatos y Normativa de postulación/Formato-de-Not
 - Conserva Server Action signOut, cierre local y limpieza de preferencia de sesión; SubmitButton bloquea repetición y muestra progreso ES/EN. No cambia roles ni base de datos.
 - ESLint y compilación TypeScript/Next correctos. Los seis expedientes reales siguen pendientes de carga como borradores de schubertlm.reg@gmail.com; preparación local en Trabajo_Carga_6_Expedientes, sin subir documentos a GitHub.
 
+
+## Resultados estructurados — versión 0.4.9 (2026-10-10)
+- Fichas repetibles: resultado, objetivo específico, indicador, meta preliminar, unidad y evidencia. Fórmulas y línea base se completarán en proyecto completo.
+- project_results opcional permite históricos sin migración implícita; results_source preserva texto anterior al organizar. Borradores incompletos permitidos. Validación cliente y servidor de referencias, campos, porcentajes y unidades.
+- Texto derivado compatible con revisión interna, PDF y exportaciones. No modifica expedientes cargados ni permisos. Futuro módulo de seguimiento conserva IDs estables.
+

@@ -1,3 +1,4 @@
+import { resultText } from "@/lib/project-results";
 import { SubmitButton } from "@/components/submit-button";
 import { getRequestTime } from "@/lib/data";
 import Link from "next/link";
@@ -181,7 +182,11 @@ export default async function ReviewPage({
             {[...identityFields, ...narrativeFields].map((f) => (
               <div key={f.key}>
                 <dt>{es ? f.es : f.en}</dt>
-                <dd>{String(a.payload.concept[f.key] ?? "—")}</dd>
+                <dd>
+                  {f.key === "results"
+                    ? resultText(a.payload.concept, locale)
+                    : String(a.payload.concept[f.key] ?? "—")}
+                </dd>
               </div>
             ))}
           </dl>
