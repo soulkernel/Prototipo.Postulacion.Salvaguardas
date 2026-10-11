@@ -45,6 +45,7 @@ export async function POST(request: NextRequest) {
       { error: "Signed document must be PDF" },
       { status: 400 },
     );
+  let signedRevision: number | null = null;
   if (
     ["concept_signed", "matrix_signed"].includes(kind) &&
     viewer.profile.role === "applicant"
@@ -82,6 +83,7 @@ export async function POST(request: NextRequest) {
           { error: "GLF_PREPARE_DOCUMENTS_REQUIRED" },
           { status: 409 },
         );
+      signedRevision = revision.data;
     }
   }
   const folder = kind === "agreement" ? "agreement" : "attachment";
@@ -97,27 +99,39 @@ export async function POST(request: NextRequest) {
   if (uploadError)
     return NextResponse.json({ error: "Upload rejected" }, { status: 403 });
   const checksum = createHash("sha256").update(bytes).digest("hex");
-  const { data, error } = await viewer.db.rpc("register_document", {
-    app_id: app.data,
-    object_path: path,
-    original_name: file.name,
-    mime: valid.mime,
-    bytes: file.size,
-    checksum,
-    document_kind: kind,
-  });
+  const { data, error } = await viewer.db.rpc(
+    signedRevision === null ? "register_document" : "register_signed_document",
+    {
+      app_id: app.data,
+      object_path: path,
+      original_name: file.name,
+      mime: valid.mime,
+      bytes: file.size,
+      checksum,
+      document_kind: kind,
+      ...(signedRevision === null ? {} : { expected_revision: signedRevision }),
+    },
+  );
   if (error)
     return NextResponse.json(
-      { error: "Registration rejected; file remains private" },
+      {
+        error:
+          error.message.match(/GLF_[A-Z_]+/)?.[0] ||
+          "Registration rejected; file remains private",
+      },
       { status: 409 },
     );
-  return NextResponse.json(
-    {
-      id: data,
-      file_name: file.name,
-      kind,
-      created_at: new Date().toISOString(),
-    },
-    { headers: { "Cache-Control": "private, no-store" } },
-  );
+  const { data: registered } = await viewer.db
+    .from("application_documents")
+    .select("id,file_name,kind,created_at")
+    .eq("id", data)
+    .maybeSingle();
+  if (!registered)
+    return NextResponse.json(
+      { error: "Document registered; reload to retrieve its status" },
+      { status: 503 },
+    );
+  return NextResponse.json(registered, {
+    headers: { "Cache-Control": "private, no-store" },
+  });
 }

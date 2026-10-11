@@ -926,6 +926,79 @@ test("draft saving calculates risks and rejects stale writes", async () => {
     /GLF_VERSION_CONFLICT/,
   );
 });
+test("signed upload registration rejects a version changed and prepared on another device", async () => {
+  const concurrentPayload = structuredClone(payload);
+  concurrentPayload.activities[0].id = "99999999-0000-4000-8000-000000000001";
+  concurrentPayload.activities[0].risks[0].id =
+    "99999999-0000-4000-8000-000000000002";
+  const target = await rpc("create_application", { call_id: call });
+  await rpc("save_application", {
+    application_id: target,
+    expected_revision: 0,
+    payload: concurrentPayload,
+  });
+  await rpc("prepare_application_documents", {
+    app_id: target,
+    expected_revision: 1,
+  });
+  const object = target + "/" + ids.applicant + "/attachment/concurrent.pdf";
+  await as("applicant", () =>
+    db.query(
+      "insert into storage.objects(bucket_id,name,metadata) values('application-files',$1,$2)",
+      [object, { size: 100 }],
+    ),
+  );
+  const args = {
+    app_id: target,
+    expected_revision: 1,
+    object_path: object,
+    original_name: "concurrent.pdf",
+    mime: "application/pdf",
+    bytes: 100,
+    checksum: "a".repeat(64),
+    document_kind: "concept_signed",
+  };
+  await rpc("save_application", {
+    application_id: target,
+    expected_revision: 1,
+    payload: concurrentPayload,
+  });
+  await rpc("prepare_application_documents", {
+    app_id: target,
+    expected_revision: 2,
+  });
+  await assert.rejects(
+    rpc("register_signed_document", args),
+    /GLF_VERSION_CONFLICT/,
+  );
+  await assert.rejects(
+    rpc("register_signed_document", { ...args, expected_revision: 2 }, "other"),
+    /GLF_APPLICATION_LOCKED/,
+  );
+  await assert.rejects(
+    rpc("register_signed_document", {
+      ...args,
+      expected_revision: 2,
+      mime: "image/png",
+    }),
+    /GLF_SIGNED_DOCUMENT_PDF_REQUIRED/,
+  );
+  const doc = await rpc("register_signed_document", {
+    ...args,
+    expected_revision: 2,
+  });
+  assert.ok(doc);
+  assert.equal(
+    (
+      await db.query(
+        "select count(*)::int as n from public.application_documents where application_id=$1",
+        [target],
+      )
+    ).rows[0].n,
+    1,
+  );
+});
+
 test("submission freezes a version and blocks all later applicant writes", async () => {
   await assert.rejects(
     rpc("submit_application", { application_id: app, expected_revision: 1 }),
