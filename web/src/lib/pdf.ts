@@ -262,19 +262,6 @@ export async function applicationPdf({
           );
           for (const paragraph of narrative) draw(paragraph);
         }
-        field(
-          es ? "Fuentes de referencia" : "Reference sources",
-          strategicText(
-            payload.concept.strategic_alignment,
-            locale,
-          ).alignment.split("\n\nPlan: ")[1]
-            ? "Plan: " +
-                strategicText(
-                  payload.concept.strategic_alignment,
-                  locale,
-                ).alignment.split("\n\nPlan: ")[1]
-            : payload.concept.strategic_alignment.version,
-        );
         continue;
       }
       if (fieldSpec.key === "summary")
