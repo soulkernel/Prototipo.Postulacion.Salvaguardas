@@ -6,7 +6,6 @@ import { SubmitButton } from "./submit-button";
 import { signOut } from "@/app/auth/actions";
 import type { Locale } from "@/lib/domain";
 import { getViewer } from "@/lib/data";
-import { roleLabels } from "@/lib/fields";
 import { version } from "../../package.json";
 export async function Shell({
   locale,
@@ -123,14 +122,7 @@ export async function Shell({
             {initials}
           </span>
           <div className="session-details">
-            <p>
-              {locale === "es" ? "Conectado como" : "Signed in as"}{" "}
-              <strong>{accountName}</strong>
-            </p>
-            <p>
-              {viewer.user.email} <span aria-hidden="true">·</span>{" "}
-              {roleLabels[viewer.profile.role]?.[locale === "es" ? 0 : 1]}
-            </p>
+            <p>{accountName}</p>
           </div>
         </div>
       )}
