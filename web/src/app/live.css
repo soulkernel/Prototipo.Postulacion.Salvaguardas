@@ -992,7 +992,7 @@ a {
 .completion-link { padding: 5px 0; border: 0; background: transparent; color: #9b2926; text-align: left; text-decoration: underline; text-underline-offset: 3px; font: inherit; cursor: pointer; }
 .completion-link:hover { color: #651915; }
 .completion-link:focus-visible { outline: 2px solid #203e6c; outline-offset: 3px; }
-.validation-pending { outline: 2px solid #ba3c37; outline-offset: 4px; border-radius: 4px; scroll-margin: 120px 0; }
-.validation-field-message { display: block; color: #9b2926; font-weight: 400; margin-top: 6px; }
+.validation-pending { outline: 2px solid #ba3c37; outline-offset: 0; padding: 8px; border-radius: 4px; scroll-margin: 120px 0; }
+.live-form .validation-field-message, .validation-field-message { display: block; color: #9b2926; font-weight: 400; margin-top: 6px; }
 .step-pending { font-size: .8rem; color: #9b2926; }
 .completion-step-notice { margin: 16px 0; padding: 10px 14px; background: #fff7f6; border-left: 3px solid #ba3c37; }

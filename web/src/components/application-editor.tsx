@@ -202,6 +202,13 @@ export function ApplicationEditor({
   const [feedback, setFeedback] = useState("");
   const [error, setError] = useState("");
   const [showCompletion, setShowCompletion] = useState(false);
+  const [completionAttempt, setCompletionAttempt] = useState(0);
+  useEffect(() => {
+    if (!completionAttempt) return;
+    const summary = document.querySelector<HTMLElement>(".completion-summary");
+    summary?.scrollIntoView({ block: "center", behavior: "smooth" });
+    summary?.focus({ preventScroll: true });
+  }, [completionAttempt]);
   const [focusIssue, setFocusIssue] = useState<CompletionIssue | null>(null);
   const [checkedStep, setCheckedStep] = useState<number | null>(null);
   const [documents, setDocuments] = useState(initialDocuments);
@@ -387,6 +394,7 @@ export function ApplicationEditor({
     if (busy || !editable) return;
     if (submit) {
       setShowCompletion(true);
+      setCompletionAttempt((n) => n + 1);
       if (
         completionGuidance(
           payload,
@@ -1815,7 +1823,7 @@ export function ApplicationEditor({
               : "Save all fields and declarations. Prepare and download the Concept Note and E&S screening separately, sign the Concept Note electronically outside this portal and attach the signed PDF. After editing, prepare and sign again. GLF will review signature validity."}
           </p>
           {showCompletion && completion.length > 0 && (
-            <div className="completion-summary" role="alert">
+            <div className="completion-summary" role="alert" tabIndex={-1}>
               <h3>
                 {es
                   ? `Hay ${completion.length} pendientes antes de preparar o enviar los documentos`
@@ -1856,6 +1864,7 @@ export function ApplicationEditor({
             onClick={async () => {
               if (busy) return;
               setShowCompletion(true);
+              setCompletionAttempt((n) => n + 1);
               if (
                 completionGuidance(
                   payload,
