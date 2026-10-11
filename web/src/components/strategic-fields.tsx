@@ -71,8 +71,8 @@ export function StrategicFields({
       </h3>
       <p>
         {es
-          ? "Escriba un objetivo por caja y seleccione a qué referencias contribuye. El Plan Galápagos 2030 le sugerirá los ODS relacionados."
-          : "Write one objective per box and select the references it contributes to. Plan Galápagos 2030 will suggest related SDGs."}
+          ? "Para cada objetivo de su proyecto, seleccione las referencias estratégicas a las que contribuirá. Puede elegir más de una."
+          : "For each project objective, select the strategic references it will contribute to. You may select more than one."}
       </p>
       {value.legacy_text && (
         <details>
@@ -119,7 +119,17 @@ export function StrategicFields({
                 }}
               >
                 <option value="">
-                  {es ? "Seleccione una opción" : "Select an option"}
+                  {key === "plan"
+                    ? es
+                      ? "Seleccione un objetivo del Plan"
+                      : "Select a Plan objective"
+                    : key === "ods"
+                      ? es
+                        ? "Seleccione un ODS"
+                        : "Select an SDG"
+                      : es
+                        ? "Seleccione una prioridad del GLF"
+                        : "Select a GLF priority"}
                 </option>
                 {key === "ods" && related.length ? (
                   <>
@@ -222,19 +232,27 @@ export function StrategicFields({
                 </small>
               </div>
               <div className="strategic-objective-selectors">
-                {selector("plan", "Plan Galápagos 2030")}
+                {selector(
+                  "plan",
+                  es
+                    ? "Alinear con el Plan Galápagos 2030"
+                    : "Align with Plan Galápagos 2030",
+                )}
                 {selector(
                   "ods",
-                  es
-                    ? "Objetivos de Desarrollo Sostenible (ODS)"
-                    : "Sustainable Development Goals (SDGs)",
+                  es ? "Alinear con los ODS" : "Align with the SDGs",
                 )}
                 <small>
                   {es
                     ? "Los ODS relacionados se muestran primero. Usted confirma cuáles corresponden."
                     : "Related SDGs are shown first. You confirm which apply."}
                 </small>
-                {selector("glf", es ? "Línea GLF" : "GLF funding line")}
+                {selector(
+                  "glf",
+                  es
+                    ? "Alinear con las prioridades estratégicas del GLF"
+                    : "Align with GLF strategic priorities",
+                )}
               </div>
             </div>
             {o.kind === "specific" && (

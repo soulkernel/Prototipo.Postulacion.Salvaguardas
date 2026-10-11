@@ -277,7 +277,7 @@ export function strategicText(
             (id) => `${id}: ${items.find((p) => p.id === id)?.[locale] || id}`,
           )
           .join("; ");
-      return `${o.text}\nPlan Galápagos 2030: ${labels(o.plan, planPolicies)}\nODS: ${o.ods.map((id) => `${id}: ${sdgGoals[id - 1]?.[locale] ?? id}`).join("; ")}\nGLF: ${labels(o.glf, glfLines)}\n${locale === "es" ? "Contribución esperada" : "Expected contribution"}: ${o.contribution}`;
+      return `${o.text}\nPlan Galápagos 2030: ${labels(o.plan, planPolicies)}\nODS: ${o.ods.map((id) => `${id}: ${sdgGoals[id - 1]?.[locale] ?? id}`).join("; ")}\n${locale === "es" ? "Prioridades estratégicas del GLF" : "GLF strategic priorities"}: ${labels(o.glf, glfLines)}\n${locale === "es" ? "Contribución esperada" : "Expected contribution"}: ${o.contribution}`;
     })
     .join("\n\n");
   return {
