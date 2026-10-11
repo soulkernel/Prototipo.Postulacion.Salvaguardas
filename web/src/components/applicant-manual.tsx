@@ -6,7 +6,6 @@ import {
   Search,
   Printer,
   ArrowUpRight,
-  CheckCircle2,
   Lightbulb,
   ChevronRight,
   FileCheck2,
@@ -80,10 +79,6 @@ export function ApplicantManual({ locale }: { locale: Locale }) {
         <div className="manual-hero-art" aria-hidden="true">
           <div className="manual-orbit" />
           <BookOpen size={74} strokeWidth={1.25} />
-          <span className="manual-art-chip">
-            <CheckCircle2 size={17} />
-            {es ? "Claro, de principio a fin" : "Clear, from start to finish"}
-          </span>
         </div>
       </section>
       <ol className="manual-journey">
