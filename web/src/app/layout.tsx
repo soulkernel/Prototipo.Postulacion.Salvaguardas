@@ -14,7 +14,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang={await getLocale()}>
+    <html lang={await getLocale()} spellCheck={true}>
       <body>
         <a className="skip-link" href="#main-content">
           Saltar al contenido / Skip to content
