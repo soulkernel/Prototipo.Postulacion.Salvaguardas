@@ -2810,7 +2810,7 @@ select {
 .partner-row button { margin-top: 24px; }
 .live-form .activity-objective-option { display: flex; align-items: flex-start; gap: 10px; white-space: normal; }
 .activity-objective-option input { flex: 0 0 auto; margin-top: 3px; }
-.activity-objective-option span { min-width: 0; overflow-wrap: anywhere; }
+.activity-objective-option span { min-width: 0; overflow-wrap: anywhere; font-weight: 400; }
 .screening-activity-description { white-space: pre-wrap; overflow-wrap: anywhere; }
 .application-save-heading { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
 .application-save-time { font-size: 13px; color: var(--navy); }
