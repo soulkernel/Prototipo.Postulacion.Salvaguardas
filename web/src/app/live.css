@@ -957,12 +957,12 @@ a {
 .header-sign-out:focus-visible { outline: 3px solid #83ead6; outline-offset: 3px; }
 .header-sign-out:active { transform: translateY(1px); }
 .header-sign-out:disabled { opacity: .7; cursor: wait; }
-.header-account-controls { width: 160px; }
+.header-account-controls { width: 118px; gap: 6px; }
 .header-account-controls .language-switch,
 .header-account-controls form,
 .header-account-controls .header-sign-out { width: 100%; box-sizing: border-box; }
 .header-account-controls .language-switch,
-.header-account-controls .header-sign-out { height: 40px; min-height: 40px; border-radius: 7px; }
+.header-account-controls .header-sign-out { height: 34px; min-height: 34px; border-radius: 7px; }
 .header-account-controls .language-switch { margin-left: 0; justify-content: center; }
 .header-account-controls .language-switch button { flex: 1; }
 
@@ -1006,4 +1006,35 @@ a {
 
 .live-main tr.application-row-submitted > td {
   background-color: #f4faf6;
+}
+
+/* Compact account controls remain distinct from the primary navigation. */
+.live-header nav { gap: 8px; }
+.live-header nav a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 7px 11px;
+  border: 1px solid #ffffff26;
+  border-radius: 7px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.live-header nav a:hover {
+  background: #ffffff0d;
+  border-color: #ffffff66;
+  color: #fff;
+}
+.live-header nav a[aria-current="page"] {
+  background: #ffffff17;
+  border-color: #ffffff80;
+  color: #fff;
+}
+.header-account-controls .header-sign-out { padding: 4px 8px; }
+.header-account-controls .language-switch button { padding: 4px 7px; }
+@media (pointer: coarse) {
+  .live-header nav a,
+  .header-account-controls .language-switch,
+  .header-account-controls .header-sign-out { min-height: 44px; }
 }
