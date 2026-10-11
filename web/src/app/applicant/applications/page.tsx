@@ -53,7 +53,15 @@ export default async function MyApplicationsPage({
               </thead>
               <tbody>
                 {rows.map((row) => (
-                  <tr key={row.id}>
+                  <tr
+                    key={row.id}
+                    className={
+                      row.status === "submitted" ||
+                      row.status === "phase2_submitted"
+                        ? "application-row-submitted"
+                        : undefined
+                    }
+                  >
                     <td>{row.reference_code}</td>
                     <td>
                       {row.payload?.concept?.title ||

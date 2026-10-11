@@ -1003,3 +1003,7 @@ a {
 .live-form .validation-field-message, .validation-field-message { display: block; color: #9b2926; font-weight: 400; margin-top: 6px; }
 .step-pending { font-size: .8rem; color: #9b2926; }
 .completion-step-notice { margin: 16px 0; padding: 10px 14px; background: #fff7f6; border-left: 3px solid #ba3c37; }
+
+.live-main tr.application-row-submitted > td {
+  background-color: #f4faf6;
+}
