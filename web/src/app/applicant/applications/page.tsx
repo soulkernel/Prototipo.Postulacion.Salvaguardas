@@ -59,7 +59,7 @@ export default async function MyApplicationsPage({
                       {row.payload?.concept?.title ||
                         (es ? "Sin título" : "Untitled")}
                     </td>
-                    <td>{statusLabel(row.status, locale)}</td>
+                    <td>{statusLabel(row.status, locale, "applicant")}</td>
                     <td>
                       {new Date(row.updated_at).toLocaleString(locale, {
                         timeZone: "Pacific/Galapagos",

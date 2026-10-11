@@ -153,7 +153,22 @@ export const statusLabels: Record<string, [string, string]> = {
   contract_signed: ["Convenio firmado", "Agreement signed"],
   closed: ["Cerrada", "Closed"],
 };
-export function statusLabel(status: string, locale: Locale) {
+const applicantStatusLabels: Record<string, [string, string]> = {
+  submitted: ["Enviada al GLF", "Submitted to GLF"],
+  under_review: ["En revisión por GLF", "Under review by GLF"],
+  phase2_submitted: [
+    "Propuesta completa enviada al GLF",
+    "Full proposal submitted to GLF",
+  ],
+};
+export function statusLabel(
+  status: string,
+  locale: Locale,
+  audience: "internal" | "applicant" = "internal",
+) {
+  if (audience === "applicant" && applicantStatusLabels[status]) {
+    return applicantStatusLabels[status][locale === "es" ? 0 : 1];
+  }
   return statusLabels[status]?.[locale === "es" ? 0 : 1] || status;
 }
 export const roleLabels: Record<string, [string, string]> = {

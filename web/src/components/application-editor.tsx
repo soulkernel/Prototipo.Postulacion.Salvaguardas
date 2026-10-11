@@ -745,7 +745,7 @@ export function ApplicationEditor({
         </div>
         <div className="application-save-heading">
           <span className="status-pill neutral">
-            {statusLabel(application.status, locale)}
+            {statusLabel(application.status, locale, "applicant")}
           </span>
           {editable && (
             <span

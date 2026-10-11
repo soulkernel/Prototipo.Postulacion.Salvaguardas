@@ -988,8 +988,8 @@ export const manualChapters: ManualChapter[] = [
         "Check fields, declarations and both signed PDFs. Select Submit to GLF once and wait for the response.",
       ],
       [
-        "Confirme que el estado cambió a Recibida y que aparece la fecha del envío. Descargue el comprobante de recepción.",
-        "Confirm the status changed to Received and the submission date appears. Download the receipt.",
+        "Confirme que el estado cambió a Enviada al GLF y que aparece la fecha del envío. Descargue el comprobante de recepción.",
+        "Confirm the status changed to Submitted to GLF and the submission date appears. Download the receipt.",
       ],
       [
         "Conserve comprobante y documentos. Para consultarlos después, use Mis postulaciones y abra el expediente.",
@@ -1004,9 +1004,9 @@ export const manualChapters: ManualChapter[] = [
         "Validates and submits the dossier. Missing data, outdated files or deadline restrictions prevent confirmation.",
       ],
       [
-        "Recibida / Versión presentada",
+        "Enviada al GLF / Versión presentada",
         "Indica que existe un envío registrado. El comprobante acredita recepción; no selección ni aprobación del financiamiento.",
-        "Received / Submitted version",
+        "Submitted to GLF / Submitted version",
         "Indicates a recorded submission. The receipt confirms reception, not selection or funding approval.",
       ],
       [
@@ -1042,8 +1042,8 @@ export const manualChapters: ManualChapter[] = [
       ["2 documentos firmados cargados ✓", "2 signed documents uploaded ✓"],
       ["Enviar al GLF → Procesando…", "Submit to GLF → Processing…"],
       [
-        "Recibida · fecha y hora Galápagos",
-        "Received · Galápagos date and time",
+        "Enviada al GLF · fecha y hora Galápagos",
+        "Submitted to GLF · Galápagos date and time",
       ],
       ["Descargar comprobante de recepción", "Download receipt"],
       [
@@ -1078,10 +1078,10 @@ export const manualChapters: ManualChapter[] = [
     ],
     rows: [
       [
-        "En revisión / No seleccionada",
-        "Son estados distintos de Recibida. Consulte el registro del expediente; no infiera una decisión solo por haber enviado.",
-        "Under review / Not selected",
-        "These differ from Received. Check the dossier record; do not infer a decision merely from submission.",
+        "En revisión por GLF / No seleccionada",
+        "Son estados distintos de Enviada al GLF. Consulte el registro del expediente; no infiera una decisión solo por haber enviado.",
+        "Under review by GLF / Not selected",
+        "These differ from Submitted to GLF. Check the dossier record; do not infer a decision merely from submission.",
       ],
       [
         "Invitada a Fase 2",
@@ -1118,8 +1118,8 @@ export const manualChapters: ManualChapter[] = [
         "My applications → Open dossier",
       ],
       [
-        "Recibida → En revisión → Decisión GLF",
-        "Received → Under review → GLF decision",
+        "Enviada al GLF → En revisión por GLF → Decisión GLF",
+        "Submitted to GLF → Under review by GLF → GLF decision",
       ],
       [
         "Si hay invitación: Fase 2 · Propuesta completa",
