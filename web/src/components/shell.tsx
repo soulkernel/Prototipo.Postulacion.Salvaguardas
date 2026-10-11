@@ -45,6 +45,9 @@ export async function Shell({
               <MenuLink href="/applicant/guide">
                 {locale === "es" ? "Cómo postular" : "How to apply"}
               </MenuLink>
+              <MenuLink href="/manual">
+                {locale === "es" ? "Manual de uso" : "User manual"}
+              </MenuLink>
             </>
           )}
           {viewer && viewer.profile.role !== "applicant" && (
@@ -89,7 +92,9 @@ export async function Shell({
             <form action={signOut}>
               <SubmitButton
                 className="header-sign-out"
-                pendingLabel={locale === "es" ? "Cerrando sesión…" : "Signing out…"}
+                pendingLabel={
+                  locale === "es" ? "Cerrando sesión…" : "Signing out…"
+                }
               >
                 {locale === "es" ? "Cerrar sesión" : "Sign out"}
               </SubmitButton>

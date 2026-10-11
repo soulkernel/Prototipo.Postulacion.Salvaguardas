@@ -808,6 +808,17 @@ export function ApplicationEditor({
           ? "Campo obligatorio para enviar la postulación. Puede guardar un borrador incompleto. Los campos opcionales se indican expresamente."
           : "Required to submit the application. You can save an incomplete draft. Optional fields are explicitly identified."}
       </p>
+      <p className="field-help">
+        <Link
+          href={`/manual#${["datos", "descripcion", "screening", "documentos"][step]}`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {es
+            ? "¿Necesita ayuda con este paso? Consulte el manual ↗"
+            : "Need help with this step? Read the manual ↗"}
+        </Link>
+      </p>
       <nav
         className="wizard-tabs"
         aria-label={es ? "Pasos de la postulación" : "Application steps"}

@@ -310,3 +310,7 @@ Resumen estructurado: source Formatos y Normativa de postulación/Formato-de-Not
 - Retirada explicación técnica de copias inmutables/autorización y etiqueta de versión de reglas del encabezado externo. Mantiene códigos y datos históricos, sin reescribirlos.
 - Los avisos heredados de prueba/datos ficticios se muestran como una breve explicación neutral del uso de información para gestionar/evaluar postulaciones; los avisos institucionales sin texto de prueba se conservan. Es una presentación de interfaz, no modificación retroactiva del aviso aceptado guardado en la base de datos ni de los documentos ya generados.
 - 71 pruebas aprobadas, lint/TypeScript y compilación correctos. Verificación de fecha al cruzar medianoche UTC y nombres por versión incluida.
+
+## 2026-10-11 — v0.4.20 Manual externo
+Manual público /manual ES/EN: 13 capítulos, esquemas numerados de pantallas (sin datos reales), tablas de campos/acciones, buscador sin acentos, índice, impresión completa aunque haya filtro, diseño móvil. Menú externo, ayuda login/registro y enlaces por paso en nueva pestaña para preservar borrador. Manual interno no construido por instrucción del usuario. Base de datos intacta. npm test: 29 SQL + 42 TS; lint, TypeScript y build correctos. Segunda fase solo contextual, sin instrucciones sobre controles aún no terminados.
+

@@ -267,6 +267,13 @@ export function AuthForm({
                 : "No account yet? Create account"}
           </Link>
         </p>
+        <p className="auth-manual-link">
+          <Link href="/manual#cuenta">
+            {es
+              ? "Manual de uso · Cómo crear e ingresar a su cuenta"
+              : "User manual · Creating and accessing your account"}
+          </Link>
+        </p>
       </section>
     </main>
   );
