@@ -962,7 +962,7 @@ a {
 .header-account-controls form,
 .header-account-controls .header-sign-out { width: 100%; box-sizing: border-box; }
 .header-account-controls .language-switch,
-.header-account-controls .header-sign-out { height: 34px; min-height: 34px; border-radius: 7px; }
+.header-account-controls .header-sign-out { height: 44px; min-height: 44px; border-radius: 7px; }
 .header-account-controls .language-switch { margin-left: 0; justify-content: center; }
 .header-account-controls .language-switch button { flex: 1; }
 
@@ -1009,12 +1009,12 @@ a {
 }
 
 /* Compact account controls remain distinct from the primary navigation. */
-.live-header nav { gap: 8px; }
+.live-header nav { gap: 8px; justify-content: flex-start; min-width: 0; }
 .live-header nav a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 38px;
+  min-height: 44px;
   padding: 7px 11px;
   border: 1px solid #ffffff26;
   border-radius: 7px;
@@ -1022,7 +1022,7 @@ a {
   white-space: nowrap;
 }
 .live-header nav a:hover {
-  background: #ffffff0d;
+  background: #ffffff24;
   border-color: #ffffff66;
   color: #fff;
 }
@@ -1031,10 +1031,16 @@ a {
   border-color: #ffffff80;
   color: #fff;
 }
-.header-account-controls .header-sign-out { padding: 4px 8px; }
-.header-account-controls .language-switch button { padding: 4px 7px; }
+.header-account-controls { margin-left: 12px; gap: 8px; }
+.header-account-controls .header-sign-out { padding: 7px 8px; }
+.header-account-controls .language-switch button { padding: 7px; }
 @media (pointer: coarse) {
   .live-header nav a,
   .header-account-controls .language-switch,
   .header-account-controls .header-sign-out { min-height: 44px; }
+}
+
+@media (max-width: 760px) {
+  .header-account-controls { margin-left: auto; }
+  .live-header nav { flex: 0 0 100%; }
 }
