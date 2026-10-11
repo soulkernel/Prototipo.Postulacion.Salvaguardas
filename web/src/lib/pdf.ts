@@ -7,7 +7,7 @@ import path from "node:path";
 import { identityFields, narrativeFields } from "./fields";
 import { hasSummaryParts, summarySections } from "./summary";
 import { strategicText } from "./strategic-alignment";
-import { riskCode, synchronizeRisks } from "./potential-risks";
+import { riskLabel, synchronizeRisks } from "./potential-risks";
 import { riskScore, riskLevel, type Payload, type Locale } from "./domain";
 export async function applicationPdf({
   payload,
@@ -203,6 +203,7 @@ export async function applicationPdf({
         field(key, value);
     }
   } else {
+    field(es ? "Proyecto" : "Project", payload.concept.title);
     let sum = 0;
     payload.activities.forEach((a, ai) => {
       draw((es ? "ACTIVIDAD " : "ACTIVITY ") + (ai + 1) + ": " + a.title, true);
@@ -221,7 +222,11 @@ export async function applicationPdf({
             (ri + 1) +
             (r.source_id
               ? " · " +
-                riskCode(payload.concept.risk_register || [], r.source_id)
+                riskLabel(
+                  payload.concept.risk_register || [],
+                  r.source_id,
+                  locale,
+                )
               : ""),
           true,
         );
@@ -241,8 +246,8 @@ export async function applicationPdf({
         const residual = riskScore(r.residual_probability, r.residual_severity);
         field(
           es
-            ? "Probabilidad × gravedad inicial"
-            : "Initial probability × severity",
+            ? "Puntaje del riesgo (probabilidad × gravedad)"
+            : "Risk score (probability × severity)",
           r.probability +
             " × " +
             r.severity +
