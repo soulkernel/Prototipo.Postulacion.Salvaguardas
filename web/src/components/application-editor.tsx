@@ -12,6 +12,7 @@ import { SummaryFields } from "./summary-fields";
 import { StrategicFields } from "./strategic-fields";
 import { ProjectResultFields } from "./project-result-fields";
 import { resultText } from "@/lib/project-results";
+import { RiskOverview } from "./risk-overview";
 import { PotentialRiskFields } from "./potential-risk-fields";
 import { riskLabel } from "@/lib/potential-risks";
 import { strategicText } from "@/lib/strategic-alignment";
@@ -1141,6 +1142,7 @@ export function ApplicationEditor({
                   ? "Identifique y evalúe los riesgos de cada actividad. La mitigación y el PGAS se completan en la Fase 2. Si no identifica riesgos, justifíquelo."
                   : "Identify and assess risks for each activity. Mitigation and the ESMP are completed in Phase 2. If you identify no risks, explain why."}
               </p>
+              <RiskOverview payload={payload} locale={locale} />
               {payload.activities.map((activity, ai) => (
                 <section className="activity-card" key={activity.id}>
                   <h3>
@@ -1354,22 +1356,23 @@ export function ApplicationEditor({
                           </label>
                           {scale(
                             es
-                              ? "Probabilidad inicial (1–5)"
-                              : "Initial probability (1–5)",
+                              ? "Probabilidad de ocurrencia (1–5)"
+                              : "Probability of occurrence (1–5)",
                             risk.probability,
                             (n) => updateRisk(ai, ri, { probability: n }),
                           )}
                           {scale(
                             es
-                              ? "Gravedad inicial (1–5)"
-                              : "Initial severity (1–5)",
+                              ? "Gravedad del riesgo (1–5)"
+                              : "Risk severity (1–5)",
                             risk.severity,
                             (n) => updateRisk(ai, ri, { severity: n }),
                           )}
                         </div>
                         <div className={"risk-result " + riskLevel(score)}>
-                          {es ? "Puntaje inicial" : "Initial score"}:{" "}
+                          {es ? "Puntaje del riesgo" : "Risk score"}:{" "}
                           <strong>
+                            {risk.probability ?? "—"} × {risk.severity ?? "—"} ={" "}
                             {score ?? "—"} · {levels[locale][riskLevel(score)]}
                           </strong>
                         </div>
