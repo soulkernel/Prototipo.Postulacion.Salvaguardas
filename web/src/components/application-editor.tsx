@@ -2065,6 +2065,15 @@ export function ApplicationEditor({
                       call.phase2_schema,
                     );
                     if (issues.missing.length || issues.invalid.length) {
+                      setShowCompletion(true);
+                      const firstIssue = completionGuidance(
+                        payload,
+                        rules,
+                        application.stage,
+                        call.phase2_schema,
+                        locale,
+                      ).find((issue) => issue.step === step);
+                      if (firstIssue) setFocusIssue({ ...firstIssue });
                       setError(
                         [
                           issues.missing.length
