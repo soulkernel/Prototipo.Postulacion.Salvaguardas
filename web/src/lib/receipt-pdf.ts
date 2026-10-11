@@ -35,46 +35,17 @@ export async function receiptPdf(input: {
     await readFile(path.join(folder, "noto-sans-latin-700-normal.woff")),
     { subset: true },
   );
-  const logo = await pdf.embedPng(
-    await readFile(path.join(process.cwd(), "public/glf-logo.png")),
-  );
-  const navy = rgb(30 / 255, 58 / 255, 108 / 255);
   const black = rgb(0, 0, 0);
   let page = pdf.addPage([595.28, 841.89]);
-  let y = 740;
-  const header = () => {
-    page.drawRectangle({
-      x: 0,
-      y: 768,
-      width: 595.28,
-      height: 74,
-      color: navy,
-    });
-    page.drawImage(logo, { x: 52, y: 779, width: 128, height: 53 });
-    page.drawText("GALÁPAGOS LIFE FUND", {
-      x: 300,
-      y: 809,
-      size: 10,
-      font: bold,
-      color: rgb(1, 1, 1),
-    });
-    page.drawText(es ? "Comprobante de recepción" : "Submission receipt", {
-      x: 300,
-      y: 790,
-      size: 11,
-      font,
-      color: rgb(1, 1, 1),
-    });
-  };
-  header();
+  let y = 790;
   function text(value: string, strong = false, size = 10, width = 491, x = 52) {
     const selected = strong ? bold : font;
     let line = "";
     const flush = () => {
       if (y < 65) {
         page = pdf.addPage([595.28, 841.89]);
-        header();
-        y = 740;
+
+        y = 790;
       }
       page.drawText(line, { x, y, size, font: selected, color: black });
       y -= size + 5;
@@ -146,8 +117,8 @@ export async function receiptPdf(input: {
   }
   if (y < 260) {
     page = pdf.addPage([595.28, 841.89]);
-    header();
-    y = 740;
+
+    y = 790;
   }
   y -= 8;
   const qrY = y - 100;
