@@ -276,7 +276,6 @@ export function emptyPayload(): Payload {
       objectives: "",
       beneficiaries: "",
       results: "",
-      project_results: [],
       sustainability: "",
       alignment: "",
       monitoring: "",

@@ -133,6 +133,7 @@ export async function createDraft(form: FormData) {
       "/applicant?error=" + encodeURIComponent(safeError(error.message)),
     );
   const payload = emptyPayload();
+  payload.concept.project_results = [];
   payload.concept.risk_register = [];
   payload.concept.strategic_alignment = {
     version: alignmentVersion,
