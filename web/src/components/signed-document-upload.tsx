@@ -39,7 +39,7 @@ export function SignedDocumentUpload({
             <span role="status">
               {current
                 ? es
-                  ? "Cargado · pendiente de verificación de firma"
+                  ? "Cargado · validez de firma pendiente de revisión por GLF"
                   : "Uploaded · signature verification pending"
                 : es
                   ? "Documento de una versión anterior · requiere reemplazo"
@@ -97,8 +97,8 @@ export function SignedDocumentUpload({
             <div className="signature-warning" role="alert">
               <p>
                 {es
-                  ? "Este documento debe contar con una firma electrónica válida. Cargar un PDF sin firma, podría no cumplir los requisitos de presentación. La validez de la firma será revisada por el GLF."
-                  : "This document must carry a valid electronic signature. Uploading an unsigned PDF may not meet the submission requirements. GLF will review the validity of the signature."}
+                  ? "Este documento debe contar con una firma electrónica válida. Cargar un PDF sin firma, podría ser motivo de descalificación de su postulación de nota conceptual. El portal comprueba la presencia de una firma incorporada; una imagen de firma no es suficiente. La validez de la firma será revisada por el GLF."
+                  : "This document must carry a valid electronic signature. Uploading an unsigned PDF could result in disqualification of your concept note application. The portal checks for an embedded signature; a signature image is not sufficient. GLF will review the validity of the signature."}
               </p>
               <div className="live-actions">
                 <button

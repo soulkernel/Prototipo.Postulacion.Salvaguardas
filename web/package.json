@@ -1,13 +1,13 @@
 {
   "name": "web",
-  "version": "0.4.16",
+  "version": "0.4.17",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --test tests/database.test.mjs && tsx --test tests/domain.test.ts tests/pdf.test.ts tests/receipt.test.ts tests/backup-selection.test.ts tests/embedding.test.ts tests/corpus-upload.test.ts tests/strategic-alignment.test.ts tests/potential-risks.test.ts tests/project-results.test.ts tests/completion-guidance.test.ts"
+    "test": "node --test tests/database.test.mjs && tsx --test tests/domain.test.ts tests/pdf.test.ts tests/receipt.test.ts tests/backup-selection.test.ts tests/embedding.test.ts tests/corpus-upload.test.ts tests/strategic-alignment.test.ts tests/potential-risks.test.ts tests/project-results.test.ts tests/completion-guidance.test.ts tests/pdf-signature.test.ts"
   },
   "dependencies": {
     "@fontsource/noto-sans": "^5.3.0",

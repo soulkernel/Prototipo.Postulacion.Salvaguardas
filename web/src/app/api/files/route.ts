@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createHash } from "node:crypto";
 import { getViewer } from "@/lib/data";
 import { validateFile } from "@/lib/files";
+import { detectPdfSignature } from "@/lib/pdf-signature";
 import { z } from "zod";
 export const runtime = "nodejs";
 export async function POST(request: NextRequest) {
@@ -45,6 +46,19 @@ export async function POST(request: NextRequest) {
       { error: "Signed document must be PDF" },
       { status: 400 },
     );
+  if (["concept_signed", "matrix_signed"].includes(kind)) {
+    const signature = await detectPdfSignature(bytes);
+    if (signature !== "detected")
+      return NextResponse.json(
+        {
+          error:
+            signature === "missing"
+              ? "GLF_SIGNATURE_MISSING"
+              : "GLF_SIGNATURE_UNREADABLE",
+        },
+        { status: 422 },
+      );
+  }
   let signedRevision: number | null = null;
   if (
     ["concept_signed", "matrix_signed"].includes(kind) &&

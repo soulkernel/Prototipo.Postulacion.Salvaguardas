@@ -12,6 +12,7 @@ import { synchronizeRisks } from "@/lib/potential-risks";
 import { geographyIssues } from "@/lib/geography";
 import { hasSummaryParts, summaryText } from "@/lib/summary";
 import { words } from "@/lib/domain";
+import { detectPdfSignature } from "@/lib/pdf-signature";
 import {
   strategicText,
   alignmentVersion,
@@ -273,6 +274,49 @@ export async function submitDraft(
     return { ok: false, error: "GLF_INVALID_SUMMARY" };
   if (!(await validStoredGeography(db, id)))
     return { ok: false, error: "GLF_INVALID_GEOGRAPHY" };
+  const { data: signatureApp } = await db
+    .from("applications")
+    .select("stage,revision")
+    .eq("id", id)
+    .maybeSingle();
+  if (signatureApp?.stage === 1) {
+    if (signatureApp.revision !== revision)
+      return { ok: false, error: "GLF_VERSION_CONFLICT" };
+    const { data: signedFiles, error: fileError } = await db
+      .from("application_documents")
+      .select("kind,storage_path,created_at")
+      .eq("application_id", id)
+      .in("kind", ["concept_signed", "matrix_signed"])
+      .order("created_at", { ascending: false });
+    if (fileError) return { ok: false, error: "GLF_SIGNATURE_UNREADABLE" };
+    for (const kind of ["concept_signed", "matrix_signed"]) {
+      const file = signedFiles?.find((f) => f.kind === kind);
+      if (!file)
+        return {
+          ok: false,
+          error:
+            kind === "concept_signed"
+              ? "GLF_SIGNED_CONCEPT_REQUIRED"
+              : "GLF_SIGNED_MATRIX_REQUIRED",
+        };
+      const { data: content, error: downloadError } = await db.storage
+        .from("application-files")
+        .download(file.storage_path);
+      if (downloadError || !content)
+        return { ok: false, error: "GLF_SIGNATURE_UNREADABLE" };
+      const detected = await detectPdfSignature(
+        new Uint8Array(await content.arrayBuffer()),
+      );
+      if (detected !== "detected")
+        return {
+          ok: false,
+          error:
+            detected === "missing"
+              ? "GLF_SIGNATURE_MISSING"
+              : "GLF_SIGNATURE_UNREADABLE",
+        };
+    }
+  }
   const { data, error } = await db.rpc("submit_application", {
     application_id: id,
     expected_revision: revision,

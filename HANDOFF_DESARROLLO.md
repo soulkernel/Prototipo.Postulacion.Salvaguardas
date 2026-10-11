@@ -289,3 +289,10 @@ Resumen estructurado: source Formatos y Normativa de postulación/Formato-de-Not
 - Al enviar se navega a confirmación con receipt=ID e intenta descargar; botón con progreso y recuperación siempre disponible. Historial externo e interno ofrece comprobante de cada envío, conservando anteriores. Fallo de descarga no se informa como fallo de recepción.
 - Registros históricos sin alguno de los anexos muestran su ausencia; no se fabrica un QR ni una firma. No se alteran DB ni documentos enviados.
 - 65 pruebas pasan, lint y build correctos. PDF ES/EN de una página verificado con datos ficticios; nombre de archivos conservado. No se enviaron los borradores del usuario para probar.
+
+## 2026-10-11 — v0.4.17: detección de firma en anexos
+- /api/files analiza la estructura del PDF para concept_signed/matrix_signed antes de almacenar; rechaza ausencia de firma incorporada o PDF ilegible/protegido con advertencias ES/EN.
+- submitDraft vuelve a descargar y comprobar los dos anexos actuales de fase 1, incluyendo cargas anteriores. Conserva validaciones SQL de versión, preparación, estado y plazos.
+- Detección estructural mediante diccionario Sig/campo FT Sig, ByteRange y Contents no vacío con forma DER. No valida criptografía CMS, identidad, confianza, revocación ni vigencia del certificado; no equivale a certificar una firma válida. GLF conserva revisión final. Una imagen o recuadro de firma no es una firma incorporada.
+- Advertencia: no se detectó firma; presentarlo sin firma podría ser motivo de descalificación; firmar y volver a cargar. PDF no legible se distingue de PDF sin firma.
+- 68 pruebas aprobadas (28 SQL + 40 dominio/PDF). Pendiente prueba con PDF firmado real de un proveedor usado por GLF. No se enviaron ni eliminaron expedientes.

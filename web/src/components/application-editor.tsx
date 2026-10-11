@@ -90,6 +90,14 @@ const levels = {
   },
 };
 function message(code: string, es: boolean) {
+  if (code.includes("SIGNATURE_MISSING"))
+    return es
+      ? "Atención: no se detectó una firma electrónica incorporada en su anexo. Presentarlo sin firma podría ser motivo de descalificación de su postulación de nota conceptual. Firme electrónicamente el PDF y vuelva a cargarlo."
+      : "Warning: no embedded electronic signature was detected in your attachment. Submitting it unsigned could result in disqualification of your concept note application. Electronically sign the PDF and upload it again.";
+  if (code.includes("SIGNATURE_UNREADABLE"))
+    return es
+      ? "No se pudo comprobar la firma electrónica del anexo. Use un PDF válido, sin contraseña, con la firma incorporada y vuelva a cargarlo."
+      : "The attachment's electronic signature could not be checked. Upload a valid, password-free PDF with an embedded signature.";
   if (code.includes("RISK_REGISTER") || code.includes("RISK_REFERENCE"))
     return es
       ? "Revise los riesgos registrados: cada riesgo debe vincularse con al menos una actividad y calificarse sin duplicados."
