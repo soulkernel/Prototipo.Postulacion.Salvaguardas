@@ -547,7 +547,7 @@ export async function applicationPdf({
   const signer =
     payload.concept.contact_name.trim() || "________________________________";
   const signerLines = lines(signer, font, 11);
-  const signatureHeight = 152 + signerLines.length * 15;
+  const signatureHeight = 180 + signerLines.length * 15;
   if (y < signatureHeight + 310) newPage();
   const signatureTop = y - 8;
   const signatureBottom = signatureTop - signatureHeight;
@@ -559,48 +559,45 @@ export async function applicationPdf({
     borderColor: rgb(0.65, 0.71, 0.78),
     borderWidth: 0.8,
   });
-  page.drawRectangle({
-    x: 46,
-    y: signatureTop - 32,
-    width: 503,
-    height: 32,
-    color: pale,
-  });
-  page.drawText(
-    es ? "RESPONSABLE DEL PROYECTO" : "PROJECT RESPONSIBLE PERSON",
-    {
-      x: 58,
-      y: signatureTop - 21,
-      size: 12,
-      font: bold,
-      color: rgb(0, 0, 0),
-    },
-  );
-  page.drawText(es ? "Nombre:" : "Name:", {
+  page.drawText(es ? "Firma electrónica" : "Electronic signature", {
     x: 58,
-    y: signatureTop - 52,
-    size: 11,
+    y: signatureTop - 22,
+    size: 12,
     font: bold,
     color: rgb(0, 0, 0),
   });
+  // Keep sufficient space between the heading and the signer's name.
   signerLines.forEach((line, i) =>
     page.drawText(line, {
       x: 58,
-      y: signatureTop - 70 - i * 15,
+      y: signatureBottom + 55 + (signerLines.length - 1 - i) * 15,
       size: 11,
-      font,
+      font: bold,
       color: rgb(0, 0, 0),
     }),
   );
+  page.drawText(es ? "Responsable del proyecto" : "Project lead", {
+    x: 58,
+    y: signatureBottom + 36,
+    size: 11,
+    font,
+    color: rgb(0, 0, 0),
+  });
+  const generationDate = new Intl.DateTimeFormat(es ? "es-EC" : "en-GB", {
+    timeZone: "Pacific/Galapagos",
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).format(stamp);
   page.drawText(
-    es ? "Espacio para firma electrónica" : "Electronic signature area",
-    {
-      x: 58,
-      y: signatureBottom + 13,
-      size: 11,
-      font,
-      color: rgb(0, 0, 0),
-    },
+    generationDate +
+      (es ? " (hora Galápagos)" : " (Galapagos time)"),
+    { x: 58, y: signatureBottom + 17, size: 9, font, color: rgb(0, 0, 0) },
   );
   y = signatureBottom - 18;
 

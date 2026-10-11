@@ -16,6 +16,7 @@ test("concept and matrix PDFs embed fonts, paginate and contain a QR image", asy
       });
   }
   payload.concept.title = "PRUEBA FICTICIA · Restauración de hábitats";
+  payload.concept.contact_name = "María Elena Pérez";
   payload.concept.associated_organizations = [
     "Fundación Marina de Prueba",
     "Organización Comunitaria de Prueba",
