@@ -17,8 +17,7 @@ export async function Shell({
   internal?: boolean;
 }) {
   const viewer = await getViewer();
-  const accountName =
-    viewer?.profile.full_name?.trim() || viewer?.user.email || "";
+  const accountName = viewer?.user.email || "";
   const initials = accountName
     .split(/\s+/)
     .filter(Boolean)
