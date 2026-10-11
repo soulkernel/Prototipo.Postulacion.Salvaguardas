@@ -68,7 +68,7 @@ export async function applicationPdf({
   pdf.setAuthor("Galápagos Life Fund");
   pdf.setSubject(payload.concept.title);
   let page = pdf.addPage([595.28, 841.89]);
-  const navy = rgb(0.12, 0.23, 0.4);
+  const navy = rgb(30 / 255, 58 / 255, 108 / 255);
   const pale = rgb(0.94, 0.96, 0.98);
   const logo = await pdf.embedPng(
     await readFile(path.join(process.cwd(), "public", "glf-logo.png")),
