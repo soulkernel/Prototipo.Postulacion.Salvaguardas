@@ -123,3 +123,30 @@ test("document filenames use the immutable generation time in Galapagos and safe
   );
   assert.throws(() => documentStamp("invalid"));
 });
+
+test("document prose preserves selected policies and scores without inventing alignment", async () => {
+  const { alignmentNarrative, riskNarrative } =
+    await import("../src/lib/document-language");
+  const objective = {
+    ...newObjective("general"),
+    text: "Conservar ecosistemas",
+    plan: ["E1"],
+    ods: [14],
+    glf: ["GLF-L01"],
+    contribution: "Aporte declarado por el aplicante.",
+  };
+  const es = alignmentNarrative(objective, "es").join("\n");
+  assert.match(es, /contribuye a la siguiente política: E1/);
+  assert.match(es, /el ODS 14/);
+  assert.ok(es.includes(objective.contribution));
+  assert.equal(
+    alignmentNarrative(
+      { ...objective, plan: [], ods: [], glf: [], contribution: "" },
+      "en",
+    ).length,
+    1,
+  );
+  assert.match(riskNarrative(3, 4, "es"), /3 × 4 = 12.*riesgo alto/);
+  assert.match(riskNarrative(4, 4, "en"), /16.*very high risk/);
+  assert.match(riskNarrative(null, 4, "es"), /incompleta/);
+});

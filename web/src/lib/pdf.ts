@@ -1,3 +1,4 @@
+import { alignmentNarrative, riskNarrative } from "./document-language";
 import { resultText, resultUnits } from "@/lib/project-results";
 import { PDFDocument, rgb, type PDFFont } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
@@ -8,7 +9,7 @@ import { identityFields, narrativeFields } from "./fields";
 import { hasSummaryParts, summarySections } from "./summary";
 import { strategicText } from "./strategic-alignment";
 import { riskLabel, synchronizeRisks } from "./potential-risks";
-import { riskScore, riskLevel, type Payload, type Locale } from "./domain";
+import { riskScore, type Payload, type Locale } from "./domain";
 export async function applicationPdf({
   payload,
   reference,
@@ -40,14 +41,6 @@ export async function applicationPdf({
     };
   const pdf = await PDFDocument.create();
   pdf.registerFontkit(fontkit);
-  const levelLabel = (score: number | null) =>
-    ({
-      incomplete: ["Incompleto", "Incomplete"],
-      low: ["Bajo", "Low"],
-      medium: ["Medio", "Medium"],
-      high: ["Alto", "High"],
-      very_high: ["Muy alto", "Very high"],
-    })[riskLevel(score)][es ? 0 : 1];
   const folder = path.join(
     process.cwd(),
     "node_modules",
@@ -193,8 +186,9 @@ export async function applicationPdf({
       new Intl.NumberFormat(es ? "es-EC" : "en-US", {
         style: "currency",
         currency: "USD",
-        maximumFractionDigits: 0,
-      }).format(v || 0);
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(v ?? 0);
     const cards = [
       [
         es ? "Solicitado al GLF" : "Requested from GLF",
@@ -232,6 +226,11 @@ export async function applicationPdf({
       });
     });
     y -= 80;
+    draw(
+      es
+        ? `Se solicita al GLF un financiamiento de ${payload.concept.requested_amount === null ? "monto no consignado" : money(payload.concept.requested_amount)} y se prevé un cofinanciamiento de ${payload.concept.cofinance_amount === null ? "monto no consignado" : money(payload.concept.cofinance_amount)}.`
+        : `The applicant requests ${payload.concept.requested_amount === null ? "an unspecified amount" : money(payload.concept.requested_amount)} from GLF and plans cofinancing of ${payload.concept.cofinance_amount === null ? "an unspecified amount" : money(payload.concept.cofinance_amount)}.`,
+    );
     draw(es ? "1. DATOS GENERALES" : "1. PROJECT DETAILS", true);
     for (const fieldSpec of [...identityFields, ...narrativeFields]) {
       if (fieldSpec.key === "title") continue;
@@ -239,10 +238,20 @@ export async function applicationPdf({
         fieldSpec.key === "alignment" &&
         payload.concept.strategic_alignment?.objectives.length
       ) {
+        if (y < 380) newPage();
         draw(es ? "ALINEACIÓN ESTRATÉGICA" : "STRATEGIC ALIGNMENT", true);
         let i = 0;
         for (const objective of payload.concept.strategic_alignment
           .objectives) {
+          const narrative = alignmentNarrative(objective, locale);
+          const blockHeight =
+            50 +
+            narrative.reduce(
+              (total, paragraph) =>
+                total + lines(paragraph, font, 11).length * 15 + 9,
+              0,
+            );
+          if (y < 72 + Math.min(blockHeight, 500)) newPage();
           draw(
             objective.kind === "general"
               ? es
@@ -251,17 +260,7 @@ export async function applicationPdf({
               : (es ? "Objetivo específico " : "Specific objective ") + ++i,
             true,
           );
-          const text = strategicText(
-            { ...payload.concept.strategic_alignment, objectives: [objective] },
-            locale,
-          ).alignment;
-          const body = text.split("\n").slice(1);
-          const sourceStart = body.findIndex((line) =>
-            line.startsWith("Plan: "),
-          );
-          draw(
-            body.slice(0, sourceStart < 0 ? undefined : sourceStart).join("\n"),
-          );
+          for (const paragraph of narrative) draw(paragraph);
         }
         field(
           es ? "Fuentes de referencia" : "Reference sources",
@@ -310,18 +309,30 @@ export async function applicationPdf({
         draw(es ? "RESULTADOS E INDICADORES" : "RESULTS AND INDICATORS", true);
         payload.concept.project_results.forEach((r, i) => {
           draw((es ? "Resultado " : "Result ") + (i + 1), true);
-          field(es ? "Resultado esperado" : "Expected result", r.result);
           field(
             es
-              ? "Objetivo específico asociado"
-              : "Associated specific objective",
+              ? "Se espera alcanzar el siguiente resultado"
+              : "The following result is expected",
+            r.result,
+          );
+          field(
+            es
+              ? "Este resultado contribuye al siguiente objetivo específico"
+              : "This result contributes to the following specific objective",
             payload.concept.strategic_alignment?.objectives.find(
               (o) => o.id === r.objective_id,
             )?.text || r.objective_id,
           );
-          field(es ? "Indicador" : "Indicator", r.indicator);
           field(
-            es ? "Meta preliminar" : "Preliminary target",
+            es
+              ? "El resultado se medirá mediante el siguiente indicador"
+              : "The result will be measured using the following indicator",
+            r.indicator,
+          );
+          field(
+            es
+              ? "La meta preliminar prevista es"
+              : "The planned preliminary target is",
             String(r.target ?? "—") +
               " " +
               (r.unit === "other"
@@ -329,7 +340,12 @@ export async function applicationPdf({
                 : resultUnits.find((u) => u[0] === r.unit)?.[es ? 1 : 2] ||
                   r.unit),
           );
-          field(es ? "Evidencia prevista" : "Expected evidence", r.evidence);
+          field(
+            es
+              ? "El cumplimiento se comprobará mediante la siguiente evidencia"
+              : "Achievement will be verified using the following evidence",
+            r.evidence,
+          );
         });
         continue;
       }
@@ -374,8 +390,8 @@ export async function applicationPdf({
       if (a.objective_ids?.length)
         field(
           es
-            ? "Objetivos específicos asociados"
-            : "Associated specific objectives",
+            ? "Esta actividad contribuye a los siguientes objetivos específicos"
+            : "This activity contributes to the following specific objectives",
           a.objective_ids
             .map(
               (id) =>
@@ -435,35 +451,34 @@ export async function applicationPdf({
           true,
         );
         field(
-          es ? "Nombre y dimensión" : "Name and dimension",
-          r.name +
-            " · " +
-            (r.dimension === "environmental"
-              ? es
-                ? "Ambiental"
-                : "Environmental"
-              : "Social"),
+          es
+            ? "Riesgo identificado durante esta actividad"
+            : "Risk identified during this activity",
+          es
+            ? `Se identifica el siguiente riesgo ${r.dimension === "environmental" ? "ambiental" : "social"}: ${r.name}`
+            : `The following ${r.dimension === "environmental" ? "environmental" : "social"} risk is identified: ${r.name}`,
         );
-        field(es ? "Descripción" : "Description", r.description);
+        field(
+          es
+            ? "Descripción del riesgo presentada por el aplicante"
+            : "Risk description provided by the applicant",
+          r.description,
+        );
         const score = riskScore(r.probability, r.severity);
         sum += score || 0;
-        const residual = riskScore(r.residual_probability, r.residual_severity);
+
         field(
           es
             ? "Puntaje del riesgo (probabilidad × gravedad)"
             : "Risk score (probability × severity)",
-          r.probability +
-            " × " +
-            r.severity +
-            " = " +
-            score +
-            " · " +
-            levelLabel(score),
+          riskNarrative(r.probability, r.severity, locale),
         );
         if (stage === 2) {
           for (const m of r.measures) {
             field(
-              es ? "Medida de mitigación" : "Mitigation measure",
+              es
+                ? "Para atender este riesgo se propone la siguiente medida"
+                : "The following measure is proposed to address this risk",
               m.text ||
                 (es ? m.label_es : m.label_en) ||
                 m.label_es ||
@@ -472,7 +487,9 @@ export async function applicationPdf({
             );
             if (m.normative_reference)
               field(
-                es ? "Referencia normativa" : "Normative reference",
+                es
+                  ? "La medida se vincula con la siguiente referencia normativa"
+                  : "The measure is linked to the following normative reference",
                 m.normative_reference,
               );
             else
@@ -486,17 +503,16 @@ export async function applicationPdf({
             es
               ? "Probabilidad × gravedad residual"
               : "Residual probability × severity",
-            r.residual_probability +
-              " × " +
-              r.residual_severity +
-              " = " +
-              residual +
-              " · " +
-              levelLabel(residual),
+            riskNarrative(r.residual_probability, r.residual_severity, locale),
           );
           field(es ? "Ubicación" : "Location", r.location);
           field(es ? "Costo estimado (USD)" : "Estimated cost (USD)", r.cost);
-          field(es ? "Responsable" : "Responsible person", r.responsible);
+          field(
+            es
+              ? "La implementación de la medida estará a cargo de"
+              : "Implementation of the measure will be assigned to",
+            r.responsible,
+          );
           field(
             es
               ? "Inicio / fin / duración (trimestres)"
@@ -513,7 +529,7 @@ export async function applicationPdf({
       });
     });
     field(
-      es ? "Suma de puntajes individuales" : "Sum of individual scores",
+      es ? "La suma de los puntajes individuales es" : "The sum of individual scores is",
       sum,
     );
     draw(
