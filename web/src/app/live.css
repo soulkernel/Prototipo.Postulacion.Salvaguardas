@@ -412,6 +412,13 @@ a {
   overflow-wrap: anywhere;
   font-size: 14px;
 }
+.document-row.submission-history-row {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.submission-history-row .live-actions {
+  margin-top: 16px;
+}
 .live-metrics {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

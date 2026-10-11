@@ -304,3 +304,9 @@ Resumen estructurado: source Formatos y Normativa de postulación/Formato-de-Not
 - Ambos anexos firmados existentes descargados desde el portal y comprobados con detectPdfSignature: detected. No equivale a validar certificados.
 - Error RPC inesperado devuelve GLF_SUBMISSION_UNAVAILABLE con mensaje explícito; registro de diagnóstico en servidor con código y motivo seguro sin contenido del expediente.
 - 70 pruebas aprobadas (29 SQL + 41 dominio/PDF), incluyendo restauración de núcleo ausente sin privilegios de bypass y traducción segura de errores.
+
+## 2026-10-11 — v0.4.19: textos externos e historial de presentación
+- Cada versión presentada muestra confirmación con título de su snapshot, fecha/hora local Pacific/Galapagos y descripción de Fase 1/2; descargas con nombres comprensibles. No usa el título mutable del expediente para describir envíos anteriores.
+- Retirada explicación técnica de copias inmutables/autorización y etiqueta de versión de reglas del encabezado externo. Mantiene códigos y datos históricos, sin reescribirlos.
+- Los avisos heredados de prueba/datos ficticios se muestran como una breve explicación neutral del uso de información para gestionar/evaluar postulaciones; los avisos institucionales sin texto de prueba se conservan. Es una presentación de interfaz, no modificación retroactiva del aviso aceptado guardado en la base de datos ni de los documentos ya generados.
+- 71 pruebas aprobadas, lint/TypeScript y compilación correctos. Verificación de fecha al cruzar medianoche UTC y nombres por versión incluida.

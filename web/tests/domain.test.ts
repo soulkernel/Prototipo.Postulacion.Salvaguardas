@@ -1,5 +1,37 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import {
+  privacyNotice,
+  submissionConfirmation,
+  submissionPhase,
+} from "../src/lib/applicant-copy";
+test("applicant submission history uses Galapagos date and the submitted version title", () => {
+  const text = submissionConfirmation(
+    1,
+    "Proyecto presentado",
+    "2026-10-11T05:37:10Z",
+    "es",
+  );
+  assert.match(text, /Proyecto presentado/);
+  assert.match(text, /sábado, 10 de octubre de 2026/);
+  assert.match(text, /23:37:10/);
+  assert.match(submissionPhase(2, "es"), /Presentación de propuesta completa/);
+  assert.match(
+    submissionConfirmation(2, "Archived title", "2026-10-11T17:37:10Z", "en"),
+    /full proposal.*Archived title.*11:37:10/,
+  );
+  assert.equal(
+    privacyNotice("Aviso institucional vigente", "es"),
+    "Aviso institucional vigente",
+  );
+  assert.doesNotMatch(
+    privacyNotice(
+      "Prueba interna sin validez oficial. Utilice datos ficticios.",
+      "es",
+    ),
+    /prueba|ficticios/i,
+  );
+});
 import { submissionError } from "../src/lib/submission-error";
 test("submission failures preserve actionable validation and hide internal SQL details", () => {
   assert.equal(

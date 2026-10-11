@@ -35,7 +35,7 @@ export default async function ApplicationPage({
       .eq("active", true),
     viewer.db
       .from("application_versions")
-      .select("id,revision,stage,submitted_at")
+      .select("id,revision,stage,submitted_at,payload")
       .eq("application_id", id)
       .order("revision", { ascending: false }),
     viewer.db
@@ -107,7 +107,13 @@ export default async function ApplicationPage({
         editable={editable}
         accountEmail={viewer.user.email || ""}
         catalog={catalog || []}
-        versions={versions || []}
+        versions={(versions || []).map(({ payload, ...v }) => ({
+          ...v,
+          project_title:
+            typeof payload?.concept?.title === "string"
+              ? payload.concept.title
+              : undefined,
+        }))}
         documents={documents || []}
         initialPrepared={prepared}
       />

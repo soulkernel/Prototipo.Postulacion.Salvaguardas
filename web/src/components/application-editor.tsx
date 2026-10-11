@@ -3,6 +3,11 @@ import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { SignedDocumentUpload } from "./signed-document-upload";
 import { ReceiptDownload } from "./receipt-download";
+import {
+  privacyNotice,
+  submissionConfirmation,
+  submissionPhase,
+} from "@/lib/applicant-copy";
 import { PhoneField } from "./phone-field";
 import { ActivityPlanningFields } from "./activity-planning-fields";
 import { PartnerFields } from "./partner-fields";
@@ -62,6 +67,7 @@ type Catalog = {
   normative_reference: string;
 };
 type Version = {
+  project_title?: string;
   id: string;
   revision: number;
   stage: number;
@@ -735,10 +741,7 @@ export function ApplicationEditor({
               {payload.concept.title}
             </p>
           )}
-          <p>
-            {es ? call.title_es : call.title_en} · {es ? "Reglas" : "Rules"}{" "}
-            {rules.version || call.rules_version}
-          </p>
+          <p>{es ? call.title_es : call.title_en}</p>
         </div>
         <div className="application-save-heading">
           <span className="status-pill neutral">
@@ -1834,7 +1837,10 @@ export function ApplicationEditor({
                   : "Call privacy notice"}
               </h3>
               <p className="preserve-text">
-                {es ? rules.privacy_es : rules.privacy_en}
+                {privacyNotice(
+                  es ? rules.privacy_es : rules.privacy_en,
+                  locale,
+                )}
               </p>
               <label className="check-row">
                 <input
@@ -2316,17 +2322,22 @@ export function ApplicationEditor({
       {versions.length > 0 && (
         <section className="live-card">
           <h2>{es ? "Versiones presentadas" : "Submitted versions"}</h2>
-          <p>
-            {es
-              ? "Los PDF se generan desde la copia inmutable de cada envío. Sus enlaces requieren ingresar con una cuenta autorizada."
-              : "PDFs are generated from each submission's immutable snapshot. Their links require an authorized account."}
-          </p>
           {versions.map((v) => (
-            <div className="document-row" key={v.id}>
-              <span>
-                {es ? "Versión" : "Version"} {v.revision} ·{" "}
-                {es ? "Fase" : "Phase"} {v.stage}
-              </span>
+            <div className="document-row submission-history-row" key={v.id}>
+              <div>
+                <p>
+                  {submissionConfirmation(
+                    v.stage,
+                    v.project_title,
+                    v.submitted_at,
+                    locale,
+                  )}
+                </p>
+                <span>
+                  {es ? "Versión" : "Version"} {v.revision} ·{" "}
+                  {submissionPhase(v.stage, locale)}
+                </span>
+              </div>
               <div className="live-actions">
                 <ReceiptDownload id={v.id} locale={locale} />
                 <a
@@ -2334,14 +2345,22 @@ export function ApplicationEditor({
                   href={"/documents/" + v.id + "/concept"}
                 >
                   <FileDown size={16} />
-                  {es ? "Nota Conceptual" : "Concept Note"}
+                  {v.stage === 1
+                    ? es
+                      ? "Nota conceptual"
+                      : "Concept note"
+                    : es
+                      ? "Propuesta completa"
+                      : "Full proposal"}
                 </a>
                 <a
                   className="button secondary"
                   href={"/documents/" + v.id + "/matrix"}
                 >
                   <FileDown size={16} />
-                  {es ? "Matriz A&S" : "E&S matrix"}
+                  {es
+                    ? "Evaluación de riesgos ambientales y sociales"
+                    : "Environmental and social risk assessment"}
                 </a>
               </div>
             </div>
