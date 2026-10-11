@@ -522,6 +522,67 @@ export async function applicationPdf({
         : "The sum does not determine an overall category. Institutional assessment belongs to GLF Sustainability.",
     );
   }
+  // Reserve the complete signature block so it never splits across pages.
+  const signer =
+    payload.concept.contact_name.trim() || "________________________________";
+  const signerLines = lines(signer, font, 11);
+  const signatureHeight = 152 + signerLines.length * 15;
+  if (y < signatureHeight + 310) newPage();
+  const signatureTop = y - 8;
+  const signatureBottom = signatureTop - signatureHeight;
+  page.drawRectangle({
+    x: 46,
+    y: signatureBottom,
+    width: 503,
+    height: signatureHeight,
+    borderColor: rgb(0.65, 0.71, 0.78),
+    borderWidth: 0.8,
+  });
+  page.drawRectangle({
+    x: 46,
+    y: signatureTop - 32,
+    width: 503,
+    height: 32,
+    color: pale,
+  });
+  page.drawText(
+    es ? "RESPONSABLE DEL PROYECTO" : "PROJECT RESPONSIBLE PERSON",
+    {
+      x: 58,
+      y: signatureTop - 21,
+      size: 12,
+      font: bold,
+      color: rgb(0, 0, 0),
+    },
+  );
+  page.drawText(es ? "Nombre:" : "Name:", {
+    x: 58,
+    y: signatureTop - 52,
+    size: 11,
+    font: bold,
+    color: rgb(0, 0, 0),
+  });
+  signerLines.forEach((line, i) =>
+    page.drawText(line, {
+      x: 58,
+      y: signatureTop - 70 - i * 15,
+      size: 11,
+      font,
+      color: rgb(0, 0, 0),
+    }),
+  );
+  page.drawText(
+    es ? "Espacio para firma electrónica" : "Electronic signature area",
+    {
+      x: 58,
+      y: signatureBottom + 13,
+      size: 11,
+      font,
+      color: rgb(0, 0, 0),
+    },
+  );
+  y = signatureBottom - 18;
+
   if (y < 230) newPage();
   draw(es ? "RECUPERAR ESTA VERSIÓN" : "RETRIEVE THIS VERSION", true);
   draw(
