@@ -9,6 +9,7 @@ const config: NextConfig = {
   },
   outputFileTracingIncludes: {
     "/documents/*": [
+      "./public/glf-logo.png",
       "./node_modules/@fontsource/noto-sans/files/*latin-400-normal.woff",
       "./node_modules/@fontsource/noto-sans/files/*latin-700-normal.woff",
     ],

@@ -3,6 +3,7 @@ import { getViewer } from "@/lib/data";
 import { getLocale } from "@/lib/locale";
 import { applicationPdf } from "@/lib/pdf";
 import type { Payload, Locale } from "@/lib/domain";
+import { documentFilename } from "@/lib/document-name";
 import { z } from "zod";
 export const runtime = "nodejs";
 export async function GET(
@@ -60,8 +61,7 @@ export async function GET(
   return new NextResponse(Buffer.from(result.bytes), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition":
-        'attachment; filename="GLF-' + version.revision + "-" + kind + '.pdf"',
+      "Content-Disposition": `attachment; filename="${documentFilename(app.reference_code, kind as "concept" | "matrix", version.revision, prepared ? version.created_at : version.submitted_at, locale)}"`,
       "Cache-Control": "private, no-store",
       "X-Content-Type-Options": "nosniff",
       "Referrer-Policy": "no-referrer",

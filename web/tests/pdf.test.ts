@@ -16,7 +16,10 @@ test("concept and matrix PDFs embed fonts, paginate and contain a QR image", asy
       });
   }
   payload.concept.title = "PRUEBA FICTICIA · Restauración de hábitats";
-  payload.concept.associated_organizations = ["Fundación Marina de Prueba", "Organización Comunitaria de Prueba"];
+  payload.concept.associated_organizations = [
+    "Fundación Marina de Prueba",
+    "Organización Comunitaria de Prueba",
+  ];
   payload.concept.summary = "Conservación y participación comunitaria. ".repeat(
     90,
   );
@@ -99,4 +102,24 @@ test("concept and matrix PDFs embed fonts, paginate and contain a QR image", asy
           result.bytes,
         );
       }
+});
+
+test("document filenames use the immutable generation time in Galapagos and safe reference", async () => {
+  const { documentFilename, documentStamp } =
+    await import("../src/lib/document-name");
+  assert.equal(documentStamp("2026-10-11T03:18:15.747Z"), "2026-10-10_211815");
+  assert.equal(
+    documentFilename("GLF-001", "concept", 7, "2026-10-11T03:18:15.747Z", "es"),
+    "GLF-001_Nota-conceptual_v7_2026-10-10_211815_Galapagos_es.pdf",
+  );
+  assert.ok(
+    !documentFilename(
+      'BAD/REF"',
+      "matrix",
+      1,
+      "2026-01-01T00:00:00Z",
+      "en",
+    ).includes('"'),
+  );
+  assert.throws(() => documentStamp("invalid"));
 });

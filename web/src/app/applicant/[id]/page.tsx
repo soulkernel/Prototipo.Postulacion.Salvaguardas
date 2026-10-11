@@ -21,6 +21,7 @@ export default async function ApplicationPage({
     { data: catalog },
     { data: versions },
     { data: documents },
+    { data: prepared },
   ] = await Promise.all([
     viewer.db.from("calls").select("*").eq("id", application.call_id).single(),
     viewer.db
@@ -37,6 +38,15 @@ export default async function ApplicationPage({
       .select("id,file_name,kind,created_at")
       .eq("application_id", id)
       .order("created_at", { ascending: false }),
+    viewer.db
+      .from("prepared_documents")
+      .select("id,revision,stage,created_at")
+      .eq("application_id", id)
+      .eq("stage", application.stage)
+      .order("revision", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
   if (!call) throw new Error("Call not available");
   const deadline =
@@ -63,6 +73,7 @@ export default async function ApplicationPage({
         catalog={catalog || []}
         versions={versions || []}
         documents={documents || []}
+        initialPrepared={prepared}
       />
     </Shell>
   );

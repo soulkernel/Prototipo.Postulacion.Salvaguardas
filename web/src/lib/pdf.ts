@@ -1,4 +1,4 @@
-import { resultText } from "@/lib/project-results";
+import { resultText, resultUnits } from "@/lib/project-results";
 import { PDFDocument, rgb, type PDFFont } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import QRCode from "qrcode";
@@ -66,13 +66,45 @@ export async function applicationPdf({
   pdf.setModificationDate(stamp);
   pdf.setTitle(reference + " · " + kind + " · v" + revision);
   pdf.setAuthor("Galápagos Life Fund");
+  pdf.setSubject(payload.concept.title);
   let page = pdf.addPage([595.28, 841.89]);
+  const navy = rgb(0.12, 0.23, 0.4);
+  const pale = rgb(0.94, 0.96, 0.98);
+  const logo = await pdf.embedPng(
+    await readFile(path.join(process.cwd(), "public", "glf-logo.png")),
+  );
   let y = 790;
   const width = 491;
+  function pageHeader() {
+    page.drawRectangle({
+      x: 0,
+      y: 768,
+      width: 595.28,
+      height: 74,
+      color: navy,
+    });
+    page.drawImage(logo, { x: 52, y: 779, width: 128, height: 53 });
+    page.drawText("GALÁPAGOS LIFE FUND", {
+      x: 310,
+      y: 801,
+      size: 10,
+      font: bold,
+      color: rgb(1, 1, 1),
+    });
+    page.drawText(es ? "Portal de subvenciones" : "Grants portal", {
+      x: 310,
+      y: 783,
+      size: 9,
+      font,
+      color: rgb(1, 1, 1),
+    });
+    y = 741;
+  }
   function newPage() {
     page = pdf.addPage([595.28, 841.89]);
-    y = 790;
+    pageHeader();
   }
+  pageHeader();
   function lines(value: string, font: PDFFont, size: number) {
     const result: string[] = [];
     for (const paragraph of value.replace(/\r/g, "").split("\n")) {
@@ -93,22 +125,40 @@ export async function applicationPdf({
     }
     return result;
   }
-  function draw(text: string, heading = false) {
+  function draw(text: string, heading = false, band = heading) {
     const size = heading ? 12 : 11;
     const face = heading ? bold : font;
-    for (const line of lines(text, face, size)) {
+    const wrapped = lines(text, face, size);
+    if (heading && y < 72 + wrapped.length * 15 + 55) newPage();
+    if (band) {
+      page.drawRectangle({
+        x: 46,
+        y: y - wrapped.length * 15 + 1,
+        width: 503,
+        height: wrapped.length * 15 + 13,
+        color: pale,
+      });
+      page.drawRectangle({
+        x: 46,
+        y: y - wrapped.length * 15 + 1,
+        width: 3,
+        height: wrapped.length * 15 + 13,
+        color: navy,
+      });
+    }
+    for (const line of wrapped) {
       if (y < 72) newPage();
       page.drawText(line, { x: 52, y, size, font: face, color: rgb(0, 0, 0) });
       y -= 15;
     }
-    y -= heading ? 5 : 9;
+    y -= heading ? 12 : 9;
   }
   function field(label: string, value: unknown) {
     if (y < 72 + lines(label, bold, 12).length * 15 + 35) newPage();
-    draw(label, true);
+    draw(label, true, false);
     draw(String(value ?? "—") || "—");
   }
-  draw("GALÁPAGOS LIFE FUND", true);
+
   draw(
     kind === "concept"
       ? es
@@ -130,10 +180,159 @@ export async function applicationPdf({
       " " +
       revision +
       " · " +
-      stamp.toISOString(),
+      new Intl.DateTimeFormat(es ? "es-EC" : "en-GB", {
+        timeZone: "Pacific/Galapagos",
+        dateStyle: "medium",
+        timeStyle: "medium",
+      }).format(stamp) +
+      " · Galápagos (UTC−06:00)",
   );
+  field(es ? "Proyecto" : "Project", payload.concept.title);
   if (kind === "concept") {
+    const money = (v: number | null) =>
+      new Intl.NumberFormat(es ? "es-EC" : "en-US", {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: 0,
+      }).format(v || 0);
+    const cards = [
+      [
+        es ? "Solicitado al GLF" : "Requested from GLF",
+        money(payload.concept.requested_amount),
+      ],
+      [
+        es ? "Cofinanciamiento" : "Cofinancing",
+        money(payload.concept.cofinance_amount),
+      ],
+    ];
+    cards.forEach(([label, value], i) => {
+      const x = 46 + i * 257;
+      page.drawRectangle({
+        x,
+        y: y - 54,
+        width: 246,
+        height: 64,
+        color: pale,
+        borderColor: rgb(0.83, 0.87, 0.91),
+        borderWidth: 0.5,
+      });
+      page.drawText(label, {
+        x: x + 12,
+        y: y - 10,
+        size: 11,
+        font,
+        color: rgb(0, 0, 0),
+      });
+      page.drawText(value, {
+        x: x + 12,
+        y: y - 33,
+        size: 12,
+        font: bold,
+        color: rgb(0, 0, 0),
+      });
+    });
+    y -= 80;
+    draw(es ? "1. DATOS GENERALES" : "1. PROJECT DETAILS", true);
     for (const fieldSpec of [...identityFields, ...narrativeFields]) {
+      if (fieldSpec.key === "title") continue;
+      if (
+        fieldSpec.key === "alignment" &&
+        payload.concept.strategic_alignment?.objectives.length
+      ) {
+        draw(es ? "ALINEACIÓN ESTRATÉGICA" : "STRATEGIC ALIGNMENT", true);
+        let i = 0;
+        for (const objective of payload.concept.strategic_alignment
+          .objectives) {
+          draw(
+            objective.kind === "general"
+              ? es
+                ? "Objetivo general"
+                : "General objective"
+              : (es ? "Objetivo específico " : "Specific objective ") + ++i,
+            true,
+          );
+          const text = strategicText(
+            { ...payload.concept.strategic_alignment, objectives: [objective] },
+            locale,
+          ).alignment;
+          const body = text.split("\n").slice(1);
+          const sourceStart = body.findIndex((line) =>
+            line.startsWith("Plan: "),
+          );
+          draw(
+            body.slice(0, sourceStart < 0 ? undefined : sourceStart).join("\n"),
+          );
+        }
+        field(
+          es ? "Fuentes de referencia" : "Reference sources",
+          strategicText(
+            payload.concept.strategic_alignment,
+            locale,
+          ).alignment.split("\n\nPlan: ")[1]
+            ? "Plan: " +
+                strategicText(
+                  payload.concept.strategic_alignment,
+                  locale,
+                ).alignment.split("\n\nPlan: ")[1]
+            : payload.concept.strategic_alignment.version,
+        );
+        continue;
+      }
+      if (fieldSpec.key === "summary")
+        draw(
+          es ? "2. DESCRIPCIÓN DEL PROYECTO" : "2. PROJECT DESCRIPTION",
+          true,
+        );
+      if (
+        fieldSpec.key === "objectives" &&
+        payload.concept.strategic_alignment?.objectives.length
+      ) {
+        draw(es ? "OBJETIVOS" : "OBJECTIVES", true);
+        let specific = 0;
+        for (const objective of payload.concept.strategic_alignment
+          .objectives) {
+          field(
+            objective.kind === "general"
+              ? es
+                ? "Objetivo general"
+                : "General objective"
+              : (es ? "Objetivo específico " : "Specific objective ") +
+                  ++specific,
+            objective.text,
+          );
+        }
+        continue;
+      }
+      if (
+        fieldSpec.key === "results" &&
+        payload.concept.project_results?.length
+      ) {
+        draw(es ? "RESULTADOS E INDICADORES" : "RESULTS AND INDICATORS", true);
+        payload.concept.project_results.forEach((r, i) => {
+          draw((es ? "Resultado " : "Result ") + (i + 1), true);
+          field(es ? "Resultado esperado" : "Expected result", r.result);
+          field(
+            es
+              ? "Objetivo específico asociado"
+              : "Associated specific objective",
+            payload.concept.strategic_alignment?.objectives.find(
+              (o) => o.id === r.objective_id,
+            )?.text || r.objective_id,
+          );
+          field(es ? "Indicador" : "Indicator", r.indicator);
+          field(
+            es ? "Meta preliminar" : "Preliminary target",
+            String(r.target ?? "—") +
+              " " +
+              (r.unit === "other"
+                ? r.other_unit
+                : resultUnits.find((u) => u[0] === r.unit)?.[es ? 1 : 2] ||
+                  r.unit),
+          );
+          field(es ? "Evidencia prevista" : "Expected evidence", r.evidence);
+        });
+        continue;
+      }
       if (
         fieldSpec.key === "summary" &&
         payload.concept.summary_parts &&
@@ -169,7 +368,7 @@ export async function applicationPdf({
       es ? "Categoría elegida" : "Selected category",
       payload.concept.category_id,
     );
-    draw(es ? "ACTIVIDADES" : "ACTIVITIES", true);
+    draw(es ? "3. ACTIVIDADES" : "3. ACTIVITIES", true);
     payload.activities.forEach((a, i) => {
       field(i + 1 + ". " + a.title, a.description);
       if (a.objective_ids?.length)
@@ -203,7 +402,6 @@ export async function applicationPdf({
         field(key, value);
     }
   } else {
-    field(es ? "Proyecto" : "Project", payload.concept.title);
     let sum = 0;
     payload.activities.forEach((a, ai) => {
       draw((es ? "ACTIVIDAD " : "ACTIVITY ") + (ai + 1) + ": " + a.title, true);
@@ -215,6 +413,11 @@ export async function applicationPdf({
           a.no_risks_reason,
         );
       a.risks.forEach((r, ri) => {
+        const estimatedHeight =
+          190 +
+          lines(r.description || "—", font, 11).length * 15 +
+          lines(r.name || "—", font, 11).length * 15;
+        if (y < 72 + Math.min(estimatedHeight, 440)) newPage();
         draw(
           (es ? "Riesgo " : "Risk ") +
             (ai + 1) +

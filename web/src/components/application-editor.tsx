@@ -165,6 +165,7 @@ export function ApplicationEditor({
   catalog,
   versions,
   documents: initialDocuments,
+  initialPrepared = null,
   saveAction = saveDraft,
 }: {
   application: Application;
@@ -175,6 +176,7 @@ export function ApplicationEditor({
   catalog: Catalog[];
   versions: Version[];
   documents: DocumentRow[];
+  initialPrepared?: { id: string; revision: number } | null;
   saveAction?: typeof saveDraft;
 }) {
   const es = locale === "es";
@@ -215,7 +217,7 @@ export function ApplicationEditor({
   const [prepared, setPrepared] = useState<{
     id: string;
     revision: number;
-  } | null>(null);
+  } | null>(initialPrepared);
   const dirty = JSON.stringify(payload) !== saved;
   useEffect(() => {
     if (!editable || !dirty || busy || autoSaving || autoError) return;
@@ -238,7 +240,6 @@ export function ApplicationEditor({
           setRevision(result.revision);
           setSaved(serialized);
           setLastSaved(new Date().toISOString());
-          setPrepared(null);
         } catch {
           setAutoError("GLF_SAVE_FAILED");
         } finally {
@@ -484,7 +485,6 @@ export function ApplicationEditor({
         setSaved(JSON.stringify(payload));
         setAutoError("");
         setLastSaved(new Date().toISOString());
-        setPrepared(null);
       }
       if (submit) {
         const result = await submitDraft(application.id, nextRevision);
@@ -1857,63 +1857,77 @@ export function ApplicationEditor({
               </ul>
             </div>
           )}
-          <button
-            className="button secondary"
-            disabled={busy || dirty}
-            aria-busy={busy && operation === "prepare"}
-            onClick={async () => {
-              if (busy) return;
-              setShowCompletion(true);
-              setCompletionAttempt((n) => n + 1);
-              if (
-                completionGuidance(
-                  payload,
-                  rules,
-                  application.stage,
-                  call.phase2_schema,
-                  locale,
-                ).length
-              )
-                return;
-              setOperation("prepare");
-              setBusy(true);
-              setError("");
-              try {
-                const result = await prepareDocuments(application.id, revision);
-                if (result.id) setPrepared({ id: result.id, revision });
-                else setError(message(result.error || "", es));
-              } catch {
-                setError(message("", es));
-              } finally {
-                setBusy(false);
-              }
-            }}
-          >
-            <ActionLabel
-              busy={busy && operation === "prepare"}
-              pendingLabel={es ? "Preparando…" : "Preparing…"}
-            >
+          {prepared && (prepared.revision !== revision || dirty) && (
+            <p className="document-stale" role="status">
               {es
-                ? "Preparar documentos para firma"
-                : "Prepare documents for signing"}
-            </ActionLabel>
-          </button>
-          {prepared && prepared.revision === revision && !dirty && (
-            <div className="live-actions">
-              <a
-                className="button secondary"
-                href={`/documents/${prepared.id}/concept?prepared=1&lang=${locale}`}
-              >
-                {es ? "Descargar Nota Conceptual" : "Download Concept Note"}
-              </a>
-              <a
-                className="button secondary"
-                href={`/documents/${prepared.id}/matrix?prepared=1&lang=${locale}`}
-              >
-                {es ? "Descargar evaluación A&S" : "Download E&S screening"}
-              </a>
-            </div>
+                ? "Los documentos requieren actualización. Prepare y firme nuevamente después de guardar los cambios."
+                : "Documents need updating. Prepare and sign again after saving your changes."}
+            </p>
           )}
+          <div className="document-actions">
+            <button
+              className="button dark"
+              disabled={busy || dirty}
+              aria-busy={busy && operation === "prepare"}
+              onClick={async () => {
+                if (busy) return;
+                setShowCompletion(true);
+                setCompletionAttempt((n) => n + 1);
+                if (
+                  completionGuidance(
+                    payload,
+                    rules,
+                    application.stage,
+                    call.phase2_schema,
+                    locale,
+                  ).length
+                )
+                  return;
+                setOperation("prepare");
+                setBusy(true);
+                setError("");
+                try {
+                  const result = await prepareDocuments(
+                    application.id,
+                    revision,
+                  );
+                  if (result.id) setPrepared({ id: result.id, revision });
+                  else setError(message(result.error || "", es));
+                } catch {
+                  setError(message("", es));
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            >
+              <ActionLabel
+                busy={busy && operation === "prepare"}
+                pendingLabel={es ? "Procesando…" : "Processing…"}
+              >
+                {es
+                  ? "Preparar documentos para firma"
+                  : "Prepare documents for signing"}
+              </ActionLabel>
+            </button>
+            {prepared && prepared.revision === revision && !dirty && (
+              <>
+                <a
+                  className="button secondary"
+                  href={`/documents/${prepared.id}/concept?prepared=1&lang=${locale}`}
+                >
+                  <FileDown size={17} aria-hidden="true" />
+                  {es ? "Descargar nota conceptual" : "Download concept note"}
+                </a>
+                <a
+                  className="button secondary"
+                  href={`/documents/${prepared.id}/matrix?prepared=1&lang=${locale}`}
+                >
+                  <FileDown size={17} aria-hidden="true" />
+                  {es ? "Descargar evaluación A&S" : "Download E&S screening"}
+                </a>
+              </>
+            )}
+          </div>
         </section>
       )}
       {step === 3 && (
