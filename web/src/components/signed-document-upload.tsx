@@ -37,13 +37,17 @@ export function SignedDocumentUpload({
             {document.file_name}
             <br />
             <span role="status">
-              {current
+              {!editable
                 ? es
-                  ? "Cargado · validez de firma pendiente de revisión por GLF"
-                  : "Uploaded · signature verification pending"
-                : es
-                  ? "Documento de una versión anterior · requiere reemplazo"
-                  : "Document from an earlier version · replacement required"}
+                  ? "Documento cargado"
+                  : "Uploaded document"
+                : current
+                  ? es
+                    ? "Cargado · validez de firma pendiente de revisión por GLF"
+                    : "Uploaded · signature verification pending"
+                  : es
+                    ? "Documento de una versión anterior · requiere reemplazo"
+                    : "Document from an earlier version · replacement required"}
             </span>
           </span>
           <a className="button secondary" href={`/files/${document.id}`}>

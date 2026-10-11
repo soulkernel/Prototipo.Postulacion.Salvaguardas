@@ -2003,9 +2003,13 @@ export function ApplicationEditor({
         <section className="live-card">
           <h2>{es ? "Documentos firmados" : "Signed documents"}</h2>
           <p className="field-help">
-            {es
-              ? "Descargue los documentos preparados por el sistema, fírmelos electrónicamente y cargue aquí cada PDF firmado. Si modifica el formulario, deberá preparar, firmar y cargar nuevamente ambos documentos."
-              : "Download the documents prepared by the system, sign them electronically and upload each signed PDF here. If you edit the form, prepare, sign and upload both documents again."}
+            {!editable
+              ? es
+                ? "Documentos adjuntos a su expediente."
+                : "Documents attached to your application."
+              : es
+                ? "Descargue los documentos preparados por el sistema, fírmelos electrónicamente y cargue aquí cada PDF firmado. Si modifica el formulario, deberá preparar, firmar y cargar nuevamente ambos documentos."
+                : "Download the documents prepared by the system, sign them electronically and upload each signed PDF here. If you edit the form, prepare, sign and upload both documents again."}
           </p>
           {[
             [
