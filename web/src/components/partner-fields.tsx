@@ -16,6 +16,7 @@ export function PartnerFields({
     names = partnerOrganizations(concept);
   return (
     <section
+      data-validation-field="partners"
       className="full-width partner-fields"
       aria-labelledby="partner-heading"
     >

@@ -49,7 +49,7 @@ export function PhoneField({
     );
   };
   return (
-    <fieldset className="activity-card">
+    <fieldset className="activity-card" data-validation-field="phone">
       <legend>
         {es ? "Teléfono de contacto" : "Contact phone"}
         <RequiredMark locale={locale} />

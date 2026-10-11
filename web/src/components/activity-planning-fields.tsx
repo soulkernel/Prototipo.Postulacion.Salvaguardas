@@ -38,7 +38,11 @@ export function ActivityPlanningFields({
           : "Describe what you will do to achieve your specific objectives. The next step will show these same activities so you can identify and assess their environmental and social risks."}
       </p>
       {payload.activities.map((activity, i) => (
-        <section className="activity-card" key={activity.id}>
+        <section
+          className="activity-card"
+          key={activity.id}
+          data-validation-activity={i + 1}
+        >
           <h3>
             {es ? "Actividad" : "Activity"} {i + 1}
           </h3>
@@ -47,6 +51,7 @@ export function ActivityPlanningFields({
               {es ? "Nombre de la actividad" : "Activity name"}
               <RequiredMark locale={locale} />
               <input
+                data-validation-field="title"
                 value={activity.title}
                 maxLength={12000}
                 aria-required="true"
@@ -60,6 +65,7 @@ export function ActivityPlanningFields({
                 : "Brief activity description"}
               <RequiredMark locale={locale} />
               <textarea
+                data-validation-field="description"
                 rows={3}
                 value={activity.description}
                 maxLength={12000}

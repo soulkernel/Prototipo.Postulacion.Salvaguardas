@@ -27,7 +27,7 @@ export function SummaryFields({
       : parts;
   const total = words(summaryText(shown));
   return (
-    <section className="activity-card">
+    <section className="activity-card" data-validation-field="summary">
       <h3>{es ? "Resumen del proyecto" : "Project summary"}</h3>
       <p
         className={total > limit ? "auth-error" : "field-help"}
@@ -51,7 +51,7 @@ export function SummaryFields({
       )}
       <div className="live-grid">
         {summarySections.map((s) => (
-          <label key={s.key}>
+          <label key={s.key} data-validation-field={"summary:" + s.key}>
             {es ? s.es : s.en}
             <RequiredMark locale={locale} />
             <small>{s.help[es ? 0 : 1]}</small>

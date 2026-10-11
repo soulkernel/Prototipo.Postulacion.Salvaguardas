@@ -23,7 +23,7 @@ export function ProjectResultFields({
       (value || []).map((r, i) => (i === index ? { ...r, ...patch } : r)),
     );
   return (
-    <section className="result-fields">
+    <section className="result-fields" data-validation-field="results">
       <h3>
         {es
           ? "Resultados e indicadores esperados"
@@ -57,13 +57,18 @@ export function ProjectResultFields({
             </details>
           )}
           {value.map((r, i) => (
-            <fieldset className="activity-card" key={r.id}>
+            <fieldset
+              className="activity-card"
+              key={r.id}
+              data-validation-result={i + 1}
+            >
               <legend>
                 {es ? "Resultado" : "Result"} {i + 1}
               </legend>
               <label>
                 {es ? "Resultado esperado" : "Expected result"} *
                 <textarea
+                  data-validation-field="result"
                   maxLength={2000}
                   value={r.result}
                   placeholder={
@@ -80,6 +85,7 @@ export function ProjectResultFields({
                   : "Associated specific objective"}{" "}
                 *
                 <select
+                  data-validation-field="objective_id"
                   value={r.objective_id}
                   onChange={(e) => update(i, { objective_id: e.target.value })}
                 >
@@ -108,6 +114,7 @@ export function ProjectResultFields({
               <label>
                 {es ? "Indicador" : "Indicator"} *
                 <input
+                  data-validation-field="indicator"
                   maxLength={1000}
                   value={r.indicator}
                   placeholder={
@@ -122,6 +129,7 @@ export function ProjectResultFields({
                 <label>
                   {es ? "Meta preliminar" : "Preliminary target"} *
                   <input
+                    data-validation-field="target"
                     type="number"
                     min={0}
                     max={r.unit === "percent" ? 100 : 999999999999}
@@ -139,6 +147,7 @@ export function ProjectResultFields({
                 <label>
                   {es ? "Unidad de medida" : "Unit of measure"} *
                   <select
+                    data-validation-field="unit"
                     value={r.unit}
                     onChange={(e) =>
                       update(i, {
@@ -159,6 +168,7 @@ export function ProjectResultFields({
                 <label>
                   {es ? "Especifique la unidad" : "Specify the unit"} *
                   <input
+                    data-validation-field="other_unit"
                     maxLength={100}
                     value={r.other_unit}
                     onChange={(e) => update(i, { other_unit: e.target.value })}
@@ -175,6 +185,7 @@ export function ProjectResultFields({
               <label>
                 {es ? "Evidencia prevista" : "Expected evidence"} *
                 <input
+                  data-validation-field="evidence"
                   maxLength={1000}
                   value={r.evidence}
                   placeholder={

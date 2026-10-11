@@ -30,6 +30,7 @@ export function GeographyFields({
           <label>
             {label(es ? "Provincia" : "Province")}
             <select
+              data-validation-field="province"
               aria-required="true"
               value={c.province}
               onChange={(e) => onChange({ province: e.target.value, city: "" })}
@@ -69,6 +70,7 @@ export function GeographyFields({
                   : "Specify city or locality",
               )}
               <input
+                data-validation-field="city"
                 aria-required="true"
                 value={c.city.trimStart()}
                 maxLength={200}
@@ -79,6 +81,7 @@ export function GeographyFields({
           <label className="full-width">
             {label(es ? "Dirección específica" : "Street address")}
             <input
+              data-validation-field="address"
               aria-required="true"
               value={c.address}
               maxLength={12000}
@@ -106,7 +109,10 @@ export function GeographyFields({
     });
   };
   return (
-    <fieldset className="activity-card full-width">
+    <fieldset
+      className="activity-card full-width"
+      data-validation-field="project_islands"
+    >
       <legend>
         {label(
           es
@@ -143,6 +149,7 @@ export function GeographyFields({
         <label>
           {label(es ? "Indique las otras islas" : "Specify other islands")}
           <input
+            data-validation-field="other_islands"
             aria-required="true"
             maxLength={12000}
             value={c.other_islands}
@@ -157,6 +164,7 @@ export function GeographyFields({
             : "Specific project location and scope",
         )}
         <textarea
+          data-validation-field="location"
           aria-required="true"
           rows={3}
           maxLength={12000}

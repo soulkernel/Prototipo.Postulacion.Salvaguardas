@@ -985,3 +985,14 @@ a {
 .risk-map-details { list-style: none; padding: 0; }
 .risk-map-details li { padding: 10px 0; border-top: 1px solid #d8e1e8; }
 .risk-map-details p { margin: 5px 0; }
+
+.completion-summary { margin: 16px 0; padding: 16px; border: 1px solid #ba3c37; border-radius: 8px; background: #fff7f6; }
+.completion-summary h3 { font-size: 1rem; margin: 0 0 8px; }
+.completion-summary ul { max-height: 340px; overflow: auto; padding-left: 20px; }
+.completion-link { padding: 5px 0; border: 0; background: transparent; color: #9b2926; text-align: left; text-decoration: underline; text-underline-offset: 3px; font: inherit; cursor: pointer; }
+.completion-link:hover { color: #651915; }
+.completion-link:focus-visible { outline: 2px solid #203e6c; outline-offset: 3px; }
+.validation-pending { outline: 2px solid #ba3c37; outline-offset: 4px; border-radius: 4px; scroll-margin: 120px 0; }
+.validation-field-message { display: block; color: #9b2926; font-weight: 400; margin-top: 6px; }
+.step-pending { font-size: .8rem; color: #9b2926; }
+.completion-step-notice { margin: 16px 0; padding: 10px 14px; background: #fff7f6; border-left: 3px solid #ba3c37; }

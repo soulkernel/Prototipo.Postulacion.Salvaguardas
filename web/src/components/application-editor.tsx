@@ -6,6 +6,11 @@ import { ActivityPlanningFields } from "./activity-planning-fields";
 import { PartnerFields } from "./partner-fields";
 import { partnerText } from "@/lib/partners";
 import { RequiredMark } from "./required-mark";
+import { CompletionFeedback } from "./completion-feedback";
+import {
+  completionGuidance,
+  type CompletionIssue,
+} from "@/lib/completion-guidance";
 import { stepIssues } from "@/lib/step-validation";
 import { GeographyFields } from "./geography-fields";
 import { SummaryFields } from "./summary-fields";
@@ -196,6 +201,8 @@ export function ApplicationEditor({
   >("save");
   const [feedback, setFeedback] = useState("");
   const [error, setError] = useState("");
+  const [showCompletion, setShowCompletion] = useState(false);
+  const [focusIssue, setFocusIssue] = useState<CompletionIssue | null>(null);
   const [checkedStep, setCheckedStep] = useState<number | null>(null);
   const [documents, setDocuments] = useState(initialDocuments);
   const [prepared, setPrepared] = useState<{
@@ -307,6 +314,19 @@ export function ApplicationEditor({
       <RequiredMark locale={locale} />
       <select
         aria-required="true"
+        data-validation-field={
+          /residual/i.test(label)
+            ? /probab/i.test(label)
+              ? "residual_probability"
+              : "residual_severity"
+            : /probab/i.test(label)
+              ? "probability"
+              : /gravedad|severity/i.test(label)
+                ? "severity"
+                : /inicio|start/i.test(label)
+                  ? "start_quarter"
+                  : "end_quarter"
+        }
         value={value ?? ""}
         onChange={(e) =>
           onChange(e.target.value ? Number(e.target.value) : null)
@@ -336,6 +356,19 @@ export function ApplicationEditor({
       <RequiredMark locale={locale} />
       <select
         aria-required="true"
+        data-validation-field={
+          /residual/i.test(label)
+            ? /probab/i.test(label)
+              ? "residual_probability"
+              : "residual_severity"
+            : /probab/i.test(label)
+              ? "probability"
+              : /gravedad|severity/i.test(label)
+                ? "severity"
+                : /inicio|start/i.test(label)
+                  ? "start_quarter"
+                  : "end_quarter"
+        }
         value={value ?? ""}
         onChange={(e) =>
           onChange(e.target.value ? Number(e.target.value) : null)
@@ -353,6 +386,19 @@ export function ApplicationEditor({
   async function persist(submit = false) {
     if (busy || !editable) return;
     if (submit) {
+      setShowCompletion(true);
+      if (
+        completionGuidance(
+          payload,
+          application.rules_snapshot,
+          application.stage,
+          call.phase2_schema,
+          locale,
+        ).length
+      ) {
+        setStep(3);
+        return;
+      }
       const missing = validateComplete(
         payload,
         application.rules_snapshot,
@@ -487,8 +533,23 @@ export function ApplicationEditor({
   }
   const fields = step === 0 ? identityFields : narrativeFields;
   const rules = application.rules_snapshot;
+  const completion = showCompletion
+    ? completionGuidance(
+        payload,
+        rules,
+        application.stage,
+        call.phase2_schema,
+        locale,
+      )
+    : [];
+  const goToIssue = (issue: CompletionIssue) => {
+    setStep(issue.step);
+    setCheckedStep(issue.step);
+    setFocusIssue({ ...issue });
+    setError("");
+  };
   const currentIssues =
-    checkedStep === step
+    showCompletion || checkedStep === step
       ? stepIssues(payload, rules, application.stage, step, call.phase2_schema)
       : { missing: [], invalid: [] };
   const fieldIssue = (key: string) =>
@@ -706,9 +767,22 @@ export function ApplicationEditor({
             }}
           >
             {i + 1}. {label}
+            {showCompletion && completion.some((x) => x.step === i) && (
+              <span className="step-pending">
+                {" "}
+                · {completion.filter((x) => x.step === i).length}{" "}
+                {es ? "pendientes" : "pending"}
+              </span>
+            )}
           </button>
         ))}
       </nav>
+      <CompletionFeedback
+        issues={completion}
+        step={step}
+        focusIssue={focusIssue}
+        locale={locale}
+      />
       {error && !editable && (
         <div className="auth-error" role="alert">
           {error}
@@ -805,6 +879,7 @@ export function ApplicationEditor({
                     <RequiredMark locale={locale} />
                     <select
                       aria-required="true"
+                      data-validation-field="applicant_type"
                       value={payload.concept.applicant_type}
                       onChange={(e) =>
                         updateConcept("applicant_type", e.target.value)
@@ -831,6 +906,7 @@ export function ApplicationEditor({
                     <RequiredMark locale={locale} />
                     <select
                       aria-required="true"
+                      data-validation-field="category_id"
                       value={payload.concept.category_id}
                       onChange={(e) =>
                         updateConcept("category_id", e.target.value)
@@ -984,6 +1060,7 @@ export function ApplicationEditor({
                   ) : (
                     <label
                       key={field.key}
+                      data-validation-field={field.key}
                       className={field.type === "textarea" ? "full-width" : ""}
                     >
                       {es ? field.es : field.en}
@@ -1102,7 +1179,7 @@ export function ApplicationEditor({
                       : "Full proposal: official call fields"}
                   </h2>
                   {call.phase2_schema.map((f) => (
-                    <label key={f.id}>
+                    <label key={f.id} data-validation-field={"phase2:" + f.id}>
                       {es ? f.label_es : f.label_en}
                       {f.required ? (
                         <RequiredMark locale={locale} />
@@ -1144,7 +1221,11 @@ export function ApplicationEditor({
               </p>
               <RiskOverview payload={payload} locale={locale} />
               {payload.activities.map((activity, ai) => (
-                <section className="activity-card" key={activity.id}>
+                <section
+                  className="activity-card"
+                  key={activity.id}
+                  data-validation-activity={ai + 1}
+                >
                   <h3>
                     {es ? "Actividad" : "Activity"} {ai + 1}:{" "}
                     {activity.title.trim() || (es ? "Sin nombre" : "Unnamed")}
@@ -1205,7 +1286,11 @@ export function ApplicationEditor({
                       risk.residual_severity,
                     );
                     return (
-                      <article className="live-risk" key={risk.id}>
+                      <article
+                        className="live-risk"
+                        key={risk.id}
+                        data-validation-risk={`${ai + 1}-${ri + 1}`}
+                      >
                         <div className="live-title">
                           <h4>
                             <ShieldCheck size={17} /> {es ? "Riesgo" : "Risk"}{" "}
@@ -1245,6 +1330,7 @@ export function ApplicationEditor({
                                 : "Select a registered risk"}
                               <RequiredMark locale={locale} />
                               <select
+                                data-validation-field="source_id"
                                 aria-required="true"
                                 value={risk.source_id || ""}
                                 onChange={(e) => {
@@ -1310,6 +1396,7 @@ export function ApplicationEditor({
                             {es ? "Dimensión" : "Dimension"}
                             <RequiredMark locale={locale} />
                             <select
+                              data-validation-field="dimension"
                               aria-required="true"
                               value={risk.dimension}
                               disabled={Boolean(payload.concept.risk_register)}
@@ -1330,6 +1417,7 @@ export function ApplicationEditor({
                             {es ? "Riesgo o impacto" : "Risk or impact"}
                             <RequiredMark locale={locale} />
                             <input
+                              data-validation-field="name"
                               aria-required="true"
                               value={risk.name}
                               readOnly={Boolean(payload.concept.risk_register)}
@@ -1344,6 +1432,7 @@ export function ApplicationEditor({
                               : "Concise risk description"}
                             <RequiredMark locale={locale} />
                             <textarea
+                              data-validation-field="description"
                               aria-required="true"
                               rows={2}
                               value={risk.description}
@@ -1530,6 +1619,7 @@ export function ApplicationEditor({
                                 {es ? "Ubicación" : "Location"}
                                 <RequiredMark locale={locale} />
                                 <input
+                                  data-validation-field="location"
                                   aria-required="true"
                                   value={risk.location}
                                   onChange={(e) =>
@@ -1545,6 +1635,7 @@ export function ApplicationEditor({
                                   : "Estimated cost (USD)"}
                                 <RequiredMark locale={locale} />
                                 <input
+                                  data-validation-field="cost"
                                   aria-required="true"
                                   type="number"
                                   min="0"
@@ -1566,6 +1657,7 @@ export function ApplicationEditor({
                                   : "Person responsible for the measure"}
                                 <RequiredMark locale={locale} />
                                 <input
+                                  data-validation-field="responsible"
                                   aria-required="true"
                                   value={risk.responsible}
                                   onChange={(e) =>
@@ -1681,6 +1773,7 @@ export function ApplicationEditor({
               <label className="check-row">
                 <input
                   type="checkbox"
+                  data-validation-field="truthful"
                   checked={payload.truthful}
                   aria-required="true"
                   onChange={(e) =>
@@ -1695,6 +1788,7 @@ export function ApplicationEditor({
               <label className="check-row">
                 <input
                   type="checkbox"
+                  data-validation-field="consent"
                   checked={payload.consent}
                   aria-required="true"
                   onChange={(e) =>
@@ -1720,12 +1814,58 @@ export function ApplicationEditor({
               ? "Guarde todos los campos y declaraciones. Prepare los documentos, descargue la Nota Conceptual y la evaluación A&S por separado, firme electrónicamente la Nota Conceptual fuera del portal y adjunte el PDF firmado. Si modifica el formulario, deberá preparar y firmar nuevamente. La validez de la firma será revisada por GLF."
               : "Save all fields and declarations. Prepare and download the Concept Note and E&S screening separately, sign the Concept Note electronically outside this portal and attach the signed PDF. After editing, prepare and sign again. GLF will review signature validity."}
           </p>
+          {showCompletion && completion.length > 0 && (
+            <div className="completion-summary" role="alert">
+              <h3>
+                {es
+                  ? `Hay ${completion.length} pendientes antes de preparar o enviar los documentos`
+                  : `${completion.length} items need attention before preparing or submitting documents`}
+              </h3>
+              <p>
+                {es
+                  ? "Seleccione un pendiente para ir al campo que necesita revisar."
+                  : "Select an item to go to the field that needs attention."}
+              </p>
+              <ul>
+                {completion.map((issue) => (
+                  <li key={issue.id}>
+                    <button
+                      type="button"
+                      className="completion-link"
+                      onClick={() => goToIssue(issue)}
+                    >
+                      {
+                        [
+                          es ? "Datos generales" : "Project details",
+                          es ? "Nota conceptual" : "Concept note",
+                          es ? "Actividades y riesgos" : "Activities and risks",
+                          es ? "Declaraciones" : "Declarations",
+                        ][issue.step]
+                      }{" "}
+                      → {issue.text}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <button
             className="button secondary"
             disabled={busy || dirty}
             aria-busy={busy && operation === "prepare"}
             onClick={async () => {
               if (busy) return;
+              setShowCompletion(true);
+              if (
+                completionGuidance(
+                  payload,
+                  rules,
+                  application.stage,
+                  call.phase2_schema,
+                  locale,
+                ).length
+              )
+                return;
               setOperation("prepare");
               setBusy(true);
               setError("");
