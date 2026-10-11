@@ -1044,3 +1044,31 @@ a {
   .header-account-controls { margin-left: auto; }
   .live-header nav { flex: 0 0 100%; }
 }
+.session-identity {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  padding: 14px 24px 0;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  color: #506071;
+  font-size: 14px;
+}
+.session-avatar {
+  flex: 0 0 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #e7edf5;
+  color: #1e3a6c;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+.session-details { min-width: 0; text-align: right; }
+.session-details p { margin: 0; line-height: 1.5; overflow-wrap: anywhere; }
+.session-details strong { color: #233144; }
+@media (max-width: 760px) {
+  .session-identity { padding: 12px 18px 0; font-size: 13px; }
+}

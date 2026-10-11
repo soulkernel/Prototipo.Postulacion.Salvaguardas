@@ -6,6 +6,7 @@ import { SubmitButton } from "./submit-button";
 import { signOut } from "@/app/auth/actions";
 import type { Locale } from "@/lib/domain";
 import { getViewer } from "@/lib/data";
+import { roleLabels } from "@/lib/fields";
 import { version } from "../../package.json";
 export async function Shell({
   locale,
@@ -17,6 +18,15 @@ export async function Shell({
   internal?: boolean;
 }) {
   const viewer = await getViewer();
+  const accountName =
+    viewer?.profile.full_name?.trim() || viewer?.user.email || "";
+  const initials = accountName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part: string) => Array.from(part)[0])
+    .join("")
+    .toLocaleUpperCase(locale);
   return (
     <div className="live-shell">
       <header className="live-header">
@@ -102,6 +112,28 @@ export async function Shell({
           )}
         </div>
       </header>
+      {viewer && (
+        <div
+          className="session-identity"
+          aria-label={
+            locale === "es" ? "Cuenta conectada" : "Signed-in account"
+          }
+        >
+          <span className="session-avatar" aria-hidden="true">
+            {initials}
+          </span>
+          <div className="session-details">
+            <p>
+              {locale === "es" ? "Conectado como" : "Signed in as"}{" "}
+              <strong>{accountName}</strong>
+            </p>
+            <p>
+              {viewer.user.email} <span aria-hidden="true">·</span>{" "}
+              {roleLabels[viewer.profile.role]?.[locale === "es" ? 0 : 1]}
+            </p>
+          </div>
+        </div>
+      )}
       <main className="live-main" id="main-content">
         {internal && (
           <p className="eyebrow">
