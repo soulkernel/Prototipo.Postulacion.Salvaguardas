@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
+import { SignedDocumentUpload } from "./signed-document-upload";
 import { PhoneField } from "./phone-field";
 import { ActivityPlanningFields } from "./activity-planning-fields";
 import { PartnerFields } from "./partner-fields";
@@ -108,6 +109,10 @@ function message(code: string, es: boolean) {
     return es
       ? "Revise el teléfono: seleccione el país e ingrese un número celular o convencional válido."
       : "Check the phone: select a country and enter a valid mobile or landline number.";
+  if (code.includes("SIGNED_MATRIX"))
+    return es
+      ? "Adjunte la evaluación de riesgos ambientales y sociales firmada en PDF de la versión vigente."
+      : "Attach the signed environmental and social risk assessment PDF for the current version.";
   if (code.includes("SIGNED_CONCEPT"))
     return es
       ? "Adjunte la Nota Conceptual firmada en PDF después de preparar los documentos."
@@ -176,7 +181,7 @@ export function ApplicationEditor({
   catalog: Catalog[];
   versions: Version[];
   documents: DocumentRow[];
-  initialPrepared?: { id: string; revision: number } | null;
+  initialPrepared?: { id: string; revision: number; created_at: string } | null;
   saveAction?: typeof saveDraft;
 }) {
   const es = locale === "es";
@@ -217,8 +222,23 @@ export function ApplicationEditor({
   const [prepared, setPrepared] = useState<{
     id: string;
     revision: number;
+    created_at: string;
   } | null>(initialPrepared);
   const dirty = JSON.stringify(payload) !== saved;
+  const signedDocumentsReady =
+    application.stage !== 1 ||
+    Boolean(
+      prepared &&
+      prepared.revision === revision &&
+      !dirty &&
+      ["concept_signed", "matrix_signed"].every((kind) =>
+        documents.some(
+          (d) =>
+            d.kind === kind &&
+            Date.parse(d.created_at) >= Date.parse(prepared.created_at),
+        ),
+      ),
+    );
   useEffect(() => {
     if (!editable || !dirty || busy || autoSaving || autoError) return;
     const timer = setTimeout(() => {
@@ -507,14 +527,23 @@ export function ApplicationEditor({
       setBusy(false);
     }
   }
-  async function upload(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function uploadForm(form: HTMLFormElement) {
     if (busy) return;
     setOperation("upload");
     setBusy(true);
     setError("");
-    const form = event.currentTarget;
     const data = new FormData(form);
+    if (
+      application.stage === 1 &&
+      ["concept_signed", "matrix_signed"].includes(String(data.get("kind")))
+    ) {
+      if (!prepared || prepared.revision !== revisionRef.current || dirty) {
+        setError(message("GLF_PREPARE_DOCUMENTS_REQUIRED", es));
+        setBusy(false);
+        return;
+      }
+      data.set("revision", String(revisionRef.current));
+    }
     data.set("application_id", application.id);
     try {
       const response = await fetch("/api/files", {
@@ -524,15 +553,27 @@ export function ApplicationEditor({
       const result = await response.json();
       if (!response.ok) {
         setError(
-          es
-            ? "No se pudo adjuntar el archivo. Use PDF, PNG, JPEG, DOCX o XLSX de hasta 4 MB, con un nombre válido."
-            : "Could not attach the file. Use PDF, PNG, JPEG, DOCX or XLSX up to 4 MB with a valid filename.",
+          result.error?.startsWith("GLF_")
+            ? message(result.error, es)
+            : ["concept_signed", "matrix_signed"].includes(
+                  String(data.get("kind")),
+                )
+              ? es
+                ? "No se pudo adjuntar el documento. Use un PDF de hasta 4 MB con un nombre válido y prepare la versión vigente antes de cargarlo."
+                : "Could not attach the document. Use a PDF up to 4 MB with a valid filename and prepare the current version before uploading."
+              : es
+                ? "No se pudo adjuntar el archivo. Use PDF, PNG, JPEG, DOCX o XLSX de hasta 4 MB, con un nombre válido."
+                : "Could not attach the file. Use PDF, PNG, JPEG, DOCX or XLSX up to 4 MB with a valid filename.",
         );
         return;
       }
       setDocuments((d) => [result, ...d]);
       form.reset();
-      setFeedback(es ? "Anexo guardado." : "Attachment saved.");
+      setFeedback(
+        es
+          ? "Documento guardado · pendiente de verificación por el GLF."
+          : "Document saved · GLF verification pending.",
+      );
     } catch {
       setError(message("", es));
     } finally {
@@ -1819,8 +1860,8 @@ export function ApplicationEditor({
           </h2>
           <p>
             {es
-              ? "Guarde todos los campos y declaraciones. Prepare los documentos, descargue la Nota Conceptual y la evaluación A&S por separado, firme electrónicamente la Nota Conceptual fuera del portal y adjunte el PDF firmado. Si modifica el formulario, deberá preparar y firmar nuevamente. La validez de la firma será revisada por GLF."
-              : "Save all fields and declarations. Prepare and download the Concept Note and E&S screening separately, sign the Concept Note electronically outside this portal and attach the signed PDF. After editing, prepare and sign again. GLF will review signature validity."}
+              ? "Guarde todos los campos y declaraciones. Prepare los documentos, descargue la Nota Conceptual y la evaluación A&S por separado, firme electrónicamente ambos documentos fuera del portal y adjunte cada PDF firmado. Si modifica el formulario, deberá preparar y firmar nuevamente. La validez de la firma será revisada por GLF."
+              : "Save all fields and declarations. Prepare and download the Concept Note and E&S screening separately, sign both documents electronically outside this portal and attach each signed PDF. After editing, prepare and sign again. GLF will review signature validity."}
           </p>
           {showCompletion && completion.length > 0 && (
             <div className="completion-summary" role="alert" tabIndex={-1}>
@@ -1891,7 +1932,12 @@ export function ApplicationEditor({
                     application.id,
                     revision,
                   );
-                  if (result.id) setPrepared({ id: result.id, revision });
+                  if (result.id && result.created_at)
+                    setPrepared({
+                      id: result.id,
+                      revision,
+                      created_at: result.created_at,
+                    });
                   else setError(message(result.error || "", es));
                 } catch {
                   setError(message("", es));
@@ -1930,9 +1976,115 @@ export function ApplicationEditor({
           </div>
         </section>
       )}
-      {step === 3 && (
+      {step === 3 && application.stage === 1 && (
         <section className="live-card">
-          <h2>{es ? "Anexos separados" : "Separate attachments"}</h2>
+          <h2>{es ? "Documentos firmados" : "Signed documents"}</h2>
+          <p className="field-help">
+            {es
+              ? "Descargue los documentos preparados por el sistema, fírmelos electrónicamente y cargue aquí cada PDF firmado. Si modifica el formulario, deberá preparar, firmar y cargar nuevamente ambos documentos."
+              : "Download the documents prepared by the system, sign them electronically and upload each signed PDF here. If you edit the form, prepare, sign and upload both documents again."}
+          </p>
+          {[
+            [
+              "concept_signed",
+              es
+                ? "Nota conceptual firmada electrónicamente"
+                : "Electronically signed concept note",
+            ],
+            [
+              "matrix_signed",
+              es
+                ? "Evaluación de riesgos ambientales y sociales firmada electrónicamente"
+                : "Electronically signed environmental and social risk assessment",
+            ],
+          ].map(([kind, title]) => {
+            const doc = documents.find((d) => d.kind === kind);
+            return (
+              <SignedDocumentUpload
+                key={kind}
+                kind={kind}
+                title={title}
+                locale={locale}
+                document={doc}
+                current={Boolean(
+                  doc &&
+                  prepared &&
+                  prepared.revision === revision &&
+                  !dirty &&
+                  Date.parse(doc.created_at) >= Date.parse(prepared.created_at),
+                )}
+                editable={editable}
+                ready={Boolean(
+                  prepared && prepared.revision === revision && !dirty,
+                )}
+                busy={busy}
+                onUpload={uploadForm}
+              />
+            );
+          })}
+          {rules.required_attachments.filter(
+            (k) => !["concept_signed", "matrix_signed"].includes(k),
+          ).length > 0 && (
+            <section>
+              <h3>
+                {es
+                  ? "Otros anexos requeridos por la convocatoria"
+                  : "Other attachments required by this call"}
+              </h3>
+              {rules.required_attachments
+                .filter((k) => !["concept_signed", "matrix_signed"].includes(k))
+                .map((kind) => (
+                  <form
+                    key={kind}
+                    className="live-form"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      void uploadForm(event.currentTarget);
+                    }}
+                  >
+                    <h4>{kind}</h4>
+                    <input type="hidden" name="kind" value={kind} />
+                    {documents
+                      .filter((d) => d.kind === kind)
+                      .map((d) => (
+                        <div className="document-row" key={d.id}>
+                          {d.file_name}
+                          <a href={`/files/${d.id}`}>
+                            {es ? "Descargar" : "Download"}
+                          </a>
+                        </div>
+                      ))}
+                    <label>
+                      {es ? "Archivo (máximo 4 MB)" : "File (maximum 4 MB)"}
+                      <input
+                        type="file"
+                        name="file"
+                        accept=".pdf,.png,.jpg,.jpeg,.docx,.xlsx"
+                        required
+                        disabled={busy}
+                      />
+                    </label>
+                    <button
+                      className="button secondary"
+                      disabled={busy}
+                      aria-busy={busy && operation === "upload"}
+                    >
+                      <ActionLabel
+                        busy={busy && operation === "upload"}
+                        pendingLabel={es ? "Guardando…" : "Saving…"}
+                      >
+                        {es ? "Guardar anexo" : "Save attachment"}
+                      </ActionLabel>
+                    </button>
+                  </form>
+                ))}
+            </section>
+          )}
+        </section>
+      )}
+      {step === 3 && application.stage !== 1 && (
+        <section className="live-card">
+          <h2>{es ? "Anexos del proyecto" : "Project attachments"}</h2>
           <p className="field-help">
             {es ? "Anexos obligatorios: " : "Required attachments: "}
             {[
@@ -1955,7 +2107,13 @@ export function ApplicationEditor({
             </div>
           ))}
           {editable && (
-            <form onSubmit={upload} className="live-form">
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                void uploadForm(event.currentTarget);
+              }}
+              className="live-form"
+            >
               <label>
                 {es ? "Tipo de anexo" : "Attachment type"}
                 <RequiredMark locale={locale} />
@@ -2019,6 +2177,13 @@ export function ApplicationEditor({
                 : "All changes saved"}
           </span>
           <div className="editor-action-feedback">
+            {step === 3 && application.stage === 1 && !signedDocumentsReady && (
+              <p className="field-help" role="status">
+                {es
+                  ? "Para enviar al GLF, cargue ambos PDF firmados de la versión vigente."
+                  : "Upload both signed PDFs for the current version before submitting to GLF."}
+              </p>
+            )}
             {error && (
               <div
                 id="application-action-error"
@@ -2046,7 +2211,7 @@ export function ApplicationEditor({
               {step === 3 ? (
                 <button
                   className="button primary"
-                  disabled={busy}
+                  disabled={busy || !signedDocumentsReady}
                   aria-busy={busy && operation === "submit"}
                   onClick={() => persist(true)}
                   aria-describedby={

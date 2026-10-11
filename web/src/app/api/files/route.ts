@@ -37,11 +37,53 @@ export async function POST(request: NextRequest) {
   const valid = validateFile(file.name, bytes);
   if (!valid)
     return NextResponse.json({ error: "Invalid file" }, { status: 400 });
-  if (kind === "concept_signed" && valid.extension !== "pdf")
+  if (
+    ["concept_signed", "matrix_signed"].includes(kind) &&
+    valid.extension !== "pdf"
+  )
     return NextResponse.json(
-      { error: "Signed concept must be PDF" },
+      { error: "Signed document must be PDF" },
       { status: 400 },
     );
+  if (
+    ["concept_signed", "matrix_signed"].includes(kind) &&
+    viewer.profile.role === "applicant"
+  ) {
+    const revision = z.coerce
+      .number()
+      .int()
+      .min(0)
+      .safeParse(form.get("revision"));
+    const { data: application } = await viewer.db
+      .from("applications")
+      .select("revision,stage")
+      .eq("id", app.data)
+      .maybeSingle();
+    if (!application)
+      return NextResponse.json(
+        { error: "Application unavailable" },
+        { status: 403 },
+      );
+    if (application.stage === 1) {
+      if (!revision.success || revision.data !== application.revision)
+        return NextResponse.json(
+          { error: "GLF_VERSION_CONFLICT" },
+          { status: 409 },
+        );
+      const { data: prepared } = await viewer.db
+        .from("prepared_documents")
+        .select("id")
+        .eq("application_id", app.data)
+        .eq("revision", application.revision)
+        .eq("stage", 1)
+        .maybeSingle();
+      if (!prepared)
+        return NextResponse.json(
+          { error: "GLF_PREPARE_DOCUMENTS_REQUIRED" },
+          { status: 409 },
+        );
+    }
+  }
   const folder = kind === "agreement" ? "agreement" : "attachment";
   const path = [
     app.data,

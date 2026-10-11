@@ -225,7 +225,7 @@ export async function deleteDraft(
   revalidatePath("/applicant");
   return { ok: true };
 }
-export async function prepareDocuments(id: string, revision: number) {
+export async function prepareDocuments(id: string, revision: number): Promise<{ id?: string; created_at?: string; error?: string }> {
   const { db } = await requireViewer(["applicant"]);
   if (!z.uuid().safeParse(id).success || !Number.isSafeInteger(revision))
     return { error: "GLF_INVALID_PAYLOAD" };
@@ -242,7 +242,15 @@ export async function prepareDocuments(id: string, revision: number) {
     app_id: id,
     expected_revision: revision,
   });
-  return error ? { error: safeError(error.message) } : { id: String(data) };
+  if (error) return { error: safeError(error.message) };
+  const { data: prepared, error: readError } = await db
+    .from("prepared_documents")
+    .select("id,created_at")
+    .eq("id", String(data))
+    .single();
+  return readError || !prepared
+    ? { error: "GLF_PREPARE_DOCUMENTS_REQUIRED" }
+    : prepared;
 }
 export async function submitDraft(
   id: string,

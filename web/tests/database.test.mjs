@@ -952,6 +952,29 @@ test("submission freezes a version and blocks all later applicant writes", async
     "insert into public.application_documents(application_id,kind,storage_path,file_name,content_type,size_bytes,sha256,uploaded_by) values($1,'concept_signed','test/signed.pdf','signed.pdf','application/pdf',100,$2,$3)",
     [app, "a".repeat(64), ids.applicant],
   );
+  await assert.rejects(
+    rpc("submit_application", { application_id: app, expected_revision: 1 }),
+    /GLF_SIGNED_MATRIX_REQUIRED/,
+  );
+  await assert.rejects(
+    db.query(
+      "insert into public.application_documents(application_id,kind,storage_path,file_name,content_type,size_bytes,sha256,uploaded_by) values($1,'matrix_signed','test/wrong.png','wrong.png','image/png',100,$2,$3)",
+      [app, "b".repeat(64), ids.applicant],
+    ),
+    /GLF_SIGNED_DOCUMENT_PDF_REQUIRED/,
+  );
+  await db.query(
+    "insert into public.application_documents(application_id,kind,storage_path,file_name,content_type,size_bytes,sha256,uploaded_by,created_at) values($1,'matrix_signed','test/stale.pdf','stale.pdf','application/pdf',100,$2,$3,'2000-01-01')",
+    [app, "b".repeat(64), ids.applicant],
+  );
+  await assert.rejects(
+    rpc("submit_application", { application_id: app, expected_revision: 1 }),
+    /GLF_SIGNED_MATRIX_REQUIRED/,
+  );
+  await db.query(
+    "insert into public.application_documents(application_id,kind,storage_path,file_name,content_type,size_bytes,sha256,uploaded_by) values($1,'matrix_signed','test/matrix.pdf','matrix.pdf','application/pdf',100,$2,$3)",
+    [app, "b".repeat(64), ids.applicant],
+  );
   assert.equal(
     await rpc("submit_application", {
       application_id: app,

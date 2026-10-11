@@ -276,3 +276,9 @@ Resumen estructurado: source Formatos y Normativa de postulación/Formato-de-Not
 - project_results opcional permite históricos sin migración implícita; results_source preserva texto anterior al organizar. Borradores incompletos permitidos. Validación cliente y servidor de referencias, campos, porcentajes y unidades.
 - Texto derivado compatible con revisión interna, PDF y exportaciones. No modifica expedientes cargados ni permisos. Futuro módulo de seguimiento conserva IDs estables.
 
+
+## Documentos firmados — versión 0.4.12 (2026-10-10)
+- Fase 1: dos bloques explícitos PDF (nota conceptual y evaluación de riesgos A&S), sin selector genérico de tipo. Confirmación previa con texto aprobado y revisión de firma reservada al GLF.
+- Ambos PDF deben ser posteriores a la preparación vigente; editar exige preparar, firmar y adjuntar ambos nuevamente. Estados y descarga de archivos adjuntos disponibles.
+- Migración 202610110024 aplicada en Supabase en transacción; comprobación devolvió both_pdfs_required=true y pdf_validation_active=true. Consulta guardada. No repetir ni eliminar datos.
+- Pruebas de base de datos incluyen falta de evaluación, formato incorrecto y versión antigua. 63 pruebas pasaron; lint, TypeScript y compilación correctos. Fase 2 conserva su formulario de anexos.

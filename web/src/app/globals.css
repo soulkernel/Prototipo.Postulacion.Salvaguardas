@@ -2852,3 +2852,9 @@ select {
     width: 100%;
   }
 }
+
+.signed-document-card { border: 1px solid #d8e0e9; border-radius: 8px; padding: 20px; margin-top: 18px; }
+.signed-document-card h3 { margin-top: 0; font-size: 17px; }
+.signature-warning { padding: 16px; background: #fff8e8; border-left: 3px solid #ad7100; border-radius: 4px; }
+.signature-warning p { margin-top: 0; }
+.signed-document-card .document-row { gap: 16px; flex-wrap: wrap; }
