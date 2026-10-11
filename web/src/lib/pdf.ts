@@ -404,6 +404,7 @@ export async function applicationPdf({
   } else {
     let sum = 0;
     payload.activities.forEach((a, ai) => {
+      if (y < (a.risks.length ? 360 : 180)) newPage();
       draw((es ? "ACTIVIDAD " : "ACTIVITY ") + (ai + 1) + ": " + a.title, true);
       if (!a.risks.length)
         field(
