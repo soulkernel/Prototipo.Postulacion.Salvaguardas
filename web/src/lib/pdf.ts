@@ -79,18 +79,34 @@ export async function applicationPdf({
     page.drawImage(logo, { x: 52, y: 779, width: 128, height: 53 });
     page.drawText("GALÁPAGOS LIFE FUND", {
       x: 310,
-      y: 801,
+      y: 809,
       size: 10,
       font: bold,
       color: rgb(1, 1, 1),
     });
-    page.drawText(es ? "Portal de subvenciones" : "Grants portal", {
-      x: 310,
-      y: 783,
-      size: 9,
-      font,
-      color: rgb(1, 1, 1),
-    });
+    const headerLines =
+      kind === "concept"
+        ? [
+            stage === 1
+              ? es
+                ? "Nota conceptual"
+                : "Concept note"
+              : es
+                ? "Propuesta completa"
+                : "Full project proposal",
+          ]
+        : es
+          ? ["Evaluación de riesgos", "ambientales y sociales"]
+          : ["Environmental and social", "risk assessment"];
+    headerLines.forEach((line, i) =>
+      page.drawText(line, {
+        x: 310,
+        y: 790 - i * 13,
+        size: 10,
+        font,
+        color: rgb(1, 1, 1),
+      }),
+    );
     y = 741;
   }
   function newPage() {
@@ -516,7 +532,9 @@ export async function applicationPdf({
       });
     });
     field(
-      es ? "La suma de los puntajes individuales es" : "The sum of individual scores is",
+      es
+        ? "La suma de los puntajes individuales es"
+        : "The sum of individual scores is",
       sum,
     );
     draw(
