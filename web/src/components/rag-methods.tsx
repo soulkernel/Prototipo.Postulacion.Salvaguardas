@@ -27,11 +27,11 @@ export function RagMethods({
       ? "El servicio BM25 + Qwen aún no está conectado."
       : "The BM25 + Qwen service is not connected yet.",
     quota: es
-      ? "Se alcanzó el límite de consultas del servicio. Intente más tarde o utilice E5."
-      : "The service query limit has been reached. Try later or use E5.",
+      ? "Se alcanzó el límite de consultas del servicio. Intente más tarde."
+      : "The service query limit has been reached. Try later.",
     unavailable: es
-      ? "No se pudo obtener una respuesta. El servicio puede estar iniciándose, sin créditos o temporalmente no disponible. Intente más tarde; puede continuar con E5."
-      : "No answer could be obtained. The service may be starting, out of credits or temporarily unavailable. Try later; E5 remains available.",
+      ? "No se pudo obtener una respuesta. El servicio puede estar iniciándose, sin créditos o temporalmente no disponible. Intente más tarde."
+      : "No answer could be obtained. The service may be starting, out of credits or temporarily unavailable. Try later.",
   };
   return (
     <>

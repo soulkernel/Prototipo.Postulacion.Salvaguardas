@@ -33,3 +33,13 @@ La selección de una actividad/riesgo de un expediente y el registro persistente
 
 Lint y TypeScript sin errores. Compilación Next.js correcta. Suite existente de base de datos y 47 pruebas TypeScript aprobadas. Tres pruebas nuevas del adaptador Qwen aprobadas: evidencia y abstención, destinos seguros, credenciales/cuotas/fallos. Prueba smoke original de public_demo aprobada en entorno aislado; no realiza inferencia real ni valida disponibilidad de Qwen.
 
+
+## Avance posterior: secretos y publicación
+
+HF_TOKEN guardado por el usuario. DEMO_ACCESS_CODE generado para comunicación servidor a servidor, guardado como secreto en HF y GLF_QWEN_API_KEY en Vercel Preview; no registrar valores. Copia local ignorada: scratch/.env.qwen-service. GLF_QWEN_ENDPOINT configurado en Preview. Publicación 0.4.38 comprobada en https://glf-postulaciones.vercel.app/internal/evidence con cuenta administrativa y MFA existente, commit 68b018e.
+
+/healthz devuelve HTTP 200: 7 documentos públicos, 271 fragmentos. /api/ask sin credencial devuelve 401. Con credencial alcanza al generador pero devolvió 503; diagnóstico seguro detectó HTTP 400/model_unavailable en la ruta :fastest. Se fijó HF_MODEL=Qwen/Qwen2.5-7B-Instruct-1M:featherless-ai según el código oficial de la página del modelo. El Space está reiniciándose; falta repetir una consulta cuando indique Running y verificar respuesta/citas mediante contrato TypeScript y portal. No declarar inferencia real validada todavía.
+
+El wrapper runtime.py conserva código académico y solo registra estado HTTP/categoría, sin consultas ni respuestas crudas ni claves. Dos pruebas del wrapper pasan. Límite HF confirmado en cero, créditos USD 2, recarga automática sin configurar. No elevar gasto.
+
+E5 aparece deshabilitado en el portal porque no existen fuentes aprobadas (o servicio disponible); no aprobar corpus automáticamente ni afirmar que E5 está listo. Falta proceso de revisión/aprobación normativa por GLF. No mezclar el corpus público de Qwen con la aprobación del corpus E5.
