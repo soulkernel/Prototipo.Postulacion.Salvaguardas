@@ -1070,5 +1070,5 @@ a {
 .session-details p { margin: 0; line-height: 1.5; overflow-wrap: anywhere; }
 .session-details strong { color: #233144; }
 @media (max-width: 760px) {
-  .session-identity { padding: 12px 18px 0; font-size: 13px; }
+  .session-identity { float: none; max-width: 100%; margin: 0 0 12px; padding: 0; font-size: 13px; }
 }

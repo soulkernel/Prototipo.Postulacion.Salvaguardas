@@ -96,6 +96,7 @@ export async function Shell({
         </nav>
         <div className="header-account-controls">
           <LanguageSwitch locale={locale} />
+
           {viewer && (
             <form action={signOut}>
               <SubmitButton
@@ -110,22 +111,23 @@ export async function Shell({
           )}
         </div>
       </header>
-      {viewer && (
-        <div
-          className="session-identity"
-          aria-label={
-            locale === "es" ? "Cuenta conectada" : "Signed-in account"
-          }
-        >
-          <span className="session-avatar" aria-hidden="true">
-            {initials}
-          </span>
-          <div className="session-details">
-            <p>{accountName}</p>
-          </div>
-        </div>
-      )}
       <main className="live-main" id="main-content">
+        {viewer && (
+          <div
+            className="session-identity"
+            aria-label={
+              locale === "es" ? "Cuenta conectada" : "Signed-in account"
+            }
+          >
+            <span className="session-avatar" aria-hidden="true">
+              {initials}
+            </span>
+            <div className="session-details">
+              <p>{accountName}</p>
+            </div>
+          </div>
+        )}
+
         {internal && (
           <p className="eyebrow">
             {locale === "es" ? "ESPACIO INTERNO GLF" : "GLF STAFF WORKSPACE"}
