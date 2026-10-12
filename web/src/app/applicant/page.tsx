@@ -1,3 +1,4 @@
+import { DeadlineCountdown } from "@/components/deadline-countdown";
 import { getRequestTime } from "@/lib/data";
 import Link from "@/components/feedback-link";
 import { requireViewer, getCalls } from "@/lib/data";
@@ -77,6 +78,7 @@ export default async function ApplicantPage({
               <section key={call.id}>
                 <h3>{es ? call.title_es : call.title_en}</h3>
                 <p>{es ? call.description_es : call.description_en}</p>
+                <DeadlineCountdown deadline={call.closes_at} serverNow={requestTime} locale={locale} />
                 <h3>
                   {es
                     ? "Escoja la categoría de subvención a la que desea aplicar"

@@ -2867,3 +2867,8 @@ select {
 .live-main .backup-download {display:inline-flex;align-items:center;gap:10px;background:#203b63;color:white;border:1px solid #203b63;border-radius:8px;min-height:46px;padding:12px 22px;font-weight:600;cursor:pointer;margin-top:16px;}
 .live-main .backup-download:hover {background:#2c4c7c;}
 .live-main .backup-download:disabled {opacity:.55;cursor:not-allowed;}
+
+.deadline-countdown { display: flex; flex-direction: column; gap: .3rem; margin: 1rem 0; padding: .8rem 1rem; border: 1px solid #d8e4ed; border-left: 3px solid #168080; border-radius: .65rem; background: #f5fafb; font-size: .92rem; }
+.deadline-countdown span { font-size: .88rem; }
+.deadline-countdown.soon { background: #fffaf0; border-left-color: #ad730e; }
+.deadline-countdown.urgent, .deadline-countdown.closed { background: #fff5f3; border-left-color: #ae3f32; }

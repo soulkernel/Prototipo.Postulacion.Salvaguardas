@@ -105,6 +105,7 @@ export default async function ApplicationPage({
         call={call as Call}
         locale={locale}
         editable={editable}
+        serverNow={requestTime}
         accountEmail={viewer.user.email || ""}
         catalog={catalog || []}
         versions={(versions || []).map(({ payload, ...v }) => ({

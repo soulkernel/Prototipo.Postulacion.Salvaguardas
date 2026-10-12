@@ -1,4 +1,5 @@
 "use client";
+import { DeadlineCountdown } from "./deadline-countdown";
 import { DocumentDownload } from "./document-download";
 import { useEffect, useState, useRef } from "react";
 import Link from "@/components/feedback-link";
@@ -185,6 +186,7 @@ export function ApplicationEditor({
   call,
   locale,
   editable,
+  serverNow,
   accountEmail = "",
   catalog,
   versions,
@@ -196,6 +198,7 @@ export function ApplicationEditor({
   call: Call;
   locale: Locale;
   editable: boolean;
+  serverNow: number;
   accountEmail?: string;
   catalog: Catalog[];
   versions: Version[];
@@ -742,6 +745,7 @@ export function ApplicationEditor({
             </p>
           )}
           <p>{es ? call.title_es : call.title_en}</p>
+          <DeadlineCountdown deadline={application.stage === 1 ? call.closes_at : application.phase2_deadline} serverNow={serverNow} locale={locale} stage={application.stage} />
         </div>
         <div className="application-save-heading">
           <span className="status-pill neutral">
