@@ -1,7 +1,7 @@
 import { SubmitButton } from "@/components/submit-button";
 import { StaffInvitations } from "@/components/staff-invitations";
 import { invitationRoles, type StaffInvitation } from "@/lib/staff-invitations";
-import Link from "next/link";
+import Link from "@/components/feedback-link";
 import { redirect } from "next/navigation";
 import { requireViewer, getRequestTime } from "@/lib/data";
 import { getLocale } from "@/lib/locale";

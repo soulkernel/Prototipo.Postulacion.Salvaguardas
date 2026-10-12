@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/feedback-link";
 import { requireViewer } from "@/lib/data";
 import { getLocale } from "@/lib/locale";
 import { statusLabel } from "@/lib/fields";

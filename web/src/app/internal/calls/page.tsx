@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/feedback-link";
 import { notFound } from "next/navigation";
 import { requireViewer, getCalls, getRequestTime } from "@/lib/data";
 import { getLocale } from "@/lib/locale";

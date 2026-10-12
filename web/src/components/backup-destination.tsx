@@ -82,6 +82,7 @@ export function BackupDestination({
   const [folderMessage, setFolderMessage] = useState("");
   const [call, setCall] = useState("");
   const [busy, setBusy] = useState(false);
+  const [choosing, setChoosing] = useState(false);
   const [message, setMessage] = useState("");
   useEffect(() => {
     destinationStore(userId)
@@ -89,6 +90,7 @@ export function BackupDestination({
       .catch(() => {});
   }, [userId]);
   async function choose() {
+    if (choosing || busy) return;
     const picker = (
       window as unknown as {
         showDirectoryPicker?: (options: {
@@ -106,6 +108,7 @@ export function BackupDestination({
       );
       return;
     }
+    setChoosing(true);
     try {
       const handle = await picker.call(window, {
         mode: "readwrite",
@@ -127,6 +130,8 @@ export function BackupDestination({
             ? "No se pudo guardar el destino. Seleccione una subcarpeta dedicada y revise su permiso de escritura."
             : "Unable to save destination. Check folder permission.",
         );
+    } finally {
+      setChoosing(false);
     }
   }
   async function backup(toFolder: boolean) {
@@ -501,16 +506,22 @@ export function BackupDestination({
             </p>
             <button
               className="button secondary"
-              disabled={busy}
+              disabled={busy || choosing}
+              aria-busy={choosing}
               onClick={choose}
             >
-              {folder
-                ? es
-                  ? "Cambiar carpeta"
-                  : "Change folder"
-                : es
-                  ? "Seleccionar carpeta"
-                  : "Select folder"}
+              <ActionLabel
+                busy={choosing}
+                pendingLabel={es ? "Procesando�" : "Processing�"}
+              >
+                {folder
+                  ? es
+                    ? "Cambiar carpeta"
+                    : "Change folder"
+                  : es
+                    ? "Seleccionar carpeta"
+                    : "Select folder"}
+              </ActionLabel>
             </button>
             <p role="status">{folderMessage}</p>
             <p>

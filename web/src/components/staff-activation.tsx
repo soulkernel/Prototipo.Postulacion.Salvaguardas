@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import Link from "@/components/feedback-link";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { activateStaffAccount } from "@/app/auth/activate/actions";
 import { invitationError } from "@/lib/staff-invitations";

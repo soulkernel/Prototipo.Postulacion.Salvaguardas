@@ -1,7 +1,7 @@
 "use client";
 import { DocumentDownload } from "./document-download";
 import { useEffect, useState, useRef } from "react";
-import Link from "next/link";
+import Link from "@/components/feedback-link";
 import { SignedDocumentUpload } from "./signed-document-upload";
 import { ReceiptDownload } from "./receipt-download";
 import {
@@ -39,7 +39,6 @@ import {
   Trash2,
   ShieldCheck,
   LockKeyhole,
-  FileDown,
 } from "lucide-react";
 import {
   saveDraft,
@@ -2086,9 +2085,12 @@ export function ApplicationEditor({
                       .map((d) => (
                         <div className="document-row" key={d.id}>
                           {d.file_name}
-                          <a href={`/files/${d.id}`}>
+                          <DocumentDownload
+                            href={`/files/${d.id}`}
+                            locale={locale}
+                          >
                             {es ? "Descargar" : "Download"}
-                          </a>
+                          </DocumentDownload>
                         </div>
                       ))}
                     <label>
@@ -2140,7 +2142,9 @@ export function ApplicationEditor({
               <span>
                 {d.file_name} · {d.kind}
               </span>
-              <a href={"/files/" + d.id}>{es ? "Descargar" : "Download"}</a>
+              <DocumentDownload href={"/files/" + d.id} locale={locale}>
+                {es ? "Descargar" : "Download"}
+              </DocumentDownload>
             </div>
           ))}
           {editable && (
@@ -2354,11 +2358,11 @@ export function ApplicationEditor({
               </div>
               <div className="live-actions">
                 <ReceiptDownload id={v.id} locale={locale} />
-                <a
+                <DocumentDownload
                   className="button secondary"
                   href={"/documents/" + v.id + "/concept"}
+                  locale={locale}
                 >
-                  <FileDown size={16} />
                   {v.stage === 1
                     ? es
                       ? "Nota conceptual"
@@ -2366,16 +2370,16 @@ export function ApplicationEditor({
                     : es
                       ? "Propuesta completa"
                       : "Full proposal"}
-                </a>
-                <a
+                </DocumentDownload>
+                <DocumentDownload
                   className="button secondary"
                   href={"/documents/" + v.id + "/matrix"}
+                  locale={locale}
                 >
-                  <FileDown size={16} />
                   {es
                     ? "Evaluación de riesgos ambientales y sociales"
                     : "Environmental and social risk assessment"}
-                </a>
+                </DocumentDownload>
               </div>
             </div>
           ))}

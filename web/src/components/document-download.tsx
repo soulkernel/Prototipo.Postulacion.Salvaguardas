@@ -8,10 +8,12 @@ export function DocumentDownload({
   href,
   locale,
   children,
+  className = "button secondary",
 }: {
   href: string;
   locale: Locale;
   children: React.ReactNode;
+  className?: string;
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
@@ -25,7 +27,9 @@ export function DocumentDownload({
       const response = await fetch(href, { cache: "no-store" });
       if (
         !response.ok ||
-        !response.headers.get("content-type")?.includes("application/pdf")
+        /text\/html|application\/json/.test(
+          response.headers.get("content-type") || "",
+        )
       )
         throw new Error("Download unavailable");
       const blob = await response.blob();
@@ -51,7 +55,7 @@ export function DocumentDownload({
     <div className="document-download-control">
       <button
         type="button"
-        className="button secondary"
+        className={className}
         disabled={busy}
         aria-busy={busy}
         onClick={() => void download()}

@@ -1,4 +1,6 @@
 "use client";
+import { DocumentDownload } from "@/components/document-download";
+
 import { useRef, useState } from "react";
 import { ActionLabel } from "./submit-button";
 import type { Locale } from "@/lib/domain";
@@ -50,9 +52,13 @@ export function SignedDocumentUpload({
                     : "Document from an earlier version · replacement required"}
             </span>
           </span>
-          <a className="button secondary" href={`/files/${document.id}`}>
+          <DocumentDownload
+            className="button secondary"
+            href={`/files/${document.id}`}
+            locale={locale}
+          >
             {es ? "Descargar" : "Download"}
-          </a>
+          </DocumentDownload>
         </div>
       ) : (
         <p className="field-help">

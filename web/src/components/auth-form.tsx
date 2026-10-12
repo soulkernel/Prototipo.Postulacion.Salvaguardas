@@ -1,5 +1,5 @@
 import Image from "next/image";
-import Link from "next/link";
+import Link from "@/components/feedback-link";
 import {
   signIn,
   signUp,

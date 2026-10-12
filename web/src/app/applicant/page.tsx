@@ -1,5 +1,5 @@
 import { getRequestTime } from "@/lib/data";
-import Link from "next/link";
+import Link from "@/components/feedback-link";
 import { requireViewer, getCalls } from "@/lib/data";
 import { getLocale } from "@/lib/locale";
 import { Shell } from "@/components/shell";

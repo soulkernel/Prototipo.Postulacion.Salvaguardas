@@ -1,5 +1,5 @@
 "use client";
-import Link from "next/link";
+import Link from "@/components/feedback-link";
 import { usePathname } from "next/navigation";
 import { useSyncExternalStore } from "react";
 function subscribe(callback: () => void) {

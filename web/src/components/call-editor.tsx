@@ -1,6 +1,6 @@
 "use client";
 import { useActionState, useState } from "react";
-import Link from "next/link";
+import Link from "@/components/feedback-link";
 import type { Call, Locale } from "@/lib/domain";
 import { callIssues, callFormValues } from "@/lib/calls";
 import { saveOrPublishCall } from "@/app/internal/calls/actions";
@@ -77,6 +77,7 @@ export function CallEditor({
         <input type="hidden" name="revision" value={call?.revision ?? 0} />
         <fieldset
           disabled={pending || call?.status === "published"}
+          aria-busy={pending}
           className="call-fields"
         >
           <CallCodeField
@@ -309,6 +310,7 @@ export function CallEditor({
           <button
             className="button primary"
             disabled={pending || call?.status === "published"}
+            aria-busy={pending}
           >
             <ActionLabel
               busy={pending}
@@ -456,7 +458,11 @@ export function CallEditor({
                 >
                   {es ? "Volver a editar" : "Back to editing"}
                 </button>
-                <button className="button primary" disabled={pending}>
+                <button
+                  className="button primary"
+                  disabled={pending}
+                  aria-busy={pending}
+                >
                   <ActionLabel
                     busy={pending}
                     pendingLabel={es ? "Publicando…" : "Publishing…"}

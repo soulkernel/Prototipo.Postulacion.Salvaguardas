@@ -1,7 +1,8 @@
+import { DocumentDownload } from "@/components/document-download";
 import { resultText } from "@/lib/project-results";
 import { SubmitButton } from "@/components/submit-button";
 import { getRequestTime } from "@/lib/data";
-import Link from "next/link";
+import Link from "@/components/feedback-link";
 import { getApplication, requireViewer } from "@/lib/data";
 import { getLocale } from "@/lib/locale";
 import { Shell } from "@/components/shell";
@@ -151,7 +152,10 @@ export default async function ReviewPage({
             </span>
             <div className="live-actions">
               <ReceiptDownload id={v.id} locale={locale} />
-              <a href={"/documents/" + v.id + "/concept"}>
+              <DocumentDownload
+                href={"/documents/" + v.id + "/concept"}
+                locale={locale}
+              >
                 {v.stage === 2
                   ? es
                     ? "Propuesta completa PDF"
@@ -159,10 +163,13 @@ export default async function ReviewPage({
                   : es
                     ? "Nota Conceptual PDF"
                     : "Concept Note PDF"}
-              </a>
-              <a href={"/documents/" + v.id + "/matrix"}>
+              </DocumentDownload>
+              <DocumentDownload
+                href={"/documents/" + v.id + "/matrix"}
+                locale={locale}
+              >
                 {es ? "Matriz PDF" : "Matrix PDF"}
-              </a>
+              </DocumentDownload>
             </div>
           </div>
         ))}
@@ -171,7 +178,9 @@ export default async function ReviewPage({
             <span>
               {d.kind} · {d.file_name}
             </span>
-            <a href={"/files/" + d.id}>{es ? "Descargar" : "Download"}</a>
+            <DocumentDownload href={"/files/" + d.id} locale={locale}>
+              {es ? "Descargar" : "Download"}
+            </DocumentDownload>
           </div>
         ))}
       </section>

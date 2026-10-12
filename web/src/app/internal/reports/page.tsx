@@ -1,4 +1,5 @@
-import Link from "next/link";
+import { DocumentDownload } from "@/components/document-download";
+import Link from "@/components/feedback-link";
 import Form from "next/form";
 import { SubmitButton } from "@/components/submit-button";
 import { requireViewer, getCalls } from "@/lib/data";
@@ -85,12 +86,13 @@ export default async function Reports({
               {es ? "Con convenio firmado" : "Under signed agreements"}:{" "}
               {Number(report.signed_total).toLocaleString(locale)}
             </p>
-            <a
+            <DocumentDownload
               className="button primary"
               href={"/internal/reports/export?call=" + id}
+              locale={locale}
             >
               {es ? "Descargar CSV" : "Download CSV"}
-            </a>
+            </DocumentDownload>
           </section>
           <section className="live-card">
             <h2>
