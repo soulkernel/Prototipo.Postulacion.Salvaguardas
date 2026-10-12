@@ -1587,3 +1587,20 @@ test("call drafts preserve incomplete content, reject stale edits and require co
     /permission denied/,
   );
 });
+
+test("RAG support notes require internal MFA access, a submitted risk, and cannot alter decisions", async () => {
+  const version = (await db.query("select application_id,revision,payload from public.application_versions order by revision desc limit 1")).rows[0];
+  assert.ok(version);
+  const risk = version.payload.activities.flatMap(a => a.risks)[0];
+  const args = [version.application_id, version.revision, risk.id, ids.reviewer];
+  const insert = () => db.query("insert into public.rag_review_notes(application_id,revision,risk_id,method,query,evidence,observation,created_by) values($1,$2,$3,'e5','Marine risk evidence','{}','Review this evidence',$4) returning id", args);
+  const note = (await as('reviewer',insert)).rows[0];
+  assert.ok(note.id);
+  assert.equal((await as('applicant',() => db.query('select id from public.rag_review_notes'))).rows.length,0);
+  await assert.rejects(as('applicant',insert),/row-level security/);
+  await assert.rejects(as('grants',insert),/row-level security/);
+  args[2]='00000000-0000-4000-8000-000000009999';
+  await assert.rejects(as('reviewer',insert),/row-level security/);
+  await assert.rejects(as('reviewer',() => db.query("delete from public.rag_review_notes where id=$1",[note.id])),/permission denied/);
+  assert.equal((await as('admin',() => db.query('select id from public.rag_review_notes'))).rows.length,1);
+});

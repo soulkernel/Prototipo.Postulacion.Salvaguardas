@@ -4,6 +4,8 @@ import {
   searchEvidence,
   type EvidenceState,
 } from "@/app/internal/evidence/actions";
+import { riskQuery, type RagProject, type RagRisk } from "@/lib/rag-context";
+import { RagNoteForm } from "./rag-note-form";
 import type { Locale } from "@/lib/domain";
 import { ActionLabel } from "./submit-button";
 
@@ -11,9 +13,11 @@ const initial: EvidenceState = { status: "idle", results: [] };
 export function EvidenceSearch({
   locale,
   enabled,
+  context,
 }: {
   locale: Locale;
   enabled: boolean;
+  context?: { project: RagProject; risk: RagRisk };
 }) {
   const es = locale === "es";
   const [state, action, pending] = useActionState(searchEvidence, initial);
@@ -24,6 +28,18 @@ export function EvidenceSearch({
           {es ? "Actividad o riesgo a consultar" : "Activity or risk to search"}
           <textarea
             name="query"
+            defaultValue={
+              context
+                ? riskQuery(context.risk, context.project.stage, "e5")
+                : ""
+            }
+            placeholder={
+              es
+                ? "Describa la actividad y el riesgo ambiental o social que desea contrastar con la normativa."
+                : "Describe the activity and environmental or social risk to compare with regulations."
+            }
+            spellCheck
+            lang={es ? "es" : "en"}
             required
             minLength={10}
             maxLength={1500}
@@ -33,7 +49,7 @@ export function EvidenceSearch({
         </label>
         <p>
           {es
-            ? "Consulte actividades y riesgos sin nombres, correos ni otros datos personales. El texto se procesa en el servicio de inferencia configurado."
+            ? "Revise el texto antes de buscar. Incluya solo la actividad y el riesgo, sin nombres, correos ni datos personales. Máximo 1.500 caracteres. El texto se procesa en un servicio externo."
             : "Describe activities and risks without names, emails or other personal data. The configured inference service processes this text."}
         </p>
         <button
@@ -50,41 +66,52 @@ export function EvidenceSearch({
         </button>
       </form>
       <div aria-live="polite">
-        {state.status === "invalid" && (
+        {!pending && state.status === "invalid" && (
           <p role="alert">
             {es
               ? "Escriba entre 10 y 1.500 caracteres."
               : "Enter between 10 and 1,500 characters."}
           </p>
         )}
-        {state.status === "unavailable" && (
+        {!pending && state.status === "unavailable" && (
           <p role="alert">
             {es
               ? "No se pudo consultar la evidencia. Intente nuevamente; no se ha emitido una evaluación."
               : "Evidence retrieval failed. Try again; no assessment has been issued."}
           </p>
         )}
-        {state.status === "ok" && !state.results.length && (
+        {!pending && state.status === "ok" && !state.results.length && (
           <p>
             {es
               ? "No hay evidencia aprobada e indexada disponible. Esto no significa que el proyecto cumpla."
               : "No approved indexed evidence is available. This does not establish compliance."}
           </p>
         )}
-        {state.results.map((r) => (
-          <article className="live-card" key={r.id}>
-            <h3>{r.document_name}</h3>
-            <p>
-              {r.document_version} · {r.locator}
-            </p>
-            <p style={{ whiteSpace: "pre-wrap" }}>{r.content}</p>
-            <p>
-              {es
-                ? "Referencia para revisión humana. La similitud no es una calificación de cumplimiento."
-                : "Reference for human review. Similarity is not a compliance rating."}
-            </p>
-          </article>
-        ))}
+        {!pending &&
+          state.results.map((r) => (
+            <article className="live-card" key={r.id}>
+              <h3>{r.document_name}</h3>
+              <p>
+                {r.document_version} · {r.locator}
+              </p>
+              <p style={{ whiteSpace: "pre-wrap" }}>{r.content}</p>
+              <p>
+                {es
+                  ? "Referencia para revisión humana. La similitud no es una calificación de cumplimiento."
+                  : "Reference for human review. Similarity is not a compliance rating."}
+              </p>
+            </article>
+          ))}
+        {!pending && state.status === "ok" && context && state.query && (
+          <RagNoteForm
+            key={state.query + JSON.stringify(state.results)}
+            context={context}
+            method="e5"
+            query={state.query}
+            evidence={{ results: state.results }}
+            es={es}
+          />
+        )}
       </div>
     </section>
   );

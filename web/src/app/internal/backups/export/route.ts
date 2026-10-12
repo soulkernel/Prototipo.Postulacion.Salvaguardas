@@ -69,6 +69,10 @@ export async function POST(request: NextRequest) {
       "application_documents",
       "application_events",
       "technical_reviews",
+      ...(viewer.profile.role === "administrator" ||
+      viewer.profile.role === "sustainability_reviewer"
+        ? ["rag_review_notes"]
+        : []),
       "governance_decisions",
       "project_agreements",
       "activities",

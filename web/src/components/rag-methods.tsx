@@ -3,16 +3,20 @@ import { useActionState, useState } from "react";
 import { consultQwen, type QwenState } from "@/app/internal/evidence/actions";
 import { EvidenceSearch } from "./evidence-search";
 import { ActionLabel } from "./submit-button";
+import { riskQuery, type RagProject, type RagRisk } from "@/lib/rag-context";
+import { RagNoteForm } from "./rag-note-form";
 import type { Locale } from "@/lib/domain";
 
 export function RagMethods({
   locale,
   e5Enabled,
   qwenEnabled,
+  context,
 }: {
   locale: Locale;
   e5Enabled: boolean;
   qwenEnabled: boolean;
+  context?: { project: RagProject; risk: RagRisk };
 }) {
   const es = locale === "es";
   const [method, setMethod] = useState("e5");
@@ -35,6 +39,12 @@ export function RagMethods({
   };
   return (
     <>
+      <div className="rag-step-heading">
+        <span className="rag-step">2</span>
+        <h2>
+          {es ? "Elija el apoyo que necesita" : "Choose the support you need"}
+        </h2>
+      </div>
       <div
         className="rag-tabs"
         role="tablist"
@@ -85,8 +95,8 @@ export function RagMethods({
       >
         <p>
           {es
-            ? "Recuperación semántica con multilingual-e5-small. Consulte fragmentos originales del corpus aprobado en GLF; no genera una respuesta ni una calificación."
-            : "Semantic retrieval with multilingual-e5-small. Search original passages from GLF's approved corpus; no generated answer or rating."}
+            ? "Encuentra fragmentos normativos relacionados con la actividad y el riesgo. Revise la evidencia original; no genera respuestas ni calificaciones."
+            : "Finds regulatory passages related to the activity and risk. Review original evidence; does not generate answers or ratings."}
         </p>
         {!e5Enabled && (
           <p role="status">
@@ -95,7 +105,7 @@ export function RagMethods({
               : "Available once the E5 service and approved sources are ready."}
           </p>
         )}
-        <EvidenceSearch locale={locale} enabled={e5Enabled} />
+        <EvidenceSearch locale={locale} enabled={e5Enabled} context={context} />
       </div>
       <div
         id="rag-qwen-panel"
@@ -111,8 +121,8 @@ export function RagMethods({
           </h2>
           <p>
             {es
-              ? "Método independiente del proyecto académico. Utiliza el corpus público definido por su autor y Qwen2.5-7B-Instruct-1M en la nube. Sus fuentes pueden diferir del corpus E5. Las métricas de la versión local no se trasladan a esta variante."
-              : "Independent method from the academic project. Uses its author's public corpus and cloud Qwen2.5-7B-Instruct-1M. Sources may differ from E5. Local-version metrics do not apply to this variant."}
+              ? "Redacta una respuesta a su pregunta utilizando normativa pública recuperada con BM25. Revise que las citas sustenten la respuesta; sus fuentes pueden diferir de E5."
+              : "Drafts an answer using public regulations retrieved by BM25. Check that the citations support the answer; sources may differ from E5."}
           </p>
           <p>
             {es
@@ -127,6 +137,16 @@ export function RagMethods({
                 : "Question about regulations"}
               <textarea
                 name="query"
+                defaultValue={
+                  context
+                    ? riskQuery(context.risk, context.project.stage, "qwen")
+                    : ""
+                }
+                placeholder={
+                  es
+                    ? "Ejemplo: ¿Qué criterios normativos deben revisarse para evaluar este riesgo?"
+                    : "Example (ask in Spanish): ¿Qué criterios normativos deben revisarse para evaluar este riesgo?"
+                }
                 rows={4}
                 required
                 minLength={3}
@@ -138,8 +158,8 @@ export function RagMethods({
             </label>
             <p>
               {es
-                ? "Máximo 600 caracteres. Respuesta en español."
-                : "Maximum 600 characters. Answers in Spanish."}
+                ? "Revise y ajuste la pregunta antes de consultar. Máximo 600 caracteres; respuesta en español."
+                : "Review and edit the question before submitting. Maximum 600 characters; answers in Spanish."}
             </p>
             <button
               className="button primary"
@@ -157,10 +177,10 @@ export function RagMethods({
             </button>
           </form>
           <div aria-live="polite">
-            {state.status !== "idle" && state.status !== "ok" && (
+            {!pending && state.status !== "idle" && state.status !== "ok" && (
               <p role="alert">{messages[state.status]}</p>
             )}
-            {state.response && (
+            {!pending && state.response && (
               <>
                 <h3>
                   {state.response.generated
@@ -209,6 +229,16 @@ export function RagMethods({
                     : "Verify citations and relevance before using them in a review. Cited answers do not certify compliance. GLF retains the decision."}
                 </p>
               </>
+            )}
+            {!pending && state.response && context && state.query && (
+              <RagNoteForm
+                key={state.query + JSON.stringify(state.response)}
+                context={context}
+                method="qwen"
+                query={state.query}
+                evidence={state.response}
+                es={es}
+              />
             )}
           </div>
         </section>

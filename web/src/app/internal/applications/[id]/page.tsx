@@ -131,6 +131,17 @@ export default async function ReviewPage({
           {statusLabel(a.status, locale)}
         </span>
       </div>
+      {(viewer.profile.role === "administrator" ||
+        viewer.profile.role === "sustainability_reviewer") && (
+        <Link
+          className="button secondary"
+          href={`/internal/evidence?project=${id}`}
+        >
+          {es
+            ? "Revisar riesgos con el asistente RAG"
+            : "Review risks with the RAG assistant"}
+        </Link>
+      )}
       {feedback.error && (
         <p role="alert" className="auth-error">
           {es
