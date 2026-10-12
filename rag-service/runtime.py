@@ -3,6 +3,7 @@ import logging
 import json
 import os
 import io
+import time
 import requests
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
@@ -16,12 +17,27 @@ def provider_urlopen(request, *args, **kwargs):
         request.add_header("User-Agent", "GLF-RAG/1.0 (HuggingFace-Inference-Client)")
         request.add_header("Accept", "application/json")
         try:
-            response = requests.post(request.full_url, headers=dict(request.header_items()), data=request.data, timeout=kwargs.get("timeout", 45), allow_redirects=False)
+            deadline = time.monotonic() + kwargs.get("timeout", 35)
+            for attempt in range(2):
+                remaining = max(1, deadline - time.monotonic())
+                response = requests.post(request.full_url, headers=dict(request.header_items()), data=request.data, timeout=remaining, allow_redirects=False)
+                if response.status_code not in (502, 503, 504) or attempt or deadline - time.monotonic() < 5:
+                    break
+                logging.getLogger("gunicorn.error").warning("GLF_PROVIDER_RETRY status=%s attempt=1", response.status_code)
+                time.sleep(1)
         except requests.RequestException as error:
             from urllib.error import URLError
             raise URLError("Inference transport unavailable") from error
         if not response.ok:
             raise HTTPError(request.full_url, response.status_code, "Inference request failed", response.headers, io.BytesIO(response.content))
+        metadata = response.json()
+        choice = metadata.get("choices", [{}])[0]
+        content = choice.get("message", {}).get("content") or ""
+        logging.getLogger("gunicorn.error").info(
+            "GLF_GENERATION finish=%s chars=%s citations=%s abstained=%s",
+            choice.get("finish_reason"), len(content), len(upstream.CHUNK_RE.findall(content)),
+            "documentación pública recuperada es insuficiente" in content.casefold(),
+        )
         return io.BytesIO(response.content)
     return original_urlopen(request, *args, **kwargs)
 
