@@ -91,3 +91,19 @@ test("Excel exports exactly three distinct applications plus header without coll
  assert.equal((sheet.match(/<row r=/g)||[]).length,4);
  for(const a of applications) assert.ok(sheet.includes(a.reference_code));
 });
+
+test("expanded workbook separates proposed dates, numeric amounts, results and scored risks", () => {
+ const records={applications:[{id:"x",reference_code:"R-X",call_id:"c",status:"submitted",stage:1}],application_versions:[{application_id:"x",revision:2,submitted_at:"2026-10-12T02:00:00Z",rules_snapshot:{categories:[{id:"small",label_es:"Pequeña",max_months:12}]},payload:{concept:{title:"Proyecto",category_id:"small",start_date:"2026-01-01",end_date:"2026-02-01",requested_amount:100,cofinance_amount:0,admin_cost:10,strategic_alignment:{objectives:[{id:"o",text:"Objetivo marino"}]},project_results:[{objective_id:"o",result:"Resultado",indicator:"Participantes",target:0,unit:"people",evidence:"Lista"}]},activities:[{title:"Taller",risks:[{name:"Riesgo",dimension:"social",probability:2,severity:3}]}]}}]};
+ const files=unzipSync(summaryWorkbook(records,"es")), main=strFromU8(files["xl/worksheets/sheet1.xml"]), results=strFromU8(files["xl/worksheets/sheet2.xml"]), risks=strFromU8(files["xl/worksheets/sheet3.xml"]);
+ assert.ok(main.includes('ref="A1:AJ2"'));
+ assert.ok(main.includes('r="T2" s="0"><v>31</v>'));
+ assert.ok(main.includes('r="V2" s="3"><v>100</v>'));
+ assert.ok(main.includes('r="Z2" s="4"><v>0</v>'));
+ assert.ok(main.includes('11/10/2026'));
+ assert.ok(main.includes("No registrado"));
+ assert.ok(results.includes("Objetivo marino"));
+ assert.ok(results.includes('r="F2" s="0"><v>0</v>'));
+ assert.ok(risks.includes('r="I2" s="0"><v>6</v>'));
+ assert.ok(risks.includes("Medio"));
+ assert.ok(strFromU8(files["xl/workbook.xml"]).includes("Resultados e indicadores"));
+});
