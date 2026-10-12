@@ -27,6 +27,8 @@ export async function POST(request: NextRequest) {
       { error: "Invalid backup selection" },
       { status: 400 },
     );
+  const content =
+    selection.data.scope === "selected" ? selection.data.content : "both";
   const call = selection.data.scope === "call" ? selection.data.call : null;
   const selected =
     selection.data.scope === "selected" ? selection.data.applications : [];
@@ -137,7 +139,9 @@ export async function POST(request: NextRequest) {
       total += bytes.length;
       entries["datos/" + name + ".json"] = bytes;
     }
-    const documents = records.application_documents as {
+    const documents = (
+      content === "data" ? [] : records.application_documents
+    ) as {
       id: string;
       application_id: string;
       storage_path: string;
@@ -187,6 +191,7 @@ export async function POST(request: NextRequest) {
         ? "selected-applications"
         : call || "received-applications",
       selected_application_ids: selected,
+      content,
       actor_id: viewer.user.id,
       application_count: ids.length,
       consistency:
@@ -203,6 +208,10 @@ export async function POST(request: NextRequest) {
         sha256: createHash("sha256").update(bytes).digest("hex"),
       })),
     };
+    if (content === "documents") {
+      for (const key of Object.keys(records)) delete records[key];
+      manifest.files = [];
+    }
     const responseBody = JSON.stringify({ manifest, records, downloads });
     if (Buffer.byteLength(responseBody) > 4 * 1024 * 1024)
       return NextResponse.json(

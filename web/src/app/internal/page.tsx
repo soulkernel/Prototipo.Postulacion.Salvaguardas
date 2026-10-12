@@ -1,9 +1,15 @@
+import { InboxFilters } from "@/components/inbox-filters";
+import { resolveFilters } from "@/lib/inbox-filters";
 import Link from "@/components/feedback-link";
 import { requireViewer, getCalls } from "@/lib/data";
 import { getLocale } from "@/lib/locale";
 import { Shell } from "@/components/shell";
 import { roleLabels, statusLabel } from "@/lib/fields";
-export default async function InternalPage() {
+export default async function InternalPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ call?: string; category?: string }>;
+}) {
   const { db, profile } = await requireViewer([
     "grants_manager",
     "sustainability_reviewer",
@@ -21,11 +27,13 @@ export default async function InternalPage() {
     proponent: string;
     contact: string;
     stage: number;
+    call_id: string;
+    category: string;
   }[] = [];
   for (let offset = 0; ; offset += 250) {
     const { data, error } = await db
       .from("applications")
-      .select("id,reference_code,status,stage")
+      .select("id,call_id,reference_code,status,stage")
       .not("submitted_at", "is", null)
       .order("updated_at", { ascending: false })
       .order("id")
@@ -34,7 +42,7 @@ export default async function InternalPage() {
     if (!data?.length) break;
     const titles = new Map<
       string,
-      { title: string; proponent: string; contact: string }
+      { title: string; proponent: string; contact: string; category: string }
     >();
     for (let versionOffset = 0; ; versionOffset += 250) {
       const { data: versions, error: versionError } = await db
@@ -52,6 +60,7 @@ export default async function InternalPage() {
         if (!titles.has(version.application_id))
           titles.set(version.application_id, {
             title: String(version.payload?.concept?.title || ""),
+            category: String(version.payload?.concept?.category_id || ""),
             proponent: String(
               version.payload?.concept?.applicant_name || "",
             ).trim(),
@@ -68,11 +77,23 @@ export default async function InternalPage() {
         title: titles.get(a.id)?.title || a.reference_code,
         proponent: titles.get(a.id)?.proponent || "",
         contact: titles.get(a.id)?.contact || "",
+        category: titles.get(a.id)?.category || "",
       })),
     );
     if (data.length < 250) break;
   }
   const calls = await getCalls();
+  const filters = resolveFilters(calls, await searchParams, locale);
+  const filtered = apps.filter(
+    (a) =>
+      (filters.call === "all" || a.call_id === filters.call) &&
+      (filters.category === "all" || a.category === filters.category),
+  );
+  const returnTo =
+    "/internal?" +
+    new URLSearchParams({ call: filters.call, category: filters.category });
+  const categoryLabel = (id: string) =>
+    filters.options.find((c) => c.id === id)?.title || "—";
   return (
     <Shell locale={locale} internal>
       <div className="live-title">
@@ -108,19 +129,29 @@ export default async function InternalPage() {
           </Link>
         )}
       </nav>
+      <InboxFilters
+        es={es}
+        call={filters.call}
+        category={filters.category}
+        categories={filters.options}
+        calls={calls.map((c) => ({
+          id: c.id,
+          title: es ? c.title_es : c.title_en,
+        }))}
+      />
       <div className="live-metrics internal-summary-metrics">
         <div>
           {es ? "Convocatorias" : "Calls"}
-          <strong>{calls.length}</strong>
+          <strong>{filters.call === "all" ? calls.length : 1}</strong>
         </div>
         <div>
           {es ? "Expedientes recibidos" : "Applications received"}
-          <strong>{apps?.length || 0}</strong>
+          <strong>{filtered?.length || 0}</strong>
         </div>
         <div>
           {es ? "En revisión" : "In review"}
           <strong>
-            {apps?.filter((a) =>
+            {filtered?.filter((a) =>
               ["submitted", "under_review", "phase2_submitted"].includes(
                 a.status,
               ),
@@ -131,18 +162,25 @@ export default async function InternalPage() {
           {es
             ? "Notas conceptuales preseleccionadas"
             : "Shortlisted concept notes"}
-          <strong>{apps.filter((a) => a.stage === 2).length}</strong>
+          <strong>{filtered.filter((a) => a.stage === 2).length}</strong>
         </div>
         <div>
           {es ? "Convenios firmados" : "Signed agreements"}
           <strong>
-            {apps?.filter((a) => a.status === "contract_signed").length || 0}
+            {filtered?.filter((a) => a.status === "contract_signed").length ||
+              0}
           </strong>
         </div>
       </div>
       <section className="live-card">
         <h2>{es ? "Bandeja de expedientes" : "Application inbox"}</h2>
-        {apps?.length ? (
+        <p>
+          {filtered.length}{" "}
+          {es
+            ? "expedientes coinciden con los filtros."
+            : "applications match the filters."}
+        </p>
+        {filtered?.length ? (
           <div className="table-scroll">
             <table>
               <thead>
@@ -154,12 +192,13 @@ export default async function InternalPage() {
                       ? "Proponente / Responsable"
                       : "Applicant / Contact person"}
                   </th>
+                  <th>{es ? "Categoría" : "Category"}</th>
                   <th>{es ? "Etapa" : "Stage"}</th>
                   <th />
                 </tr>
               </thead>
               <tbody>
-                {apps.map((a) => (
+                {filtered.map((a) => (
                   <tr key={a.id}>
                     <td>{a.reference_code}</td>
                     <td>{a.title}</td>
@@ -172,9 +211,17 @@ export default async function InternalPage() {
                           <div className="inbox-contact">{a.contact}</div>
                         )}
                     </td>
+                    <td>{categoryLabel(a.category)}</td>
                     <td>{statusLabel(a.status, locale)}</td>
                     <td>
-                      <Link href={"/internal/applications/" + a.id}>
+                      <Link
+                        href={
+                          "/internal/applications/" +
+                          a.id +
+                          "?returnTo=" +
+                          encodeURIComponent(returnTo)
+                        }
+                      >
                         {es ? "Revisar" : "Review"}
                       </Link>
                     </td>
@@ -186,8 +233,8 @@ export default async function InternalPage() {
         ) : (
           <p>
             {es
-              ? "Todavía no se han recibido postulaciones."
-              : "No applications have been received yet."}
+              ? "No hay expedientes recibidos que coincidan con estos filtros."
+              : "No received applications match these filters."}
           </p>
         )}
       </section>

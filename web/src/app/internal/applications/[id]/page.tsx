@@ -9,7 +9,7 @@ import { Shell } from "@/components/shell";
 import { UploadForm } from "@/components/upload-form";
 import { ReceiptDownload } from "@/components/receipt-download";
 import { identityFields, narrativeFields, statusLabel } from "@/lib/fields";
-import { riskScore, riskLevel } from "@/lib/domain";
+import { safeReturnPath, riskScore, riskLevel } from "@/lib/domain";
 import { strategicText } from "@/lib/strategic-alignment";
 import type { Call } from "@/lib/domain";
 import {
@@ -23,7 +23,7 @@ export default async function ReviewPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ error?: string; saved?: string }>;
+  searchParams: Promise<{ error?: string; saved?: string; returnTo?: string }>;
 }) {
   const requestTime = await getRequestTime();
   await requireViewer([
@@ -109,7 +109,17 @@ export default async function ReviewPage({
   );
   return (
     <Shell locale={locale} internal>
-      <Link href="/internal">← {es ? "Expedientes" : "Applications"}</Link>
+      <Link
+        href={
+          safeReturnPath(feedback.returnTo, "/internal").startsWith(
+            "/internal?",
+          )
+            ? safeReturnPath(feedback.returnTo, "/internal")
+            : "/internal"
+        }
+      >
+        ← {es ? "Expedientes" : "Applications"}
+      </Link>
       <div className="live-title">
         <div>
           <p className="eyebrow">

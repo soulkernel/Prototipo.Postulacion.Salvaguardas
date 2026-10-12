@@ -2,6 +2,8 @@
 import { ActionLabel } from "./submit-button";
 import { useEffect, useState } from "react";
 import { zip, strToU8 } from "fflate";
+import { statusLabel } from "@/lib/fields";
+import { summaryWorkbook } from "@/lib/backup-workbook";
 import type { Locale } from "@/lib/domain";
 
 type Destination = {
@@ -60,13 +62,20 @@ export function BackupDestination({
   locale,
   calls,
   applications,
+  defaultCallId,
+  categories,
 }: {
   applications: {
     id: string;
     call_id: string;
     reference_code: string;
     title: string;
+    category: string;
+    proponent: string;
+    status: string;
   }[];
+  defaultCallId: string;
+  categories: { id: string; title: string }[];
   userId: string;
   locale: Locale;
   calls: { id: string; title: string }[];
@@ -80,7 +89,11 @@ export function BackupDestination({
     "download",
   );
   const [folderMessage, setFolderMessage] = useState("");
-  const [call, setCall] = useState("");
+  const [call, setCall] = useState(
+    defaultCallId === "all" ? "" : defaultCallId,
+  );
+  const [category, setCategory] = useState("");
+  const [content, setContent] = useState<"data" | "documents" | "both">("both");
   const [busy, setBusy] = useState(false);
   const [choosing, setChoosing] = useState(false);
   const [message, setMessage] = useState("");
@@ -135,7 +148,7 @@ export function BackupDestination({
     }
   }
   async function backup(toFolder: boolean) {
-    if (!ready) return;
+    if (!ready || busy) return;
     setBusy(true);
     setMessage(es ? "Preparando el respaldo…" : "Preparing backup…");
     try {
@@ -149,12 +162,11 @@ export function BackupDestination({
             ? "Autorice el acceso a la carpeta seleccionada."
             : "Allow access to the selected folder.",
         );
-      const selection =
-        scope === "call"
-          ? { scope, call }
-          : scope === "selected"
-            ? { scope, applications: selected }
-            : { scope };
+      const selection = {
+        scope: "selected",
+        applications: chosen.map((a) => a.id),
+        content,
+      };
       const response = await fetch("/internal/backups/export", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -167,6 +179,11 @@ export function BackupDestination({
       }
       const plan = await response.json();
       const entries: Record<string, Uint8Array> = {};
+      if (content !== "documents")
+        entries["Resumen-expedientes.xlsx"] = summaryWorkbook(
+          plan.records,
+          locale,
+        );
       for (const [name, rows] of Object.entries(plan.records))
         entries["datos/" + name + ".json"] = strToU8(
           JSON.stringify(rows, null, 2),
@@ -207,6 +224,21 @@ export function BackupDestination({
           path: document.path,
           bytes: bytes.length,
           sha256: hash,
+        });
+      }
+      if (entries["Resumen-expedientes.xlsx"]) {
+        const bytes = entries["Resumen-expedientes.xlsx"];
+        const sha256 = Array.from(
+          new Uint8Array(
+            await crypto.subtle.digest("SHA-256", new Uint8Array(bytes)),
+          ),
+        )
+          .map((b) => b.toString(16).padStart(2, "0"))
+          .join("");
+        plan.manifest.files.push({
+          path: "Resumen-expedientes.xlsx",
+          bytes: bytes.length,
+          sha256,
         });
       }
       entries["manifest.json"] = strToU8(
@@ -272,24 +304,24 @@ export function BackupDestination({
       setBusy(false);
     }
   }
-  const chosen =
-    scope === "all"
-      ? applications
-      : scope === "call"
-        ? applications.filter((a) => a.call_id === call)
-        : applications.filter((a) => selected.includes(a.id));
-  const visible = applications.filter(
+  const filtered = applications.filter(
     (a) =>
-      (!call || a.call_id === call) &&
-      (a.title + " " + a.reference_code)
-        .toLowerCase()
-        .includes(search.toLowerCase()),
+      (!call || a.call_id === call) && (!category || a.category === category),
+  );
+  const chosen =
+    scope === "selected"
+      ? filtered.filter((a) => selected.includes(a.id))
+      : filtered;
+  const visible = filtered.filter((a) =>
+    (a.title + " " + a.reference_code + " " + a.proponent)
+      .toLowerCase()
+      .includes(search.toLowerCase()),
   );
   const ready =
     !busy &&
     chosen.length > 0 &&
     chosen.length <= 200 &&
-    (scope !== "call" || !!call) &&
+    true &&
     (destination !== "folder" || !!folder);
   const callTitle = (id: string) => calls.find((c) => c.id === id)?.title || id;
   return (
@@ -304,10 +336,10 @@ export function BackupDestination({
               [
                 "all",
                 es
-                  ? "Todos los expedientes recibidos"
-                  : "All received applications",
+                  ? "Todos los expedientes que coincidan con los filtros"
+                  : "All matching applications",
               ],
-              ["call", es ? "Una convocatoria" : "One call"],
+
               [
                 "selected",
                 es ? "Expedientes específicos" : "Specific applications",
@@ -338,7 +370,7 @@ export function BackupDestination({
             </label>
           ))}
         </fieldset>
-        {scope !== "all" && (
+        {
           <label>
             {es ? "Convocatoria" : "Call"}
             <select
@@ -346,17 +378,12 @@ export function BackupDestination({
               value={call}
               onChange={(e) => {
                 setCall(e.target.value);
+                setSelected([]);
                 setMessage("");
               }}
             >
               <option value="">
-                {scope === "call"
-                  ? es
-                    ? "Seleccione una convocatoria"
-                    : "Select a call"
-                  : es
-                    ? "Todas las convocatorias"
-                    : "All calls"}
+                {es ? "Todas las convocatorias" : "All calls"}
               </option>
               {calls.map((c) => (
                 <option key={c.id} value={c.id}>
@@ -366,7 +393,34 @@ export function BackupDestination({
               ))}
             </select>
           </label>
-        )}
+        }
+        <label>
+          {es ? "Categoría de subvención" : "Grant category"}
+          <select
+            disabled={busy}
+            value={category}
+            onChange={(e) => {
+              setCategory(e.target.value);
+              setSelected([]);
+              setMessage("");
+            }}
+          >
+            <option value="">
+              {es ? "Todas las categorías" : "All categories"}
+            </option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.title}
+              </option>
+            ))}
+          </select>
+        </label>
+        <p>
+          {filtered.length}{" "}
+          {es
+            ? "expedientes coinciden con los filtros."
+            : "applications match the filters."}
+        </p>
         {scope === "selected" && (
           <>
             <label>
@@ -400,6 +454,8 @@ export function BackupDestination({
                     <th>{es ? "Elegir" : "Select"}</th>
                     <th>{es ? "Referencia" : "Reference"}</th>
                     <th>{es ? "Proyecto" : "Project"}</th>
+                    <th>{es ? "Proponente" : "Applicant"}</th>
+                    <th>{es ? "Estado" : "Status"}</th>
                     <th>{es ? "Convocatoria" : "Call"}</th>
                   </tr>
                 </thead>
@@ -428,6 +484,8 @@ export function BackupDestination({
                       </td>
                       <td>{a.reference_code}</td>
                       <td>{a.title}</td>
+                      <td>{a.proponent || "—"}</td>
+                      <td>{statusLabel(a.status, locale)}</td>
                       <td>{callTitle(a.call_id)}</td>
                     </tr>
                   ))}
@@ -463,7 +521,21 @@ export function BackupDestination({
         )}
       </section>
       <section className="live-card">
-        <h2>{es ? "2. Dónde guardar" : "2. Where to save"}</h2>
+        <h2>{es ? "2. Contenido y destino" : "2. Content and destination"}</h2>
+        <label>
+          {es ? "Contenido del respaldo" : "Backup content"}
+          <select
+            disabled={busy}
+            value={content}
+            onChange={(e) => setContent(e.target.value as typeof content)}
+          >
+            <option value="both">
+              {es ? "Datos en Excel y documentos" : "Excel data and documents"}
+            </option>
+            <option value="data">{es ? "Datos en Excel" : "Excel data"}</option>
+            <option value="documents">{es ? "Documentos" : "Documents"}</option>
+          </select>
+        </label>
         <fieldset disabled={busy}>
           <legend>{es ? "Destino" : "Destination"}</legend>
           <label
@@ -512,7 +584,7 @@ export function BackupDestination({
             >
               <ActionLabel
                 busy={choosing}
-                pendingLabel={es ? "Procesando�" : "Processing�"}
+                pendingLabel={es ? "Procesando…" : "Processing…"}
               >
                 {folder
                   ? es
@@ -540,7 +612,26 @@ export function BackupDestination({
             {chosen.length}
             {es ? " expedientes" : " applications"}
           </strong>
-          {scope === "call" && call ? " · " + callTitle(call) : ""} ·{" "}
+          {" · " +
+            (call
+              ? callTitle(call)
+              : es
+                ? "Todas las convocatorias"
+                : "All calls") +
+            " · " +
+            (categories.find((c) => c.id === category)?.title ||
+              (es ? "Todas las categorías" : "All categories")) +
+            " · " +
+            (content === "both"
+              ? es
+                ? "Excel y documentos"
+                : "Excel and documents"
+              : content === "data"
+                ? "Excel"
+                : es
+                  ? "Documentos"
+                  : "Documents")}{" "}
+          ·{" "}
           {destination === "folder"
             ? folder?.name ||
               (es ? "Seleccione una carpeta" : "Select a folder")
@@ -550,8 +641,8 @@ export function BackupDestination({
         </p>
         <p>
           {es
-            ? "Incluye datos, versiones remitidas, revisiones, decisiones y archivos originales. Se verifica la integridad de los archivos antes de guardar. El ZIP no tiene contraseña ni cifrado adicional."
-            : "Includes data, submitted versions, reviews, decisions and original files. File integrity is checked before saving. The ZIP has no password or additional encryption."}
+            ? "El contenido corresponde a la opción seleccionada. Los datos incluyen Excel y registros JSON; los documentos incluyen los archivos originales. Se verifica la integridad de los archivos antes de guardar. El ZIP no tiene contraseña ni cifrado adicional."
+            : "Content follows the selected option. Data includes Excel and JSON records; documents include original files. File integrity is checked before saving. The ZIP has no password or additional encryption."}
         </p>
         <button
           className="button"

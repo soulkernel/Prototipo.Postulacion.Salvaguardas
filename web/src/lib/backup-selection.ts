@@ -5,6 +5,7 @@ export const backupSelectionSchema = z.discriminatedUnion("scope", [
   z.strictObject({ scope: z.literal("call"), call: z.uuid() }),
   z.strictObject({
     scope: z.literal("selected"),
+    content: z.enum(["data", "documents", "both"]).default("both"),
     applications: z
       .array(z.uuid())
       .min(1)
