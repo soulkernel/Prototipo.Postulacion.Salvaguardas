@@ -57,7 +57,7 @@ export function BackupDestination({
     if (!ready || flight.current) return;
     flight.current = true;
     setBusy(true);
-    setMessage(es ? "Preparando el respaldo…" : "Preparing backup…");
+    setMessage(es ? "Preparando el archivo…" : "Preparing file…");
     try {
       const filename =
         "GLF-respaldo-" +
@@ -314,7 +314,7 @@ export function BackupDestination({
         </section>
       </div>
       <section className="live-card">
-        <h2>{es ? "1. Qué respaldar" : "1. What to back up"}</h2>
+        <h2>{es ? "1. Qué descargar" : "1. What to download"}</h2>
         <fieldset disabled={busy}>
           <legend>{es ? "Alcance del respaldo" : "Backup scope"}</legend>
           {(
@@ -549,7 +549,7 @@ export function BackupDestination({
         <h2>{es ? "3. Revisar y descargar" : "3. Review and download"}</h2>
         <p>
           <strong>
-            {es ? "Se respaldarán " : "Backup will include "}
+            {es ? "Se incluirán " : "Backup will include "}
             {chosen.length}
             {es ? " expedientes" : " applications"}
           </strong>
@@ -574,8 +574,8 @@ export function BackupDestination({
               ? "Elegir ubicación al guardar"
               : "Choose location when saving"
             : es
-              ? "Descarga ZIP"
-              : "ZIP download"}
+              ? "Descarga de archivo"
+              : "File download"}
         </p>
         <p>
           {content === "data"
