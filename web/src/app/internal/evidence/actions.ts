@@ -60,9 +60,17 @@ export async function searchEvidence(
       query_embedding: JSON.stringify(embedding),
       result_limit: 6,
     });
-    if (error) throw new Error("GLF_RETRIEVAL_FAILED");
+    if (error) {
+      console.error("GLF_EVIDENCE_DATABASE", error.code);
+      throw new Error("GLF_RETRIEVAL_FAILED");
+    }
     return { status: "ok", results: data || [] };
-  } catch {
+  } catch (error) {
+    const code = error instanceof Error ? error.message : "GLF_UNKNOWN";
+    console.error(
+      "GLF_EVIDENCE_FAILURE",
+      /^GLF_[A-Z0-9_]+$/.test(code) ? code : "GLF_NETWORK_OR_TIMEOUT",
+    );
     return { status: "unavailable", results: [] };
   }
 }
