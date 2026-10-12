@@ -1,4 +1,5 @@
 "use client";
+import { DocumentDownload } from "./document-download";
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { SignedDocumentUpload } from "./signed-document-upload";
@@ -1991,20 +1992,18 @@ export function ApplicationEditor({
             </button>
             {prepared && prepared.revision === revision && !dirty && (
               <>
-                <a
-                  className="button secondary"
+                <DocumentDownload
                   href={`/documents/${prepared.id}/concept?prepared=1&lang=${locale}`}
+                  locale={locale}
                 >
-                  <FileDown size={17} aria-hidden="true" />
                   {es ? "Descargar nota conceptual" : "Download concept note"}
-                </a>
-                <a
-                  className="button secondary"
+                </DocumentDownload>
+                <DocumentDownload
                   href={`/documents/${prepared.id}/matrix?prepared=1&lang=${locale}`}
+                  locale={locale}
                 >
-                  <FileDown size={17} aria-hidden="true" />
                   {es ? "Descargar evaluación A&S" : "Download E&S screening"}
-                </a>
+                </DocumentDownload>
               </>
             )}
           </div>
