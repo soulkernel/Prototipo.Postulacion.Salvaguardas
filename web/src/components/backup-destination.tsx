@@ -1,64 +1,19 @@
 "use client";
 import { ActionLabel } from "./submit-button";
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import { zip, strToU8 } from "fflate";
 import { statusLabel } from "@/lib/fields";
 import { summaryWorkbook } from "@/lib/backup-workbook";
 import type { Locale } from "@/lib/domain";
 
-type Destination = {
-  name: string;
-  getDirectoryHandle(
-    name: string,
-    options: { create: boolean },
-  ): Promise<Destination>;
-  getFileHandle(
-    name: string,
-    options: { create: boolean },
-  ): Promise<{
-    createWritable(): Promise<{
-      write(data: Blob): Promise<void>;
-      close(): Promise<void>;
-      abort(): Promise<void>;
-    }>;
+type SaveFile = {
+  createWritable(): Promise<{
+    write(data: Blob): Promise<void>;
+    close(): Promise<void>;
+    abort(): Promise<void>;
   }>;
-  requestPermission(options: { mode: string }): Promise<string>;
 };
-const storeName = "glf-backup-destinations";
-async function destinationStore(
-  key: string,
-  value?: Destination,
-): Promise<Destination | undefined> {
-  return new Promise((resolve, reject) => {
-    const opening = indexedDB.open(storeName, 1);
-    opening.onupgradeneeded = () => opening.result.createObjectStore("handles");
-    opening.onerror = () => reject(opening.error);
-    opening.onsuccess = () => {
-      const db = opening.result;
-      const transaction = db.transaction(
-        "handles",
-        value ? "readwrite" : "readonly",
-      );
-      const request = value
-        ? transaction.objectStore("handles").put(value, key)
-        : transaction.objectStore("handles").get(key);
-      let result: Destination | undefined;
-      request.onsuccess = () => {
-        result = value || request.result;
-      };
-      transaction.oncomplete = () => {
-        db.close();
-        resolve(result);
-      };
-      transaction.onerror = () => {
-        db.close();
-        reject(transaction.error);
-      };
-    };
-  });
-}
 export function BackupDestination({
-  userId,
   locale,
   calls,
   applications,
@@ -76,92 +31,60 @@ export function BackupDestination({
   }[];
   defaultCallId: string;
   categories: { id: string; title: string }[];
-  userId: string;
   locale: Locale;
   calls: { id: string; title: string }[];
 }) {
   const es = locale === "es";
-  const [folder, setFolder] = useState<Destination>();
   const [scope, setScope] = useState<"all" | "call" | "selected">("all");
   const [selected, setSelected] = useState<string[]>([]);
   const [search, setSearch] = useState("");
-  const [destination, setDestination] = useState<"folder" | "download">(
-    "download",
-  );
-  const [folderMessage, setFolderMessage] = useState("");
+  const [destination, setDestination] = useState<"file" | "download">("file");
   const [call, setCall] = useState(
     defaultCallId === "all" ? "" : defaultCallId,
   );
   const [category, setCategory] = useState("");
   const [content, setContent] = useState<"data" | "documents" | "both">("both");
   const [busy, setBusy] = useState(false);
-  const [choosing, setChoosing] = useState(false);
+  const flight = useRef(false);
   const [message, setMessage] = useState("");
-  useEffect(() => {
-    destinationStore(userId)
-      .then(setFolder)
-      .catch(() => {});
-  }, [userId]);
-  async function choose() {
-    if (choosing || busy) return;
-    const picker = (
-      window as unknown as {
-        showDirectoryPicker?: (options: {
-          mode: string;
-          id: string;
-          startIn: string;
-        }) => Promise<Destination>;
-      }
-    ).showDirectoryPicker;
-    if (!picker) {
-      setMessage(
-        es
-          ? "Use Chrome o Edge para seleccionar una carpeta. También puede descargar el respaldo y guardarlo manualmente."
-          : "Use Chrome or Edge to select a folder. You can also download and save the backup manually.",
-      );
-      return;
-    }
-    setChoosing(true);
-    try {
-      const handle = await picker.call(window, {
-        mode: "readwrite",
-        id: "glf-backups",
-        startIn: "documents",
-      });
-      await destinationStore(userId, handle);
-      setFolder(handle);
-      setDestination("folder");
-      setFolderMessage(
-        es
-          ? "Destino guardado en este navegador. Google Drive sincronizará los archivos si esta carpeta pertenece a su unidad sincronizada."
-          : "Destination saved in this browser. Google Drive will sync files if this is a synced folder.",
-      );
-    } catch (error) {
-      if ((error as Error).name !== "AbortError")
-        setFolderMessage(
-          es
-            ? "No se pudo guardar el destino. Seleccione una subcarpeta dedicada y revise su permiso de escritura."
-            : "Unable to save destination. Check folder permission.",
-        );
-    } finally {
-      setChoosing(false);
-    }
-  }
-  async function backup(toFolder: boolean) {
-    if (!ready || busy) return;
+  async function backup() {
+    if (!ready || flight.current) return;
+    flight.current = true;
     setBusy(true);
     setMessage(es ? "Preparando el respaldo…" : "Preparing backup…");
     try {
-      if (
-        toFolder &&
-        (!folder ||
-          (await folder.requestPermission({ mode: "readwrite" })) !== "granted")
-      )
-        throw new Error(
-          es
-            ? "Autorice el acceso a la carpeta seleccionada."
-            : "Allow access to the selected folder.",
-        );
+      const filename =
+        "GLF-respaldo-" +
+        new Date().toISOString().replace(/[:.]/g, "-") +
+        ".zip";
+      let target: SaveFile | undefined;
+      if (destination === "file") {
+        const picker = (
+          window as unknown as {
+            showSaveFilePicker?: (options: {
+              suggestedName: string;
+              startIn: string;
+              types: {
+                description: string;
+                accept: Record<string, string[]>;
+              }[];
+            }) => Promise<SaveFile>;
+          }
+        ).showSaveFilePicker;
+        if (picker) {
+          // Must run from this click, before fetching or compressing the backup.
+          target = await picker.call(window, {
+            suggestedName: filename,
+            startIn: "downloads",
+            types: [
+              {
+                description: "Respaldo GLF (ZIP)",
+                accept: { "application/zip": [".zip"] },
+              },
+            ],
+          });
+        }
+      }
       const selection = {
         scope: "selected",
         applications: chosen.map((a) => a.id),
@@ -255,35 +178,19 @@ export function BackupDestination({
           ),
       );
       const blob = new Blob([packed], { type: "application/zip" });
-      const filename =
-        "GLF-respaldo-" +
-        new Date().toISOString().replace(/[:.]/g, "-") +
-        ".zip";
-      if (toFolder && folder) {
-        const subfolder = await folder.getDirectoryHandle("GLF-Respaldos", {
-          create: true,
-        });
-        const file = await subfolder.getFileHandle(filename, { create: true });
-        const writable = await file.createWritable();
+      if (target) {
+        const writable = await target.createWritable();
         try {
           await writable.write(blob);
           await writable.close();
-        } catch (e) {
+        } catch (error) {
           await writable.abort();
-          throw e;
+          throw error;
         }
         setMessage(
           es
-            ? "Respaldo guardado en " +
-                folder.name +
-                " / GLF-Respaldos / " +
-                filename +
-                ". La sincronización depende de Google Drive."
-            : "Backup saved in " +
-                folder.name +
-                " / GLF-Respaldos / " +
-                filename +
-                ". Synchronization depends on Google Drive.",
+            ? "Respaldo guardado correctamente en la ubicación elegida."
+            : "Backup saved successfully to the selected location.",
         );
       } else {
         const url = URL.createObjectURL(blob);
@@ -299,8 +206,20 @@ export function BackupDestination({
         );
       }
     } catch (e) {
-      setMessage((e as Error).message);
+      const error = e as Error;
+      setMessage(
+        error.name === "AbortError"
+          ? es
+            ? "Guardado cancelado. Puede volver a intentarlo; sus datos no han cambiado."
+            : "Save cancelled. You can try again; your data is unchanged."
+          : error.name === "SecurityError" || error.name === "NotAllowedError"
+            ? es
+              ? "El navegador no permite guardar en esa ubicación. Elija otra ubicación o use Descargar ZIP."
+              : "The browser does not allow saving to that location. Choose another location or use Download ZIP."
+            : error.message,
+      );
     } finally {
+      flight.current = false;
       setBusy(false);
     }
   }
@@ -318,11 +237,7 @@ export function BackupDestination({
       .includes(search.toLowerCase()),
   );
   const ready =
-    !busy &&
-    chosen.length > 0 &&
-    chosen.length <= 200 &&
-    true &&
-    (destination !== "folder" || !!folder);
+    !busy && chosen.length > 0 && chosen.length <= 200 && content !== undefined;
   const callTitle = (id: string) => calls.find((c) => c.id === id)?.title || id;
   return (
     <>
@@ -559,49 +474,18 @@ export function BackupDestination({
               style={{ width: "auto" }}
               type="radio"
               name="backup-destination"
-              checked={destination === "folder"}
-              onChange={() => setDestination("folder")}
+              checked={destination === "file"}
+              onChange={() => setDestination("file")}
             />
-            {es ? "Guardar en una carpeta" : "Save to folder"}
+            {es ? "Guardar como…" : "Save as…"}
           </label>
         </fieldset>
-        {destination === "folder" && (
-          <>
-            <p>
-              {es
-                ? "Seleccione una subcarpeta dedicada en su computador, Google Drive sincronizado o dispositivo externo; por ejemplo, Respaldos GLF. Chrome puede bloquear la raíz de una unidad y las carpetas protegidas del sistema. Si aparece ese aviso, elija otra carpeta."
-                : "Select a dedicated subfolder on your computer, synced Google Drive or external device, for example GLF Backups. Chrome may block a drive root or protected system folders. If that warning appears, choose another folder."}
-            </p>
-            <p>
-              <strong>{es ? "Carpeta: " : "Folder: "}</strong>
-              {folder?.name || (es ? "Sin seleccionar" : "Not selected")}
-            </p>
-            <button
-              className="button secondary"
-              disabled={busy || choosing}
-              aria-busy={choosing}
-              onClick={choose}
-            >
-              <ActionLabel
-                busy={choosing}
-                pendingLabel={es ? "Procesando…" : "Processing…"}
-              >
-                {folder
-                  ? es
-                    ? "Cambiar carpeta"
-                    : "Change folder"
-                  : es
-                    ? "Seleccionar carpeta"
-                    : "Select folder"}
-              </ActionLabel>
-            </button>
-            <p role="status">{folderMessage}</p>
-            <p>
-              {es
-                ? "No se solicita la contraseña de Google. El destino se recuerda por usuario en este navegador."
-                : "Google passwords are not requested. The destination is remembered per user in this browser."}
-            </p>
-          </>
+        {destination === "file" && (
+          <p>
+            {es
+              ? "Al pulsar Guardar respaldo como…, elija el nombre y la ubicación del archivo ZIP: una carpeta local, Google Drive sincronizado o un dispositivo externo. No se solicita acceso a toda la carpeta. Si su navegador no ofrece esta opción, se utilizará la descarga normal."
+              : "Click Save backup as… to choose the ZIP filename and location: a local folder, synced Google Drive or external device. Access to the entire folder is not requested. Browsers without this option use a normal download."}
+          </p>
         )}
       </section>
       <section className="live-card">
@@ -632,9 +516,10 @@ export function BackupDestination({
                   ? "Documentos"
                   : "Documents")}{" "}
           ·{" "}
-          {destination === "folder"
-            ? folder?.name ||
-              (es ? "Seleccione una carpeta" : "Select a folder")
+          {destination === "file"
+            ? es
+              ? "Elegir ubicación al guardar"
+              : "Choose location when saving"
             : es
               ? "Descarga ZIP"
               : "ZIP download"}
@@ -648,16 +533,16 @@ export function BackupDestination({
           className="button"
           disabled={!ready}
           aria-busy={busy}
-          onClick={() => backup(destination === "folder")}
+          onClick={backup}
         >
           <ActionLabel
             busy={busy}
             pendingLabel={es ? "Preparando respaldo…" : "Preparing backup…"}
           >
-            {destination === "folder"
+            {destination === "file"
               ? es
-                ? "Respaldar en carpeta"
-                : "Back up to folder"
+                ? "Guardar respaldo como…"
+                : "Save backup as…"
               : es
                 ? "Crear y descargar respaldo"
                 : "Create and download backup"}
@@ -671,8 +556,8 @@ export function BackupDestination({
         <h2>{es ? "Estado de la automatización" : "Automation status"}</h2>
         <p>
           {es
-            ? "Copias automáticas: no activadas. Una carpeta seleccionada no permite ejecutar tareas con el navegador cerrado. La programación diaria y semanal requiere un servicio de respaldo configurado. Las copias manuales no se eliminan automáticamente."
-            : "Automatic backups: not enabled. A selected folder cannot run tasks when the browser is closed. Daily and weekly schedules require a configured backup service. Manual backups are not automatically deleted."}
+            ? "Copias automáticas: no activadas. Guardar un archivo local no permite ejecutar tareas con el navegador cerrado. La programación diaria y semanal requiere un servicio de respaldo configurado. Las copias manuales no se eliminan automáticamente."
+            : "Automatic backups: not enabled. Saving a local file cannot run tasks when the browser is closed. Daily and weekly schedules require a configured backup service. Manual backups are not automatically deleted."}
         </p>
         <p>
           {es

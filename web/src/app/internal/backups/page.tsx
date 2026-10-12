@@ -68,7 +68,6 @@ export default async function BackupsPage() {
   return (
     <Shell locale={locale} internal>
       <BackupDestination
-        userId={viewer.user.id}
         defaultCallId={defaultCall(calls)}
         categories={categoryOptions(calls, locale)}
         applications={applications}
