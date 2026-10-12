@@ -107,3 +107,18 @@ test("expanded workbook separates proposed dates, numeric amounts, results and s
  assert.ok(risks.includes("Medio"));
  assert.ok(strFromU8(files["xl/workbook.xml"]).includes("Resultados e indicadores"));
 });
+
+test("risk summary uses maxima by dimension, never adds initial and residual or treats missing as zero",()=>{
+ const risk=(dimension:string,p:number|null,g:number|null,rp:number|null,rg:number|null)=>({dimension,probability:p,severity:g,residual_probability:rp,residual_severity:rg});
+ const make=(stage:number,rows:unknown[])=>strFromU8(unzipSync(summaryWorkbook({applications:[{id:"x",stage}],application_versions:[{application_id:"x",revision:1,stage,payload:{concept:{},activities:[{risks:rows}]}}]},"es"))["xl/worksheets/sheet1.xml"]);
+ const row=make(2,[risk("environmental",2,3,1,2),risk("environmental",5,4,2,3),risk("social",3,3,1,1)]);
+ assert.ok(row.includes('r="AG2" s="0" t="inlineStr"><is><t xml:space="preserve">20 · Muy alto'));
+ assert.ok(row.includes('r="AH2" s="0" t="inlineStr"><is><t xml:space="preserve">9 · Medio'));
+ assert.ok(row.includes('r="AI2" s="0" t="inlineStr"><is><t xml:space="preserve">6 · Medio'));
+ assert.ok(row.includes('r="AJ2" s="0" t="inlineStr"><is><t xml:space="preserve">1 · Bajo'));
+ assert.ok(!row.includes("Última decisión"));
+ assert.ok(!row.includes("Firma GLF"));
+ assert.ok(make(1,[risk("social",3,3,null,null)]).includes("No aplica en esta fase"));
+ assert.ok(make(2,[risk("social",3,3,null,null)]).includes("Pendiente de evaluación"));
+ assert.ok(make(2,[]).includes("Sin riesgos identificados"));
+});

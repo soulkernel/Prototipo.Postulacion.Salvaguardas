@@ -108,12 +108,18 @@ export function summaryWorkbook(
       "Plazo propuesta completa (hora Galápagos)",
       "Full proposal deadline (Galapagos time)",
     ),
-    t("Última decisión", "Latest decision"),
-    t("Fecha decisión (hora Galápagos)", "Decision date (Galapagos time)"),
     t("Monto aprobado (USD)", "Approved amount (USD)"),
     t("Referencia convenio", "Agreement reference"),
-    t("Firma GLF", "GLF signed on"),
-    t("Firma postulante", "Applicant signed on"),
+    t(
+      "Riesgo ambiental inicial (máximo)",
+      "Initial environmental risk (maximum)",
+    ),
+    t("Riesgo social inicial (máximo)", "Initial social risk (maximum)"),
+    t(
+      "Riesgo ambiental residual (máximo)",
+      "Residual environmental risk (maximum)",
+    ),
+    t("Riesgo social residual (máximo)", "Residual social risk (maximum)"),
   ];
   const main: Cell[][] = [headers];
   const results: Cell[][] = [
@@ -145,13 +151,6 @@ export function summaryWorkbook(
   const apps = list(records.applications),
     versions = list(records.application_versions),
     calls = list(records.calls);
-  const decisions = {
-    recommend: t("Recomendar", "Recommend"),
-    invite: t("Invitar a propuesta completa", "Invite full proposal"),
-    not_select: t("No seleccionar", "Not selected"),
-    approve: t("Aprobar", "Approve"),
-    reject: t("Rechazar", "Reject"),
-  };
   const units: Record<string, string> = {
     people: t("Personas", "People"),
     activities: t("Actividades", "Activities"),
@@ -186,14 +185,48 @@ export function summaryWorkbook(
           String(b.created_at).localeCompare(String(a.created_at)) ||
           String(b.id).localeCompare(String(a.id)),
       );
-    const decision = ds[0] || {},
-      approval = ds.find((d) => d.decision === "approve") || {};
+    const approval = ds.find((d) => d.decision === "approve") || {};
     const requested = number(c.requested_amount),
       cofinance = number(c.cofinance_amount),
       start = day(c.start_date),
       end = day(c.end_date);
     const title = value(c.title),
       ref = value(app.reference_code);
+    function riskSummary(dimension: string, residual: boolean): string {
+      if (residual && Number(version.stage ?? app.stage) !== 2)
+        return t("No aplica en esta fase", "Not applicable in this phase");
+      const rows = list(payload.activities)
+        .flatMap((a) => list(a.risks))
+        .filter((r) => r.dimension === dimension);
+      if (!rows.length)
+        return t("Sin riesgos identificados", "No identified risks");
+      const scores = rows.map((r) => {
+        const p = number(r[residual ? "residual_probability" : "probability"]),
+          g = number(r[residual ? "residual_severity" : "severity"]);
+        return p !== undefined &&
+          g !== undefined &&
+          Number.isInteger(p) &&
+          Number.isInteger(g) &&
+          p >= 1 &&
+          p <= 5 &&
+          g >= 1 &&
+          g <= 5
+          ? p * g
+          : undefined;
+      });
+      if (scores.some((s) => s === undefined))
+        return t("Pendiente de evaluación", "Pending assessment");
+      const score = Math.max(...(scores as number[]));
+      const level =
+        score <= 4
+          ? t("Bajo", "Low")
+          : score <= 9
+            ? t("Medio", "Medium")
+            : score <= 15
+              ? t("Alto", "High")
+              : t("Muy alto", "Very high");
+      return `${score} · ${level}`;
+    }
     main.push([
       ref,
       value(call[es ? "title_es" : "title_en"]),
@@ -245,16 +278,13 @@ export function summaryWorkbook(
       value(version.revision),
       timestamp(app.phase2_deadline),
       value(
-        decisions[String(decision.decision) as keyof typeof decisions] ||
-          decision.decision,
-      ),
-      timestamp(decision.created_at),
-      value(
         number(agreement.approved_amount) ?? number(approval.approved_amount),
       ),
       value(agreement.reference),
-      date(agreement.glf_signed_on),
-      date(agreement.applicant_signed_on),
+      riskSummary("environmental", false),
+      riskSummary("social", false),
+      riskSummary("environmental", true),
+      riskSummary("social", true),
     ]);
     const objectives = list(obj(c.strategic_alignment).objectives);
     for (const r of list(c.project_results))
@@ -342,11 +372,11 @@ export function summaryWorkbook(
                   i === 0
                     ? 1
                     : index === 0 &&
-                        [17, 18, 34, 35].includes(j) &&
+                        [17, 18].includes(j) &&
                         typeof v === "number"
                       ? 2
                       : index === 0 &&
-                          [21, 22, 23, 24, 32].includes(j) &&
+                          [21, 22, 23, 24, 30].includes(j) &&
                           typeof v === "number"
                         ? 3
                         : index === 0 && j === 25 && typeof v === "number"
