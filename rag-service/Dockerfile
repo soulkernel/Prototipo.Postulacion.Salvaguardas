@@ -2,6 +2,7 @@ FROM python:3.11-slim
 WORKDIR /app
 COPY public_demo/requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir 'requests>=2.32,<3'
 COPY public_demo /app/public_demo
 COPY src /app/src
 COPY runtime.py /app/runtime.py

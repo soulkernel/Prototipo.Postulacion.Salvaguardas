@@ -52,3 +52,13 @@ HF_TOKEN guardado por el usuario. DEMO_ACCESS_CODE generado para comunicación s
 El wrapper runtime.py conserva código académico y solo registra estado HTTP/categoría, sin consultas ni respuestas crudas ni claves. Dos pruebas del wrapper pasan. Límite HF confirmado en cero, créditos USD 2, recarga automática sin configurar. No elevar gasto.
 
 E5 aparece deshabilitado en el portal porque no existen fuentes aprobadas (o servicio disponible); no aprobar corpus automáticamente ni afirmar que E5 está listo. Falta proceso de revisión/aprobación normativa por GLF. No mezclar el corpus público de Qwen con la aprobación del corpus E5.
+
+## Actualización autorizada del límite HF
+El 12-10-2026 el usuario autorizó elevar el Spending limit mensual de Inference Providers a USD 5. Se guardó en Settings y la interfaz confirmó Saved con valor 5; no se activó recarga ni hardware pagado. La primera consulta posterior devolvió HTTP 403 categoría token_or_permissions. El token GLF-Qwen tiene Make calls to Inference Providers marcado; no se cambiaron permisos. Falta determinar la causa específica del rechazo antes de declarar Qwen operativo. Evidencia: scratch/hf-limite-5-usd.png.
+
+
+## Diagnóstico y corrección de transporte — 12-10-2026
+
+HF_TOKEN fue reemplazado por el usuario y el servicio reiniciado. La comprobación whoami confirmó token válido, nombre esperado GLF-Qwen y scope de inferencia. El 403 posterior era HTML de Cloudflare; el diagnóstico anterior token_or_permissions era demasiado amplio y no demostraba un problema de credenciales. Se añadió identificación HTTP propia y transporte Requests en runtime.py, exclusivamente para la ruta oficial HF de chat. Se conserva el código académico byte por byte, incluidas recuperación, generación, citas y abstención. Cuatro pruebas del wrapper pasan; no se empaqueta corpus privado ni secretos.
+
+Primera consulta del portal completada con Requests: 13.0 s, abstención segura por evidencia insuficiente. Esta prueba confirma que la conexión procesa solicitudes; no confirma calidad de respuesta ni cobertura documental. Límite mensual HF autorizado USD 5, alojamiento CPU Basic gratuito.

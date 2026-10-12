@@ -14,5 +14,8 @@ with ZipFile(out / "service.zip", "w", ZIP_DEFLATED) as archive:
 docker = (root / "Dockerfile").read_text()
 docker = docker.replace("COPY runtime.py /app/runtime.py\n", "")
 docker = docker.replace("COPY public_demo/requirements.txt /app/requirements.txt\nRUN pip install --no-cache-dir -r requirements.txt\nCOPY public_demo /app/public_demo\nCOPY src /app/src", "COPY service.zip /tmp/service.zip\nRUN python -m zipfile -e /tmp/service.zip /app\nRUN pip install --no-cache-dir -r public_demo/requirements.txt")
+docker = docker.replace("COPY public_demo/requirements.txt /app/requirements.txt", "COPY service.zip /tmp/service.zip\nRUN python -m zipfile -e /tmp/service.zip /app")
+docker = docker.replace("-r requirements.txt", "-r public_demo/requirements.txt")
+docker = docker.replace("COPY public_demo /app/public_demo\n", "").replace("COPY src /app/src\n", "")
 (out / "Dockerfile").write_text(docker)
 print(out)
