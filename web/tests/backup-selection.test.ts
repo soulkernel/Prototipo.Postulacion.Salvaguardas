@@ -83,3 +83,11 @@ test("backup scope never broadens an empty or conflicting selection", () => {
     true,
   );
 });
+
+test("Excel exports exactly three distinct applications plus header without collapsing records", () => {
+ const applications = [1,2,3].map(n=>({id:String(n),reference_code:`REF-${n}`,call_id:"c"}));
+ const application_versions = applications.map(a=>({application_id:a.id,revision:1,payload:{concept:{title:`Project ${a.id}`}}}));
+ const sheet = strFromU8(unzipSync(summaryWorkbook({applications,application_versions},"es"))["xl/worksheets/sheet1.xml"]);
+ assert.equal((sheet.match(/<row r=/g)||[]).length,4);
+ for(const a of applications) assert.ok(sheet.includes(a.reference_code));
+});

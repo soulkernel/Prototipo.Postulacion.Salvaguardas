@@ -1,7 +1,13 @@
 "use client";
+import {
+  Download,
+  Database,
+  FileSpreadsheet,
+  FolderArchive,
+} from "lucide-react";
 import { ActionLabel } from "./submit-button";
 import { useRef, useState } from "react";
-import { zip, strToU8 } from "fflate";
+import { zip } from "fflate";
 import { statusLabel } from "@/lib/fields";
 import { summaryWorkbook } from "@/lib/backup-workbook";
 import type { Locale } from "@/lib/domain";
@@ -43,7 +49,7 @@ export function BackupDestination({
     defaultCallId === "all" ? "" : defaultCallId,
   );
   const [category, setCategory] = useState("");
-  const [content, setContent] = useState<"data" | "documents" | "both">("both");
+  const [content, setContent] = useState<"data" | "both">("data");
   const [busy, setBusy] = useState(false);
   const flight = useRef(false);
   const [message, setMessage] = useState("");
@@ -56,7 +62,7 @@ export function BackupDestination({
       const filename =
         "GLF-respaldo-" +
         new Date().toISOString().replace(/[:.]/g, "-") +
-        ".zip";
+        (content === "data" ? ".xlsx" : ".zip");
       let target: SaveFile | undefined;
       if (destination === "file") {
         const picker = (
@@ -78,8 +84,14 @@ export function BackupDestination({
             startIn: "downloads",
             types: [
               {
-                description: "Respaldo GLF (ZIP)",
-                accept: { "application/zip": [".zip"] },
+                description: content === "data" ? "Excel" : "ZIP",
+                accept:
+                  content === "data"
+                    ? {
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+                          [".xlsx"],
+                      }
+                    : { "application/zip": [".zip"] },
               },
             ],
           });
@@ -101,16 +113,22 @@ export function BackupDestination({
         throw new Error(detail.error || "Export failed");
       }
       const plan = await response.json();
-      const entries: Record<string, Uint8Array> = {};
-      if (content !== "documents")
-        entries["Resumen-expedientes.xlsx"] = summaryWorkbook(
-          plan.records,
-          locale,
+      const returnedIds = (plan.records.applications || []).map(
+        (a: { id: string }) => a.id,
+      );
+      if (
+        returnedIds.length !== chosen.length ||
+        chosen.some((a) => !returnedIds.includes(a.id))
+      )
+        throw new Error(
+          es
+            ? "La cantidad de expedientes no coincide con la selección. Actualice la página y vuelva a intentar."
+            : "Application count does not match your selection. Refresh and try again.",
         );
-      for (const [name, rows] of Object.entries(plan.records))
-        entries["datos/" + name + ".json"] = strToU8(
-          JSON.stringify(rows, null, 2),
-        );
+      const workbook = summaryWorkbook(plan.records, locale);
+      const entries: Record<string, Uint8Array> = {
+        "Listado-expedientes.xlsx": workbook,
+      };
       for (let i = 0; i < plan.downloads.length; i++) {
         const document = plan.downloads[i];
         setMessage(
@@ -149,35 +167,23 @@ export function BackupDestination({
           sha256: hash,
         });
       }
-      if (entries["Resumen-expedientes.xlsx"]) {
-        const bytes = entries["Resumen-expedientes.xlsx"];
-        const sha256 = Array.from(
-          new Uint8Array(
-            await crypto.subtle.digest("SHA-256", new Uint8Array(bytes)),
-          ),
-        )
-          .map((b) => b.toString(16).padStart(2, "0"))
-          .join("");
-        plan.manifest.files.push({
-          path: "Resumen-expedientes.xlsx",
-          bytes: bytes.length,
-          sha256,
+      let blob: Blob;
+      if (content === "data") {
+        blob = new Blob([new Uint8Array(workbook)], {
+          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         });
+      } else {
+        setMessage(
+          es ? "Comprimiendo expedientes…" : "Compressing applications…",
+        );
+        const packed = await new Promise<Uint8Array<ArrayBuffer>>(
+          (resolve, reject) =>
+            zip(entries, { level: 1 }, (error, result) =>
+              error ? reject(error) : resolve(new Uint8Array(result)),
+            ),
+        );
+        blob = new Blob([packed], { type: "application/zip" });
       }
-      entries["manifest.json"] = strToU8(
-        JSON.stringify(plan.manifest, null, 2),
-      );
-      entries["LEAME.txt"] = strToU8(
-        "GLF - Copia del expediente de negocio. Datos JSON y archivos originales. Consulte manifest.json para integridad y alcance. No incluye Auth, secretos, corpus RAG ni configuración. No es un volcado transaccional de PostgreSQL.\n",
-      );
-      setMessage(es ? "Comprimiendo respaldo…" : "Compressing backup…");
-      const packed = await new Promise<Uint8Array<ArrayBuffer>>(
-        (resolve, reject) =>
-          zip(entries, { level: 1 }, (error, result) =>
-            error ? reject(error) : resolve(new Uint8Array(result)),
-          ),
-      );
-      const blob = new Blob([packed], { type: "application/zip" });
       if (target) {
         const writable = await target.createWritable();
         try {
@@ -214,8 +220,8 @@ export function BackupDestination({
             : "Save cancelled. You can try again; your data is unchanged."
           : error.name === "SecurityError" || error.name === "NotAllowedError"
             ? es
-              ? "El navegador no permite guardar en esa ubicación. Elija otra ubicación o use Descargar ZIP."
-              : "The browser does not allow saving to that location. Choose another location or use Download ZIP."
+              ? "El navegador no permite guardar en esa ubicación. Elija otra ubicación o use Descargar archivo."
+              : "The browser does not allow saving to that location. Choose another location or use Download file."
             : error.message,
       );
     } finally {
@@ -236,12 +242,77 @@ export function BackupDestination({
       .toLowerCase()
       .includes(search.toLowerCase()),
   );
-  const ready =
-    !busy && chosen.length > 0 && chosen.length <= 200 && content !== undefined;
+  const ready = !busy && chosen.length > 0 && chosen.length <= 200;
   const callTitle = (id: string) => calls.find((c) => c.id === id)?.title || id;
   return (
     <>
-      <h1>{es ? "Respaldos" : "Backups"}</h1>
+      <h1>{es ? "Descargas y respaldos" : "Downloads and backups"}</h1>
+      <div className="backup-options">
+        <button
+          type="button"
+          className={
+            "live-card backup-option " + (content === "data" ? "selected" : "")
+          }
+          aria-pressed={content === "data"}
+          disabled={busy}
+          onClick={() => {
+            setContent("data");
+            setMessage("");
+          }}
+        >
+          <FileSpreadsheet aria-hidden size={26} />
+          <strong>
+            {es ? "Descargar listado en Excel" : "Download Excel list"}
+          </strong>
+          <span>
+            {es
+              ? "Un archivo .xlsx con una fila por expediente. Para consultar, analizar o compartir información."
+              : "One .xlsx file with one row per application. For consulting, analysing or sharing information."}
+          </span>
+        </button>
+        <button
+          type="button"
+          className={
+            "live-card backup-option " + (content === "both" ? "selected" : "")
+          }
+          aria-pressed={content === "both"}
+          disabled={busy}
+          onClick={() => {
+            setContent("both");
+            setMessage("");
+          }}
+        >
+          <FolderArchive aria-hidden size={26} />
+          <strong>
+            {es ? "Descargar expedientes" : "Download applications"}
+          </strong>
+          <span>
+            {es
+              ? "Un ZIP con los documentos y el listado Excel de los expedientes elegidos."
+              : "A ZIP with the documents and Excel list of your selected applications."}
+          </span>
+        </button>
+        <section className="live-card backup-option">
+          <Database aria-hidden size={26} />
+          <strong>
+            {es ? "Respaldo completo del sistema" : "Full system backup"}
+          </strong>
+          <span>
+            {es
+              ? "Base de datos y todos los documentos para recuperar el sistema. Exclusivo para administradores."
+              : "Database and all documents for system recovery. Administrators only."}
+          </span>
+          <strong>{es ? "No configurado" : "Not configured"}</strong>
+          <span>
+            {es
+              ? "Último respaldo completo: no registrado. Se habilitará cuando exista un mecanismo de recuperación verificado. Las descargas de esta pantalla no sustituyen ese respaldo."
+              : "Last full backup: not recorded. Available once a verified recovery mechanism is configured. Downloads on this page do not replace a full backup."}
+          </span>
+          <button type="button" className="button secondary" disabled>
+            {es ? "Preparar respaldo completo" : "Prepare full backup"}
+          </button>
+        </section>
+      </div>
       <section className="live-card">
         <h2>{es ? "1. Qué respaldar" : "1. What to back up"}</h2>
         <fieldset disabled={busy}>
@@ -437,20 +508,6 @@ export function BackupDestination({
       </section>
       <section className="live-card">
         <h2>{es ? "2. Contenido y destino" : "2. Content and destination"}</h2>
-        <label>
-          {es ? "Contenido del respaldo" : "Backup content"}
-          <select
-            disabled={busy}
-            value={content}
-            onChange={(e) => setContent(e.target.value as typeof content)}
-          >
-            <option value="both">
-              {es ? "Datos en Excel y documentos" : "Excel data and documents"}
-            </option>
-            <option value="data">{es ? "Datos en Excel" : "Excel data"}</option>
-            <option value="documents">{es ? "Documentos" : "Documents"}</option>
-          </select>
-        </label>
         <fieldset disabled={busy}>
           <legend>{es ? "Destino" : "Destination"}</legend>
           <label
@@ -467,7 +524,7 @@ export function BackupDestination({
               checked={destination === "download"}
               onChange={() => setDestination("download")}
             />
-            {es ? "Descargar ZIP" : "Download ZIP"}
+            {es ? "Descargar archivo" : "Download file"}
           </label>
           <label style={{ display: "inline-flex", gap: ".5rem" }}>
             <input
@@ -483,13 +540,13 @@ export function BackupDestination({
         {destination === "file" && (
           <p>
             {es
-              ? "Al pulsar Guardar respaldo como…, elija el nombre y la ubicación del archivo ZIP: una carpeta local, Google Drive sincronizado o un dispositivo externo. No se solicita acceso a toda la carpeta. Si su navegador no ofrece esta opción, se utilizará la descarga normal."
-              : "Click Save backup as… to choose the ZIP filename and location: a local folder, synced Google Drive or external device. Access to the entire folder is not requested. Browsers without this option use a normal download."}
+              ? "Al pulsar Guardar respaldo como…, elija el nombre y la ubicación del archivo: una carpeta local, Google Drive sincronizado o un dispositivo externo. No se solicita acceso a toda la carpeta. Si su navegador no ofrece esta opción, se utilizará la descarga normal."
+              : "Click Save backup as… to choose the filename and location: a local folder, synced Google Drive or external device. Access to the entire folder is not requested. Browsers without this option use a normal download."}
           </p>
         )}
       </section>
       <section className="live-card">
-        <h2>{es ? "3. Revisar y respaldar" : "3. Review and back up"}</h2>
+        <h2>{es ? "3. Revisar y descargar" : "3. Review and download"}</h2>
         <p>
           <strong>
             {es ? "Se respaldarán " : "Backup will include "}
@@ -510,11 +567,7 @@ export function BackupDestination({
               ? es
                 ? "Excel y documentos"
                 : "Excel and documents"
-              : content === "data"
-                ? "Excel"
-                : es
-                  ? "Documentos"
-                  : "Documents")}{" "}
+              : "Excel")}{" "}
           ·{" "}
           {destination === "file"
             ? es
@@ -525,27 +578,39 @@ export function BackupDestination({
               : "ZIP download"}
         </p>
         <p>
-          {es
-            ? "El contenido corresponde a la opción seleccionada. Los datos incluyen Excel y registros JSON; los documentos incluyen los archivos originales. Se verifica la integridad de los archivos antes de guardar. El ZIP no tiene contraseña ni cifrado adicional."
-            : "Content follows the selected option. Data includes Excel and JSON records; documents include original files. File integrity is checked before saving. The ZIP has no password or additional encryption."}
+          {content === "data"
+            ? es
+              ? `Se generará un archivo Excel con ${chosen.length} filas de expedientes, más la cabecera. No incluye JSON ni documentos.`
+              : `One Excel file with ${chosen.length} application rows plus the header. No JSON or documents.`
+            : es
+              ? `Se generará un ZIP con los documentos y un Excel de ${chosen.length} expedientes. No es un respaldo completo del sistema.`
+              : `A ZIP with documents and an Excel list of ${chosen.length} applications. This is not a full system backup.`}
         </p>
+        <ul>
+          {chosen.map((a) => (
+            <li key={a.id}>
+              {a.reference_code} · {a.title}
+            </li>
+          ))}
+        </ul>
         <button
-          className="button"
+          className="button primary backup-download"
           disabled={!ready}
           aria-busy={busy}
           onClick={backup}
         >
           <ActionLabel
             busy={busy}
-            pendingLabel={es ? "Preparando respaldo…" : "Preparing backup…"}
+            pendingLabel={es ? "Procesando…" : "Processing…"}
           >
-            {destination === "file"
+            <Download size={18} aria-hidden />
+            {content === "data"
               ? es
-                ? "Guardar respaldo como…"
-                : "Save backup as…"
+                ? "Guardar Excel…"
+                : "Save Excel…"
               : es
-                ? "Crear y descargar respaldo"
-                : "Create and download backup"}
+                ? "Guardar expedientes…"
+                : "Save applications…"}
           </ActionLabel>
         </button>
         <p role="status" aria-live="polite">

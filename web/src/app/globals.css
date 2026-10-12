@@ -2858,3 +2858,12 @@ select {
 .signature-warning { padding: 16px; background: #fff8e8; border-left: 3px solid #ad7100; border-radius: 4px; }
 .signature-warning p { margin-top: 0; }
 .signed-document-card .document-row { gap: 16px; flex-wrap: wrap; }
+
+.backup-options { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-bottom:24px; }
+.backup-options .backup-option { display:flex;flex-direction:column;align-items:flex-start;gap:12px;text-align:left;padding:22px;background:white;color:#203b63;border:1px solid #d7dfea;border-radius:12px;font:inherit; }
+.backup-options button.backup-option {cursor:pointer;}
+.backup-options .backup-option.selected {border:2px solid #203b63;background:#f5f8fc;}
+.backup-options .backup-option span {font-size:14px;line-height:1.6;color:#506071;}
+.live-main .backup-download {display:inline-flex;align-items:center;gap:10px;background:#203b63;color:white;border:1px solid #203b63;border-radius:8px;min-height:46px;padding:12px 22px;font-weight:600;cursor:pointer;margin-top:16px;}
+.live-main .backup-download:hover {background:#2c4c7c;}
+.live-main .backup-download:disabled {opacity:.55;cursor:not-allowed;}
