@@ -3,7 +3,7 @@ import { useState } from "react";
 import { RagMethods } from "./rag-methods";
 import type { RagProject } from "@/lib/rag-context";
 import type { Locale } from "@/lib/domain";
-import Link from "next/link";
+import Link from "./feedback-link";
 import { RagSavedEvidence } from "./rag-saved-evidence";
 export type RagNote = {
   id: string;
@@ -128,7 +128,7 @@ export function RagWorkspace({
                     .filter((p) => !call || p.callId === call)
                     .map((p) => (
                       <option value={p.id} key={p.id}>
-                        {p.reference} · {p.title}
+                        {p.title} · {p.reference}
                       </option>
                     ))}
                 </select>
@@ -226,8 +226,8 @@ export function RagWorkspace({
         <section className="live-card">
           <h2>
             {es
-              ? "Consultas guardadas para este riesgo"
-              : "Saved consultations for this risk"}
+              ? "Consultas recientes guardadas para este riesgo"
+              : "Recent saved consultations for this risk"}
           </h2>
           {notes.filter(
             (n) => n.application_id === projectId && n.risk_id === riskId,
@@ -262,8 +262,8 @@ export function RagWorkspace({
           ) : (
             <p>
               {es
-                ? "Todavía no se han guardado consultas para este riesgo."
-                : "No saved consultations for this risk yet."}
+                ? "No hay consultas recientes guardadas para este riesgo."
+                : "No recent saved consultations for this risk."}
             </p>
           )}
         </section>

@@ -2886,8 +2886,8 @@ select {
 .rag-mode { display:flex; flex-wrap:wrap; gap:.6rem; margin:1rem 0; }
 .rag-mode button { border:1px solid #b9cbd8; border-radius:.5rem; padding:.65rem .9rem; background:white; color:#203e70; font:inherit; cursor:pointer; }
 .rag-mode button[aria-pressed="true"] { background:#eaf5f3; border-color:#3c8881; }
-.rag-selectors { display:grid; grid-template-columns:1fr 2fr; gap:1rem; margin-bottom:1rem; }
-.rag-context label { display:grid; gap:.4rem; font-weight:600; }
+.rag-selectors { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,2fr); gap:1rem; margin-bottom:1rem; }
+.rag-context label { min-width:0; display:grid; gap:.4rem; font-weight:600; }
 .rag-context select { width:100%; min-width:0; padding:.75rem; border:1px solid #b9cbd8; border-radius:.5rem; background:white; font:inherit; font-weight:400; }
 .rag-risk-summary { background:#f4f8fb; border-left:3px solid #3b8781; border-radius:.5rem; padding:1rem; margin-top:1rem; overflow-wrap:anywhere; }
 .rag-risk-summary p { margin:.5rem 0; }
