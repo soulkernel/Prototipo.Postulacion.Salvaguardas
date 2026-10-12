@@ -2872,3 +2872,9 @@ select {
 .deadline-countdown span { font-size: .88rem; }
 .deadline-countdown.soon { background: #fffaf0; border-left-color: #ad730e; }
 .deadline-countdown.urgent, .deadline-countdown.closed { background: #fff5f3; border-left-color: #ae3f32; }
+
+.rag-tabs { display: flex; flex-wrap: wrap; gap: .75rem; margin: 1.25rem 0; }
+.rag-tabs button { padding: .85rem 1rem; border: 1px solid #cbd9e6; border-radius: .6rem; background: #fff; color: #203e70; font: inherit; cursor: pointer; }
+.rag-tabs button[aria-selected="true"] { background: #203e70; border-color: #203e70; color: white; }
+.rag-tabs button:hover { box-shadow: 0 0 0 2px #96d6d0; }
+.rag-answer { white-space: pre-wrap; overflow-wrap: anywhere; }

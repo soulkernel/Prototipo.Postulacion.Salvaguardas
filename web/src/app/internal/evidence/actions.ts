@@ -2,6 +2,30 @@
 import { requireViewer } from "@/lib/data";
 import { embedQuery } from "@/lib/rag";
 import { z } from "zod";
+import { askQwen } from "@/lib/qwen";
+import type { QwenResponse } from "@/lib/qwen-contract";
+
+export type QwenState = {
+  status: "idle" | "ok" | "invalid" | "unavailable" | "quota" | "configuration";
+  response?: QwenResponse;
+};
+export async function consultQwen(
+  _previous: QwenState,
+  form: FormData,
+): Promise<QwenState> {
+  await requireViewer(["sustainability_reviewer", "administrator"]);
+  const query = z.string().trim().min(3).max(600).safeParse(form.get("query"));
+  if (!query.success) return { status: "invalid" };
+  try {
+    return { status: "ok", response: await askQwen(query.data) };
+  } catch (error) {
+    const code = error instanceof Error ? error.message : "unavailable";
+    return {
+      status:
+        code === "quota" || code === "configuration" ? code : "unavailable",
+    };
+  }
+}
 
 export type EvidenceState = {
   status: "idle" | "ok" | "invalid" | "unavailable";
