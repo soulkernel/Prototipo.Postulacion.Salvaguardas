@@ -18,18 +18,24 @@ export default async function InternalPage() {
     reference_code: string;
     status: string;
     title: string;
+    proponent: string;
+    contact: string;
+    stage: number;
   }[] = [];
   for (let offset = 0; ; offset += 250) {
     const { data, error } = await db
       .from("applications")
-      .select("id,reference_code,status")
+      .select("id,reference_code,status,stage")
       .not("submitted_at", "is", null)
       .order("updated_at", { ascending: false })
       .order("id")
       .range(offset, offset + 249);
     if (error) throw new Error("Cannot read applications");
     if (!data?.length) break;
-    const titles = new Map<string, string>();
+    const titles = new Map<
+      string,
+      { title: string; proponent: string; contact: string }
+    >();
     for (let versionOffset = 0; ; versionOffset += 250) {
       const { data: versions, error: versionError } = await db
         .from("application_versions")
@@ -44,17 +50,24 @@ export default async function InternalPage() {
       if (versionError) throw new Error("Cannot read submitted versions");
       for (const version of versions || []) {
         if (!titles.has(version.application_id))
-          titles.set(
-            version.application_id,
-            String(version.payload?.concept?.title || ""),
-          );
+          titles.set(version.application_id, {
+            title: String(version.payload?.concept?.title || ""),
+            proponent: String(
+              version.payload?.concept?.applicant_name || "",
+            ).trim(),
+            contact: String(
+              version.payload?.concept?.contact_name || "",
+            ).trim(),
+          });
       }
       if (!versions || versions.length < 250) break;
     }
     apps.push(
       ...data.map((a) => ({
         ...a,
-        title: titles.get(a.id) || a.reference_code,
+        title: titles.get(a.id)?.title || a.reference_code,
+        proponent: titles.get(a.id)?.proponent || "",
+        contact: titles.get(a.id)?.contact || "",
       })),
     );
     if (data.length < 250) break;
@@ -95,7 +108,7 @@ export default async function InternalPage() {
           </Link>
         )}
       </nav>
-      <div className="live-metrics">
+      <div className="live-metrics internal-summary-metrics">
         <div>
           {es ? "Convocatorias" : "Calls"}
           <strong>{calls.length}</strong>
@@ -115,6 +128,12 @@ export default async function InternalPage() {
           </strong>
         </div>
         <div>
+          {es
+            ? "Notas conceptuales preseleccionadas"
+            : "Shortlisted concept notes"}
+          <strong>{apps.filter((a) => a.stage === 2).length}</strong>
+        </div>
+        <div>
           {es ? "Convenios firmados" : "Signed agreements"}
           <strong>
             {apps?.filter((a) => a.status === "contract_signed").length || 0}
@@ -130,6 +149,11 @@ export default async function InternalPage() {
                 <tr>
                   <th>{es ? "Referencia" : "Reference"}</th>
                   <th>{es ? "Proyecto" : "Project"}</th>
+                  <th>
+                    {es
+                      ? "Proponente / Responsable"
+                      : "Applicant / Contact person"}
+                  </th>
                   <th>{es ? "Etapa" : "Stage"}</th>
                   <th />
                 </tr>
@@ -139,6 +163,15 @@ export default async function InternalPage() {
                   <tr key={a.id}>
                     <td>{a.reference_code}</td>
                     <td>{a.title}</td>
+                    <td>
+                      <div>{a.proponent || a.contact || "—"}</div>
+                      {a.proponent &&
+                        a.contact &&
+                        a.proponent.toLocaleLowerCase(locale) !==
+                          a.contact.toLocaleLowerCase(locale) && (
+                          <div className="inbox-contact">{a.contact}</div>
+                        )}
+                    </td>
                     <td>{statusLabel(a.status, locale)}</td>
                     <td>
                       <Link href={"/internal/applications/" + a.id}>
