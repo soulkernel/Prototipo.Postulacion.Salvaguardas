@@ -1,5 +1,14 @@
 # Integración de métodos de apoyo GLF
 
+## Estado vigente verificado — 12 de octubre de 2026, cierre de pruebas
+
+Este bloque sustituye los estados pendientes registrados más abajo como historial.
+
+- El usuario confirmó que Ulf validó todo el corpus cargado. Se aprobaron 3.549 fragmentos de 36 versiones documentales, todos con embedding, con 3.549 eventos de auditoría. El registro identifica a Schubert como quien comunicó la validación de Ulf; no suplanta su cuenta. Operación acotada a los IDs existentes, hasta 3565: supabase/operations/20261012_approve_validated_corpus.sql. Los documentos nuevos requieren aprobación independiente.
+- E5 operativo en el portal publicado: dos consultas reales completadas, conservación marina y participación comunitaria/mecanismos de quejas; seis fragmentos referenciados por consulta. La segunda recuperó evidencia pertinente de IFC ND1 y su guía. El servicio gratuito había arrancado lentamente; /health confirmó ready y modelo multilingual-e5-small. No se modificó el modelo ni se reindexó el corpus. Commit 3cf768b añade diagnóstico seguro, sin registrar consultas ni credenciales.
+- BM25 + Qwen: servicio desplegado, pero la inferencia devuelve HTTP 403, categoría billing_or_credit_limit, tras corregir la selección del proveedor. No está operativo para respuestas generadas. El límite de gasto HF se conserva en USD 0; no se autorizaron cargos adicionales. No presentar las dos opciones como plenamente funcionales.
+- No se borraron datos, no se enviaron invitaciones ni postulaciones. La prueba funcional E5 no certifica calidad global de recuperación; corresponde a los técnicos contrastar pertinencia y cobertura de sus consultas.
+
 ## Estado al 12 de octubre de 2026
 
 Implementación local: pestañas independientes E5 y BM25 + Qwen; acción de servidor autorizada para sostenibilidad y administración mediante el control MFA existente; validación del contrato de respuesta, origen de fuentes GLF y correspondencia de citas con evidencia; manejo de cuotas y fallos sin bloquear E5. Credencial del servicio exclusivamente en servidor. Destino permitido: HTTPS de Hugging Face Spaces, ruta /api/ask.
