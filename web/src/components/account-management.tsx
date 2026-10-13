@@ -11,7 +11,6 @@ import { accountErrors, type ManagedAccount } from "@/lib/account-management";
 import { SubmitButton } from "./submit-button";
 import { roleLabels } from "@/lib/fields";
 import type { Role } from "@/lib/domain";
-import Link from "./feedback-link";
 function ErrorMessage({ code, es }: { code?: string; es: boolean }) {
   return code ? (
     <p role="alert" className="auth-error">
@@ -177,9 +176,7 @@ function AccountControls({
           <SubmitButton
             pendingLabel={es ? "Procesando…" : "Processing…"}
             className={
-              operation === "delete"
-                ? "button danger"
-                : "button secondary"
+              operation === "delete" ? "button danger" : "button secondary"
             }
           >
             {labels[operation]}
@@ -293,7 +290,14 @@ export function AccountManagement({
         </label>
       </div>
       <p aria-live="polite">
-        {shown.length} {es ? "cuentas" : "accounts"}
+        {shown.length}{" "}
+        {es
+          ? shown.length === 1
+            ? "cuenta"
+            : "cuentas"
+          : shown.length === 1
+            ? "account"
+            : "accounts"}
       </p>
       {shown.map((a) => (
         <AccountControls
@@ -331,9 +335,6 @@ export function AcademicAccountForm({ es }: { es: boolean }) {
           ? "Vigencia: tres meses desde su creación. Ingreso con correo y contraseña, sin doble factor. Permite consultar los expedientes de prueba habilitados, descargar sus archivos, recorrer formularios y reportes y utilizar los dos motores RAG. No permite modificar datos ni administrar usuarios."
           : "Valid for three months from creation. Email/password sign-in without MFA. Allows access to the enabled test applications, file downloads, forms, reports and both RAG engines. Does not allow editing data or administering users."}
       </p>
-      <Link href="/evaluation">
-        {es ? "Vista previa del acceso académico" : "Preview academic access"}
-      </Link>
       <form action={serviceAction} className="live-actions">
         <SubmitButton
           className="button secondary"

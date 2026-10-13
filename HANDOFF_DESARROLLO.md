@@ -374,3 +374,11 @@ QA local: 35 pruebas SQL/PGlite +65 TypeScript (100), lint/tsc/build correctos. 
 - 41 pruebas SQL y 65 TypeScript pasan; controles verifican consulta de expediente/Storage habilitado, rechazo de caso futuro y de escrituras, y retirada del acceso al desactivar. Servicio Edge autenticado probado: disponible. Cuenta de profesora aún pendiente de creación final/entrega; no se envió correo.
 - Descargas firmadas de Storage ya emitidas tienen vigencia máxima de 60 segundos; la revocación impide emitir nuevas. Los archivos ya descargados no se retiran del equipo de quien los recibió.
 
+
+## v0.6.2 - Verificación con cuenta académica real
+- Titular confirmó expresamente la creación de Gladys Villegas Rugel (gmvillegas@uees.edu.ec). Cuenta creada y vence el 13/01/2027. Sin correo automático; contraseña aleatoria guardada solo en archivo local fuera del repositorio y ocultada en interfaz.
+- Prueba real por Supabase SSR/Auth y HTTP, sin alterar sesión Chrome del administrador: AAL1, cero factores MFA, acceso a 11 expedientes y 23 documentos; corpus académico 3.549 ventanas / 36 documentos exactos. Reporte devuelve 7 recibidos.
+- 200 verificados: RAG, todos los expedientes/archivos, convocatorias, bandeja interna, detalle de expediente enviado y de borrador, formulario completo en consulta y reportes. Descargar archivo cargado, PDF de nota conceptual y PDF de comprobante produce PDF válido. Gestión de usuarios redirige y RPC de administración deniega acceso.
+- Sesión usada para esta prueba cerrada al terminar; cuenta permanece activa y lista para ingreso de la profesora. Informe sin secretos: scratch/qa-academic-live.json (no versionado). Credenciales no copiadas al repositorio ni a GitHub, no enviadas por mail.
+- Ajuste final de UI: singular cuenta/account y eliminación de enlace redundante de previsualización administrativa.
+
