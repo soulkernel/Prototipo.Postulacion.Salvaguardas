@@ -130,7 +130,7 @@ export async function Shell({
 
         {internal && (
           <p className="eyebrow">
-            {locale === "es" ? "ESPACIO INTERNO GLF" : "GLF STAFF WORKSPACE"}
+            {locale === "es" ? "MÓDULO INTERNO GLF" : "GLF INTERNAL MODULE"}
           </p>
         )}
         {children}
