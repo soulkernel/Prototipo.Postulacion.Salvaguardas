@@ -382,3 +382,8 @@ QA local: 35 pruebas SQL/PGlite +65 TypeScript (100), lint/tsc/build correctos. 
 - Sesión usada para esta prueba cerrada al terminar; cuenta permanece activa y lista para ingreso de la profesora. Informe sin secretos: scratch/qa-academic-live.json (no versionado). Credenciales no copiadas al repositorio ni a GitHub, no enviadas por mail.
 - Ajuste final de UI: singular cuenta/account y eliminación de enlace redundante de previsualización administrativa.
 
+
+## v0.6.3 - Identidad integrada en la cabecera
+- Correo de la cuenta bajo el logotipo, 12 px, sin avatar ni espacio reservado en el contenido. Correos largos se abrevian visualmente y se muestran completos al pasar el puntero o enfocar con teclado.
+- Cabecera compartida externa, interna y académica. Menús e idioma/cierre mantienen altura uniforme de 40 px en escritorio y 44 px con puntero táctil. Navegación sigue de izquierda a derecha y controles de cuenta separados.
+- No modifica permisos, autenticación ni datos. Lint y compilación correctos; verificación visual del despliegue pendiente.

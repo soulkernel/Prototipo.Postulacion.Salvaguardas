@@ -18,25 +18,32 @@ export async function Shell({
 }) {
   const viewer = await getViewer();
   const accountName = viewer?.user.email || "";
-  const initials = accountName
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part: string) => Array.from(part)[0])
-    .join("")
-    .toLocaleUpperCase(locale);
   return (
     <div className="live-shell">
       <header className="live-header">
-        <Link className="live-brand" href="/">
-          <Image
-            src="/glf-logo.png"
-            alt="Galápagos Life Fund"
-            width={165}
-            height={71}
-            priority
-          />
-        </Link>
+        <div className="header-brand-account">
+          <Link className="live-brand" href="/">
+            <Image
+              src="/glf-logo.png"
+              alt="Galápagos Life Fund"
+              width={165}
+              height={71}
+              priority
+            />
+          </Link>
+          {viewer && (
+            <div
+              className="header-identity"
+              tabIndex={0}
+              aria-label={`${locale === "es" ? "Cuenta conectada" : "Signed-in account"}: ${accountName}`}
+            >
+              <span className="header-identity-email">{accountName}</span>
+              <span className="header-identity-tooltip" aria-hidden="true">
+                {accountName}
+              </span>
+            </div>
+          )}
+        </div>
         <nav
           aria-label={
             locale === "es" ? "Navegación principal" : "Main navigation"
@@ -144,22 +151,6 @@ export async function Shell({
         </div>
       </header>
       <main className="live-main" id="main-content">
-        {viewer && (
-          <div
-            className="session-identity"
-            aria-label={
-              locale === "es" ? "Cuenta conectada" : "Signed-in account"
-            }
-          >
-            <span className="session-avatar" aria-hidden="true">
-              {initials}
-            </span>
-            <div className="session-details">
-              <p>{accountName}</p>
-            </div>
-          </div>
-        )}
-
         {internal && (
           <p className="eyebrow">
             {viewer?.profile.access_kind === "academic"

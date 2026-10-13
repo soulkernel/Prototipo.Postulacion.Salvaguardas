@@ -1044,35 +1044,25 @@ a {
   .header-account-controls { margin-left: auto; }
   .live-header nav { flex: 0 0 100%; }
 }
-.session-identity {
-  width: auto;
-  max-width: 48%;
-  float: right;
-  margin: 0 0 12px 24px;
-  padding: 0;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 10px;
-  color: #506071;
-  font-size: 14px;
+/* Account identity belongs to the header, outside the content flow. */
+.header-brand-account { flex: 0 0 165px; min-width: 0; }
+.header-identity { position: relative; margin-top: 3px; color: #edf3ff; font-size: 12px; line-height: 1.4; }
+.header-identity-email { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.header-identity-tooltip { display: none; position: absolute; top: calc(100% + 6px); left: 0; z-index: 20; width: max-content; max-width: min(320px, calc(100vw - 36px)); overflow-wrap: anywhere; padding: 8px 10px; border: 1px solid #ccd8e8; border-radius: 6px; background: #fff; color: #233144; box-shadow: 0 3px 12px #10244526; }
+.header-identity:hover .header-identity-tooltip,
+.header-identity:focus-visible .header-identity-tooltip { display: block; }
+.live-header nav a { min-height: 40px; padding-block: 5px; }
+.header-account-controls .language-switch,
+.header-account-controls .header-sign-out { height: 40px; min-height: 40px; }
+.header-account-controls .header-sign-out { padding-block: 5px; }
+.header-account-controls .language-switch button { padding-block: 5px; }
+@media (pointer: coarse) {
+  .live-header nav a,
+  .header-account-controls .language-switch,
+  .header-account-controls .header-sign-out { min-height: 44px; height: 44px; }
 }
-.session-avatar {
-  flex: 0 0 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: #e7edf5;
-  color: #1e3a6c;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-}
-.session-details { min-width: 0; text-align: right; }
-.session-details p { margin: 0; line-height: 1.5; overflow-wrap: anywhere; }
-.session-details strong { color: #233144; }
 @media (max-width: 760px) {
-  .session-identity { float: none; max-width: 100%; margin: 0 0 12px; padding: 0; font-size: 13px; }
+  .header-brand-account { flex-basis: 165px; max-width: calc(100% - 132px); }
 }
 
 .internal-summary-metrics {
