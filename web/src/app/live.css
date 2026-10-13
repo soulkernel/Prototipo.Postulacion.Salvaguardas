@@ -1075,7 +1075,25 @@ a {
   .session-identity { float: none; max-width: 100%; margin: 0 0 12px; padding: 0; font-size: 13px; }
 }
 
-.internal-summary-metrics { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+.internal-summary-metrics {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
+  gap: 12px;
+  align-items: stretch;
+}
+.internal-summary-metrics > div {
+  min-width: 0;
+  padding: 16px;
+  font-size: 14px;
+  line-height: 1.4;
+  display: flex;
+  flex-direction: column;
+  overflow-wrap: break-word;
+}
+.internal-summary-metrics strong {
+  margin: auto 0 0;
+  padding-top: 12px;
+  font-size: 28px;
+}
 .inbox-contact { margin-top: 4px; font-size: 0.9em; color: #506071; }
 
 .working-review > .live-fieldset { display:grid; gap:16px; }
