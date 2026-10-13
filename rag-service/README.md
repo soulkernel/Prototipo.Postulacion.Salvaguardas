@@ -32,3 +32,5 @@ El recuperador, corpus público, prompt y validador originales en public_demo/ap
 El adaptador devuelve hasta cinco pasajes también ante abstención; sources permanece vacío en ese caso. reason distingue insufficient_context de citation_validation_failed. Los fragmentos recuperados no se presentan como citas de una respuesta validada. review_support_version=1.1 permite comprobar el despliegue.
 E5 continúa independiente y no envía sus fragmentos a Qwen. Su guía de lectura es determinista, con extracto literal y original expandible; no es un resumen generado. El botón de complemento prepara una consulta en E5 y requiere que el usuario la ejecute.
 Cuotas, autenticación, proveedor y límite monetario no cambian. Las métricas académicas anteriores no validan este adaptador de redacción.
+
+Adaptador 1.2: si el proveedor redacta sin citas exactas, un único intento de regeneración exige el formato válido; nunca agrega citas automáticamente. La abstención explícita no se reintenta. Ambas generaciones comparten un presupuesto de 43 segundos. El validador original decide sobre la salida final; cuotas y límite USD 5 permanecen iguales.

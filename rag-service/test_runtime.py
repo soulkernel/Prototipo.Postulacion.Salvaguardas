@@ -29,7 +29,7 @@ class DeploymentDiagnostics(unittest.TestCase):
         cause = HTTPError('https://router.huggingface.co/v1/chat/completions', 402, 'Payment', {}, io.BytesIO(b'credit limit; PRIVATE_VALUE'))
         failure = RuntimeError('Generator unavailable')
         failure.__cause__ = cause
-        with patch.object(runtime, 'original_chat', side_effect=failure), patch.object(runtime.logging.getLogger('gunicorn.error'), 'error') as log:
+        with runtime.app.test_request_context(), patch.object(runtime, 'original_chat', side_effect=failure), patch.object(runtime.logging.getLogger('gunicorn.error'), 'error') as log:
             with self.assertRaises(RuntimeError) as raised:
                 runtime.diagnostic_chat('PRIVATE_QUESTION')
             self.assertIs(raised.exception, failure)
@@ -60,7 +60,7 @@ class DeploymentDiagnostics(unittest.TestCase):
         cause = HTTPError('https://router.huggingface.co/v1/chat/completions', 403, 'Forbidden', {}, io.BytesIO(b'<html>Cloudflare PRIVATE</html>'))
         failure = RuntimeError('Generator unavailable')
         failure.__cause__ = cause
-        with patch.object(runtime, 'original_chat', side_effect=failure), patch.object(runtime.logging.getLogger('gunicorn.error'), 'error') as log:
+        with runtime.app.test_request_context(), patch.object(runtime, 'original_chat', side_effect=failure), patch.object(runtime.logging.getLogger('gunicorn.error'), 'error') as log:
             with self.assertRaises(RuntimeError):
                 runtime.diagnostic_chat('PRIVATE_QUESTION')
             self.assertIn('provider_http_filter', repr(log.call_args_list))
@@ -88,6 +88,18 @@ class DeploymentDiagnostics(unittest.TestCase):
             runtime.diagnostic_chat(prompt)
             self.assertEqual(runtime.g.glf_answer_reason, 'answered')
             self.assertIn('Una definición de EIAS no demuestra', model.call_args.args[0])
+
+
+    def test_missing_citation_retries_once_and_still_requires_original_validator(self):
+        with runtime.app.test_request_context(), patch.object(runtime, 'original_chat', side_effect=['Criterio sin cita', 'Criterio [GLF_PUBLIC::P01C01]']) as model:
+            answer = runtime.diagnostic_chat('CHUNK_ID: GLF_PUBLIC::P01C01')
+            self.assertEqual(model.call_count, 2)
+            self.assertIn('[GLF_PUBLIC::P01C01]', answer)
+            self.assertEqual(runtime.g.glf_answer_reason, 'answered')
+        with runtime.app.test_request_context(), patch.object(runtime, 'original_chat', return_value='La documentación pública recuperada es insuficiente para responder esta pregunta.') as model:
+            runtime.diagnostic_chat('CHUNK_ID: GLF_PUBLIC::P01C01')
+            self.assertEqual(model.call_count, 1)
+            self.assertEqual(runtime.g.glf_answer_reason, 'insufficient_context')
 
 if __name__ == '__main__':
     unittest.main()
