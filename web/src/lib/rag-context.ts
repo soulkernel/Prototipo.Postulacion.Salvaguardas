@@ -48,7 +48,7 @@ export function riskQuery(
   method: string,
   purpose = "assessment",
 ) {
-  const name = risk.name.trim();
+  const name = risk.name.trim().replace(/[.\s]+$/g, "");
   const description = risk.description.trim();
   const extra =
     description &&
@@ -56,7 +56,7 @@ export function riskQuery(
       name.replace(/[.\s]+$/g, "").toLowerCase()
       ? ` ${description}`
       : "";
-  const context = `Riesgo ${risk.dimension === "environmental" ? "ambiental" : "social"}: ${name}.${extra} Actividad: ${risk.activity}.`;
+  const context = `Riesgo ${risk.dimension === "environmental" ? "ambiental" : "social"}: ${name}.${extra} Actividad: ${risk.activity.trim().replace(/[.\s]+$/g, "")}.`;
   const question =
     method === "e5"
       ? ""

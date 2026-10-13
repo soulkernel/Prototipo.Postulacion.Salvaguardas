@@ -1182,3 +1182,6 @@ a {
 .evidence-reading details { margin: 10px 0 16px; }
 .evidence-reading summary { cursor: pointer; color: #076f78; padding-block: 8px; }
 .rag-result-intro { margin-top: 24px; }
+
+.evidence-metadata { font-size: 12px; color: #536579; overflow-wrap: anywhere; }
+.evidence-metadata summary { cursor: pointer; padding-block: 8px; }

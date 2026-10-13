@@ -1,4 +1,8 @@
 "use client";
+import {
+  evidenceSourceName,
+  evidenceLocation,
+} from "@/lib/evidence-presentation";
 import { EvidenceReading } from "./evidence-reading";
 import { useActionState } from "react";
 import {
@@ -117,16 +121,24 @@ export function EvidenceSearch({
         {!pending &&
           state.results.map((r) => (
             <article className="live-card" key={r.id}>
-              <h3>{r.document_name}</h3>
-              <p>
-                {r.document_version} · {r.locator}
-              </p>
+              <h3>{evidenceSourceName(r.document_name)}</h3>
+              <p>{evidenceLocation(r.locator, es)}</p>
               <EvidenceReading
-                name={r.document_name}
+                name={evidenceSourceName(r.document_name)}
                 text={r.content}
-                locator={r.locator}
+                locator={evidenceLocation(r.locator, es)}
                 locale={locale}
               />
+              <details className="evidence-metadata">
+                <summary>
+                  {es
+                    ? "Referencia técnica del fragmento"
+                    : "Technical passage reference"}
+                </summary>
+                <p>
+                  {r.document_name} · {r.document_version} · {r.locator}
+                </p>
+              </details>
             </article>
           ))}
         {!readOnly &&

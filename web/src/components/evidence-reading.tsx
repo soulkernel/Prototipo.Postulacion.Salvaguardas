@@ -38,6 +38,13 @@ export function EvidenceReading({
           : "Quick reading · verbatim excerpt"}
       </h4>
       <blockquote>{preview}</blockquote>
+      {/\bVEAS\b/i.test(text) && (
+        <p className="evidence-guide">
+          {es
+            ? "La fuente utiliza la denominación VEAS. Verifique el formato vigente de la convocatoria antes de aplicar esa referencia."
+            : "The source uses the term VEAS. Check the call’s current assessment form before applying this reference."}
+        </p>
+      )}
       <details>
         <summary>
           {es

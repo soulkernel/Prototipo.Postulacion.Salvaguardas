@@ -41,3 +41,23 @@ test("risk questions deduplicate descriptions and separate exclusions from scree
   assert.ok(!q.includes("PGAS"));
   assert.match(riskQuery(risk, 1, "qwen", "exclusions"), /exclusiones/);
 });
+
+import {
+  evidenceSourceName,
+  evidenceLocation,
+} from "../src/lib/evidence-presentation";
+test("reading labels preserve source identity without inventing pages", () => {
+  assert.equal(
+    evidenceSourceName("CREF-03_ES_20210614-ifc-ps-guidance-note-1-es"),
+    "IFC · Nota de orientación 1",
+  );
+  assert.equal(
+    evidenceLocation("SOURCE::0002 / part 5 / chars 2800-3600", true),
+    "Fragmento 2 · segmento 5",
+  );
+  assert.equal(
+    evidenceLocation("SOURCE::0012 / page markers 39", true),
+    "Referencia de página: 39",
+  );
+  assert.equal(evidenceLocation("custom locator", true), "custom locator");
+});
