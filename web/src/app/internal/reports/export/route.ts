@@ -56,11 +56,18 @@ export async function GET(request: NextRequest) {
         .range(offset, offset + 249);
       if (appsError) return new NextResponse("Unavailable", { status: 500 });
       if (!apps?.length) break;
-      const versions = new Map<string, Record<string, unknown>>();
+      const versions = new Map<
+        string,
+        {
+          concept: Record<string, unknown>;
+          stage: number;
+          submitted_at: string;
+        }
+      >();
       for (let n = 0; ; n += 250) {
         const { data, error: versionError } = await db
           .from("application_versions")
-          .select("application_id,revision,payload")
+          .select("application_id,revision,payload,stage,submitted_at")
           .in(
             "application_id",
             apps.map((a) => a.id),
@@ -72,7 +79,11 @@ export async function GET(request: NextRequest) {
           return new NextResponse("Unavailable", { status: 500 });
         for (const v of data || [])
           if (!versions.has(v.application_id))
-            versions.set(v.application_id, v.payload?.concept || {});
+            versions.set(v.application_id, {
+              concept: v.payload?.concept || {},
+              stage: v.stage,
+              submitted_at: v.submitted_at,
+            });
         if (!data || data.length < 250) break;
       }
       for (const a of apps) {
@@ -80,7 +91,7 @@ export async function GET(request: NextRequest) {
           return new NextResponse("Submitted version unavailable", {
             status: 409,
           });
-        applications.push({ ...a, concept: versions.get(a.id)! });
+        applications.push({ ...a, ...versions.get(a.id)! });
       }
       if (apps.length < 250) break;
     }

@@ -102,13 +102,13 @@ export function reportTables(report: ReportExport) {
       t("Teléfono", "Phone"),
       t("Categoría", "Category"),
       t("Línea temática", "Thematic line"),
-      t("Etapa", "Stage"),
+      t("Etapa de la última presentación", "Latest submission stage"),
       t("Estado", "Status"),
       t("Monto solicitado (USD)", "Requested amount (USD)"),
       t("Cofinanciamiento (USD)", "Co-financing (USD)"),
       t("Inicio propuesto", "Proposed start"),
       t("Fin propuesto", "Proposed end"),
-      t("Envío (hora Galápagos)", "Submission (Galapagos time)"),
+      t("Último envío (hora Galápagos)", "Latest submission (Galapagos time)"),
     ],
     ...report.applications.map((a) => {
       const c = a.concept;
