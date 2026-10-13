@@ -58,7 +58,11 @@ export function RagNoteForm({
     setReplace(false);
   }
   return (
-    <form action={action} className="live-form rag-note-form">
+    <form
+      action={action}
+      className="live-form rag-note-form"
+      onReset={(event) => event.preventDefault()}
+    >
       <h3>
         {es
           ? "Preparar observación al aplicante"
