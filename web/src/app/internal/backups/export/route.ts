@@ -68,6 +68,9 @@ export async function POST(request: NextRequest) {
       "application_versions",
       "application_documents",
       "application_events",
+      ...(viewer.profile.role === "administrator"
+        ? ["review_working_drafts", "review_draft_history"]
+        : []),
       "technical_reviews",
       ...(viewer.profile.role === "administrator" ||
       viewer.profile.role === "sustainability_reviewer"
@@ -104,6 +107,25 @@ export async function POST(request: NextRequest) {
       : { data: [], error: null };
     if (callError) throw callError;
     records.calls = calls || [];
+    if (viewer.profile.role === "administrator") {
+      const { data: pins, error: pinError } = callIds.length
+        ? await viewer.db
+            .from("call_review_templates")
+            .select("*")
+            .in("call_id", callIds)
+        : { data: [], error: null };
+      if (pinError) throw pinError;
+      records.call_review_templates = pins || [];
+      const templateIds = [...new Set((pins || []).map((p) => p.template_id))];
+      const { data: templates, error: templateError } = templateIds.length
+        ? await viewer.db
+            .from("review_templates")
+            .select("*")
+            .in("id", templateIds)
+        : { data: [], error: null };
+      if (templateError) throw templateError;
+      records.review_templates = templates || [];
+    }
     const risks = records.risks as { id: string }[];
     const safeguards: { catalog_id: string | null }[] = [];
     for (let offset = 0; offset < risks.length; offset += 100) {

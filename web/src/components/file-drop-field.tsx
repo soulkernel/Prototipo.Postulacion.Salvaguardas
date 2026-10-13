@@ -82,6 +82,7 @@ export function FileDropField({
         accept={accept}
         required={required}
         disabled={disabled}
+        aria-label={es ? "Seleccionar archivo" : "Select file"}
         aria-describedby={id}
         aria-invalid={Boolean(error)}
         onChange={(e) => {

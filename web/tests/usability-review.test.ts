@@ -62,7 +62,7 @@ function complete() {
   p.truthful = true;
   return p;
 }
-test("progress requires all content, current signed files, declarations and saving; never mutates the payload", () => {
+test("progress requires all content, current signed files, declarations; saving is independent; never mutates the payload", () => {
   const p = complete();
   const before = JSON.stringify(p);
   const docs = [{ kind: "concept_signed" }, { kind: "matrix_signed" }];
@@ -74,7 +74,7 @@ test("progress requires all content, current signed files, declarations and savi
     submissionProgress(p, rules, 1, [], docs, false, true).percent < 100,
   );
   assert.ok(
-    submissionProgress(p, rules, 1, [], docs, true, false).percent < 100,
+    submissionProgress(p, rules, 1, [], docs, true, false).percent === 100,
   );
   assert.ok(submissionProgress(p, rules, 1, [], [], true, true).percent < 100);
   assert.equal(JSON.stringify(p), before);
@@ -119,5 +119,36 @@ test("file selection refuses multiple, empty, oversize and disallowed files", ()
   assert.equal(
     uploadSelectionError([{ ...file, name: "bad.exe" }], ".pdf"),
     "format",
+  );
+});
+
+test("progress excludes hidden summary and future phase requirements", () => {
+  const p = complete();
+  p.concept.summary_parts = {
+    context: "Contexto",
+    problem: "Problema",
+    threats: "Amenazas",
+    rationale: "Justificación",
+    solution: "Solución",
+    results: "Resultados",
+  };
+  p.concept.summary = "";
+  const docs = [{ kind: "concept_signed" }, { kind: "matrix_signed" }];
+  const fields = [
+    {
+      id: "future",
+      label_es: "Futuro",
+      label_en: "Future",
+      type: "text" as const,
+      required: true,
+    },
+  ];
+  assert.equal(
+    submissionProgress(p, rules, 1, fields, docs, true, false).percent,
+    100,
+  );
+  p.concept.summary_parts.problem = "";
+  assert.ok(
+    submissionProgress(p, rules, 1, fields, docs, true, true).percent < 100,
   );
 });

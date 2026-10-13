@@ -34,16 +34,36 @@ export function submissionProgress(
   phase2: Call["phase2_schema"],
   documents: { kind: string }[],
   signedReady: boolean,
-  saved: boolean,
+  _saved: boolean,
 ) {
-  const issues = (p: Payload) =>
-    new Set([
+  void _saved;
+  const applicable = (p: Payload) => {
+    const copy = structuredClone(p);
+    if (copy.concept.summary_parts) copy.concept.summary = "structured";
+    if (copy.concept.strategic_alignment) {
+      copy.concept.objectives = "structured";
+      copy.concept.alignment = "structured";
+    }
+    if (copy.concept.project_results !== undefined)
+      copy.concept.results = "structured";
+    if (copy.concept.associated_organizations !== undefined)
+      copy.concept.partners = "";
+    if (copy.concept.risk_register !== undefined) {
+      copy.concept.environmental_risks = "structured";
+      copy.concept.social_risks = "structured";
+    }
+    return copy;
+  };
+  const issues = (raw: Payload) => {
+    const p = applicable(raw);
+    return new Set([
       ...validateComplete(p, rules, stage),
       ...[0, 1, 2].flatMap((i) => {
         const s = stepIssues(p, rules, stage, i, phase2);
         return [...s.missing, ...s.invalid];
       }),
     ]);
+  };
   const pending = issues(payload),
     expected = issues(blank(payload) as Payload);
   pending.forEach((k) => expected.add(k));
@@ -58,11 +78,8 @@ export function submissionProgress(
         ["concept_signed", "matrix_signed"].includes(k) &&
         !signedReady),
   ).length;
-  const total = expected.size + required.size + 1;
-  const completed = Math.max(
-    0,
-    total - pending.size - missingDocs - (saved ? 0 : 1),
-  );
+  const total = expected.size + required.size;
+  const completed = Math.max(0, total - pending.size - missingDocs);
   return {
     total,
     completed,

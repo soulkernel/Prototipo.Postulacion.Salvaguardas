@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { callIssues, type CallEditorState } from "@/lib/calls";
 import type { Call } from "@/lib/domain";
+import { callThemes } from "@/lib/grant-rules";
 import { suggestCallCodes } from "@/lib/call-codes";
 export async function saveOrPublishCall(
   previous: CallEditorState,
@@ -22,6 +23,7 @@ export async function saveOrPublishCall(
   for (const [k, v] of form.entries())
     if (!k.startsWith("$ACTION") && typeof v === "string") values[k] = v;
   values.applicant_types = form.getAll("applicant_types").map(String);
+  values.themes = form.getAll("themes").map(String);
   const failed = (error: string): CallEditorState => ({
     ...previous,
     values: str("operation") === "publish" ? previous.values : values,
@@ -125,6 +127,11 @@ export async function saveOrPublishCall(
     opens_at: str("opens_at") ? str("opens_at") + "-06:00" : null,
     closes_at: str("closes_at") ? str("closes_at") + "-06:00" : null,
     rules: {
+      ...(str("grant_rule_version")
+        ? { grant_rule_version: str("grant_rule_version") }
+        : {}),
+      themes: callThemes.filter((t) => form.getAll("themes").includes(t.id)),
+      admin_base: null,
       categories: ["small", "medium", "large"]
         .filter((k) => str(k + "_enabled") === "on")
         .map((k) => ({

@@ -83,7 +83,11 @@ export default async function ApplicationGuide() {
               </tr>
               <tr>
                 <td>{es ? "Mediana" : "Medium"}</td>
-                <td>≤ USD 250.000</td>
+                <td>
+                  {es
+                    ? "Más de USD 100.000 y hasta USD 250.000"
+                    : "Over USD 100,000 and up to USD 250,000"}
+                </td>
                 <td>{es ? "24 meses" : "24 months"}</td>
                 <td>
                   {es ? "10%, en especie o efectivo" : "10%, in-kind or cash"}
@@ -91,7 +95,7 @@ export default async function ApplicationGuide() {
               </tr>
               <tr>
                 <td>{es ? "Grande" : "Large"}</td>
-                <td>≥ USD 250.000</td>
+                <td>{es ? "Más de USD 250.000" : "Over USD 250,000"}</td>
                 <td>{es ? "36 meses" : "36 months"}</td>
                 <td>25%</td>
               </tr>

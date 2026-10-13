@@ -1,3 +1,4 @@
+import { budgetIssues } from "./budget";
 import { z } from "zod";
 import { normalizePhone } from "./phone";
 import { geographyIssues } from "./geography";
@@ -42,6 +43,7 @@ export function stepIssues(
         missing.push(key);
     }
     if (step === 0) {
+      invalid.push(...budgetIssues(payload.budget, payload.concept));
       missing.push(...partnerIssues(payload.concept));
       missing.push(...geographyIssues(payload.concept));
       if (

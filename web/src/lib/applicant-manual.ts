@@ -178,15 +178,15 @@ export const manualChapters: ManualChapter[] = [
       ],
       [
         "Mediana",
-        "Hasta USD 250.000; hasta 24 meses. Cofinanciamiento del 10%, en especie o efectivo.",
+        "Más de USD 100.000 y hasta USD 250.000; hasta 24 meses. Cofinanciamiento del 10%, en especie o efectivo.",
         "Medium",
-        "Up to USD 250,000; up to 24 months. 10% co-financing, in-kind or cash.",
+        "Over USD 100,000 and up to USD 250,000; up to 24 months. 10% co-financing, in-kind or cash.",
       ],
       [
         "Grande",
-        "Desde USD 250.000; hasta 36 meses. Cofinanciamiento equivalente al 25% del monto solicitado al Fondo.",
+        "Más de USD 250.000; hasta 36 meses. Cofinanciamiento equivalente al 25% del monto solicitado al Fondo.",
         "Large",
-        "From USD 250,000; up to 36 months. Co-financing equivalent to 25% of the amount requested from the Fund.",
+        "Over USD 250,000; up to 36 months. Co-financing equivalent to 25% of the amount requested from the Fund.",
       ],
       [
         "Preparar nota conceptual",
@@ -337,6 +337,64 @@ export const manualChapters: ManualChapter[] = [
         "GLF amount + Co-financing = Total cost",
       ],
       ["Guardar borrador | Continuar", "Save draft | Continue"],
+    ],
+  },
+  {
+    id: "presupuesto",
+    title: ["Presupuesto anual GLF y Otros", "Annual GLF and Other budget"],
+    intro: [
+      "Organice los importes en dólares estadounidenses por año de ejecución, categoría y fuente de financiamiento.",
+      "Organize amounts in US dollars by implementation year, category and funding source.",
+    ],
+    steps: [
+      [
+        "Pulse Preparar presupuesto detallado. Los valores anteriores se conservan; no se reparten automáticamente.",
+        "Select Prepare detailed budget. Existing values are preserved and are not allocated automatically.",
+      ],
+      [
+        "Añada partidas, seleccione el año y la categoría, describa el gasto y consigne los aportes GLF y Otros con hasta dos decimales.",
+        "Add lines, select the year and category, describe the expense and enter GLF and Other amounts with up to two decimals.",
+      ],
+      [
+        "Indique si cada partida contiene remuneraciones, honorarios o salarios. Divida las partidas mixtas. Use Pendiente si aún no puede clasificarlas.",
+        "Identify lines containing remuneration, fees or salaries. Split mixed lines. Use Pending when you cannot yet classify a line.",
+      ],
+      [
+        "Revise los subtotales por año, categoría y fuente. Las sumas actualizan los importes generales; el detalle se incluye en la nota conceptual PDF.",
+        "Check subtotals by year, category and source. Totals update summary amounts; the detail is included in the concept note PDF.",
+      ],
+    ],
+    rows: [
+      [
+        "GLF / Otros",
+        "Aportes monetarios equivalentes por fuente; indique USD con hasta dos decimales.",
+        "GLF / Other",
+        "Funding-source amounts in USD with up to two decimals.",
+      ],
+      [
+        "Años",
+        "El presupuesto se adapta a la duración propuesta. Si reduce la duración, revise las partidas de años posteriores.",
+        "Years",
+        "The budget follows the proposed duration. Review later-year lines when reducing duration.",
+      ],
+      [
+        "Remuneraciones",
+        "El cálculo incorpora GLF y Otros y los compara con el 30% del monto solicitado al GLF. Las partidas pendientes no equivalen a cero remuneraciones.",
+        "Remuneration",
+        "The calculation includes GLF and Other and compares them with 30% of GLF funding. Pending lines do not mean zero remuneration.",
+      ],
+    ],
+    tip: [
+      "No vuelva a ingresar los importes generales cuando ya utiliza el detalle: se obtienen de sus partidas.",
+      "Do not re-enter summary amounts when using the detail: they are calculated from its lines.",
+    ],
+    screen: [
+      [
+        "Partida 1 · Año 1 · Personal/Salarios",
+        "Line 1 · Year 1 · Personnel/Salaries",
+      ],
+      ["GLF (USD) · Otros (USD)", "GLF (USD) · Other (USD)"],
+      ["Subtotales por año y categoría", "Subtotals by year and category"],
     ],
   },
   {
@@ -799,8 +857,8 @@ export const manualChapters: ManualChapter[] = [
       "Save, resume and delete drafts",
     ],
     intro: [
-      "La barra de avance incluye los requisitos de información, declaraciones, anexos y guardado. Llegar al 100% no envía la postulación ni significa aprobación. Guardar conserva su trabajo; Enviar lo remite al GLF.",
-      "The progress bar includes information, declarations, attachments and saving. Reaching 100% neither submits nor approves the application. Saving preserves your work; submitting sends it to GLF.",
+      "La barra de avance incluye los requisitos de información, declaraciones y anexos aplicables a la fase; guardar no equivale a cumplirlos. Llegar al 100% no envía la postulación ni significa aprobación. Guardar conserva su trabajo; Enviar lo remite al GLF.",
+      "The progress bar includes information, declarations and attachments applicable to the phase; saving does not establish completeness. Reaching 100% neither submits nor approves the application. Saving preserves your work; submitting sends it to GLF.",
     ],
     steps: [
       [

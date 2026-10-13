@@ -121,6 +121,7 @@ export function callFormValues(c: Call): Record<string, string | string[]> {
       ? new Date(Date.parse(c[k]!) - 6 * 3600000).toISOString().slice(0, 16)
       : "";
   v.applicant_types = c.rules.applicant_types;
+  v.themes = (c.rules.themes ?? []).map(t => t.id);
   v.word_limit = String(c.rules.summary_word_limit);
   v.admin_percent = String(c.rules.max_admin_percent);
   v.attachments = c.rules.required_attachments.join("\n");

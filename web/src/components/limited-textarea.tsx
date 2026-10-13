@@ -21,7 +21,7 @@ export function LimitedTextarea({
       />
       {maxLength !== undefined && (
         <small className="text-limit">
-          {length.toLocaleString(locale)} / {maxLength.toLocaleString(locale)}{" "}
+          {length.toLocaleString(locale)}{" "}
           {locale === "es" ? "caracteres" : "characters"}
         </small>
       )}

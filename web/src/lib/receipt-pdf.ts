@@ -1,3 +1,4 @@
+import { submissionNotice } from "./grant-rules";
 import { PDFDocument, rgb } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import QRCode from "qrcode";
@@ -166,6 +167,7 @@ export async function receiptPdf(input: {
     false,
     9,
   );
+  text(submissionNotice[es ? "es" : "en"], false, 9);
   pdf.setTitle(receiptNumber(input.id));
   pdf.setAuthor("Galápagos Life Fund");
   pdf.setCreationDate(new Date(input.receivedAt));

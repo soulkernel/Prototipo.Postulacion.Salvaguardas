@@ -1,3 +1,5 @@
+import { budgetText } from "./budget";
+import { submissionNotice } from "./grant-rules";
 import { alignmentNarrative, riskNarrative } from "./document-language";
 import { resultText, resultUnits } from "@/lib/project-results";
 import { PDFDocument, rgb, type PDFFont } from "pdf-lib";
@@ -467,6 +469,13 @@ export async function applicationPdf({
             : "Risk description provided by the applicant",
           r.description,
         );
+        if (r.performance_standard)
+          field(
+            es
+              ? "Norma de desempeño asociada"
+              : "Associated performance standard",
+            r.performance_standard,
+          );
         const score = riskScore(r.probability, r.severity);
         sum += score || 0;
 
@@ -547,6 +556,10 @@ export async function applicationPdf({
   const signer =
     payload.concept.contact_name.trim() || "________________________________";
   const signerLines = lines(signer, font, 11);
+  if (kind === "concept" && payload.budget?.lines.length) {
+    draw(es ? "PRESUPUESTO ANUAL" : "ANNUAL BUDGET", true);
+    draw(budgetText(payload.budget, locale));
+  }
   const signatureHeight = 180 + signerLines.length * 15;
   if (y < signatureHeight + 310) newPage();
   const signatureTop = y - 8;
@@ -595,8 +608,7 @@ export async function applicationPdf({
     hourCycle: "h23",
   }).format(stamp);
   page.drawText(
-    generationDate +
-      (es ? " (hora Galápagos)" : " (Galapagos time)"),
+    generationDate + (es ? " (hora Galápagos)" : " (Galapagos time)"),
     { x: 58, y: signatureBottom + 17, size: 9, font, color: rgb(0, 0, 0) },
   );
   y = signatureBottom - 18;
@@ -617,11 +629,7 @@ export async function applicationPdf({
   );
   page.drawImage(qr, { x: 52, y: y - 100, width: 100, height: 100 });
   y -= 118;
-  draw(
-    es
-      ? "El contenido corresponde a una postulación al GLF y está sujeto a validación. Su presentación no garantiza preselección, aprobación ni financiamiento."
-      : "This document contains an application to GLF and is subject to validation. Submission does not guarantee shortlisting, approval or funding.",
-  );
+  draw(submissionNotice[locale]);
   const pages = pdf.getPages();
   for (let i = 0; i < pages.length; i++)
     pages[i].drawText(reference + " · " + (i + 1) + " / " + pages.length, {

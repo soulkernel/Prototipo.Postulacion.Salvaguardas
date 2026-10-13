@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { budgetSchema, budgetIssues } from "./budget";
 import { normalizePhone } from "./phone";
 import { geographyIssues } from "./geography";
 import { emptySummary, hasSummaryParts } from "./summary";
@@ -86,6 +87,7 @@ export const riskSchema = z
     source_id: z.uuid().optional(),
     name: text,
     description: text,
+    performance_standard: z.string().max(2000).optional(),
     dimension: z.enum(["environmental", "social"]),
     probability: scale,
     severity: scale,
@@ -125,6 +127,7 @@ export const payloadSchema = z
   .object({
     concept: conceptSchema,
     activities: z.array(activitySchema).max(100),
+    budget: budgetSchema.optional(),
     phase2: z.record(z.string(), z.string().max(12000)),
     consent: z.boolean(),
     truthful: z.boolean(),
@@ -209,6 +212,9 @@ export type Rules = {
   privacy_es: string;
   privacy_en: string;
   version?: string;
+  grant_rule_version?: string;
+  themes?: { id: string; label_es: string; label_en: string }[];
+  admin_base?: "glf" | "project" | null;
 };
 export type Call = {
   id: string;
@@ -393,6 +399,12 @@ export function validateComplete(
 ): string[] {
   const missing: string[] = [];
   const c = payload.concept;
+  missing.push(...budgetIssues(payload.budget, c));
+  if (
+    rules.themes?.length &&
+    !rules.themes.some((t) => t.id === c.project_type)
+  )
+    missing.push("project_type");
   missing.push(...partnerIssues(c));
   missing.push(...resultIssues(c));
   missing.push(...activityPlanningIssues(payload));

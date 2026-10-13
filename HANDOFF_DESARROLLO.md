@@ -314,3 +314,16 @@ Resumen estructurado: source Formatos y Normativa de postulación/Formato-de-Not
 ## 2026-10-11 — v0.4.20 Manual externo
 Manual público /manual ES/EN: 14 capítulos, esquemas numerados de pantallas (sin datos reales), tablas de campos/acciones, buscador sin acentos, índice, impresión completa aunque haya filtro, diseño móvil. Menú externo, ayuda login/registro y enlaces por paso en nueva pestaña para preservar borrador. Manual interno no construido por instrucción del usuario. Base de datos intacta. npm test: 29 SQL + 42 TS; lint, TypeScript y build correctos. Segunda fase solo contextual, sin instrucciones sobre controles aún no terminados.
 Verificación publicada: Vercel success 608e3a9; 14 capítulos y 110 filas explicativas; búsqueda firma: 7 resultados; índice sin enlaces rotos; ES/EN correcto; ancho móvil 390 px sin desbordamiento; acceso sin cuenta verificado en IAB. Captura scratch/manual-externo-0.4.20.png.
+
+## Actualización 0.5.0 — observaciones GLF
+
+Se implementa el trabajo autorizado en Texto pegado.txt. Consultar docs/Revision_32_observaciones_0.5.0.txt: mapa de los 32 puntos, fórmula de avance, fuentes y siete grupos de decisiones pendientes.
+
+- Presupuesto anual GLF/Otros en centavos, siete categorías, totales consistentes y PDF; resúmenes previos preservados sin distribución artificial. Clasificación explícita de remuneraciones en ambas fuentes; 30% calculado, sin nuevo bloqueo. Base del 10% pendiente: comportamiento vigente conservado.
+- Nuevas postulaciones: mediana >100000 y <=250000; grande >250000. Migración 029 no actualiza convocatorias/drafts/versiones históricos. Borradores anteriores mantienen snapshots.
+- Migración 028: rúbricas 50/55 y checklist 8/7 por fase; plantillas fijadas por convocatoria; borradores independientes y auditoría, concurrencia por revisión y versión. Reutiliza roles/MFA existentes; no se modifican cuentas ni privilegios. No activa cierre/promedio institucional/rechazo automático.
+- Tercera columna Norma de desempeño preparada. safeguard_catalog está vacío y el Excel original indica catálogo definitivo pendiente. No inventar ni marcar selección operativa hasta recibir el catálogo validado.
+- Avance excluye guardar, campos ocultos sustituidos y fases futuras. Aviso institucional PDF centralizado, firma/QR conservados. Manual externo actualizado. Instrumentos PGAS/PPPI/MGQ distinguidos sin decidir modalidad final.
+- Migraciones 028/029 aplicadas manualmente vía Supabase SQL. No usar db push inicial: historial CLI todavía sin conciliar. Funciones vivas coinciden con fuente local tras normalizar espacios (hashes en documento de revisión).
+- QA: 92 pruebas correctas (33 SQL,59 TS), lint, tsc, build y revisión visual de presupuesto/firma/comprobante. Aceptación con usuarios externos/reales sigue siendo distinta de estas pruebas.
+- RAG no se modifica en este lote; tampoco se borran datos, envían invitaciones o presentan resoluciones.

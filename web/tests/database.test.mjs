@@ -1589,18 +1589,360 @@ test("call drafts preserve incomplete content, reject stale edits and require co
 });
 
 test("RAG support notes require internal MFA access, a submitted risk, and cannot alter decisions", async () => {
-  const version = (await db.query("select application_id,revision,payload from public.application_versions order by revision desc limit 1")).rows[0];
+  const version = (
+    await db.query(
+      "select application_id,revision,payload from public.application_versions order by revision desc limit 1",
+    )
+  ).rows[0];
   assert.ok(version);
-  const risk = version.payload.activities.flatMap(a => a.risks)[0];
-  const args = [version.application_id, version.revision, risk.id, ids.reviewer];
-  const insert = () => db.query("insert into public.rag_review_notes(application_id,revision,risk_id,method,query,evidence,observation,created_by) values($1,$2,$3,'e5','Marine risk evidence','{}','Review this evidence',$4) returning id", args);
-  const note = (await as('reviewer',insert)).rows[0];
+  const risk = version.payload.activities.flatMap((a) => a.risks)[0];
+  const args = [
+    version.application_id,
+    version.revision,
+    risk.id,
+    ids.reviewer,
+  ];
+  const insert = () =>
+    db.query(
+      "insert into public.rag_review_notes(application_id,revision,risk_id,method,query,evidence,observation,created_by) values($1,$2,$3,'e5','Marine risk evidence','{}','Review this evidence',$4) returning id",
+      args,
+    );
+  const note = (await as("reviewer", insert)).rows[0];
   assert.ok(note.id);
-  assert.equal((await as('applicant',() => db.query('select id from public.rag_review_notes'))).rows.length,0);
-  await assert.rejects(as('applicant',insert),/row-level security/);
-  await assert.rejects(as('grants',insert),/row-level security/);
-  args[2]='00000000-0000-4000-8000-000000009999';
-  await assert.rejects(as('reviewer',insert),/row-level security/);
-  await assert.rejects(as('reviewer',() => db.query("delete from public.rag_review_notes where id=$1",[note.id])),/permission denied/);
-  assert.equal((await as('admin',() => db.query('select id from public.rag_review_notes'))).rows.length,1);
+  assert.equal(
+    (
+      await as("applicant", () =>
+        db.query("select id from public.rag_review_notes"),
+      )
+    ).rows.length,
+    0,
+  );
+  await assert.rejects(as("applicant", insert), /row-level security/);
+  await assert.rejects(as("grants", insert), /row-level security/);
+  args[2] = "00000000-0000-4000-8000-000000009999";
+  await assert.rejects(as("reviewer", insert), /row-level security/);
+  await assert.rejects(
+    as("reviewer", () =>
+      db.query("delete from public.rag_review_notes where id=$1", [note.id]),
+    ),
+    /permission denied/,
+  );
+  assert.equal(
+    (
+      await as("admin", () =>
+        db.query("select id from public.rag_review_notes"),
+      )
+    ).rows.length,
+    1,
+  );
+});
+
+test("annual detail persists once, uses both sources, validates totals and preserves original summary", async () => {
+  const id = await rpc("create_application", { call_id: call }, "other");
+  const p = structuredClone(payload);
+  p.activities[0].id = crypto.randomUUID();
+  p.activities[0].risks[0].id = crypto.randomUUID();
+  p.budget = {
+    version: "glf-annual-v1",
+    currency: "USD",
+    years: 1,
+    legacy_summary: {
+      requested_amount: 123,
+      cofinance_amount: 0,
+      admin_cost: 0,
+    },
+    lines: [
+      {
+        id: "00000000-0000-4000-8000-000000005001",
+        year: 1,
+        category: "equipment",
+        description: "Materiales",
+        glf: 1000000,
+        other: 10000,
+        remuneration: "no",
+      },
+    ],
+  };
+  Object.assign(p.concept, {
+    requested_amount: 10000,
+    cofinance_amount: 100,
+    admin_cost: 0,
+  });
+  await rpc(
+    "save_application",
+    { application_id: id, expected_revision: 0, payload: p },
+    "other",
+  );
+  const stored = (
+    await db.query(
+      "select payload,rules_snapshot from public.applications where id=$1",
+      [id],
+    )
+  ).rows[0];
+  assert.deepEqual(stored.payload.budget, p.budget);
+  assert.equal(stored.rules_snapshot.grant_rule_version, "glf-2025-v1");
+  await db.query("select private.validate_payload($1,$2,true,1)", [
+    JSON.stringify(p),
+    JSON.stringify(rules),
+  ]);
+  const bad = structuredClone(p);
+  bad.budget.lines[0].glf = 1000001;
+  await assert.rejects(
+    db.query("select private.validate_payload($1,$2,true,1)", [
+      JSON.stringify(bad),
+      JSON.stringify(rules),
+    ]),
+    /GLF_BUDGET_TOTALS/,
+  );
+  bad.budget.lines[0].glf = 1.5;
+  await assert.rejects(
+    rpc(
+      "save_application",
+      { application_id: id, expected_revision: 1, payload: bad },
+      "other",
+    ),
+    /GLF_INVALID_BUDGET_LINE/,
+  );
+  bad.budget.lines[0].glf = 1000000;
+  bad.budget.lines.push(bad.budget.lines[0]);
+  await assert.rejects(
+    rpc(
+      "save_application",
+      { application_id: id, expected_revision: 1, payload: bad },
+      "other",
+    ),
+    /GLF_DUPLICATE_BUDGET_LINE/,
+  );
+});
+test("working reviews isolate evaluators, preserve audit and reject stale versions, invalid scales and role misuse", async () => {
+  const id = await rpc("create_application", { call_id: call }, "other");
+  await db.query(
+    "update public.applications set status='under_review',submitted_at=now(),payload=$2,revision=1 where id=$1",
+    [id, JSON.stringify(payload)],
+  );
+  const version = (
+    await db.query(
+      "insert into public.application_versions(application_id,revision,stage,payload,rules_snapshot,actor_id) values($1,1,1,$2,$3,$4) returning id",
+      [id, JSON.stringify(payload), JSON.stringify(rules), ids.other],
+    )
+  ).rows[0].id;
+  const args = {
+    app_id: id,
+    submitted_version: version,
+    review_kind: "rubric",
+    expected_revision: 0,
+    values_json: { 1.1: 4, 1.2: null },
+    observation: "Primera revisión",
+  };
+  for (const user of [
+    "applicant",
+    "other",
+    "reviewer",
+    "coordinator",
+    "grants",
+  ])
+    await assert.rejects(
+      rpc("save_working_review", args, user),
+      /GLF_FORBIDDEN/,
+    );
+  for (const n of [0, 6, 1.5, "5"])
+    await assert.rejects(
+      rpc(
+        "save_working_review",
+        { ...args, values_json: { 1.1: n } },
+        "committee",
+      ),
+      /GLF_INVALID_REVIEW_SCORE/,
+    );
+  await assert.rejects(
+    rpc(
+      "save_working_review",
+      { ...args, expected_revision: null },
+      "committee",
+    ),
+    /GLF_VERSION_CONFLICT/,
+  );
+  await assert.rejects(
+    as("committee", async () => {
+      await db.query("select set_config('request.jwt.claim.aal','aal1',true)");
+      return db.query(
+        "select public.save_working_review($1,$2,'rubric',0,'{}','')",
+        [id, version],
+      );
+    }),
+    /GLF_FORBIDDEN/,
+  );
+  const first = await rpc("save_working_review", args, "committee");
+  assert.equal(first.revision, 1);
+  await assert.rejects(
+    rpc("save_working_review", args, "committee"),
+    /GLF_VERSION_CONFLICT/,
+  );
+  const second = await rpc("save_working_review", args, "admin");
+  assert.notEqual(first.id, second.id);
+  assert.equal(
+    (
+      await as("committee", () =>
+        db.query(
+          "select id from public.review_working_drafts where application_id=$1",
+          [id],
+        ),
+      )
+    ).rows.length,
+    1,
+  );
+  assert.equal(
+    (
+      await as("other", () =>
+        db.query("select id from public.review_working_drafts"),
+      )
+    ).rows.length,
+    0,
+  );
+  await rpc(
+    "save_working_review",
+    { ...args, expected_revision: 1, values_json: { 1.1: 5 } },
+    "committee",
+  );
+  assert.equal(
+    (
+      await as("committee", () =>
+        db.query(
+          "select id from public.review_draft_history where application_id=$1",
+          [id],
+        ),
+      )
+    ).rows.length,
+    2,
+  );
+  await rpc(
+    "save_working_review",
+    {
+      ...args,
+      review_kind: "administrative",
+      values_json: { cofinance: "not_applicable" },
+    },
+    "grants",
+  );
+  await assert.rejects(
+    rpc(
+      "save_working_review",
+      {
+        ...args,
+        review_kind: "administrative",
+        values_json: { cofinance: "wrong" },
+      },
+      "grants",
+    ),
+    /GLF_INVALID_CHECKLIST/,
+  );
+  await assert.rejects(
+    as("committee", () =>
+      db.query(
+        "update public.review_working_drafts set notes='tamper' where id=$1",
+        [first.id],
+      ),
+    ),
+    /permission denied/,
+  );
+  assert.equal(
+    (await db.query("select status from public.applications where id=$1", [id]))
+      .rows[0].status,
+    "under_review",
+  );
+  await db.query(
+    "insert into public.application_versions(application_id,revision,stage,payload,rules_snapshot,actor_id) values($1,2,1,$2,$3,$4)",
+    [id, JSON.stringify(payload), JSON.stringify(rules), ids.other],
+  );
+  await assert.rejects(
+    rpc("save_working_review", { ...args, expected_revision: 2 }, "committee"),
+    /GLF_VERSION_CONFLICT/,
+  );
+});
+
+test("new grant snapshots correct exact boundaries without changing historical rules or maximum durations", async () => {
+  const mixed = {
+    ...rules,
+    categories: [
+      {
+        ...rules.categories[0],
+        id: "medium",
+        min_amount: 100000,
+        max_amount: 250000,
+        max_months: 24,
+        cofinance_percent: 10,
+      },
+      {
+        ...rules.categories[0],
+        id: "large",
+        min_amount: 250000,
+        max_amount: null,
+        max_months: 36,
+        cofinance_percent: 25,
+      },
+    ],
+  };
+  const c = await rpc(
+    "create_call",
+    {
+      details: {
+        code: "RANGES-2025",
+        title_es: "Rangos",
+        title_en: "Ranges",
+        description_es: "Rangos",
+        description_en: "Ranges",
+        opens_at: "2020-01-01T00:00:00Z",
+        closes_at: "2099-01-01T00:00:00Z",
+        rules: mixed,
+        phase2_schema: [],
+      },
+    },
+    "grants",
+  );
+  await rpc("publish_call", { call_id: c }, "grants");
+  const a = await rpc("create_application", { call_id: c });
+  const snapshot = (
+    await db.query(
+      "select rules_snapshot from public.applications where id=$1",
+      [a],
+    )
+  ).rows[0].rules_snapshot;
+  assert.equal(snapshot.categories[0].min_amount, 100000.01);
+  assert.equal(snapshot.categories[1].min_amount, 250000.01);
+  assert.equal(
+    (await db.query("select rules from public.calls where id=$1", [c])).rows[0]
+      .rules.categories[1].min_amount,
+    250000,
+  );
+  const p = structuredClone(payload);
+  Object.assign(p.concept, {
+    category_id: "large",
+    requested_amount: 250000,
+    cofinance_amount: 62500,
+  });
+  await db.query("select private.validate_payload($1,$2,true,1)", [
+    JSON.stringify(p),
+    JSON.stringify(mixed),
+  ]);
+  await assert.rejects(
+    db.query("select private.validate_payload($1,$2,true,1)", [
+      JSON.stringify(p),
+      JSON.stringify(snapshot),
+    ]),
+    /GLF_CATEGORY_AMOUNT/,
+  );
+  p.concept.requested_amount = 250000.01;
+  p.concept.cofinance_amount = 62500.01;
+  await db.query("select private.validate_payload($1,$2,true,1)", [
+    JSON.stringify(p),
+    JSON.stringify(snapshot),
+  ]);
+  p.concept.end_date = "2030-01-01";
+  await assert.rejects(
+    db.query("select private.validate_payload($1,$2,true,1)", [
+      JSON.stringify(p),
+      JSON.stringify(snapshot),
+    ]),
+    /GLF_CATEGORY_DURATION/,
+  );
 });

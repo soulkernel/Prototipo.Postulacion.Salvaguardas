@@ -6,6 +6,7 @@ import { callIssues, callFormValues } from "@/lib/calls";
 import { saveOrPublishCall } from "@/app/internal/calls/actions";
 import { ActionLabel } from "@/components/submit-button";
 import { CallPreview } from "@/components/call-preview";
+import { callThemes } from "@/lib/grant-rules";
 import { CallCodeField } from "@/components/call-code-field";
 import type { CallCodeSuggestions } from "@/lib/call-codes";
 export function CallEditor({
@@ -74,12 +75,35 @@ export function CallEditor({
         onChange={() => setDirtySequence(state.sequence)}
       >
         <input type="hidden" name="id" value={call?.id ?? ""} />
+        <input
+          type="hidden"
+          name="grant_rule_version"
+          value={call?.rules.grant_rule_version ?? (call ? "" : "glf-2025-v1")}
+        />
         <input type="hidden" name="revision" value={call?.revision ?? 0} />
         <fieldset
           disabled={pending || call?.status === "published"}
           aria-busy={pending}
           className="call-fields"
         >
+          <fieldset>
+            <legend>
+              {es
+                ? "Líneas temáticas de esta convocatoria"
+                : "Themes for this call"}
+            </legend>
+            {callThemes.map((t) => (
+              <label key={t.id}>
+                <input
+                  type="checkbox"
+                  name="themes"
+                  value={t.id}
+                  defaultChecked={checked("themes", t.id, !call)}
+                />
+                {es ? t.label_es : t.label_en}
+              </label>
+            ))}
+          </fieldset>
           <CallCodeField
             defaultCode={field("code")}
             suggestions={codeSuggestions}
@@ -179,8 +203,8 @@ export function CallEditor({
           </h3>
           {[
             ["small", "Pequeña", "Small", 0, 100000, 12, 0],
-            ["medium", "Mediana", "Medium", 100000, 250000, 24, 10],
-            ["large", "Grande", "Large", 250000, "", 36, 25],
+            ["medium", "Mediana", "Medium", 100000.01, 250000, 24, 10],
+            ["large", "Grande", "Large", 250000.01, "", 36, 25],
           ].map(([id, esName, enName, min, max, months, cofinance]) => (
             <fieldset className="activity-card" key={String(id)}>
               <legend>{es ? esName : enName}</legend>
@@ -437,6 +461,13 @@ export function CallEditor({
             <form action={action}>
               <input type="hidden" name="operation" value="publish" />
               <input type="hidden" name="id" value={call.id} />
+              <input
+                type="hidden"
+                name="grant_rule_version"
+                value={
+                  call?.rules.grant_rule_version ?? (call ? "" : "glf-2025-v1")
+                }
+              />
               <input type="hidden" name="revision" value={call.revision} />
               <label className="check-row">
                 <input

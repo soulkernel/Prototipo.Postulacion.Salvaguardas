@@ -55,6 +55,31 @@ test("concept and matrix PDFs embed fonts, paginate and contain a QR image", asy
       },
     ],
   };
+  payload.budget = {
+    version: "glf-annual-v1",
+    currency: "USD",
+    years: 2,
+    lines: [
+      {
+        id: crypto.randomUUID(),
+        year: 1,
+        category: "personnel",
+        description: "Coordinación del proyecto",
+        glf: 1500000,
+        other: 500000,
+        remuneration: "yes",
+      },
+      {
+        id: crypto.randomUUID(),
+        year: 2,
+        category: "equipment",
+        description: "Equipos para la conservación marina",
+        glf: 3500000,
+        other: 0,
+        remuneration: "no",
+      },
+    ],
+  };
   const activity = newActivity();
   activity.title = "Restauración costera";
   activity.description = "Actividad ficticia para verificar exportación.";

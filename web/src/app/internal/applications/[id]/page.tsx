@@ -1,4 +1,5 @@
 import { DocumentDownload } from "@/components/document-download";
+import { budgetText } from "@/lib/budget";
 import { resultText } from "@/lib/project-results";
 import { SubmitButton } from "@/components/submit-button";
 import { getRequestTime } from "@/lib/data";
@@ -141,6 +142,30 @@ export default async function ReviewPage({
             ? "Revisar riesgos con el asistente RAG"
             : "Review risks with the RAG assistant"}
         </Link>
+      )}
+      {underReview &&
+        [
+          "grants_manager",
+          "project_coordinator",
+          "committee_member",
+          "administrator",
+        ].includes(role) && (
+          <Link
+            className="button secondary"
+            href={`/internal/applications/${id}/working-review`}
+          >
+            {es
+              ? "Revisión administrativa y evaluación"
+              : "Administrative review and evaluation"}
+          </Link>
+        )}
+      {a.payload.budget?.lines.length && (
+        <section className="live-card">
+          <h2>{es ? "Presupuesto anual" : "Annual budget"}</h2>
+          <p className="preserve-text">
+            {budgetText(a.payload.budget, locale)}
+          </p>
+        </section>
       )}
       {feedback.error && (
         <p role="alert" className="auth-error">

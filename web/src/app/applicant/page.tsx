@@ -78,7 +78,11 @@ export default async function ApplicantPage({
               <section key={call.id}>
                 <h3>{es ? call.title_es : call.title_en}</h3>
                 <p>{es ? call.description_es : call.description_en}</p>
-                <DeadlineCountdown deadline={call.closes_at} serverNow={requestTime} locale={locale} />
+                <DeadlineCountdown
+                  deadline={call.closes_at}
+                  serverNow={requestTime}
+                  locale={locale}
+                />
                 <h3>
                   {es
                     ? "Escoja la categoría de subvención a la que desea aplicar"
@@ -99,11 +103,19 @@ export default async function ApplicantPage({
                       />
                       <h3>{es ? category.label_es : category.label_en}</h3>
                       <p>
-                        {category.max_amount === null
-                          ? (es ? "Desde USD " : "From USD ") +
-                            category.min_amount.toLocaleString(locale)
-                          : (es ? "Hasta USD " : "Up to USD ") +
-                            category.max_amount.toLocaleString(locale)}
+                        {category.id === "large"
+                          ? es
+                            ? "Más de USD 250.000"
+                            : "Over USD 250,000"
+                          : category.id === "medium"
+                            ? es
+                              ? "Más de USD 100.000 y hasta USD 250.000"
+                              : "Over USD 100,000 and up to USD 250,000"
+                            : category.max_amount === null
+                              ? (es ? "Desde USD " : "From USD ") +
+                                category.min_amount.toLocaleString(locale)
+                              : (es ? "Hasta USD " : "Up to USD ") +
+                                category.max_amount.toLocaleString(locale)}
                       </p>
                       <p>
                         {es ? "Duración máxima: " : "Maximum duration: "}

@@ -43,6 +43,17 @@ export function completionGuidance(
   ];
   const alignment = payload.concept.strategic_alignment;
   keys.forEach((key) => {
+    if (key.startsWith("budget_")) {
+      add(
+        key,
+        0,
+        es
+          ? "Presupuesto: revise descripciones, años y concordancia de los totales."
+          : "Budget: check descriptions, years and matching totals.",
+        field("budget"),
+      );
+      return;
+    }
     if (
       /^(risk_\d|quarters_|activity_\d|activity_objectives_|result_)/.test(
         key,

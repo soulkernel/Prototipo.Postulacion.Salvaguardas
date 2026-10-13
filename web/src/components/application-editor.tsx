@@ -29,6 +29,9 @@ import { SummaryFields } from "./summary-fields";
 import { StrategicFields } from "./strategic-fields";
 import { ProjectResultFields } from "./project-result-fields";
 import { resultText } from "@/lib/project-results";
+import { BudgetFields } from "./budget-fields";
+import { budgetTotals, budgetYears } from "@/lib/budget";
+import { RiskReferenceTable } from "./risk-reference-table";
 import { RiskOverview } from "./risk-overview";
 import { PotentialRiskFields } from "./potential-risk-fields";
 import { riskLabel } from "@/lib/potential-risks";
@@ -227,6 +230,7 @@ export function ApplicationEditor({
   const [lastSaved, setLastSaved] = useState(application.updated_at);
   const [step, setStep] = useState(editable ? 0 : 3);
   const [busy, setBusy] = useState(false);
+  const [budgetUiValid, setBudgetUiValid] = useState(true);
   const [operation, setOperation] = useState<
     "save" | "submit" | "upload" | "prepare"
   >("save");
@@ -437,6 +441,15 @@ export function ApplicationEditor({
   );
   async function persist(submit = false) {
     if (busy || !editable) return;
+    if (!budgetUiValid) {
+      setError(
+        es
+          ? "Revise los importes del presupuesto: use como máximo dos decimales."
+          : "Check budget amounts: use at most two decimals.",
+      );
+      setStep(0);
+      return;
+    }
     if (submit) {
       setShowCompletion(true);
       setCompletionAttempt((n) => n + 1);
@@ -641,6 +654,10 @@ export function ApplicationEditor({
   const fieldIssue = (key: string) =>
     currentIssues.missing.includes(key) || currentIssues.invalid.includes(key);
   const issueLabel = (key: string) => {
+    if (key.startsWith("budget_"))
+      return es
+        ? "Presupuesto anual: revise años, partidas y totales"
+        : "Annual budget: check years, lines and totals";
     if (key === "risk_unlinked")
       return es
         ? "Vincule cada riesgo registrado con al menos una actividad"
@@ -865,7 +882,16 @@ export function ApplicationEditor({
             key={label}
             type="button"
             aria-current={step === i ? "step" : undefined}
+            disabled={busy}
             onClick={() => {
+              if (!budgetUiValid) {
+                setError(
+                  es
+                    ? "Revise los importes del presupuesto: use como máximo dos decimales."
+                    : "Check budget amounts: use at most two decimals.",
+                );
+                return;
+              }
               setStep(i);
               setError("");
             }}
@@ -899,8 +925,8 @@ export function ApplicationEditor({
           />
           <small>
             {es
-              ? "Incluye información, declaraciones, anexos obligatorios y guardado. Completar el 100% no envía la postulación ni implica su aprobación."
-              : "Includes information, declarations, required attachments and saving. Reaching 100% does not submit or approve the application."}
+              ? "Incluye únicamente información, declaraciones y anexos aplicables a esta fase. Guardar no equivale a cumplir requisitos. Completar el 100% no envía la postulación ni implica su aprobación."
+              : "Includes only information, declarations and attachments applicable to this phase. Saving does not establish completeness. Reaching 100% does not submit or approve the application."}
           </small>
         </section>
       )}
@@ -1192,7 +1218,33 @@ export function ApplicationEditor({
                     >
                       {es ? field.es : field.en}
                       <RequiredMark locale={locale} />
-                      {field.type === "textarea" ? (
+                      {field.key === "project_type" && rules.themes?.length ? (
+                        <select
+                          value={payload.concept.project_type}
+                          onChange={(e) =>
+                            updateConcept("project_type", e.target.value)
+                          }
+                        >
+                          <option value="">
+                            {es
+                              ? "Seleccione una línea temática"
+                              : "Select a theme"}
+                          </option>
+                          {!rules.themes.some(
+                            (t) => t.id === payload.concept.project_type,
+                          ) &&
+                            payload.concept.project_type && (
+                              <option value={payload.concept.project_type}>
+                                {payload.concept.project_type}
+                              </option>
+                            )}
+                          {rules.themes.map((t) => (
+                            <option value={t.id} key={t.id}>
+                              {es ? t.label_es : t.label_en}
+                            </option>
+                          ))}
+                        </select>
+                      ) : field.type === "textarea" ? (
                         <LimitedTextarea
                           locale={locale}
                           aria-required="true"
@@ -1207,6 +1259,14 @@ export function ApplicationEditor({
                       ) : (
                         <input
                           aria-required="true"
+                          readOnly={
+                            !!payload.budget?.lines.length &&
+                            [
+                              "requested_amount",
+                              "cofinance_amount",
+                              "admin_cost",
+                            ].includes(field.key)
+                          }
                           type={field.type || "text"}
                           min={field.type === "number" ? 0 : undefined}
                           max={
@@ -1279,6 +1339,42 @@ export function ApplicationEditor({
                   </small>
                 </div>
               )}
+              {step === 0 && (
+                <BudgetFields
+                  value={payload.budget}
+                  years={budgetYears(
+                    payload.concept.start_date,
+                    payload.concept.end_date,
+                  )}
+                  locale={locale}
+                  onValidity={setBudgetUiValid}
+                  onChange={(b) =>
+                    setPayload((p) => {
+                      const budget = {
+                        ...b,
+                        legacy_summary: b.legacy_summary ?? {
+                          requested_amount: p.concept.requested_amount,
+                          cofinance_amount: p.concept.cofinance_amount,
+                          admin_cost: p.concept.admin_cost,
+                        },
+                      };
+                      const t = budgetTotals(budget);
+                      return {
+                        ...p,
+                        budget,
+                        concept: b.lines.length
+                          ? {
+                              ...p.concept,
+                              requested_amount: t.glf / 100,
+                              cofinance_amount: t.other / 100,
+                              admin_cost: (t.admin.glf + t.admin.other) / 100,
+                            }
+                          : p.concept,
+                      };
+                    })
+                  }
+                />
+              )}
               {step === 1 && (
                 <ActivityPlanningFields
                   payload={payload}
@@ -1296,6 +1392,11 @@ export function ApplicationEditor({
                       ? "Proyecto completo: campos oficiales de la convocatoria"
                       : "Full proposal: official call fields"}
                   </h2>
+                  <p>
+                    {es
+                      ? "PGAS: Plan de Gestión Ambiental y Social. PPPI: Plan de Participación de las Partes Interesadas. MGQ: Mecanismo de Gestión de Quejas. Complete los instrumentos requeridos por GLF en esta convocatoria."
+                      : "ESMP: Environmental and Social Management Plan. SEP: Stakeholder Engagement Plan. GRM: Grievance Redress Mechanism. Complete the instruments required by GLF for this call."}
+                  </p>
                   {call.phase2_schema.map((f) => (
                     <label key={f.id} data-validation-field={"phase2:" + f.id}>
                       {es ? f.label_es : f.label_en}
@@ -1339,6 +1440,18 @@ export function ApplicationEditor({
                   : "Identify and assess risks for each activity. Mitigation and the ESMP are completed in Phase 2. If you identify no risks, explain why."}
               </p>
               <RiskOverview payload={payload} locale={locale} />
+              <RiskReferenceTable
+                payload={payload}
+                locale={locale}
+                references={[
+                  ...new Set(
+                    catalog.map((c) => c.normative_reference).filter(Boolean),
+                  ),
+                ]}
+                onChange={(ai, ri, performance_standard) =>
+                  updateRisk(ai, ri, { performance_standard })
+                }
+              />
               {payload.activities.map((activity, ai) => (
                 <section
                   className="activity-card"
@@ -1984,7 +2097,7 @@ export function ApplicationEditor({
           <div className="document-actions">
             <button
               className="button dark"
-              disabled={busy || dirty}
+              disabled={busy || dirty || !budgetUiValid}
               aria-busy={busy && operation === "prepare"}
               onClick={async () => {
                 if (busy) return;
@@ -2290,7 +2403,7 @@ export function ApplicationEditor({
               {step === 3 ? (
                 <button
                   className="button primary"
-                  disabled={busy || !signedDocumentsReady}
+                  disabled={busy || !signedDocumentsReady || !budgetUiValid}
                   aria-busy={busy && operation === "submit"}
                   onClick={() => persist(true)}
                   aria-describedby={
@@ -2314,6 +2427,14 @@ export function ApplicationEditor({
                     error ? "application-action-error" : undefined
                   }
                   onClick={() => {
+                    if (!budgetUiValid) {
+                      setError(
+                        es
+                          ? "Revise los importes del presupuesto: use como máximo dos decimales."
+                          : "Check budget amounts: use at most two decimals.",
+                      );
+                      return;
+                    }
                     setCheckedStep(step);
                     const issues = stepIssues(
                       payload,
