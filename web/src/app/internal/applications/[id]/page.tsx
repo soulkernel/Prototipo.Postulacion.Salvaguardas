@@ -1,4 +1,5 @@
 import { callThemeLabel } from "@/lib/call-themes";
+import { attachmentLabel } from "@/lib/attachment-requirements";
 import { DocumentDownload } from "@/components/document-download";
 import { budgetText } from "@/lib/budget";
 import { resultText } from "@/lib/project-results";
@@ -223,7 +224,7 @@ export default async function ReviewPage({
         {docs?.map((d) => (
           <div className="document-row" key={d.id}>
             <span>
-              {d.kind} · {d.file_name}
+              {attachmentLabel(a.rules_snapshot, d.kind, locale)} · {d.file_name}
             </span>
             <DocumentDownload href={"/files/" + d.id} locale={locale}>
               {es ? "Descargar" : "Download"}

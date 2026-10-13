@@ -2001,3 +2001,52 @@ test("custom bilingual themes survive call save, publication and frozen applican
   assert.deepEqual(stored.rules_snapshot.themes, [custom]);
   assert.deepEqual(stored.rules_snapshot.theme_options, [custom, unchecked]);
 });
+
+test("structured attachment requirements survive publication and frozen rules without changing legacy required identifiers", async () => {
+  const attachment = {
+    id: "attachment_12345678-1234-4123-8123-123456789012",
+    label_es: "Certificado institucional",
+    label_en: "Institutional certificate",
+    formats: ["pdf"],
+    conditions: ["notarized"],
+    instructions_es: "Copia legible",
+    instructions_en: "Readable copy",
+  };
+  const draft = await rpc(
+    "save_call_draft",
+    {
+      details: {
+        code: "ATTACHMENT-ROUNDTRIP",
+        title_es: "Anexos",
+        title_en: "Attachments",
+        description_es: "Descripción",
+        description_en: "Description",
+        rules_version: "1",
+        opens_at: "2020-01-01T00:00:00Z",
+        closes_at: "2099-01-01T00:00:00Z",
+        rules: {
+          ...rules,
+          required_attachments: [attachment.id],
+          attachment_requirements: [attachment],
+        },
+        phase2_schema: [],
+      },
+    },
+    "grants",
+  );
+  const published = await rpc(
+    "publish_call_reviewed",
+    { call_id: draft.id, expected_revision: draft.revision },
+    "grants",
+  );
+  assert.deepEqual(published.rules.required_attachments, [attachment.id]);
+  const appId = await rpc("create_application", { call_id: draft.id }, "other");
+  const app = (
+    await db.query(
+      "select rules_snapshot from public.applications where id=$1",
+      [appId],
+    )
+  ).rows[0];
+  assert.deepEqual(app.rules_snapshot.attachment_requirements, [attachment]);
+  assert.deepEqual(app.rules_snapshot.required_attachments, [attachment.id]);
+});

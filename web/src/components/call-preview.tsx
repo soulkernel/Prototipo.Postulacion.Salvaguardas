@@ -1,3 +1,7 @@
+import {
+  requiredAttachments,
+  conditionLabel,
+} from "@/lib/attachment-requirements";
 import type { Call, Locale } from "@/lib/domain";
 export function CallPreview({
   call: c,
@@ -104,8 +108,22 @@ export function CallPreview({
       <h3>{es ? "Anexos obligatorios" : "Required attachments"}</h3>
       {c.rules.required_attachments.length ? (
         <ul>
-          {c.rules.required_attachments.map((a, i) => (
-            <li key={i}>{a}</li>
+          {requiredAttachments(c.rules).map((r) => (
+            <li key={r.id}>
+              <strong>{es ? r.label_es : r.label_en}</strong> ·{" "}
+              {r.formats.map((f) => f.toUpperCase()).join(", ")}
+              {!!r.conditions.length && (
+                <span>
+                  {" "}
+                  · {r.conditions.map((c) => conditionLabel(c, es)).join(" · ")}
+                </span>
+              )}
+              {(es ? r.instructions_es : r.instructions_en) && (
+                <p className="call-preserve-lines">
+                  {es ? r.instructions_es : r.instructions_en}
+                </p>
+              )}
+            </li>
           ))}
         </ul>
       ) : (

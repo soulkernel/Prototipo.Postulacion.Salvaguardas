@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { callIssues, type CallEditorState } from "@/lib/calls";
 import type { Call } from "@/lib/domain";
+import { attachmentRequirementsSchema } from "@/lib/attachment-requirements";
 import { callThemes } from "@/lib/grant-rules";
 import { parseCallThemes } from "@/lib/call-themes";
 import { suggestCallCodes } from "@/lib/call-codes";
@@ -97,6 +98,22 @@ export async function saveOrPublishCall(
         : "Review themes: complete names in both languages, no duplicates and at most 50 options.",
     );
   }
+  let attachments;
+  if (str("attachment_requirements")) {
+    try {
+      if (str("attachment_requirements").length > 90000)
+        throw new Error("Too large");
+      attachments = attachmentRequirementsSchema.parse(
+        JSON.parse(str("attachment_requirements")),
+      );
+    } catch {
+      return failed(
+        es
+          ? "Revise los anexos: nombres en ambos idiomas, al menos un formato, sin duplicados y condiciones completas. La firma electrónica requiere PDF; otra condición requiere instrucciones en ambos idiomas."
+          : "Review attachments: bilingual names, at least one format, no duplicates and complete conditions. Electronic signatures require PDF; other conditions require bilingual instructions.",
+      );
+    }
+  }
   const { data: codeRows, error: codeReadError } = await db
     .from("calls")
     .select("id,code");
@@ -166,7 +183,10 @@ export async function saveOrPublishCall(
       applicant_types: values.applicant_types,
       summary_word_limit: Number(str("word_limit")),
       max_admin_percent: Number(str("admin_percent")),
-      required_attachments: lines("attachments"),
+      required_attachments: attachments
+        ? attachments.map((r) => r.id)
+        : lines("attachments"),
+      ...(attachments ? { attachment_requirements: attachments } : {}),
       privacy_es: str("privacy_es"),
       privacy_en: str("privacy_en"),
     },

@@ -1,3 +1,4 @@
+import type { AttachmentRequirement } from "./attachment-requirements";
 import { z } from "zod";
 import { budgetSchema, budgetIssues } from "./budget";
 import { normalizePhone } from "./phone";
@@ -209,6 +210,7 @@ export type Rules = {
   summary_word_limit: number;
   max_admin_percent: number;
   required_attachments: string[];
+  attachment_requirements?: AttachmentRequirement[];
   privacy_es: string;
   privacy_en: string;
   version?: string;

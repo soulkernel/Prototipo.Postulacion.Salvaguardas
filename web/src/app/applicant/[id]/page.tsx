@@ -7,6 +7,7 @@ import { ApplicationEditor } from "@/components/application-editor";
 import { ReceiptDownload } from "@/components/receipt-download";
 import { receiptDate } from "@/lib/receipt";
 import type { Call } from "@/lib/domain";
+export const maxDuration = 60;
 export default async function ApplicationPage({
   params,
   searchParams,

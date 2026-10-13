@@ -188,3 +188,142 @@ test("custom theme identifiers display the frozen bilingual label and preserve h
   );
   assert.equal(callThemeLabel("Histórico", null, "en"), "Histórico");
 });
+
+test("attachment definitions require formats, bilingual names and coherent conditions while preserving legacy attachments", async () => {
+  const {
+    attachmentRequirementsSchema,
+    attachmentDraftSchema,
+    requiredAttachments,
+    attachmentAccept,
+    attachmentFormatAllowed,
+    attachmentLabel,
+  } = await import("../src/lib/attachment-requirements");
+  const r = {
+    id: "attachment_1",
+    label_es: "Certificado",
+    label_en: "Certificate",
+    formats: ["pdf"],
+    conditions: [],
+    instructions_es: "",
+    instructions_en: "",
+  };
+  assert.equal(attachmentRequirementsSchema.safeParse([r]).success, true);
+  for (const bad of [
+    { ...r, label_en: "" },
+    { ...r, formats: [] },
+    { ...r, conditions: ["other"] },
+    { ...r, conditions: ["electronic_signature"], formats: ["jpg"] },
+    { ...r, formats: ["exe"] },
+    { ...r, formats: ["pdf", "pdf"] },
+    { ...r, id: "agreement" },
+    { ...r, instructions_es: "Sin traducción" },
+  ])
+    assert.equal(attachmentRequirementsSchema.safeParse([bad]).success, false);
+  assert.equal(
+    attachmentRequirementsSchema.safeParse([
+      r,
+      { ...r, id: "attachment_2", label_es: "CERTIFICADO" },
+    ]).success,
+    false,
+  );
+  assert.equal(
+    attachmentDraftSchema.safeParse([{ ...r, label_es: "", label_en: "" }])
+      .success,
+    true,
+  );
+  const legacy = requiredAttachments({
+    required_attachments: ["CV", "concept_signed"],
+  });
+  assert.equal(legacy[0].id, "CV");
+  assert.ok(legacy[0].formats.includes("docx"));
+  assert.deepEqual(legacy[1].formats, ["pdf"]);
+  assert.deepEqual(legacy[1].conditions, ["electronic_signature"]);
+  assert.equal(
+    attachmentAccept({ ...legacy[0], formats: ["jpg", "png"] }),
+    ".jpg,.jpeg,.png",
+  );
+  assert.equal(
+    attachmentFormatAllowed({ ...legacy[0], formats: ["jpg"] }, "jpeg"),
+    true,
+  );
+  assert.equal(
+    attachmentLabel(
+      {
+        required_attachments: ["attachment_1"],
+        attachment_requirements: [r as (typeof legacy)[number]],
+      },
+      "attachment_1",
+      "en",
+    ),
+    "Certificate",
+  );
+});
+
+test("required uploads enforce format and embedded signatures, recheck the latest file, and preserve manual notarization review", async () => {
+  const { validateRequiredFile, validateRequiredDocuments } =
+    await import("../src/lib/attachment-validation");
+  const { PDFDocument } = await import("pdf-lib");
+  const pdf = await PDFDocument.create();
+  pdf.addPage();
+  const bytes = await pdf.save();
+  const r = {
+    id: "attachment_1",
+    label_es: "Documento",
+    label_en: "Document",
+    formats: ["pdf"] as ("pdf" | "jpg")[],
+    conditions: [] as ("electronic_signature" | "notarized")[],
+    instructions_es: "",
+    instructions_en: "",
+  };
+  assert.equal(await validateRequiredFile(r, "document.pdf", bytes), null);
+  assert.equal(
+    await validateRequiredFile(
+      { ...r, formats: ["jpg"] },
+      "document.pdf",
+      bytes,
+    ),
+    "GLF_ATTACHMENT_FORMAT",
+  );
+  assert.equal(
+    await validateRequiredFile(
+      { ...r, conditions: ["electronic_signature"] },
+      "document.pdf",
+      bytes,
+    ),
+    "GLF_SIGNATURE_MISSING",
+  );
+  assert.equal(
+    await validateRequiredFile(
+      { ...r, conditions: ["notarized"] },
+      "document.pdf",
+      bytes,
+    ),
+    null,
+    "notarization authenticity remains a human review",
+  );
+  assert.equal(
+    await validateRequiredDocuments([r], [], async () => bytes),
+    "GLF_ATTACHMENT_REQUIRED",
+  );
+  assert.equal(
+    await validateRequiredDocuments(
+      [r],
+      [
+        { kind: r.id, file_name: "wrong.jpg", storage_path: "new" },
+        { kind: r.id, file_name: "document.pdf", storage_path: "old" },
+      ],
+      async () => bytes,
+    ),
+    "GLF_ATTACHMENT_UNREADABLE",
+  );
+  assert.equal(
+    await validateRequiredDocuments(
+      [r],
+      [{ kind: r.id, file_name: "document.pdf", storage_path: "x" }],
+      async () => {
+        throw new Error("unavailable");
+      },
+    ),
+    "GLF_ATTACHMENT_UNREADABLE",
+  );
+});

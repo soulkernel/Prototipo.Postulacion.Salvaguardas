@@ -997,6 +997,12 @@ export const manualChapters: ManualChapter[] = [
         "A signature image or typed name is not an electronic signature. The portal detects structural presence; GLF reviews validity. If no signature is detected, sign correctly and upload again.",
       ],
       [
+        "Anexos adicionales de la convocatoria",
+        "Cada documento requerido tiene su propia tarjeta con nombre, formatos admitidos, condiciones e instrucciones. Cargue el archivo en la tarjeta correspondiente y pulse Guardar anexo. Una firma electrónica requiere PDF; la autenticidad de la firma y la notarización serán revisadas por GLF.",
+        "Additional attachments required by the call",
+        "Each required document has its own card with its name, accepted formats, conditions and instructions. Upload the file in the matching card and select Save attachment. Electronic signatures require PDF; GLF will review signature authenticity and notarization.",
+      ],
+      [
         "Documento de versión anterior",
         "Si modifica el contenido después de preparar o firmar, genere, descargue, firme y cargue nuevamente ambos documentos para que coincidan con la versión vigente.",
         "Document from previous version",

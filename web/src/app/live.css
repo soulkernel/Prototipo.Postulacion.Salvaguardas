@@ -1148,3 +1148,13 @@ a {
 .call-theme-row .live-actions { margin: 0; gap: 8px; }
 .call-theme-row .button { padding: 6px 10px; font-size: .88rem; }
 .call-theme-entry { display: grid; gap: 12px; padding: 16px; border: 1px solid #d8e4ed; border-radius: .65rem; background: #f8fafc; }
+
+.call-category-card, .call-attachment-card { border: 1px solid #d8e4ed; border-radius: 12px; padding: 20px; display: grid; gap: 16px; background: #fff; }
+.call-category-card > h4 { margin: 0; padding-bottom: 12px; border-bottom: 1px solid #e6edf2; font-size: 18px; color: #1e3a6c; }
+.call-attachment-editor, .required-attachment-uploads { display: grid; gap: 16px; }
+.call-attachment-card > header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.call-attachment-card h4 { margin: 0; }
+.call-attachment-card fieldset { margin: 0; }
+.call-attachment-card small { color: #506071; line-height: 1.5; }
+.attachment-format-options { display: flex; flex-wrap: wrap; gap: 12px; }
+.attachment-format-options .check-row { margin: 0; }

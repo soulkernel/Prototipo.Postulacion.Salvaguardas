@@ -2,6 +2,11 @@
 import { useActionState, useState } from "react";
 import Link from "@/components/feedback-link";
 import type { Call, Locale } from "@/lib/domain";
+import {
+  requiredAttachments,
+  attachmentDraftSchema,
+} from "@/lib/attachment-requirements";
+import { CallAttachmentEditor } from "./call-attachment-editor";
 import { callIssues, callFormValues } from "@/lib/calls";
 import { saveOrPublishCall } from "@/app/internal/calls/actions";
 import { ActionLabel } from "@/components/submit-button";
@@ -46,6 +51,15 @@ export function CallEditor({
     if (parsed.success) initialOptions = parsed.data;
   } catch {
     /* Keep the last valid options when a malformed request fails. */
+  }
+  let initialAttachments = call ? requiredAttachments(call.rules) : [];
+  try {
+    const parsed = attachmentDraftSchema.safeParse(
+      JSON.parse(String(values.attachment_requirements ?? "null")),
+    );
+    if (parsed.success) initialAttachments = parsed.data;
+  } catch {
+    /* Preserve existing requirements if a malformed request fails. */
   }
   const field = (name: string, fallback = "") =>
     String(values[name] ?? fallback);
@@ -223,8 +237,8 @@ export function CallEditor({
             ["medium", "Mediana", "Medium", 100000.01, 250000, 24, 10],
             ["large", "Grande", "Large", 250000.01, "", 36, 25],
           ].map(([id, esName, enName, min, max, months, cofinance]) => (
-            <fieldset className="activity-card" key={String(id)}>
-              <legend>{es ? esName : enName}</legend>
+            <section className="call-category-card" key={String(id)}>
+              <h4>{es ? esName : enName}</h4>
               <label className="check-row">
                 <input
                   type="checkbox"
@@ -280,7 +294,7 @@ export function CallEditor({
                   </label>
                 ))}
               </div>
-            </fieldset>
+            </section>
           ))}
           <div className="live-grid">
             <label>
@@ -308,12 +322,12 @@ export function CallEditor({
               />
             </label>
           </div>
-          <label>
-            {es
-              ? "Anexos obligatorios: un nombre por línea"
-              : "Required attachments: one name per line"}
-            <textarea name="attachments" defaultValue={field("attachments")} />
-          </label>
+          <CallAttachmentEditor
+            key={state.sequence}
+            initial={initialAttachments}
+            locale={locale}
+            onEdit={() => setDirtySequence(state.sequence)}
+          />
           <label>
             Aviso de privacidad en español
             <textarea name="privacy_es" defaultValue={field("privacy_es")} />

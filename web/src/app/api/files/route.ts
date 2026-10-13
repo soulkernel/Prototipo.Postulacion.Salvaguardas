@@ -3,6 +3,8 @@ import { createHash } from "node:crypto";
 import { getViewer } from "@/lib/data";
 import { validateFile } from "@/lib/files";
 import { detectPdfSignature } from "@/lib/pdf-signature";
+import { requiredAttachments } from "@/lib/attachment-requirements";
+import { validateRequiredFile } from "@/lib/attachment-validation";
 import { z } from "zod";
 export const runtime = "nodejs";
 export async function POST(request: NextRequest) {
@@ -38,6 +40,23 @@ export async function POST(request: NextRequest) {
   const valid = validateFile(file.name, bytes);
   if (!valid)
     return NextResponse.json({ error: "Invalid file" }, { status: 400 });
+  const { data: applicationRules, error: rulesError } = await viewer.db
+    .from("applications")
+    .select("rules_snapshot")
+    .eq("id", app.data)
+    .maybeSingle();
+  if (rulesError || !applicationRules)
+    return NextResponse.json(
+      { error: "Application unavailable" },
+      { status: 403 },
+    );
+  const requirement = requiredAttachments(applicationRules.rules_snapshot).find(
+    (r) => r.id === kind,
+  );
+  if (requirement) {
+    const issue = await validateRequiredFile(requirement, file.name, bytes);
+    if (issue) return NextResponse.json({ error: issue }, { status: 422 });
+  }
   if (
     ["concept_signed", "matrix_signed"].includes(kind) &&
     valid.extension !== "pdf"

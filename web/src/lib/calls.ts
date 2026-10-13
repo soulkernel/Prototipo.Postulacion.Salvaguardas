@@ -1,3 +1,7 @@
+import {
+  requiredAttachments,
+  attachmentRequirementsSchema,
+} from "./attachment-requirements";
 import type { Call, Locale } from "./domain";
 import {
   themeOptions,
@@ -14,6 +18,21 @@ export type CallEditorState = {
 export function callIssues(c: Call, locale: Locale, now: number): string[] {
   const es = locale === "es";
   const issues: string[] = [];
+  if (c.rules.attachment_requirements !== undefined) {
+    const parsed = attachmentRequirementsSchema.safeParse(
+      c.rules.attachment_requirements,
+    );
+    if (
+      !parsed.success ||
+      JSON.stringify(parsed.data.map((r) => r.id)) !==
+        JSON.stringify(c.rules.required_attachments)
+    )
+      issues.push(
+        es
+          ? "Revise nombres, formatos y condiciones de los anexos en ambos idiomas."
+          : "Review attachment names, formats and conditions in both languages.",
+      );
+  }
   if (c.rules.theme_options !== undefined || c.rules.themes?.length) {
     try {
       parseCallThemes(
@@ -147,6 +166,7 @@ export function callFormValues(c: Call): Record<string, string | string[]> {
   v.word_limit = String(c.rules.summary_word_limit);
   v.admin_percent = String(c.rules.max_admin_percent);
   v.attachments = c.rules.required_attachments.join("\n");
+  v.attachment_requirements = JSON.stringify(requiredAttachments(c.rules));
   v.privacy_es = c.rules.privacy_es;
   v.privacy_en = c.rules.privacy_en;
   v.phase2_es = c.phase2_schema.map((f) => f.label_es).join("\n");

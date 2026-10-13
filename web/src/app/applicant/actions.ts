@@ -2,6 +2,11 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import {
+  requiredAttachments,
+  attachmentRequirementsSchema,
+} from "@/lib/attachment-requirements";
+import { validateRequiredDocuments } from "@/lib/attachment-validation";
 import { requireViewer } from "@/lib/data";
 import { payloadSchema, emptyPayload, applicantDefaults } from "@/lib/domain";
 import { normalizePhone } from "@/lib/phone";
@@ -275,6 +280,53 @@ export async function submitDraft(
     return { ok: false, error: "GLF_INVALID_SUMMARY" };
   if (!(await validStoredGeography(db, id)))
     return { ok: false, error: "GLF_INVALID_GEOGRAPHY" };
+  const { data: attachmentApp, error: attachmentReadError } = await db
+    .from("applications")
+    .select("rules_snapshot,stage")
+    .eq("id", id)
+    .maybeSingle();
+  if (attachmentReadError || !attachmentApp)
+    return { ok: false, error: "GLF_ATTACHMENT_UNREADABLE" };
+  if (attachmentApp.rules_snapshot.attachment_requirements !== undefined) {
+    if (
+      !attachmentRequirementsSchema.safeParse(
+        attachmentApp.rules_snapshot.attachment_requirements,
+      ).success
+    )
+      return { ok: false, error: "GLF_ATTACHMENT_UNREADABLE" };
+    const requirements = requiredAttachments(
+      attachmentApp.rules_snapshot,
+    ).filter(
+      (r) =>
+        attachmentApp.stage !== 1 ||
+        !["concept_signed", "matrix_signed"].includes(r.id),
+    );
+    if (requirements.length) {
+      const { data: files, error: filesError } = await db
+        .from("application_documents")
+        .select("kind,file_name,storage_path")
+        .eq("application_id", id)
+        .in(
+          "kind",
+          requirements.map((r) => r.id),
+        )
+        .order("created_at", { ascending: false })
+        .limit(1000);
+      if (filesError) return { ok: false, error: "GLF_ATTACHMENT_UNREADABLE" };
+      const issue = await validateRequiredDocuments(
+        requirements,
+        files ?? [],
+        async (path) => {
+          const { data, error } = await db.storage
+            .from("application-files")
+            .download(path);
+          if (error || !data) throw new Error("Unavailable attachment");
+          return new Uint8Array(await data.arrayBuffer());
+        },
+      );
+      if (issue) return { ok: false, error: issue };
+    }
+  }
   const { data: signatureApp } = await db
     .from("applications")
     .select("stage,revision")

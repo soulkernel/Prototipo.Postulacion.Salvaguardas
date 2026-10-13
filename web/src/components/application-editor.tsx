@@ -1,4 +1,6 @@
 "use client";
+import { RequiredAttachmentUploads } from "./required-attachment-uploads";
+import { attachmentLabel } from "@/lib/attachment-requirements";
 import { FileDropField } from "./file-drop-field";
 import { LimitedTextarea } from "./limited-textarea";
 import { callThemeLabel } from "@/lib/call-themes";
@@ -103,6 +105,18 @@ const levels = {
   },
 };
 function message(code: string, es: boolean) {
+  if (code.includes("ATTACHMENT_FORMAT"))
+    return es
+      ? "El formato de este anexo no está permitido. Revise los formatos indicados junto al documento y vuelva a cargarlo."
+      : "This attachment format is not allowed. Check the listed formats and upload it again.";
+  if (code.includes("ATTACHMENT_REQUIRED"))
+    return es
+      ? "Falta un anexo obligatorio. Revise la lista de documentos requeridos."
+      : "A required attachment is missing. Review the required documents.";
+  if (code.includes("ATTACHMENT_UNREADABLE"))
+    return es
+      ? "No se pudo comprobar un anexo requerido. Vuelva a cargarlo o intente nuevamente."
+      : "A required attachment could not be checked. Upload it again or retry.";
   if (code.includes("SUBMISSION_UNAVAILABLE"))
     return es
       ? "No se pudo confirmar el envío por un problema técnico del sistema. Sus documentos continúan guardados. Revise el estado en Mis postulaciones antes de volver a enviar; si persiste, contacte al GLF indicando la referencia del expediente."
@@ -2205,65 +2219,14 @@ export function ApplicationEditor({
               />
             );
           })}
-          {rules.required_attachments.filter(
-            (k) => !["concept_signed", "matrix_signed"].includes(k),
-          ).length > 0 && (
-            <section>
-              <h3>
-                {es
-                  ? "Otros anexos requeridos por la convocatoria"
-                  : "Other attachments required by this call"}
-              </h3>
-              {rules.required_attachments
-                .filter((k) => !["concept_signed", "matrix_signed"].includes(k))
-                .map((kind) => (
-                  <form
-                    key={kind}
-                    className="live-form"
-                    onSubmit={(event) => {
-                      event.preventDefault();
-                      void uploadForm(event.currentTarget);
-                    }}
-                  >
-                    <h4>{kind}</h4>
-                    <input type="hidden" name="kind" value={kind} />
-                    {documents
-                      .filter((d) => d.kind === kind)
-                      .map((d) => (
-                        <div className="document-row" key={d.id}>
-                          {d.file_name}
-                          <DocumentDownload
-                            href={`/files/${d.id}`}
-                            locale={locale}
-                          >
-                            {es ? "Descargar" : "Download"}
-                          </DocumentDownload>
-                        </div>
-                      ))}
-                    <label>
-                      {es ? "Archivo (máximo 4 MB)" : "File (maximum 4 MB)"}
-                      <FileDropField
-                        locale={locale}
-                        accept=".pdf,.png,.jpg,.jpeg,.docx,.xlsx"
-                        disabled={busy}
-                      />
-                    </label>
-                    <button
-                      className="button secondary"
-                      disabled={busy}
-                      aria-busy={busy && operation === "upload"}
-                    >
-                      <ActionLabel
-                        busy={busy && operation === "upload"}
-                        pendingLabel={es ? "Guardando…" : "Saving…"}
-                      >
-                        {es ? "Guardar anexo" : "Save attachment"}
-                      </ActionLabel>
-                    </button>
-                  </form>
-                ))}
-            </section>
-          )}
+          <RequiredAttachmentUploads
+            rules={rules}
+            stage={application.stage}
+            locale={locale}
+            documents={documents}
+            busy={busy || !editable}
+            onUpload={uploadForm}
+          />
         </section>
       )}
       {step === 3 && application.stage !== 1 && (
@@ -2279,19 +2242,31 @@ export function ApplicationEditor({
                       : "Signed Concept Note (PDF)",
                   ]
                 : []),
-              ...rules.required_attachments,
+              ...rules.required_attachments.map((k) =>
+                attachmentLabel(rules, k, locale),
+              ),
             ].join(", ") || (es ? "Ninguno adicional" : "None additional")}
           </p>
-          {documents.map((d) => (
-            <div className="document-row" key={d.id}>
-              <span>
-                {d.file_name} · {d.kind}
-              </span>
-              <DocumentDownload href={"/files/" + d.id} locale={locale}>
-                {es ? "Descargar" : "Download"}
-              </DocumentDownload>
-            </div>
-          ))}
+          <RequiredAttachmentUploads
+            rules={rules}
+            stage={application.stage}
+            locale={locale}
+            documents={documents}
+            busy={busy || !editable}
+            onUpload={uploadForm}
+          />
+          {documents
+            .filter((d) => !rules.required_attachments.includes(d.kind))
+            .map((d) => (
+              <div className="document-row" key={d.id}>
+                <span>
+                  {d.file_name} · {d.kind}
+                </span>
+                <DocumentDownload href={"/files/" + d.id} locale={locale}>
+                  {es ? "Descargar" : "Download"}
+                </DocumentDownload>
+              </div>
+            ))}
           {editable && (
             <form
               onSubmit={(event) => {
@@ -2304,13 +2279,7 @@ export function ApplicationEditor({
                 {es ? "Tipo de anexo" : "Attachment type"}
                 <RequiredMark locale={locale} />
                 <select name="kind">
-                  {[
-                    ...new Set([
-                      "concept_signed",
-                      "other",
-                      ...rules.required_attachments,
-                    ]),
-                  ].map((k) => (
+                  {[...new Set(["concept_signed", "other"])].map((k) => (
                     <option value={k} key={k}>
                       {k === "concept_signed"
                         ? es
