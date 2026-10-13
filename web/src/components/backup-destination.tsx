@@ -1,4 +1,5 @@
 "use client";
+import { ModuleHeading } from "@/components/module-heading";
 import {
   Download,
   Database,
@@ -246,7 +247,9 @@ export function BackupDestination({
   const callTitle = (id: string) => calls.find((c) => c.id === id)?.title || id;
   return (
     <>
-      <h1>{es ? "Descargas y respaldos" : "Downloads and backups"}</h1>
+      <ModuleHeading
+        title={es ? "Descargas y respaldos" : "Downloads and backups"}
+      />
       <div className="backup-options">
         <button
           type="button"

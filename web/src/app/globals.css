@@ -2911,3 +2911,32 @@ select {
 .file-drop-hint { display:flex; gap:.6rem; align-items:center; }
 .file-drop-zone input { max-width:100%; min-width:0; }
 .text-limit { display:block; color:#536378; font-weight:400; font-size:.85rem; }
+
+/* Shared internal module heading: compact, consistent and independent of forms. */
+.module-heading {
+  margin: 16px 0 24px;
+  padding: 18px 22px;
+  background: #fff;
+  border: 1px solid #dbe3ee;
+  border-left: 4px solid var(--teal-dark);
+  border-radius: 14px;
+  min-width: 0;
+}
+.module-heading h1 {
+  margin: 0;
+  color: var(--navy);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.module-heading-description {
+  margin-top: 8px;
+  color: #586d81;
+  line-height: 1.6;
+}
+.module-heading-description p { margin: 0; }
+@media (max-width: 640px) {
+  .module-heading { padding: 16px; margin-bottom: 20px; }
+  .module-heading h1 { font-size: 22px; }
+}

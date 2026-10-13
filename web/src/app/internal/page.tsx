@@ -1,3 +1,4 @@
+import { ModuleHeading } from "@/components/module-heading";
 import { InboxFilters } from "@/components/inbox-filters";
 import { resolveFilters } from "@/lib/inbox-filters";
 import Link from "@/components/feedback-link";
@@ -96,21 +97,18 @@ export default async function InternalPage({
     filters.options.find((c) => c.id === id)?.title || "—";
   return (
     <Shell locale={locale} internal>
-      <div className="live-title">
-        <div>
-          <h1>
-            {es ? "Expedientes y decisiones" : "Applications and decisions"}
-          </h1>
-          <p>
-            {profile.full_name} ·{" "}
-            {profile.access_kind === "academic"
-              ? es
-                ? "Evaluación académica"
-                : "Academic evaluation"
-              : roleLabels[profile.role][es ? 0 : 1]}
-          </p>
-        </div>
-      </div>
+      <ModuleHeading
+        title={es ? "Expedientes y decisiones" : "Applications and decisions"}
+      >
+        <p>
+          {profile.full_name} ·{" "}
+          {profile.access_kind === "academic"
+            ? es
+              ? "Evaluación académica"
+              : "Academic evaluation"
+            : roleLabels[profile.role][es ? 0 : 1]}
+        </p>
+      </ModuleHeading>
       <nav className="live-nav">
         {["grants_manager", "administrator"].includes(profile.role) && (
           <Link href="/internal/calls">

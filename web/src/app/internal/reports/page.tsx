@@ -1,3 +1,4 @@
+import { ModuleHeading } from "@/components/module-heading";
 import { callThemeLabel } from "@/lib/call-themes";
 import { DocumentDownload } from "@/components/document-download";
 import Link from "@/components/feedback-link";
@@ -35,12 +36,13 @@ export default async function Reports({
   return (
     <Shell locale={locale} internal>
       <Link href="/internal">← {es ? "Panel interno" : "Staff workspace"}</Link>
-      <h1>{es ? "Reportería de cierre" : "Closing reports"}</h1>
-      <p>
-        {es
-          ? "Insumo interno para Comunicación. Selección, aprobación y firma se informan por separado. No incluye seguimiento de ejecución ni impactos alcanzados."
-          : "Internal input for Communications. Selection, approval and signing are reported separately. It does not include implementation monitoring or achieved impacts."}
-      </p>
+      <ModuleHeading title={es ? "Reportería de cierre" : "Closing reports"}>
+        <p>
+          {es
+            ? "Insumo interno para Comunicación. Selección, aprobación y firma se informan por separado. No incluye seguimiento de ejecución ni impactos alcanzados."
+            : "Internal input for Communications. Selection, approval and signing are reported separately. It does not include implementation monitoring or achieved impacts."}
+        </p>
+      </ModuleHeading>
       <Form action="/internal/reports" className="live-actions">
         <label>
           {es ? "Convocatoria" : "Call"}{" "}

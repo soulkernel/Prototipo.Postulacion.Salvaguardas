@@ -1,3 +1,4 @@
+import { ModuleHeading } from "@/components/module-heading";
 import Link from "@/components/feedback-link";
 import { notFound } from "next/navigation";
 import { requireViewer, getCalls, getRequestTime } from "@/lib/data";
@@ -33,7 +34,7 @@ export default async function CallsPage({
   return (
     <Shell locale={locale} internal>
       <Link href="/internal">← {es ? "Panel interno" : "Staff workspace"}</Link>
-      <h1>{es ? "Convocatorias" : "Calls"}</h1>
+      <ModuleHeading title={es ? "Convocatorias" : "Calls"} />
       {viewed ? (
         <section className="live-card">
           <Link className="button secondary" href="/internal/calls">

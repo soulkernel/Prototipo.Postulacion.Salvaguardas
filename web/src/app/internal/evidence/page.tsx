@@ -1,3 +1,4 @@
+import { ModuleHeading } from "@/components/module-heading";
 import Link from "@/components/feedback-link";
 import { requireRagViewer } from "@/lib/data";
 import { getLocale } from "@/lib/locale";
@@ -73,16 +74,13 @@ export default async function EvidencePage({
   return (
     <Shell locale={locale} internal>
       <Link href="/internal">← GLF</Link>
-      <h1>
-        {es
-          ? "Asistente RAG para identificar riesgos y salvaguardas ambientales y sociales en proyectos financiados por el GLF (Galapagos Life Fund)"
-          : "RAG assistant for identifying environmental and social risks and safeguards in GLF-funded projects"}
-      </h1>
-      <p>
-        {es
-          ? "Utilice uno o ambos métodos de inteligencia artificial para apoyar la revisión y fundamentar criterios sobre riesgos y salvaguardas ambientales y sociales."
-          : "Two independent methods to support review. Verify sources and apply your professional judgement; neither method approves or rejects projects."}
-      </p>
+      <ModuleHeading title={es ? "Asistente RAG de IA" : "AI RAG assistant"}>
+        <p>
+          {es
+            ? "Apoyo para identificar riesgos y salvaguardas ambientales y sociales en proyectos financiados por el GLF. Utilice uno o ambos modelos para fundamentar su revisión."
+            : "Support for identifying environmental and social risks and safeguards in GLF-funded projects. Use one or both models to inform your review."}
+        </p>
+      </ModuleHeading>
       <RagWorkspace
         locale={locale}
         e5Enabled={ragConfigured() && hasApprovedSources}

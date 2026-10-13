@@ -1,3 +1,4 @@
+import { ModuleHeading } from "@/components/module-heading";
 import { SubmitButton } from "@/components/submit-button";
 import { StaffInvitations } from "@/components/staff-invitations";
 import { invitationRoles, type StaffInvitation } from "@/lib/staff-invitations";
@@ -71,7 +72,7 @@ export default async function UsersPage({
   return (
     <Shell locale={locale} internal>
       <Link href="/internal">← GLF</Link>
-      <h1>{es ? "Gestión de usuarios" : "User management"}</h1>
+      <ModuleHeading title={es ? "Gestión de usuarios" : "User management"} />
       {params.error && (
         <p role="alert" className="auth-error">
           {es
