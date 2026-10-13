@@ -387,3 +387,9 @@ QA local: 35 pruebas SQL/PGlite +65 TypeScript (100), lint/tsc/build correctos. 
 - Correo de la cuenta bajo el logotipo, 12 px, sin avatar ni espacio reservado en el contenido. Correos largos se abrevian visualmente y se muestran completos al pasar el puntero o enfocar con teclado.
 - Cabecera compartida externa, interna y académica. Menús e idioma/cierre mantienen altura uniforme de 40 px en escritorio y 44 px con puntero táctil. Navegación sigue de izquierda a derecha y controles de cuenta separados.
 - No modifica permisos, autenticación ni datos. Lint, pruebas, compilación y auditoría de dependencias correctos (GitHub 38458311614). Vercel success; manual externo verificado a 958 px y 390 px sin desbordamiento, contenido a ancho completo; cabecera interna verificada. Captura scratch/cabecera-correo-logo-0.6.3.png.
+
+## v0.6.4 - Lectura de evidencia y apoyo normativo más claros
+- E5: guía de lectura en lenguaje natural según tipo de fuente (definición, exclusión o disposición general), extracto literal legible, fragmento original expandible. No resume con un LLM ni agrega consumo de inferencia.
+- BM25/Qwen: preguntas sin duplicar el riesgo; selector de evaluación inicial/PGAS o exclusiones. Pasajes distinguidos de citas de respuesta y botón de búsqueda complementaria E5 (requiere ejecutar la consulta, sin mezclar corpus).
+- Adaptador runtime 1.1 añade instrucciones para proponer respuestas parciales sustentadas, distinguir definiciones de obligaciones y explicitar faltantes. Devuelve pasajes ante abstención y motivo separado para fallo de citas. BM25, corpus público y validador originales permanecen intactos.
+- QA: 41 pruebas SQL, 67 TypeScript, 7 adaptador y smoke pasan; lint/build pasan. Permisos, cuentas, cuotas y límite monetario sin cambios. Despliegues y QA visual en curso.

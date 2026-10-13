@@ -1174,3 +1174,11 @@ a {
 .call-attachment-card small { color: #506071; line-height: 1.5; }
 .attachment-format-options { display: flex; flex-wrap: wrap; gap: 12px; }
 .attachment-format-options .check-row { margin: 0; }
+
+/* Clear separation between reading guidance and original normative evidence. */
+.evidence-guide { color: #475a70; line-height: 1.65; }
+.evidence-reading h4 { margin: 14px 0 8px; font-size: 14px; }
+.evidence-reading blockquote { margin: 0 0 12px; padding: 12px 16px; border-left: 3px solid #5b9298; background: #f5f9fb; line-height: 1.7; overflow-wrap: anywhere; }
+.evidence-reading details { margin: 10px 0 16px; }
+.evidence-reading summary { cursor: pointer; color: #076f78; padding-block: 8px; }
+.rag-result-intro { margin-top: 24px; }

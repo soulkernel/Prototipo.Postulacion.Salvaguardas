@@ -2,6 +2,7 @@
 import { useActionState, useState } from "react";
 import { Search, FileText, Sparkles } from "lucide-react";
 import { consultQwen, type QwenState } from "@/app/internal/evidence/actions";
+import { EvidenceReading } from "./evidence-reading";
 import { EvidenceSearch } from "./evidence-search";
 import { ActionLabel } from "./submit-button";
 import { riskQuery, type RagProject, type RagRisk } from "@/lib/rag-context";
@@ -22,6 +23,11 @@ export function RagMethods({
   readOnly?: boolean;
 }) {
   const es = locale === "es";
+  const [e5Query, setE5Query] = useState<string | undefined>();
+  const [purpose, setPurpose] = useState("assessment");
+  const [query, setQuery] = useState(
+    context ? riskQuery(context.risk, context.project.stage, "qwen") : "",
+  );
   const [method, setMethod] = useState("e5");
   const [state, action, pending] = useActionState(consultQwen, {
     status: "idle",
@@ -45,7 +51,9 @@ export function RagMethods({
       <div className="rag-step-heading">
         <span className="rag-step">2</span>
         <h2>
-          {es ? "Elija el apoyo que necesita" : "Choose the support you need"}
+          {es
+            ? "Elija el modelo IA de apoyo que necesita"
+            : "Choose the AI support model you need"}
         </h2>
       </div>
       <div
@@ -114,6 +122,8 @@ export function RagMethods({
           </p>
         )}
         <EvidenceSearch
+          key={e5Query ?? "initial"}
+          suggestedQuery={e5Query}
           locale={locale}
           enabled={e5Enabled}
           context={context}
@@ -134,8 +144,8 @@ export function RagMethods({
           </h2>
           <p>
             {es
-              ? "Redacta una respuesta a su pregunta utilizando normativa pública recuperada con BM25. Revise que las citas sustenten la respuesta; sus fuentes pueden diferir de E5."
-              : "Drafts an answer using public regulations retrieved by BM25. Check that the citations support the answer; sources may differ from E5."}
+              ? "BM25 busca disposiciones en el corpus público del GLF y Qwen utiliza esa evidencia para proponer una redacción de respuesta con citas. Puede responder parcialmente cuando la normativa solo cubre una parte de la consulta."
+              : "BM25 retrieves public GLF provisions and Qwen uses this evidence to propose a cited answer. It may answer partially when the sources cover only part of the question."}
           </p>
           <p>
             {es
@@ -144,17 +154,47 @@ export function RagMethods({
           </p>
           {!qwenEnabled && <p role="status">{messages.configuration}</p>}
           <form action={action} className="live-form">
+            {context && (
+              <label>
+                {es ? "Qué desea revisar" : "Review focus"}
+                <select
+                  value={purpose}
+                  disabled={pending}
+                  onChange={(event) => {
+                    setPurpose(event.target.value);
+                    setQuery(
+                      riskQuery(
+                        context.risk,
+                        context.project.stage,
+                        "qwen",
+                        event.target.value,
+                      ),
+                    );
+                  }}
+                >
+                  <option value="assessment">
+                    {es
+                      ? context.project.stage === 1
+                        ? "Identificación y evaluación inicial"
+                        : "Evaluación y medidas del PGAS"
+                      : "Risk assessment"}
+                  </option>
+                  <option value="exclusions">
+                    {es
+                      ? "Posibles exclusiones del GLF"
+                      : "Potential GLF exclusions"}
+                  </option>
+                </select>
+              </label>
+            )}
             <label>
               {es
                 ? "Pregunta sobre la normativa"
                 : "Question about regulations"}
               <textarea
                 name="query"
-                defaultValue={
-                  context
-                    ? riskQuery(context.risk, context.project.stage, "qwen")
-                    : ""
-                }
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
                 placeholder={
                   es
                     ? "Ejemplo: ¿Qué criterios normativos deben revisarse para evaluar este riesgo?"
@@ -198,31 +238,70 @@ export function RagMethods({
                 <h3>
                   {state.response.generated
                     ? es
-                      ? "Respuesta para revisión técnica"
-                      : "Answer for technical review"
+                      ? "Propuesta de respuesta para revisión técnica"
+                      : "Draft answer for technical review"
                     : es
-                      ? "Evidencia insuficiente"
-                      : "Insufficient evidence"}
+                      ? "No se pudo fundamentar una respuesta completa"
+                      : "A complete answer could not be grounded"}
                 </h3>
-                <p className="rag-answer">{state.response.answer}</p>
+                {state.response.generated ? (
+                  <p className="rag-answer">{state.response.answer}</p>
+                ) : (
+                  <p>
+                    {es
+                      ? state.response.reason === "citation_validation_failed"
+                        ? "La respuesta propuesta no superó la validación de citas. Puede consultar los fragmentos recuperados, pero no utilizarlos como una respuesta validada."
+                        : "No se obtuvo una respuesta suficientemente sustentada para esta consulta. Revise los pasajes disponibles: pueden aportar criterios generales, aunque no resuelvan el caso específico. Puede precisar la pregunta o complementar la búsqueda con E5."
+                      : "A sufficiently grounded answer could not be obtained. Review any retrieved passages as supporting material, refine the question or complement the search with E5."}
+                  </p>
+                )}
+                <p>
+                  {es
+                    ? "La respuesta solo debe tratar como obligaciones los requisitos expresos de la fuente. Las definiciones y orientaciones generales requieren comprobar su aplicabilidad al caso."
+                    : "Only explicit source requirements should be treated as obligations. Definitions and general guidance require checking applicability."}
+                </p>
                 <p>
                   {es ? "Tiempo de procesamiento: " : "Processing time: "}
                   {state.response.timings.total_seconds.toFixed(1)} s
                 </p>
-                {state.response.sources.map((source) => (
+                <h4>
+                  {es
+                    ? state.response.generated
+                      ? "Fuentes y evidencia para contrastar la respuesta"
+                      : "Pasajes recuperados · material de apoyo"
+                    : "Retrieved evidence for review"}
+                </h4>
+                {!state.response.results.length && (
+                  <p>
+                    {es
+                      ? "No se recibieron pasajes utilizables. Pruebe una pregunta más concreta o consulte E5, que utiliza un corpus diferente."
+                      : "No usable passages were returned. Try a more focused question or E5, which uses a different corpus."}
+                  </p>
+                )}
+                {state.response.results.map((source) => (
                   <article className="live-card" key={source.chunk_id}>
                     <h3>{source.source_name}</h3>
                     <p>
                       {es ? "Página " : "Page "}
-                      {source.page} · {source.chunk_id}
+                      {source.page} · {source.chunk_id} ·{" "}
+                      {es
+                        ? state.response!.sources.some(
+                            (s) => s.chunk_id === source.chunk_id,
+                          )
+                          ? "Citada en la propuesta"
+                          : "Recuperada; no citada en una respuesta validada"
+                        : state.response!.sources.some(
+                              (s) => s.chunk_id === source.chunk_id,
+                            )
+                          ? "Cited in the draft"
+                          : "Retrieved; not cited in a validated answer"}
                     </p>
-                    <p className="rag-answer">
-                      {
-                        state.response!.results.find(
-                          (row) => row.chunk_id === source.chunk_id,
-                        )?.text
-                      }
-                    </p>
+                    <EvidenceReading
+                      name={source.source_name}
+                      text={source.text}
+                      locator={`${es ? "página" : "page"} ${source.page}`}
+                      locale={locale}
+                    />
                     <a
                       href={
                         source.source_url.split("#")[0] + `#page=${source.page}`
@@ -236,9 +315,27 @@ export function RagMethods({
                     </a>
                   </article>
                 ))}
+                <button
+                  type="button"
+                  className="button secondary"
+                  disabled={!e5Enabled}
+                  onClick={() => {
+                    setE5Query(
+                      context
+                        ? riskQuery(context.risk, context.project.stage, "e5")
+                        : state.query,
+                    );
+                    setMethod("e5");
+                    document.getElementById("rag-e5-tab")?.focus();
+                  }}
+                >
+                  {es
+                    ? "Buscar evidencia complementaria con E5"
+                    : "Find complementary evidence with E5"}
+                </button>
                 <p>
                   {es
-                    ? "Verifique las citas y su pertinencia antes de fundamentar una revisión. Una respuesta con citas no certifica cumplimiento. La decisión corresponde al GLF."
+                    ? "Contraste la propuesta con el texto original y registre su criterio técnico. La decisión corresponde al GLF."
                     : "Verify citations and relevance before using them in a review. Cited answers do not certify compliance. GLF retains the decision."}
                 </p>
               </>

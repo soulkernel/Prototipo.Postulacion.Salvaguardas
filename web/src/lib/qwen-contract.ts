@@ -22,6 +22,9 @@ export const qwenResponse = z
   .object({
     answer: z.string().min(1).max(20000),
     generated: z.boolean(),
+    reason: z
+      .enum(["answered", "insufficient_context", "citation_validation_failed"])
+      .optional(),
     public_demo: z.literal(true),
     sources: z.array(source).max(5),
     results: z

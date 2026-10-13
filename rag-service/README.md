@@ -25,3 +25,10 @@ Se conserva sin modificaciones el código académico de recuperación BM25, vali
 Límite mensual verificado en la cuenta HF: USD 5; no modificado. DeepInfra usa facturación HF, sin clave propia, y CPU Basic del Space sigue gratuito. Tarifa consultada en el router: USD 0,36 de entrada / 0,40 de salida por millón de tokens. Son tarifas de referencia, pueden cambiar. No se habilitó recarga automática.
 
 Primera prueba del portal: pregunta sobre redes de deriva de más de 2,5 km; respuesta en 9,4 s con cita GLF_ANEXO_B_PUBLIC::P03C01, página 3, respaldada por el fragmento mostrado. La selección explícita de proveedor evita que fastest regrese al proveedor intermitente. Continúa activo el reintento acotado del adaptador; no se garantiza disponibilidad absoluta de servicios externos.
+
+
+## Adaptador de revisión 1.1 (portal 0.6.4)
+El recuperador, corpus público, prompt y validador originales en public_demo/app.py y src/retrieval_optimized.py permanecen intactos. runtime.py añade una guía de redacción al prompt: respuestas parciales explícitas, distinción de definiciones y obligaciones, condiciones y fase, abstención si nada se sustenta. No constituye validación automática de aplicabilidad jurídica ni modifica la decisión humana.
+El adaptador devuelve hasta cinco pasajes también ante abstención; sources permanece vacío en ese caso. reason distingue insufficient_context de citation_validation_failed. Los fragmentos recuperados no se presentan como citas de una respuesta validada. review_support_version=1.1 permite comprobar el despliegue.
+E5 continúa independiente y no envía sus fragmentos a Qwen. Su guía de lectura es determinista, con extracto literal y original expandible; no es un resumen generado. El botón de complemento prepara una consulta en E5 y requiere que el usuario la ejecute.
+Cuotas, autenticación, proveedor y límite monetario no cambian. Las métricas académicas anteriores no validan este adaptador de redacción.

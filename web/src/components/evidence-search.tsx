@@ -1,4 +1,5 @@
 "use client";
+import { EvidenceReading } from "./evidence-reading";
 import { useActionState } from "react";
 import {
   searchEvidence,
@@ -15,11 +16,13 @@ export function EvidenceSearch({
   enabled,
   context,
   readOnly = false,
+  suggestedQuery,
 }: {
   locale: Locale;
   enabled: boolean;
   context?: { project: RagProject; risk: RagRisk };
   readOnly?: boolean;
+  suggestedQuery?: string;
 }) {
   const es = locale === "es";
   const [state, action, pending] = useActionState(searchEvidence, initial);
@@ -31,9 +34,10 @@ export function EvidenceSearch({
           <textarea
             name="query"
             defaultValue={
-              context
+              suggestedQuery ??
+              (context
                 ? riskQuery(context.risk, context.project.stage, "e5")
-                : ""
+                : "")
             }
             placeholder={
               es
@@ -96,6 +100,20 @@ export function EvidenceSearch({
               : "No approved indexed evidence is available. This does not establish compliance."}
           </p>
         )}
+        {!pending && state.status === "ok" && state.results.length > 0 && (
+          <div className="rag-result-intro">
+            <h3>
+              {es
+                ? "Evidencia encontrada para su revisión"
+                : "Evidence found for your review"}
+            </h3>
+            <p>
+              {es
+                ? `E5 encontró ${state.results.length} pasajes relacionados con su consulta. La guía de lectura explica cómo consultarlos; el extracto conserva el texto de la fuente. La relación semántica no demuestra que una disposición sea aplicable al caso.`
+                : `E5 found ${state.results.length} passages related to your query. The reading guide explains how to review them; excerpts retain the source wording. Semantic relevance does not establish applicability.`}
+            </p>
+          </div>
+        )}
         {!pending &&
           state.results.map((r) => (
             <article className="live-card" key={r.id}>
@@ -103,12 +121,12 @@ export function EvidenceSearch({
               <p>
                 {r.document_version} · {r.locator}
               </p>
-              <p style={{ whiteSpace: "pre-wrap" }}>{r.content}</p>
-              <p>
-                {es
-                  ? "Referencia para revisión humana. La similitud no es una calificación de cumplimiento."
-                  : "Reference for human review. Similarity is not a compliance rating."}
-              </p>
+              <EvidenceReading
+                name={r.document_name}
+                text={r.content}
+                locator={r.locator}
+                locale={locale}
+              />
             </article>
           ))}
         {!readOnly &&

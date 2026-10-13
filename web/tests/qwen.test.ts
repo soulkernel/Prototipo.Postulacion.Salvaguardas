@@ -99,3 +99,21 @@ test("Qwen sends credentials only to the backend and handles quotas and failures
     ),
   );
 });
+
+test("partial retrieval on abstention remains evidence and never grounded sources", () => {
+  const result = {
+    ...grounded,
+    generated: false,
+    sources: [],
+    reason: "citation_validation_failed",
+  };
+  assert.ok(qwenResponse.safeParse(result).success);
+  assert.equal(
+    qwenResponse.safeParse({ ...result, sources: [source] }).success,
+    false,
+  );
+  assert.equal(
+    qwenResponse.safeParse({ ...result, reason: "invented" }).success,
+    false,
+  );
+});

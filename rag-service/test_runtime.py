@@ -38,7 +38,7 @@ class DeploymentDiagnostics(unittest.TestCase):
             self.assertNotIn('PRIVATE', args)
 
     def test_success_is_unchanged(self):
-        with patch.object(runtime, 'original_chat', return_value='Original answer'):
+        with runtime.app.test_request_context(), patch.object(runtime, 'original_chat', return_value='Original answer'):
             self.assertEqual(runtime.diagnostic_chat('question'), 'Original answer')
 
     def test_transient_failure_retried_once_but_auth_failure_never_retried(self):
@@ -65,6 +65,29 @@ class DeploymentDiagnostics(unittest.TestCase):
                 runtime.diagnostic_chat('PRIVATE_QUESTION')
             self.assertIn('provider_http_filter', repr(log.call_args_list))
             self.assertNotIn('PRIVATE', repr(log.call_args_list))
+
+
+    def test_abstention_keeps_passages_without_presenting_them_as_answer_citations(self):
+        from public_demo.smoke_test import reset_state, ROW
+        reset_state()
+        with patch.object(runtime.upstream, '_generate_answer', return_value=('Insuficiente', [])):
+            response = runtime.app.test_client().post('/api/ask', json={'query': 'riesgo biodiversidad'}, headers={'X-Demo-Key': 'smoke-secret'})
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()
+        self.assertFalse(data['generated'])
+        self.assertEqual(data['sources'], [])
+        self.assertEqual(data['results'][0]['chunk_id'], ROW['chunk_id'])
+        self.assertEqual(data['reason'], 'insufficient_context')
+
+    def test_citation_failure_is_distinct_and_unknown_ids_never_accepted(self):
+        prompt = 'CHUNK_ID: GLF_PUBLIC::P01C01'
+        with runtime.app.test_request_context(), patch.object(runtime, 'original_chat', return_value='Afirmación [OTHER::P01C01]'):
+            runtime.diagnostic_chat(prompt)
+            self.assertEqual(runtime.g.glf_answer_reason, 'citation_validation_failed')
+        with runtime.app.test_request_context(), patch.object(runtime, 'original_chat', return_value='Criterio general [GLF_PUBLIC::P01C01]') as model:
+            runtime.diagnostic_chat(prompt)
+            self.assertEqual(runtime.g.glf_answer_reason, 'answered')
+            self.assertIn('Una definición de EIAS no demuestra', model.call_args.args[0])
 
 if __name__ == '__main__':
     unittest.main()

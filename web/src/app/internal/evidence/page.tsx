@@ -80,7 +80,7 @@ export default async function EvidencePage({
       </h1>
       <p>
         {es
-          ? "Dos métodos independientes para apoyar la revisión. Consulte las fuentes y conserve su criterio técnico; ninguna opción aprueba ni rechaza proyectos."
+          ? "Utilice uno o ambos métodos de inteligencia artificial para apoyar la revisión y fundamentar criterios sobre riesgos y salvaguardas ambientales y sociales."
           : "Two independent methods to support review. Verify sources and apply your professional judgement; neither method approves or rejects projects."}
       </p>
       <RagWorkspace

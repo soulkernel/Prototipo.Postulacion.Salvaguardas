@@ -42,14 +42,29 @@ export function projectRisks(payload: Payload, locale: "es" | "en"): RagRisk[] {
     })),
   );
 }
-export function riskQuery(risk: RagRisk, stage: number, method: string) {
-  const context = `Actividad: ${risk.activity}. Riesgo ${risk.dimension === "environmental" ? "ambiental" : "social"}: ${risk.name}. ${risk.description}`;
+export function riskQuery(
+  risk: RagRisk,
+  stage: number,
+  method: string,
+  purpose = "assessment",
+) {
+  const name = risk.name.trim();
+  const description = risk.description.trim();
+  const extra =
+    description &&
+    description.replace(/[.\s]+$/g, "").toLowerCase() !==
+      name.replace(/[.\s]+$/g, "").toLowerCase()
+      ? ` ${description}`
+      : "";
+  const context = `Riesgo ${risk.dimension === "environmental" ? "ambiental" : "social"}: ${name}.${extra} Actividad: ${risk.activity}.`;
   const question =
     method === "e5"
       ? ""
-      : stage === 1
-        ? "¿Qué criterios normativos permiten revisar la identificación y evaluación de este riesgo, incluidas posibles exclusiones? "
-        : "¿Qué criterios normativos y medidas de mitigación deben revisarse para este riesgo en el PGAS? ";
+      : purpose === "exclusions"
+        ? "¿Qué exclusiones del GLF podrían ser pertinentes? Distinga prohibiciones expresas y aspectos por verificar. "
+        : stage === 1
+          ? "¿Qué disposiciones del GLF orientan la identificación y evaluación inicial del siguiente riesgo en la nota conceptual? "
+          : "¿Qué disposiciones orientan la evaluación y las medidas de mitigación de este riesgo en el PGAS? ";
   return (
     question +
     context.slice(0, (method === "e5" ? 1500 : 600) - question.length)
