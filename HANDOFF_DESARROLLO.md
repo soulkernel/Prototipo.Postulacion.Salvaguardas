@@ -327,3 +327,5 @@ Se implementa el trabajo autorizado en Texto pegado.txt. Consultar docs/Revision
 - Migraciones 028/029 aplicadas manualmente vía Supabase SQL. No usar db push inicial: historial CLI todavía sin conciliar. Funciones vivas coinciden con fuente local tras normalizar espacios (hashes en documento de revisión).
 - QA: 92 pruebas correctas (33 SQL,59 TS), lint, tsc, build y revisión visual de presupuesto/firma/comprobante. Aceptación con usuarios externos/reales sigue siendo distinta de estas pruebas.
 - RAG no se modifica en este lote; tampoco se borran datos, envían invitaciones o presentan resoluciones.
+
+0.5.1: corrección visual de tarjetas de revisión (live-form y espaciado explícito), máximo 50/55 siempre visible, casillas de líneas temáticas con check-row. Sin cambios de lógica/roles/datos. cf36bd6/0.5.0 pasó CI Linux y Vercel; se verificó suma 50/50 sin guardar evaluaciones, EN y lectura de plantillas en sesión administradora.

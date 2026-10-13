@@ -1077,3 +1077,9 @@ a {
 
 .internal-summary-metrics { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
 .inbox-contact { margin-top: 4px; font-size: 0.9em; color: #506071; }
+
+.working-review > .live-fieldset { display:grid; gap:16px; }
+.working-review .live-risk { margin:0; display:grid; gap:10px; padding:18px; }
+.working-review .live-risk > span { font-weight:400; }
+.working-review select { max-width:400px; font:inherit; font-weight:400; }
+.working-review h2 { margin:0; }

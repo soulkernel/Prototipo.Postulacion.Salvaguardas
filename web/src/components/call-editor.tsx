@@ -93,7 +93,7 @@ export function CallEditor({
                 : "Themes for this call"}
             </legend>
             {callThemes.map((t) => (
-              <label key={t.id}>
+              <label className="check-row" key={t.id}>
                 <input
                   type="checkbox"
                   name="themes"

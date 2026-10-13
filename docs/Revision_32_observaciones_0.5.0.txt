@@ -148,3 +148,6 @@ Suite PostgreSQL aislada PGlite + TypeScript: envíos, versiones, roles, documen
 RESULTADOS PREVIOS A PUBLICACIÓN
 92 pruebas correctas: 33 PostgreSQL + 59 TypeScript, cero fallos. ESLint y TypeScript correctos. Compilación de producción correcta. Revisión visual del presupuesto anual, firma/QR y comprobante sin desbordes.
 Supabase: cuatro plantillas confirmadas (checklists 8/7 ítems, rúbricas 10/11 criterios). Definiciones SQL comparadas con archivos locales mediante hash MD5 normalizado sin espacios: create_application=6ae37f163fcc7c5612c8346802172438; save_working_review=49d98879fdeebd60277bfbaf113633f4; validate_payload=6b6a61a9e0695a5050532ef6d26ab384. Coinciden las tres.
+
+PUBLICACIÓN Y AJUSTE VISUAL
+0.5.0 publicada, commit cf36bd6; GitHub Actions y Vercel correctos. Pantalla interna conectada a plantillas Supabase; prueba visual de 50/50 sin guardar valoraciones y traducción EN correcta. Ajuste 0.5.1 corrige distribución de tarjetas de evaluación y casillas de líneas temáticas, sin modificar lógica, permisos ni datos.

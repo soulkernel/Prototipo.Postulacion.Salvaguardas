@@ -53,7 +53,7 @@ export function WorkingReview({
       0,
     );
   return (
-    <section className="live-card">
+    <section className="live-card live-form working-review">
       <h2>
         {rubric
           ? es
@@ -68,6 +68,13 @@ export function WorkingReview({
           ? "Borrador individual asociado a la versión remitida. No cambia el estado del expediente ni emite una decisión."
           : "Individual draft associated with the submitted version. It does not change application status or issue a decision."}
       </p>
+      {rubric && (
+        <p>
+          {es
+            ? `${criteria.length} criterios · máximo ${criteria.length * 5} puntos. Un criterio sin responder no equivale a cero.`
+            : `${criteria.length} criteria · maximum ${criteria.length * 5} points. An unanswered criterion does not count as zero.`}
+        </p>
+      )}
       <small>
         {templateId} · {es ? "Revisión" : "Revision"} {revision}
       </small>
