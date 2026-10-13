@@ -1,6 +1,8 @@
+import { callThemeLabel } from "@/lib/call-themes";
 import { NextResponse, type NextRequest } from "next/server";
 import { requireViewer } from "@/lib/data";
 import { csvCell } from "@/lib/files";
+import { getLocale } from "@/lib/locale";
 import { z } from "zod";
 export async function GET(request: NextRequest) {
   const { db } = await requireViewer([
@@ -16,6 +18,14 @@ export async function GET(request: NextRequest) {
     requested_call: id.data,
   });
   if (error) return new NextResponse("Unavailable", { status: 500 });
+  const locale = await getLocale();
+  const { data: call, error: callError } = await db
+    .from("calls")
+    .select("rules")
+    .eq("id", id.data)
+    .maybeSingle();
+  if (callError || !call)
+    return new NextResponse("Unavailable", { status: 500 });
   const rows = [
     ["call_id", id.data],
     ["cutoff_utc", data.cutoff],
@@ -32,7 +42,7 @@ export async function GET(request: NextRequest) {
     ].map((k) => [k, data[k]]),
     ["project_type", "received"],
     ...data.by_type.map((r: { project_type: string; received: number }) => [
-      r.project_type,
+      callThemeLabel(r.project_type, call.rules, locale),
       r.received,
     ]),
   ];

@@ -31,7 +31,7 @@ export async function GET(
   if (!version) return new NextResponse("Not found", { status: 404 });
   const { data: app } = await viewer.db
     .from("applications")
-    .select("reference_code")
+    .select("reference_code,rules_snapshot")
     .eq("id", version.application_id)
     .single();
   if (!app) return new NextResponse("Not found", { status: 404 });
@@ -50,6 +50,7 @@ export async function GET(
     (prepared ? "&prepared=1" : "");
   const result = await applicationPdf({
     payload: version.payload as Payload,
+    rules: version.rules_snapshot ?? app.rules_snapshot,
     stage: version.stage,
     reference: app.reference_code,
     revision: version.revision,

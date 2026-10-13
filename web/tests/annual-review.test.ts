@@ -172,3 +172,19 @@ test("custom call themes preserve unchecked options and validate bilingual names
     false,
   );
 });
+
+test("custom theme identifiers display the frozen bilingual label and preserve historical free text", async () => {
+  const { callThemeLabel } = await import("../src/lib/call-themes");
+  const rules = {
+    themes: [
+      { id: "custom_1", label_es: "Restauración", label_en: "Restoration" },
+    ],
+  };
+  assert.equal(callThemeLabel("custom_1", rules, "es"), "Restauración");
+  assert.equal(callThemeLabel("custom_1", rules, "en"), "Restoration");
+  assert.equal(
+    callThemeLabel("Educación marina", rules, "es"),
+    "Educación marina",
+  );
+  assert.equal(callThemeLabel("Histórico", null, "en"), "Histórico");
+});

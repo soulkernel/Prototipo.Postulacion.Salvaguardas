@@ -82,3 +82,18 @@ export function parseCallThemes(raw: string, selected: string[]) {
     themes: options.filter((t) => selected.includes(t.id)),
   };
 }
+
+export function callThemeLabel(
+  value: string,
+  rules: unknown,
+  locale: "es" | "en",
+) {
+  if (!rules || typeof rules !== "object") return value;
+  const themes = (rules as { themes?: unknown }).themes;
+  if (!Array.isArray(themes)) return value;
+  const theme = themes.find(
+    (t) => t && typeof t === "object" && t.id === value,
+  );
+  const label = theme?.[locale === "es" ? "label_es" : "label_en"];
+  return typeof label === "string" && label.trim() ? label : value;
+}

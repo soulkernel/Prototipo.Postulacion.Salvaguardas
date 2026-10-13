@@ -1,3 +1,4 @@
+import { callThemeLabel } from "@/lib/call-themes";
 import { DocumentDownload } from "@/components/document-download";
 import { budgetText } from "@/lib/budget";
 import { resultText } from "@/lib/project-results";
@@ -240,9 +241,15 @@ export default async function ReviewPage({
               <div key={f.key}>
                 <dt>{es ? f.es : f.en}</dt>
                 <dd>
-                  {f.key === "results"
-                    ? resultText(a.payload.concept, locale)
-                    : String(a.payload.concept[f.key] ?? "—")}
+                  {f.key === "project_type"
+                    ? callThemeLabel(
+                        a.payload.concept.project_type,
+                        a.rules_snapshot,
+                        locale,
+                      )
+                    : f.key === "results"
+                      ? resultText(a.payload.concept, locale)
+                      : String(a.payload.concept[f.key] ?? "—")}
                 </dd>
               </div>
             ))}

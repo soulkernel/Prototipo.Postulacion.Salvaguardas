@@ -1,3 +1,4 @@
+import { callThemeLabel } from "@/lib/call-themes";
 import { DocumentDownload } from "@/components/document-download";
 import Link from "@/components/feedback-link";
 import Form from "next/form";
@@ -104,7 +105,12 @@ export default async function Reports({
               {report.by_type.map(
                 (r: { project_type: string; received: number }) => (
                   <li key={r.project_type}>
-                    {r.project_type}: {r.received}
+                    {callThemeLabel(
+                      r.project_type,
+                      calls.find((c) => c.id === id)?.rules,
+                      locale,
+                    )}
+                    : {r.received}
                   </li>
                 ),
               )}

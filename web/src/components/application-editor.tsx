@@ -1,6 +1,7 @@
 "use client";
 import { FileDropField } from "./file-drop-field";
 import { LimitedTextarea } from "./limited-textarea";
+import { callThemeLabel } from "@/lib/call-themes";
 import { DeadlineCountdown } from "./deadline-countdown";
 import { DocumentDownload } from "./document-download";
 import { useEffect, useState, useRef } from "react";
@@ -1981,9 +1982,15 @@ export function ApplicationEditor({
                   <div key={f.key}>
                     <dt>{es ? f.es : f.en}</dt>
                     <dd>
-                      {f.key === "results"
-                        ? resultText(payload.concept, locale)
-                        : String(payload.concept[f.key] ?? "—") || "—"}
+                      {f.key === "project_type"
+                        ? callThemeLabel(
+                            payload.concept.project_type,
+                            rules,
+                            locale,
+                          )
+                        : f.key === "results"
+                          ? resultText(payload.concept, locale)
+                          : String(payload.concept[f.key] ?? "—") || "—"}
                     </dd>
                   </div>
                 ))}

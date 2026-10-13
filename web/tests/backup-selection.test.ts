@@ -85,40 +85,229 @@ test("backup scope never broadens an empty or conflicting selection", () => {
 });
 
 test("Excel exports exactly three distinct applications plus header without collapsing records", () => {
- const applications = [1,2,3].map(n=>({id:String(n),reference_code:`REF-${n}`,call_id:"c"}));
- const application_versions = applications.map(a=>({application_id:a.id,revision:1,payload:{concept:{title:`Project ${a.id}`}}}));
- const sheet = strFromU8(unzipSync(summaryWorkbook({applications,application_versions},"es"))["xl/worksheets/sheet1.xml"]);
- assert.equal((sheet.match(/<row r=/g)||[]).length,4);
- for(const a of applications) assert.ok(sheet.includes(a.reference_code));
+  const applications = [1, 2, 3].map((n) => ({
+    id: String(n),
+    reference_code: `REF-${n}`,
+    call_id: "c",
+  }));
+  const application_versions = applications.map((a) => ({
+    application_id: a.id,
+    revision: 1,
+    payload: { concept: { title: `Project ${a.id}` } },
+  }));
+  const sheet = strFromU8(
+    unzipSync(summaryWorkbook({ applications, application_versions }, "es"))[
+      "xl/worksheets/sheet1.xml"
+    ],
+  );
+  assert.equal((sheet.match(/<row r=/g) || []).length, 4);
+  for (const a of applications) assert.ok(sheet.includes(a.reference_code));
 });
 
 test("expanded workbook separates proposed dates, numeric amounts, results and scored risks", () => {
- const records={applications:[{id:"x",reference_code:"R-X",call_id:"c",status:"submitted",stage:1}],application_versions:[{application_id:"x",revision:2,submitted_at:"2026-10-12T02:00:00Z",rules_snapshot:{categories:[{id:"small",label_es:"Pequeña",max_months:12}]},payload:{concept:{title:"Proyecto",category_id:"small",start_date:"2026-01-01",end_date:"2026-02-01",requested_amount:100,cofinance_amount:0,admin_cost:10,strategic_alignment:{objectives:[{id:"o",text:"Objetivo marino"}]},project_results:[{objective_id:"o",result:"Resultado",indicator:"Participantes",target:0,unit:"people",evidence:"Lista"}]},activities:[{title:"Taller",risks:[{name:"Riesgo",dimension:"social",probability:2,severity:3}]}]}}]};
- const files=unzipSync(summaryWorkbook(records,"es")), main=strFromU8(files["xl/worksheets/sheet1.xml"]), results=strFromU8(files["xl/worksheets/sheet2.xml"]), risks=strFromU8(files["xl/worksheets/sheet3.xml"]);
- assert.ok(main.includes('ref="A1:AJ2"'));
- assert.ok(main.includes('r="T2" s="0"><v>31</v>'));
- assert.ok(main.includes('r="V2" s="3"><v>100</v>'));
- assert.ok(main.includes('r="Z2" s="4"><v>0</v>'));
- assert.ok(main.includes('11/10/2026'));
- assert.ok(main.includes("No registrado"));
- assert.ok(results.includes("Objetivo marino"));
- assert.ok(results.includes('r="F2" s="0"><v>0</v>'));
- assert.ok(risks.includes('r="I2" s="0"><v>6</v>'));
- assert.ok(risks.includes("Medio"));
- assert.ok(strFromU8(files["xl/workbook.xml"]).includes("Resultados e indicadores"));
+  const records = {
+    applications: [
+      {
+        id: "x",
+        reference_code: "R-X",
+        call_id: "c",
+        status: "submitted",
+        stage: 1,
+      },
+    ],
+    application_versions: [
+      {
+        application_id: "x",
+        revision: 2,
+        submitted_at: "2026-10-12T02:00:00Z",
+        rules_snapshot: {
+          categories: [{ id: "small", label_es: "Pequeña", max_months: 12 }],
+        },
+        payload: {
+          concept: {
+            title: "Proyecto",
+            category_id: "small",
+            start_date: "2026-01-01",
+            end_date: "2026-02-01",
+            requested_amount: 100,
+            cofinance_amount: 0,
+            admin_cost: 10,
+            strategic_alignment: {
+              objectives: [{ id: "o", text: "Objetivo marino" }],
+            },
+            project_results: [
+              {
+                objective_id: "o",
+                result: "Resultado",
+                indicator: "Participantes",
+                target: 0,
+                unit: "people",
+                evidence: "Lista",
+              },
+            ],
+          },
+          activities: [
+            {
+              title: "Taller",
+              risks: [
+                {
+                  name: "Riesgo",
+                  dimension: "social",
+                  probability: 2,
+                  severity: 3,
+                },
+              ],
+            },
+          ],
+        },
+      },
+    ],
+  };
+  const files = unzipSync(summaryWorkbook(records, "es")),
+    main = strFromU8(files["xl/worksheets/sheet1.xml"]),
+    results = strFromU8(files["xl/worksheets/sheet2.xml"]),
+    risks = strFromU8(files["xl/worksheets/sheet3.xml"]);
+  assert.ok(main.includes('ref="A1:AJ2"'));
+  assert.ok(main.includes('r="T2" s="0"><v>31</v>'));
+  assert.ok(main.includes('r="V2" s="3"><v>100</v>'));
+  assert.ok(main.includes('r="Z2" s="4"><v>0</v>'));
+  assert.ok(main.includes("11/10/2026"));
+  assert.ok(main.includes("No registrado"));
+  assert.ok(results.includes("Objetivo marino"));
+  assert.ok(results.includes('r="F2" s="0"><v>0</v>'));
+  assert.ok(risks.includes('r="I2" s="0"><v>6</v>'));
+  assert.ok(risks.includes("Medio"));
+  assert.ok(
+    strFromU8(files["xl/workbook.xml"]).includes("Resultados e indicadores"),
+  );
 });
 
-test("risk summary uses maxima by dimension, never adds initial and residual or treats missing as zero",()=>{
- const risk=(dimension:string,p:number|null,g:number|null,rp:number|null,rg:number|null)=>({dimension,probability:p,severity:g,residual_probability:rp,residual_severity:rg});
- const make=(stage:number,rows:unknown[])=>strFromU8(unzipSync(summaryWorkbook({applications:[{id:"x",stage}],application_versions:[{application_id:"x",revision:1,stage,payload:{concept:{},activities:[{risks:rows}]}}]},"es"))["xl/worksheets/sheet1.xml"]);
- const row=make(2,[risk("environmental",2,3,1,2),risk("environmental",5,4,2,3),risk("social",3,3,1,1)]);
- assert.ok(row.includes('r="AG2" s="0" t="inlineStr"><is><t xml:space="preserve">20 · Muy alto'));
- assert.ok(row.includes('r="AH2" s="0" t="inlineStr"><is><t xml:space="preserve">9 · Medio'));
- assert.ok(row.includes('r="AI2" s="0" t="inlineStr"><is><t xml:space="preserve">6 · Medio'));
- assert.ok(row.includes('r="AJ2" s="0" t="inlineStr"><is><t xml:space="preserve">1 · Bajo'));
- assert.ok(!row.includes("Última decisión"));
- assert.ok(!row.includes("Firma GLF"));
- assert.ok(make(1,[risk("social",3,3,null,null)]).includes("No aplica en esta fase"));
- assert.ok(make(2,[risk("social",3,3,null,null)]).includes("Pendiente de evaluación"));
- assert.ok(make(2,[]).includes("Sin riesgos identificados"));
+test("risk summary uses maxima by dimension, never adds initial and residual or treats missing as zero", () => {
+  const risk = (
+    dimension: string,
+    p: number | null,
+    g: number | null,
+    rp: number | null,
+    rg: number | null,
+  ) => ({
+    dimension,
+    probability: p,
+    severity: g,
+    residual_probability: rp,
+    residual_severity: rg,
+  });
+  const make = (stage: number, rows: unknown[]) =>
+    strFromU8(
+      unzipSync(
+        summaryWorkbook(
+          {
+            applications: [{ id: "x", stage }],
+            application_versions: [
+              {
+                application_id: "x",
+                revision: 1,
+                stage,
+                payload: { concept: {}, activities: [{ risks: rows }] },
+              },
+            ],
+          },
+          "es",
+        ),
+      )["xl/worksheets/sheet1.xml"],
+    );
+  const row = make(2, [
+    risk("environmental", 2, 3, 1, 2),
+    risk("environmental", 5, 4, 2, 3),
+    risk("social", 3, 3, 1, 1),
+  ]);
+  assert.ok(
+    row.includes(
+      'r="AG2" s="0" t="inlineStr"><is><t xml:space="preserve">20 · Muy alto',
+    ),
+  );
+  assert.ok(
+    row.includes(
+      'r="AH2" s="0" t="inlineStr"><is><t xml:space="preserve">9 · Medio',
+    ),
+  );
+  assert.ok(
+    row.includes(
+      'r="AI2" s="0" t="inlineStr"><is><t xml:space="preserve">6 · Medio',
+    ),
+  );
+  assert.ok(
+    row.includes(
+      'r="AJ2" s="0" t="inlineStr"><is><t xml:space="preserve">1 · Bajo',
+    ),
+  );
+  assert.ok(!row.includes("Última decisión"));
+  assert.ok(!row.includes("Firma GLF"));
+  assert.ok(
+    make(1, [risk("social", 3, 3, null, null)]).includes(
+      "No aplica en esta fase",
+    ),
+  );
+  assert.ok(
+    make(2, [risk("social", 3, 3, null, null)]).includes(
+      "Pendiente de evaluación",
+    ),
+  );
+  assert.ok(make(2, []).includes("Sin riesgos identificados"));
+});
+
+test("Excel shows the bilingual theme name from the frozen rules rather than an internal identifier", () => {
+  const themeId = "custom_12345678-1234-4123-8123-123456789012";
+  const records = {
+    applications: [
+      {
+        id: "theme-app",
+        call_id: "call",
+        rules_snapshot: {
+          themes: [
+            {
+              id: themeId,
+              label_es: "Restauración marina",
+              label_en: "Marine restoration",
+            },
+          ],
+        },
+      },
+    ],
+    calls: [
+      {
+        id: "call",
+        rules: {
+          themes: [
+            {
+              id: themeId,
+              label_es: "Nombre posterior",
+              label_en: "Later name",
+            },
+          ],
+        },
+      },
+    ],
+    application_versions: [
+      {
+        application_id: "theme-app",
+        revision: 1,
+        payload: { concept: { title: "Proyecto", project_type: themeId } },
+      },
+    ],
+  };
+  for (const locale of ["es", "en"] as const) {
+    const sheet = strFromU8(
+      unzipSync(summaryWorkbook(records, locale))["xl/worksheets/sheet1.xml"],
+    );
+    assert.ok(
+      sheet.includes(
+        locale === "es" ? "Restauración marina" : "Marine restoration",
+      ),
+    );
+    assert.ok(
+      !sheet.includes(themeId) &&
+        !sheet.includes("Nombre posterior") &&
+        !sheet.includes("Later name"),
+    );
+  }
 });

@@ -1,3 +1,4 @@
+import { callThemeLabel } from "./call-themes";
 import { zipSync, strToU8 } from "fflate";
 import type { Locale } from "./domain";
 import { statusLabel } from "./fields";
@@ -232,7 +233,13 @@ export function summaryWorkbook(
       value(call[es ? "title_es" : "title_en"]),
       title,
       value(category[es ? "label_es" : "label_en"] || c.category_id),
-      value(c.project_type),
+      value(
+        callThemeLabel(
+          String(c.project_type ?? ""),
+          snapshot.themes ? snapshot : call.rules,
+          locale,
+        ),
+      ),
       statusLabel(String(app.status || ""), locale),
       value(c.applicant_type),
       value(c.applicant_name),

@@ -1,3 +1,4 @@
+import { callThemeLabel } from "./call-themes";
 import { budgetText } from "./budget";
 import { submissionNotice } from "./grant-rules";
 import { alignmentNarrative, riskNarrative } from "./document-language";
@@ -21,6 +22,7 @@ export async function applicationPdf({
   locale,
   downloadUrl,
   stage,
+  rules,
 }: {
   payload: Payload;
   reference: string;
@@ -30,6 +32,7 @@ export async function applicationPdf({
   locale: Locale;
   downloadUrl: string;
   stage: number;
+  rules?: unknown;
 }) {
   const es = locale === "es";
   payload = synchronizeRisks(payload);
@@ -477,13 +480,16 @@ export async function applicationPdf({
       }
       field(
         es ? fieldSpec.es : fieldSpec.en,
-        fieldSpec.key === "partners" && payload.concept.associated_organizations
-          ? payload.concept.associated_organizations
-              .map((name, i) => `${i + 1}. ${name}`)
-              .join("\n")
-          : Array.isArray(payload.concept[fieldSpec.key])
-            ? (payload.concept[fieldSpec.key] as string[]).join(", ")
-            : payload.concept[fieldSpec.key],
+        fieldSpec.key === "project_type"
+          ? callThemeLabel(payload.concept.project_type, rules, locale)
+          : fieldSpec.key === "partners" &&
+              payload.concept.associated_organizations
+            ? payload.concept.associated_organizations
+                .map((name, i) => `${i + 1}. ${name}`)
+                .join("\n")
+            : Array.isArray(payload.concept[fieldSpec.key])
+              ? (payload.concept[fieldSpec.key] as string[]).join(", ")
+              : payload.concept[fieldSpec.key],
       );
     }
     field(
