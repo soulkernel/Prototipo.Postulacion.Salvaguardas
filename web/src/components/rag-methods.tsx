@@ -1,6 +1,6 @@
 "use client";
 import { useActionState, useState } from "react";
-import { Search, FileSparkles } from "lucide-react";
+import { Search, FileText, Sparkles } from "lucide-react";
 import { consultQwen, type QwenState } from "@/app/internal/evidence/actions";
 import { EvidenceSearch } from "./evidence-search";
 import { ActionLabel } from "./submit-button";
@@ -84,7 +84,10 @@ export function RagMethods({
           }}
           onClick={() => setMethod("qwen")}
         >
-          <FileSparkles size={18} strokeWidth={1.7} aria-hidden="true" />
+          <span className="rag-document-icon" aria-hidden="true">
+            <FileText size={18} strokeWidth={1.7} />
+            <Sparkles size={10} strokeWidth={1.7} />
+          </span>
           {es
             ? "Consultar normativa · BM25 + Qwen"
             : "Ask about regulations · BM25 + Qwen"}

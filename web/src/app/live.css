@@ -1086,6 +1086,8 @@ a {
 
 .rag-tabs button { display: inline-flex; align-items: center; gap: 8px; }
 .rag-tabs button > svg { flex: 0 0 18px; }
+.rag-document-icon { position: relative; display: inline-flex; width: 22px; height: 22px; flex: 0 0 22px; align-items: center; }
+.rag-document-icon > svg:last-child { position: absolute; right: -2px; top: -2px; }
 
 /* Shared, restrained title scale; status cards share a row when space permits. */
 .live-main > h1,
