@@ -114,3 +114,61 @@ test("rubrics are 50 and 55; unanswered never becomes zero; strictly less than 2
   assert.equal(administrativeChecklist(1).length, 8);
   assert.equal(administrativeChecklist(2).length, 7);
 });
+
+test("custom call themes preserve unchecked options and validate bilingual names, identifiers and selections", async () => {
+  const { callThemes } = await import("../src/lib/grant-rules");
+  const { themeOptions, parseCallThemes, themeOptionsSchema } =
+    await import("../src/lib/call-themes");
+  const custom = {
+    id: `custom_${crypto.randomUUID()}`,
+    label_es: "Restauración de ecosistemas",
+    label_en: "Ecosystem restoration",
+  };
+  const options = [...callThemes, custom];
+  const stored = parseCallThemes(JSON.stringify(options), [custom.id]);
+  assert.deepEqual(stored.themes, [custom]);
+  assert.equal(themeOptions(stored).length, options.length);
+  const unchecked = parseCallThemes(JSON.stringify(stored.theme_options), []);
+  assert.equal(unchecked.themes.length, 0);
+  assert.equal(unchecked.theme_options.at(-1)?.label_en, custom.label_en);
+  assert.throws(() => parseCallThemes(JSON.stringify(options), ["unknown"]));
+  assert.throws(() =>
+    parseCallThemes(JSON.stringify(options), [custom.id, custom.id]),
+  );
+  for (const extra of [
+    {
+      ...custom,
+      id: `custom_${crypto.randomUUID()}`,
+      label_es: "  RESTAURACION   DE ECOSISTEMAS ",
+    },
+    {
+      ...custom,
+      id: `custom_${crypto.randomUUID()}`,
+      label_es: "Otra línea",
+      label_en: "ecosystem restoration",
+    },
+    { ...custom, label_en: " " },
+    { ...custom, id: "forged" },
+    { ...custom, label_es: "a".repeat(201) },
+    { ...custom, label_es: "bad\nname" },
+  ])
+    assert.equal(
+      themeOptionsSchema.safeParse([...options, extra]).success,
+      false,
+    );
+  assert.equal(
+    themeOptionsSchema.safeParse([{ ...callThemes[0], label_es: "Altered" }])
+      .success,
+    false,
+  );
+  assert.equal(
+    themeOptionsSchema.safeParse(
+      Array.from({ length: 51 }, (_, i) => ({
+        id: `custom_${crypto.randomUUID()}`,
+        label_es: `Tema ${i}`,
+        label_en: `Theme ${i}`,
+      })),
+    ).success,
+    false,
+  );
+});

@@ -214,6 +214,7 @@ export type Rules = {
   version?: string;
   grant_rule_version?: string;
   themes?: { id: string; label_es: string; label_en: string }[];
+  theme_options?: { id: string; label_es: string; label_en: string }[];
   admin_base?: "glf" | "project" | null;
 };
 export type Call = {

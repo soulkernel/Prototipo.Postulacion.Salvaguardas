@@ -6,7 +6,8 @@ import { callIssues, callFormValues } from "@/lib/calls";
 import { saveOrPublishCall } from "@/app/internal/calls/actions";
 import { ActionLabel } from "@/components/submit-button";
 import { CallPreview } from "@/components/call-preview";
-import { callThemes } from "@/lib/grant-rules";
+import { themeOptions, themeOptionsSchema } from "@/lib/call-themes";
+import { CallThemeEditor } from "./call-theme-editor";
 import { CallCodeField } from "@/components/call-code-field";
 import type { CallCodeSuggestions } from "@/lib/call-codes";
 export function CallEditor({
@@ -14,11 +15,13 @@ export function CallEditor({
   locale,
   now,
   codeSuggestions,
+  initialValues,
 }: {
   initialCall: Call | null;
   locale: Locale;
   now: number;
   codeSuggestions: CallCodeSuggestions;
+  initialValues?: Record<string, string | string[]>;
 }) {
   const es = locale === "es";
   const [state, action, pending] = useActionState(saveOrPublishCall, {
@@ -32,7 +35,18 @@ export function CallEditor({
   const [previewLocale, setPreviewLocale] = useState(locale);
   const call = state.call;
   const dirty = !state.saved || dirtySequence === state.sequence;
-  const values = state.values ?? (call ? callFormValues(call) : {});
+  const values =
+    state.values ?? (call ? callFormValues(call) : (initialValues ?? {}));
+  const storedOptions = themeOptions(call?.rules);
+  let initialOptions = storedOptions;
+  try {
+    const parsed = themeOptionsSchema.safeParse(
+      JSON.parse(String(values.theme_options ?? "null")),
+    );
+    if (parsed.success) initialOptions = parsed.data;
+  } catch {
+    /* Keep the last valid options when a malformed request fails. */
+  }
   const field = (name: string, fallback = "") =>
     String(values[name] ?? fallback);
   const checked = (name: string, value: string, fallback = false) =>
@@ -52,7 +66,7 @@ export function CallEditor({
       </span>
     ) : null;
   return (
-    <section className="live-card call-editor">
+    <section className="live-card call-editor" id="call-editor">
       <h2>
         {call
           ? es
@@ -78,7 +92,10 @@ export function CallEditor({
         <input
           type="hidden"
           name="grant_rule_version"
-          value={call?.rules.grant_rule_version ?? (call ? "" : "glf-2025-v1")}
+          value={field(
+            "grant_rule_version",
+            call?.rules.grant_rule_version ?? (call ? "" : "glf-2025-v1"),
+          )}
         />
         <input type="hidden" name="revision" value={call?.revision ?? 0} />
         <fieldset
@@ -86,24 +103,24 @@ export function CallEditor({
           aria-busy={pending}
           className="call-fields"
         >
-          <fieldset>
-            <legend>
-              {es
-                ? "Líneas temáticas de esta convocatoria"
-                : "Themes for this call"}
-            </legend>
-            {callThemes.map((t) => (
-              <label className="check-row" key={t.id}>
-                <input
-                  type="checkbox"
-                  name="themes"
-                  value={t.id}
-                  defaultChecked={checked("themes", t.id, !call)}
-                />
-                {es ? t.label_es : t.label_en}
-              </label>
-            ))}
-          </fieldset>
+          <CallThemeEditor
+            key={state.sequence}
+            locale={locale}
+            initialOptions={initialOptions}
+            initialEditor={
+              values.theme_editor_pending === "true"
+                ? {
+                    id: field("theme_edit_id", "new"),
+                    spanish: field("theme_edit_es"),
+                    english: field("theme_edit_en"),
+                  }
+                : undefined
+            }
+            selected={initialOptions
+              .filter((t) => checked("themes", t.id, !call && !initialValues))
+              .map((t) => t.id)}
+            onEdit={() => setDirtySequence(state.sequence)}
+          />
           <CallCodeField
             defaultCode={field("code")}
             suggestions={codeSuggestions}

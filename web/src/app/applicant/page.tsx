@@ -78,6 +78,18 @@ export default async function ApplicantPage({
               <section key={call.id}>
                 <h3>{es ? call.title_es : call.title_en}</h3>
                 <p>{es ? call.description_es : call.description_en}</p>
+                {!!call.rules.themes?.length && (
+                  <div>
+                    <strong>{es ? "Líneas temáticas" : "Call themes"}</strong>
+                    <ul>
+                      {call.rules.themes.map((theme) => (
+                        <li key={theme.id}>
+                          {es ? theme.label_es : theme.label_en}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
                 <DeadlineCountdown
                   deadline={call.closes_at}
                   serverNow={requestTime}

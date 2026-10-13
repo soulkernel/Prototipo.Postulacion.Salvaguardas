@@ -1946,3 +1946,58 @@ test("new grant snapshots correct exact boundaries without changing historical r
     /GLF_CATEGORY_DURATION/,
   );
 });
+
+test("custom bilingual themes survive call save, publication and frozen applicant rules", async () => {
+  const custom = {
+    id: "custom_12345678-1234-4123-8123-123456789012",
+    label_es: "Restauración marina",
+    label_en: "Marine restoration",
+  };
+  const unchecked = {
+    id: "custom_12345678-1234-4123-8123-123456789013",
+    label_es: "Ciencia comunitaria",
+    label_en: "Community science",
+  };
+  const draft = await rpc(
+    "save_call_draft",
+    {
+      details: {
+        code: "CUSTOM-THEME-ROUNDTRIP",
+        title_es: "Temas personalizados",
+        title_en: "Custom themes",
+        description_es: "Descripción",
+        description_en: "Description",
+        rules_version: "1",
+        opens_at: "2020-01-01T00:00:00Z",
+        closes_at: "2099-01-01T00:00:00Z",
+        rules: {
+          ...rules,
+          theme_options: [custom, unchecked],
+          themes: [custom],
+        },
+        phase2_schema: [],
+      },
+    },
+    "grants",
+  );
+  assert.deepEqual(draft.rules.theme_options, [custom, unchecked]);
+  const published = await rpc(
+    "publish_call_reviewed",
+    { call_id: draft.id, expected_revision: draft.revision },
+    "grants",
+  );
+  assert.deepEqual(published.rules.themes, [custom]);
+  const application = await rpc(
+    "create_application",
+    { call_id: draft.id },
+    "other",
+  );
+  const stored = (
+    await db.query(
+      "select rules_snapshot from public.applications where id=$1",
+      [application],
+    )
+  ).rows[0];
+  assert.deepEqual(stored.rules_snapshot.themes, [custom]);
+  assert.deepEqual(stored.rules_snapshot.theme_options, [custom, unchecked]);
+});

@@ -38,6 +38,20 @@ export function CallPreview({
         <dt>{es ? "Cierre" : "Closing"}</dt>
         <dd>{date(c.closes_at)} (Galápagos)</dd>
       </dl>
+      {!!c.rules.themes?.length && (
+        <>
+          <h3>
+            {es
+              ? "Líneas temáticas de esta convocatoria"
+              : "Themes for this call"}
+          </h3>
+          <ul>
+            {c.rules.themes.map((t) => (
+              <li key={t.id}>{es ? t.label_es : t.label_en}</li>
+            ))}
+          </ul>
+        </>
+      )}
       <h3>{es ? "Quiénes pueden postular" : "Eligible applicants"}</h3>
       <ul>
         {c.rules.applicant_types.map((t) => (

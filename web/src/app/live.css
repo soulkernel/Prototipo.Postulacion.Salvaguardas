@@ -1141,3 +1141,10 @@ a {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.call-theme-editor { display: grid; gap: 12px; }
+.call-theme-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.call-theme-row .check-row { flex: 1 1 260px; margin: 0; }
+.call-theme-row .live-actions { margin: 0; gap: 8px; }
+.call-theme-row .button { padding: 6px 10px; font-size: .88rem; }
+.call-theme-entry { display: grid; gap: 12px; padding: 16px; border: 1px solid #d8e4ed; border-radius: .65rem; background: #f8fafc; }

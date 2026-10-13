@@ -7,6 +7,7 @@ import { z } from "zod";
 import { callIssues, type CallEditorState } from "@/lib/calls";
 import type { Call } from "@/lib/domain";
 import { callThemes } from "@/lib/grant-rules";
+import { parseCallThemes } from "@/lib/call-themes";
 import { suggestCallCodes } from "@/lib/call-codes";
 export async function saveOrPublishCall(
   previous: CallEditorState,
@@ -77,6 +78,25 @@ export async function saveOrPublishCall(
       sequence,
     };
   }
+  if (str("theme_editor_pending") === "true")
+    return failed(
+      es
+        ? "Agregue, aplique o cancele la línea temática que está editando antes de guardar."
+        : "Add, apply or cancel the theme being edited before saving.",
+    );
+  let callThemeRules;
+  try {
+    callThemeRules = parseCallThemes(
+      str("theme_options") || JSON.stringify(callThemes),
+      form.getAll("themes").map(String),
+    );
+  } catch {
+    return failed(
+      es
+        ? "Revise las líneas temáticas: nombres completos en ambos idiomas, sin duplicados y máximo 50 opciones."
+        : "Review themes: complete names in both languages, no duplicates and at most 50 options.",
+    );
+  }
   const { data: codeRows, error: codeReadError } = await db
     .from("calls")
     .select("id,code");
@@ -130,7 +150,7 @@ export async function saveOrPublishCall(
       ...(str("grant_rule_version")
         ? { grant_rule_version: str("grant_rule_version") }
         : {}),
-      themes: callThemes.filter((t) => form.getAll("themes").includes(t.id)),
+      ...callThemeRules,
       admin_base: null,
       categories: ["small", "medium", "large"]
         .filter((k) => str(k + "_enabled") === "on")

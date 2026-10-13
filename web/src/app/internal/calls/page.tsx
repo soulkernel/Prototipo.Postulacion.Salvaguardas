@@ -3,13 +3,14 @@ import { notFound } from "next/navigation";
 import { requireViewer, getCalls, getRequestTime } from "@/lib/data";
 import { getLocale } from "@/lib/locale";
 import { Shell } from "@/components/shell";
+import { callFormValues } from "@/lib/calls";
 import { CallEditor } from "@/components/call-editor";
 import { CallPreview } from "@/components/call-preview";
 import { suggestCallCodes } from "@/lib/call-codes";
 export default async function CallsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ edit?: string; view?: string }>;
+  searchParams: Promise<{ edit?: string; view?: string; copy?: string }>;
 }) {
   await requireViewer(["grants_manager", "administrator"]);
   const locale = await getLocale();
@@ -18,10 +19,15 @@ export default async function CallsPage({
   const params = await searchParams;
   const now = await getRequestTime();
   const selected = params.edit ? calls.find((c) => c.id === params.edit) : null;
+  const source = params.copy ? calls.find((c) => c.id === params.copy) : null;
+  const copyValues = source
+    ? { ...callFormValues(source), code: "", opens_at: "", closes_at: "" }
+    : undefined;
   const viewed = params.view ? calls.find((c) => c.id === params.view) : null;
   if (
     (params.edit && (!selected || selected.status !== "draft")) ||
-    (params.view && !viewed)
+    (params.view && !viewed) ||
+    (params.copy && (!source || params.edit || params.view))
   )
     notFound();
   return (
@@ -98,11 +104,25 @@ export default async function CallsPage({
                       ? "Ver convocatoria"
                       : "View call"}
                 </Link>
+                <Link
+                  className="button secondary"
+                  href={`/internal/calls?copy=${c.id}#call-editor`}
+                >
+                  {es ? "Duplicar como borrador" : "Duplicate as draft"}
+                </Link>
               </section>
             ))}
           </div>
+          {source && (
+            <p role="status">
+              {es
+                ? `Preparando una copia de ${source.code}. Revise el código y defina nuevas fechas antes de publicar.`
+                : `Preparing a copy of ${source.code}. Review the code and set new dates before publishing.`}
+            </p>
+          )}
           <CallEditor
-            key={selected?.id ?? "new"}
+            key={selected?.id ?? source?.id ?? "new"}
+            initialValues={copyValues}
             initialCall={selected ?? null}
             locale={locale}
             now={now}

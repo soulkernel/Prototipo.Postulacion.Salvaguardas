@@ -1,4 +1,9 @@
 import type { Call, Locale } from "./domain";
+import {
+  themeOptions,
+  themeOptionsSchema,
+  parseCallThemes,
+} from "./call-themes";
 export type CallEditorState = {
   call: Call | null;
   values?: Record<string, string | string[]>;
@@ -9,6 +14,21 @@ export type CallEditorState = {
 export function callIssues(c: Call, locale: Locale, now: number): string[] {
   const es = locale === "es";
   const issues: string[] = [];
+  if (c.rules.theme_options !== undefined || c.rules.themes?.length) {
+    try {
+      parseCallThemes(
+        JSON.stringify(c.rules.theme_options ?? themeOptions(c.rules)),
+        (c.rules.themes ?? []).map((t) => t.id),
+      );
+      themeOptionsSchema.parse(c.rules.themes ?? []);
+    } catch {
+      issues.push(
+        es
+          ? "Revise las líneas temáticas y sus nombres en ambos idiomas."
+          : "Review themes and their names in both languages.",
+      );
+    }
+  }
   const labels: Record<string, string> = es
     ? {
         code: "Código",
@@ -120,8 +140,10 @@ export function callFormValues(c: Call): Record<string, string | string[]> {
     v[k] = c[k]
       ? new Date(Date.parse(c[k]!) - 6 * 3600000).toISOString().slice(0, 16)
       : "";
+  v.grant_rule_version = c.rules.grant_rule_version ?? "";
   v.applicant_types = c.rules.applicant_types;
-  v.themes = (c.rules.themes ?? []).map(t => t.id);
+  v.themes = (c.rules.themes ?? []).map((t) => t.id);
+  v.theme_options = JSON.stringify(themeOptions(c.rules));
   v.word_limit = String(c.rules.summary_word_limit);
   v.admin_percent = String(c.rules.max_admin_percent);
   v.attachments = c.rules.required_attachments.join("\n");
