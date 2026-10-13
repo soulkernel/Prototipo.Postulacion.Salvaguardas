@@ -145,5 +145,17 @@ class DeploymentDiagnostics(unittest.TestCase):
             self.assertEqual(adapter.search('¿Qué es un hábitat?'),rows)
         self.assertEqual(adapter.search('¿Qué disposiciones normativas?'),rows)
 
+
+    def test_context_pairs_risk_provisions_with_one_phase_reference_without_duplicate_ids(self):
+        focus=[{'chunk_id':str(i),'source_name':name,'score':1-i*.1} for i,name in enumerate(['Anexo D','Lista de Exclusión','Política Ambiental','Definiciones','Definiciones'])]
+        phase={'chunk_id':'phase','source_name':'Manual SGAS','score':1}
+        class Base:
+            def search(self,query,limit=5): return focus if query=='manglar biodiversidad' else [phase]
+        with runtime.app.test_request_context():
+            runtime.g.glf_retrieval_query='manglar biodiversidad'
+            rows=runtime.FocusedReviewIndex(Base()).search('¿Qué disposiciones orientan la evaluación inicial?')
+            self.assertEqual([x['chunk_id'] for x in rows[:4]],['0','1','2','phase'])
+            self.assertEqual(len({x['chunk_id'] for x in rows}),5)
+
 if __name__ == '__main__':
     unittest.main()

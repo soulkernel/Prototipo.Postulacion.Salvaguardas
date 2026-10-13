@@ -132,6 +132,15 @@ class FocusedReviewIndex:
             # The original generator takes only four passages. Preserve retrieval scores,
             # but avoid letting definitions displace provisions in that limited context.
             rows = sorted(rows, key=lambda row: "definicion" in "".join(c for c in unicodedata.normalize("NFD",row.get("source_name", "").lower()) if not unicodedata.combining(c)))
+            if limit >= 4:
+                # Pair risk-specific provisions with one procedural reference for the phase.
+                # Neither the retrieval algorithm nor citation validation is changed.
+                general = self.base.search(query, limit=limit)
+                support = next((row for row in general if "manual sgas" in row.get("source_name", "").lower() and all(row.get("chunk_id") != chosen.get("chunk_id") for chosen in rows[:3])), None)
+                if support:
+                    head = rows[:3] + [support]
+                    used = {row["chunk_id"] for row in head}
+                    rows = (head + [row for row in rows[3:] if row["chunk_id"] not in used])[:limit]
         return rows
 
 
@@ -180,7 +189,7 @@ def review_ask():
         # These passages are supporting material, never citations for an abstained answer.
         data["sources"] = []
     data["reason"] = getattr(g, "glf_answer_reason", "answered" if data.get("generated") else "insufficient_context")
-    data["review_support_version"] = "1.4"
+    data["review_support_version"] = "1.5"
     if retrieval_query is not None:
         data["retrieval_query"] = g.glf_retrieval_query
     return jsonify(data)

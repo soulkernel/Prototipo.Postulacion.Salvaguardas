@@ -295,8 +295,8 @@ export function RagMethods({
                     <p>{state.response.retrieval_query}</p>
                     <p>
                       {es
-                        ? "La búsqueda se centra en el riesgo y la actividad. Qwen recibe por separado la pregunta completa para interpretar la evidencia en su contexto. Los términos relacionados amplían la búsqueda; no establecen requisitos ni califican el riesgo."
-                        : "Search focuses on the risk and activity. Qwen separately receives the full question. Related search terms do not establish requirements or rate the risk."}
+                        ? "La búsqueda prioriza el riesgo y se complementa con una referencia del procedimiento de la fase, cuando está disponible. Qwen recibe la pregunta completa para interpretar la evidencia. Los términos relacionados amplían la búsqueda; no establecen requisitos ni califican el riesgo."
+                        : "Search prioritizes the risk and adds a procedural reference for the phase when available. Qwen receives the full question. Related search terms do not establish requirements or rate the risk."}
                     </p>
                   </details>
                 )}
