@@ -1,4 +1,5 @@
 "use client";
+import { LimitedTextarea } from "./limited-textarea";
 import { Plus, X } from "lucide-react";
 import {
   glfLines,
@@ -188,7 +189,8 @@ export function StrategicFields({
             <div className="strategic-objective-row">
               <div className="strategic-objective-text">
                 <label htmlFor={`objective-${o.id}`}>{title} *</label>
-                <textarea
+                <LimitedTextarea
+                  locale={locale}
                   id={`objective-${o.id}`}
                   aria-required="true"
                   rows={4}
@@ -201,9 +203,6 @@ export function StrategicFields({
                   }
                   onChange={(e) => update(o.id, { text: e.target.value })}
                 />
-                <small>
-                  {o.text.length}/2000 {es ? "caracteres" : "characters"}
-                </small>
                 <label
                   className="alignment-benefit-label"
                   htmlFor={`benefit-${o.id}`}
@@ -212,7 +211,8 @@ export function StrategicFields({
                     ? "Contribución o beneficio esperado *"
                     : "Expected contribution or benefit *"}
                 </label>
-                <textarea
+                <LimitedTextarea
+                  locale={locale}
                   id={`benefit-${o.id}`}
                   aria-required="true"
                   rows={2}
@@ -227,9 +227,6 @@ export function StrategicFields({
                     update(o.id, { contribution: e.target.value })
                   }
                 />
-                <small>
-                  {o.contribution.length}/600 {es ? "caracteres" : "characters"}
-                </small>
               </div>
               <div className="strategic-objective-selectors">
                 {selector(

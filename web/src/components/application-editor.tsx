@@ -1,4 +1,6 @@
 "use client";
+import { FileDropField } from "./file-drop-field";
+import { LimitedTextarea } from "./limited-textarea";
 import { DeadlineCountdown } from "./deadline-countdown";
 import { DocumentDownload } from "./document-download";
 import { useEffect, useState, useRef } from "react";
@@ -20,6 +22,7 @@ import {
   completionGuidance,
   type CompletionIssue,
 } from "@/lib/completion-guidance";
+import { submissionProgress } from "@/lib/submission-progress";
 import { stepIssues } from "@/lib/step-validation";
 import { GeographyFields } from "./geography-fields";
 import { SummaryFields } from "./summary-fields";
@@ -53,7 +56,6 @@ import {
   riskLevel,
   validateComplete,
   financialErrors,
-  words,
   type Application,
   type Call,
   type Locale,
@@ -608,6 +610,15 @@ export function ApplicationEditor({
   }
   const fields = step === 0 ? identityFields : narrativeFields;
   const rules = application.rules_snapshot;
+  const progress = submissionProgress(
+    payload,
+    rules,
+    application.stage,
+    call.phase2_schema,
+    documents,
+    signedDocumentsReady,
+    !dirty,
+  );
   const completion = showCompletion
     ? completionGuidance(
         payload,
@@ -745,7 +756,16 @@ export function ApplicationEditor({
             </p>
           )}
           <p>{es ? call.title_es : call.title_en}</p>
-          <DeadlineCountdown deadline={application.stage === 1 ? call.closes_at : application.phase2_deadline} serverNow={serverNow} locale={locale} stage={application.stage} />
+          <DeadlineCountdown
+            deadline={
+              application.stage === 1
+                ? call.closes_at
+                : application.phase2_deadline
+            }
+            serverNow={serverNow}
+            locale={locale}
+            stage={application.stage}
+          />
         </div>
         <div className="application-save-heading">
           <span className="status-pill neutral">
@@ -831,13 +851,13 @@ export function ApplicationEditor({
           ? [
               "Datos generales",
               application.stage === 1 ? "Nota Conceptual" : "Proyecto completo",
-              "Actividades y riesgos",
+              "Examen Ambiental y Social inicial",
               "Revisar y enviar",
             ]
           : [
               "Project details",
               application.stage === 1 ? "Concept Note" : "Full proposal",
-              "Activities and risks",
+              "Initial environmental and social screening",
               "Review and submit",
             ]
         ).map((label, i) => (
@@ -861,6 +881,29 @@ export function ApplicationEditor({
           </button>
         ))}
       </nav>
+      {editable && (
+        <section
+          className="application-progress"
+          aria-label={es ? "Avance de la postulación" : "Application progress"}
+        >
+          <div>
+            <strong>
+              {es ? "Avance de requisitos" : "Requirements completed"}
+            </strong>
+            <span>{progress.percent}%</span>
+          </div>
+          <progress
+            value={progress.percent}
+            max={100}
+            aria-label={es ? "Porcentaje completado" : "Completion percentage"}
+          />
+          <small>
+            {es
+              ? "Incluye información, declaraciones, anexos obligatorios y guardado. Completar el 100% no envía la postulación ni implica su aprobación."
+              : "Includes information, declarations, required attachments and saving. Reaching 100% does not submit or approve the application."}
+          </small>
+        </section>
+      )}
       <CompletionFeedback
         issues={completion}
         step={step}
@@ -1150,7 +1193,8 @@ export function ApplicationEditor({
                       {es ? field.es : field.en}
                       <RequiredMark locale={locale} />
                       {field.type === "textarea" ? (
-                        <textarea
+                        <LimitedTextarea
+                          locale={locale}
                           aria-required="true"
                           aria-invalid={fieldIssue(field.key)}
                           rows={4}
@@ -1210,16 +1254,6 @@ export function ApplicationEditor({
                           {message(financial[field.key]!, es)}
                         </span>
                       )}
-                      {field.type === "textarea" && (
-                        <small>
-                          {words(String(payload.concept[field.key] || ""))}{" "}
-                          {es ? "palabras" : "words"} ·{" "}
-                          {String(
-                            payload.concept[field.key] || "",
-                          ).length.toLocaleString(locale)}{" "}
-                          / 12.000 {es ? "caracteres" : "characters"}
-                        </small>
-                      )}
                     </label>
                   ),
                 )}
@@ -1270,7 +1304,8 @@ export function ApplicationEditor({
                       ) : (
                         <small> ({es ? "Opcional" : "Optional"})</small>
                       )}
-                      <textarea
+                      <LimitedTextarea
+                        locale={locale}
                         aria-required={f.required}
                         value={payload.phase2[f.id] || ""}
                         onChange={(e) =>
@@ -1351,7 +1386,8 @@ export function ApplicationEditor({
                         ? "Justificación si no identifica riesgos"
                         : "Explanation if no risks are identified"}
                       <RequiredMark locale={locale} />
-                      <textarea
+                      <LimitedTextarea
+                        locale={locale}
                         aria-required="true"
                         value={activity.no_risks_reason}
                         maxLength={12000}
@@ -1515,7 +1551,8 @@ export function ApplicationEditor({
                               ? "Descripción concisa del riesgo"
                               : "Concise risk description"}
                             <RequiredMark locale={locale} />
-                            <textarea
+                            <LimitedTextarea
+                              locale={locale}
                               data-validation-field="description"
                               aria-required="true"
                               rows={2}
@@ -1589,7 +1626,8 @@ export function ApplicationEditor({
                                         ? "Medida propuesta"
                                         : "Proposed measure"}
                                       <RequiredMark locale={locale} />
-                                      <textarea
+                                      <LimitedTextarea
+                                        locale={locale}
                                         aria-required="true"
                                         rows={2}
                                         value={m.text || ""}
@@ -2099,11 +2137,9 @@ export function ApplicationEditor({
                       ))}
                     <label>
                       {es ? "Archivo (máximo 4 MB)" : "File (maximum 4 MB)"}
-                      <input
-                        type="file"
-                        name="file"
+                      <FileDropField
+                        locale={locale}
                         accept=".pdf,.png,.jpg,.jpeg,.docx,.xlsx"
-                        required
                         disabled={busy}
                       />
                     </label>
@@ -2187,11 +2223,9 @@ export function ApplicationEditor({
               <label>
                 {es ? "Archivo (máximo 4 MB)" : "File (maximum 4 MB)"}
                 <RequiredMark locale={locale} />
-                <input
-                  type="file"
-                  name="file"
+                <FileDropField
+                  locale={locale}
                   accept=".pdf,.png,.jpg,.jpeg,.docx,.xlsx"
-                  required
                 />
               </label>
               <button

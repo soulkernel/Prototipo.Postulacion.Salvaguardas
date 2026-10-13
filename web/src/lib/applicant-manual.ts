@@ -799,8 +799,8 @@ export const manualChapters: ManualChapter[] = [
       "Save, resume and delete drafts",
     ],
     intro: [
-      "Guardar conserva su trabajo. Enviar lo remite al GLF. Son operaciones distintas: un borrador guardado no es una postulación presentada.",
-      "Saving preserves your work. Submitting sends it to GLF. These are different actions: a saved draft is not a submitted application.",
+      "La barra de avance incluye los requisitos de información, declaraciones, anexos y guardado. Llegar al 100% no envía la postulación ni significa aprobación. Guardar conserva su trabajo; Enviar lo remite al GLF.",
+      "The progress bar includes information, declarations, attachments and saving. Reaching 100% neither submits nor approves the application. Saving preserves your work; submitting sends it to GLF.",
     ],
     steps: [
       [
@@ -928,7 +928,7 @@ export const manualChapters: ManualChapter[] = [
       ],
       [
         "Seleccionar archivo / Guardar anexo",
-        "Cargue un PDF firmado en cada casilla: nota conceptual y evaluación A&S. Máximo 4 MB por archivo. Guardar anexo registra la carga; no envía todo el expediente.",
+        "Arrastre un PDF firmado a cada casilla o utilice el selector: nota conceptual y evaluación A&S. Máximo 4 MB por archivo. Guardar anexo registra la carga; no envía todo el expediente.",
         "Choose file / Save attachment",
         "Upload one signed PDF per slot: concept note and E&S assessment. Maximum 4 MB per file. Save attachment registers the upload; it does not submit the whole dossier.",
       ],

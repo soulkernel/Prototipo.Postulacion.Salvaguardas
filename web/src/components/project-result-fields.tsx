@@ -1,4 +1,5 @@
 "use client";
+import { LimitedTextarea } from "./limited-textarea";
 import {
   newProjectResult,
   resultUnits,
@@ -67,7 +68,8 @@ export function ProjectResultFields({
               </legend>
               <label>
                 {es ? "Resultado esperado" : "Expected result"} *
-                <textarea
+                <LimitedTextarea
+                  locale={es ? "es" : "en"}
                   data-validation-field="result"
                   maxLength={2000}
                   value={r.result}

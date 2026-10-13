@@ -2897,3 +2897,17 @@ select {
 .rag-note-form { border-top:1px solid #dae4eb; margin-top:1.5rem; padding-top:1rem; }
 .rag-saved-note { padding:1rem 0; border-bottom:1px solid #dae4eb; white-space:pre-wrap; overflow-wrap:anywhere; }
 @media(max-width:700px) { .rag-selectors { grid-template-columns:1fr; } }
+
+.application-progress { padding:1rem 1.2rem; margin:1rem 0; border:1px solid #d6e4e8; border-radius:.6rem; background:#f6faf9; }
+.application-progress > div { display:flex; justify-content:space-between; gap:1rem; }
+.application-progress progress { width:100%; height:.65rem; accent-color:#187d78; margin:.6rem 0; border:0; border-radius:1rem; overflow:hidden; }
+.application-progress progress::-webkit-progress-bar { background:#e2ebe9; }
+.application-progress progress::-webkit-progress-value { background:#187d78; }
+.application-progress small { display:block; line-height:1.5; }
+.file-drop-zone { display:grid; gap:.65rem; padding:1rem; border:2px dashed #a9c8cf; border-radius:.6rem; background:#f8fbfc; font-weight:400; }
+.file-drop-zone.is-dragging { background:#e6f4f0; border-color:#177b75; }
+.file-drop-zone:focus-within { outline:2px solid #177b75; outline-offset:2px; }
+.file-drop-zone.is-disabled { opacity:.65; }
+.file-drop-hint { display:flex; gap:.6rem; align-items:center; }
+.file-drop-zone input { max-width:100%; min-width:0; }
+.text-limit { display:block; color:#536378; font-weight:400; font-size:.85rem; }

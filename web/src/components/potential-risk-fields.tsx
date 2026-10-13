@@ -1,4 +1,5 @@
 "use client";
+import { LimitedTextarea } from "./limited-textarea";
 import { Plus, Trash2 } from "lucide-react";
 import type { Payload, Locale } from "@/lib/domain";
 import {
@@ -107,7 +108,8 @@ export function PotentialRiskFields({
                 : es
                   ? "Sociales"
                   : "Social"}
-              <textarea
+              <LimitedTextarea
+                locale={locale}
                 rows={3}
                 maxLength={12000}
                 value={payload.concept[key]}
@@ -158,7 +160,8 @@ export function PotentialRiskFields({
                 <div key={r.id} className="potential-risk-row">
                   <label htmlFor={"potential-" + r.id}>
                     {riskLabel(rows, r.id, es ? "es" : "en")} *
-                    <textarea
+                    <LimitedTextarea
+                      locale={locale}
                       id={"potential-" + r.id}
                       rows={2}
                       value={r.name}
@@ -172,9 +175,6 @@ export function PotentialRiskFields({
                         )
                       }
                     />
-                    <small>
-                      {r.name.length}/2000 {es ? "caracteres" : "characters"}
-                    </small>
                   </label>
                   <button
                     type="button"
@@ -228,7 +228,8 @@ export function PotentialRiskFields({
               {es
                 ? "Justificación de ausencia de riesgos *"
                 : "Explanation of no identified risks *"}
-              <textarea
+              <LimitedTextarea
+                locale={locale}
                 rows={2}
                 maxLength={12000}
                 value={

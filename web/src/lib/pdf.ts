@@ -619,8 +619,8 @@ export async function applicationPdf({
   y -= 118;
   draw(
     es
-      ? "La postulación y sus calificaciones declaradas están sujetas a revisión humana del GLF."
-      : "The application and its declared ratings are subject to human review by GLF.",
+      ? "El contenido corresponde a una postulación al GLF y está sujeto a validación. Su presentación no garantiza preselección, aprobación ni financiamiento."
+      : "This document contains an application to GLF and is subject to validation. Submission does not guarantee shortlisting, approval or funding.",
   );
   const pages = pdf.getPages();
   for (let i = 0; i < pages.length; i++)

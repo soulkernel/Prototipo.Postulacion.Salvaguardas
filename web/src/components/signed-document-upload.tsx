@@ -1,4 +1,5 @@
 "use client";
+import { FileDropField } from "./file-drop-field";
 import { DocumentDownload } from "@/components/document-download";
 
 import { useRef, useState } from "react";
@@ -83,11 +84,9 @@ export function SignedDocumentUpload({
               : es
                 ? "PDF firmado electrónicamente (máximo 4 MB)"
                 : "Electronically signed PDF (maximum 4 MB)"}
-            <input
-              type="file"
-              name="file"
+            <FileDropField
+              locale={locale}
               accept=".pdf,application/pdf"
-              required
               disabled={busy || !ready}
               onChange={() => setConfirming(false)}
             />
@@ -125,7 +124,14 @@ export function SignedDocumentUpload({
                   disabled={busy || !ready}
                   aria-busy={saving}
                   onClick={async () => {
-                    if (!formRef.current || busy || !ready) return;
+                    if (
+                      !formRef.current ||
+                      busy ||
+                      saving ||
+                      !ready ||
+                      !formRef.current.reportValidity()
+                    )
+                      return;
                     setSaving(true);
                     try {
                       await onUpload(formRef.current);

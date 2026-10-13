@@ -1,4 +1,5 @@
 "use client";
+import { FileDropField } from "./file-drop-field";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Locale } from "@/lib/domain";
@@ -44,11 +45,9 @@ export function UploadForm({
         {es
           ? "Archivo: PDF, PNG, JPEG, DOCX o XLSX (máximo 4 MB)"
           : "File: PDF, PNG, JPEG, DOCX or XLSX (maximum 4 MB)"}
-        <input
-          type="file"
-          name="file"
-          accept=".pdf,.png,.jpg,.jpeg,.docx,.xlsx"
-          required
+        <FileDropField
+          locale={locale}
+          accept=".pdf,.png,.jpg,.jpeg,.docx,.xlsx" disabled={busy}
         />
       </label>
       <button className="button secondary" disabled={busy} aria-busy={busy}>

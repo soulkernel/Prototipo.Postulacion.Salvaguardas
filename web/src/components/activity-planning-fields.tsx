@@ -1,4 +1,5 @@
 "use client";
+import { LimitedTextarea } from "./limited-textarea";
 import type { Payload, Locale } from "@/lib/domain";
 import { newActivity } from "@/lib/domain";
 import { RequiredMark } from "./required-mark";
@@ -64,7 +65,8 @@ export function ActivityPlanningFields({
                 ? "Descripción breve de la actividad"
                 : "Brief activity description"}
               <RequiredMark locale={locale} />
-              <textarea
+              <LimitedTextarea
+                locale={locale}
                 data-validation-field="description"
                 rows={3}
                 value={activity.description}
