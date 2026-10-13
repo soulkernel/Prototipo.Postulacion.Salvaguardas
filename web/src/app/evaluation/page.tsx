@@ -1,12 +1,11 @@
 import { redirect } from "next/navigation";
-import { getViewer, requireViewer } from "@/lib/data";
+import { getViewer, requireViewer, getCalls } from "@/lib/data";
 import Link from "@/components/feedback-link";
 import { getLocale } from "@/lib/locale";
 import { Shell } from "@/components/shell";
-import { RagWorkspace } from "@/components/rag-workspace";
-import { ragConfigured } from "@/lib/rag";
-import { qwenConfigured } from "@/lib/qwen";
-import { evaluationProjects } from "@/lib/evaluation-projects";
+import { CallPreview } from "@/components/call-preview";
+import { DocumentDownload } from "@/components/document-download";
+import { statusLabel } from "@/lib/fields";
 export default async function EvaluationPage({
   searchParams,
 }: {
@@ -18,8 +17,9 @@ export default async function EvaluationPage({
     await requireViewer(["administrator"]);
   const locale = await getLocale(),
     es = locale === "es";
-  const workflow = (await searchParams).view === "workflow";
-  const projects = evaluationProjects(es);
+  const view = (await searchParams).view;
+  if (!["workflow", "files", "calls"].includes(view || ""))
+    redirect("/internal/evidence");
   const steps = es
     ? [
         [
@@ -73,94 +73,119 @@ export default async function EvaluationPage({
           "Shortlisted applicants submit a full proposal and environmental and social management plan. Selection, approval and agreement signature are distinct milestones. Reports summarize the application process.",
         ],
       ];
+
+  const calls = view === "calls" ? await getCalls() : [];
+  const { data: apps, error: appsError } =
+    view === "files"
+      ? await viewer.db
+          .from("applications")
+          .select("id,reference_code,status,payload")
+          .order("updated_at", { ascending: false })
+      : { data: [], error: null };
+  const { data: docs, error: docsError } =
+    view === "files"
+      ? await viewer.db
+          .from("application_documents")
+          .select("id,application_id,file_name")
+          .order("file_name")
+      : { data: [], error: null };
+  if (appsError || docsError) throw new Error("Academic files unavailable");
   return (
     <Shell locale={locale} internal>
       <h1>
-        {es
-          ? workflow
-            ? "Recorrido del portal"
-            : "Asistente RAG · evaluación académica"
-          : workflow
-            ? "Portal walkthrough"
-            : "RAG assistant · academic evaluation"}
+        {view === "files"
+          ? es
+            ? "Expedientes y archivos"
+            : "Applications and files"
+          : view === "calls"
+            ? es
+              ? "Convocatorias"
+              : "Calls"
+            : es
+              ? "Recorrido del portal"
+              : "Portal walkthrough"}
       </h1>
       <p>
         {es
-          ? "Acceso de evaluación con ejemplos independientes de los expedientes institucionales."
-          : "Evaluation access using examples independent of institutional applications."}{" "}
-        {viewer.profile.access_expires_at && (
-          <>
-            {es ? "Vigente hasta: " : "Valid until: "}
-            {new Intl.DateTimeFormat(locale, {
-              dateStyle: "long",
-              timeZone: "Pacific/Galapagos",
-            }).format(new Date(viewer.profile.access_expires_at))}
-            .
-          </>
-        )}
+          ? "Consulta académica de los expedientes de prueba habilitados. Puede revisar formularios y descargar los documentos disponibles."
+          : "Academic review of enabled test applications. Browse forms and download available documents."}
       </p>
       <nav className="live-nav">
-        <Link href="/evaluation">{es ? "Asistente RAG" : "RAG assistant"}</Link>
+        <Link href="/internal/evidence">
+          {es ? "Asistente RAG" : "RAG assistant"}
+        </Link>
+        <Link href="/evaluation?view=files">
+          {es ? "Expedientes y archivos" : "Applications and files"}
+        </Link>
+        <Link href="/evaluation?view=calls">
+          {es ? "Convocatorias" : "Calls"}
+        </Link>
+        <Link href="/internal/reports">{es ? "Reportes" : "Reports"}</Link>
         <Link href="/evaluation?view=workflow">
           {es ? "Recorrido del portal" : "Portal walkthrough"}
         </Link>
       </nav>
-      {workflow ? (
-        <>
-          <section className="live-card">
-            <h2>{es ? "Ciclo de postulación" : "Application lifecycle"}</h2>
-            {steps.map(([title, description]) => (
-              <details key={title}>
-                <summary>{title}</summary>
-                <p>{description}</p>
-              </details>
-            ))}
+      {view === "workflow" && (
+        <section className="live-card">
+          <h2>{es ? "Ciclo de postulación" : "Application lifecycle"}</h2>
+          {steps.map(([title, description]) => (
+            <details key={title}>
+              <summary>{title}</summary>
+              <p>{description}</p>
+            </details>
+          ))}
+        </section>
+      )}
+      {view === "calls" &&
+        calls.map((c) => (
+          <section className="live-card" key={c.id}>
+            <CallPreview call={c} locale={locale} />
           </section>
-          <section className="live-card">
-            <h2>
-              {es ? "Escenarios para probar el RAG" : "RAG test scenarios"}
-            </h2>
-            {projects.map((p) => (
-              <article key={p.id}>
-                <h3>
-                  {p.reference} · {p.title}
-                </h3>
-                <p>
-                  {es ? "Fase" : "Phase"} {p.stage}
-                </p>
-                <ul>
-                  {p.risks.map((r) => (
-                    <li key={r.id}>
-                      {r.name}: {r.probability} × {r.severity} = {r.score}
-                    </li>
-                  ))}
-                </ul>
-              </article>
-            ))}
-          </section>
-        </>
-      ) : (
+        ))}
+      {view === "files" && (
         <>
           <p>
-            {es
-              ? "Seleccione un ejemplo y un riesgo, o Consulta libre. Pruebe ambos motores y contraste sus fuentes. Límite del acceso académico: 15 consultas por hora y 60 al día, compartidas entre los dos motores."
-              : "Choose a sample and risk, or Free query. Test both engines and compare their sources. Academic access allows 15 queries per hour and 60 per day, shared by both engines."}
+            {apps?.length || 0}{" "}
+            {es ? "expedientes disponibles" : "available applications"}
           </p>
-          <RagWorkspace
-            locale={locale}
-            projects={projects}
-            calls={[
-              {
-                id: "academic",
-                title: es ? "Escenarios de evaluación" : "Evaluation scenarios",
-              },
-            ]}
-            initialProject={projects[0].id}
-            notes={[]}
-            e5Enabled={ragConfigured()}
-            qwenEnabled={qwenConfigured()}
-            readOnly
-          />
+          {apps?.map((a) => (
+            <section className="live-card" key={a.id}>
+              <h2>{a.payload?.concept?.title || a.reference_code}</h2>
+              <p>
+                {a.reference_code} · {statusLabel(a.status, locale)}
+              </p>
+              <div className="live-actions">
+                <Link
+                  className="button secondary"
+                  href={`/internal/applications/${a.id}`}
+                >
+                  {es ? "Ver expediente" : "View application"}
+                </Link>
+                <Link className="button secondary" href={`/applicant/${a.id}`}>
+                  {es ? "Consultar formulario completo" : "View complete form"}
+                </Link>
+              </div>
+              <h3>{es ? "Archivos disponibles" : "Available files"}</h3>
+              {docs?.filter((d) => d.application_id === a.id).length ? (
+                docs
+                  .filter((d) => d.application_id === a.id)
+                  .map((d) => (
+                    <div className="document-row" key={d.id}>
+                      <span>{d.file_name}</span>
+                      <DocumentDownload href={`/files/${d.id}`} locale={locale}>
+                        {es ? "Descargar" : "Download"}
+                      </DocumentDownload>
+                    </div>
+                  ))
+              ) : (
+                <p>
+                  {es
+                    ? "No hay archivos cargados en este expediente. Los PDF generados y comprobantes, si existen, están en Ver expediente o en el formulario completo."
+                    : "No files are uploaded for this application. Generated PDFs and receipts, when available, can be accessed in the application or complete form."}
+                </p>
+              )}
+            </section>
+          ))}
         </>
       )}
     </Shell>

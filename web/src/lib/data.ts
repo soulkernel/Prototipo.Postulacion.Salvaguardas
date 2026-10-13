@@ -50,6 +50,13 @@ export async function requireRagViewer() {
   if (viewer.profile.access_kind === "academic") return viewer;
   return requireViewer(["sustainability_reviewer", "administrator"]);
 }
+// Read-only entry point: mutating actions continue using requireViewer.
+export async function requireReadViewer(allowed?: readonly Role[]) {
+  const viewer = await getViewer();
+  if (!viewer) redirect("/login");
+  if (viewer.profile.access_kind === "academic") return viewer;
+  return requireViewer(allowed);
+}
 export async function getCalls(): Promise<Call[]> {
   const db = await createSupabaseServerClient();
   if (!db) return [];
@@ -61,7 +68,7 @@ export async function getCalls(): Promise<Call[]> {
   return (data || []) as Call[];
 }
 export async function getApplication(id: string) {
-  const viewer = await requireViewer();
+  const viewer = await requireReadViewer();
   const { data, error } = await viewer.db
     .from("applications")
     .select("*")

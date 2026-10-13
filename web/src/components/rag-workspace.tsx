@@ -23,6 +23,7 @@ export function RagWorkspace({
   initialProject,
   notes,
   readOnly = false,
+  showApplicationLinks = !readOnly,
   ...enabled
 }: {
   locale: Locale;
@@ -31,6 +32,7 @@ export function RagWorkspace({
   initialProject: string;
   notes: RagNote[];
   readOnly?: boolean;
+  showApplicationLinks?: boolean;
   e5Enabled: boolean;
   qwenEnabled: boolean;
 }) {
@@ -69,9 +71,13 @@ export function RagWorkspace({
           </h2>
         </div>
         <p>
-          {es
-            ? "Trabaje con un expediente enviado o realice una consulta libre. La calificación del aplicante no se modifica."
-            : "Use a submitted application or a free query. The applicant’s rating remains unchanged."}
+          {readOnly && !showApplicationLinks
+            ? es
+              ? "Seleccione un escenario de evaluación o realice una consulta libre."
+              : "Select an evaluation scenario or use a free query."
+            : es
+              ? "Trabaje con un expediente enviado o realice una consulta libre. La calificación del aplicante no se modifica."
+              : "Use a submitted application or a free query. The applicant’s rating remains unchanged."}
         </p>
         <div className="rag-mode">
           <button
@@ -122,9 +128,13 @@ export function RagWorkspace({
                   }}
                 >
                   <option value="">
-                    {es
-                      ? "Seleccione un proyecto enviado"
-                      : "Select a submitted project"}
+                    {readOnly && !showApplicationLinks
+                      ? es
+                        ? "Seleccione un escenario"
+                        : "Select a scenario"
+                      : es
+                        ? "Seleccione un proyecto enviado"
+                        : "Select a submitted project"}
                   </option>
                   {projects
                     .filter((p) => !call || p.callId === call)
@@ -157,7 +167,13 @@ export function RagWorkspace({
                   </select>
                 </label>
                 <p className="rag-context-meta">
-                  {es ? "Versión enviada" : "Submitted version"}{" "}
+                  {readOnly && !showApplicationLinks
+                    ? es
+                      ? "Escenario · versión"
+                      : "Scenario · version"
+                    : es
+                      ? "Versión enviada"
+                      : "Submitted version"}{" "}
                   {project.revision} ·{" "}
                   {project.stage === 1
                     ? es
@@ -166,10 +182,14 @@ export function RagWorkspace({
                     : es
                       ? "Propuesta completa · mitigación y PGAS"
                       : "Full proposal · mitigation and ESMP"}{" "}
-                  ·{" "}
-                  <Link href={`/internal/applications/${project.id}`}>
-                    {es ? "Ver expediente" : "View application"}
-                  </Link>
+                  {showApplicationLinks && (
+                    <>
+                      ·{" "}
+                      <Link href={`/internal/applications/${project.id}`}>
+                        {es ? "Ver expediente" : "View application"}
+                      </Link>
+                    </>
+                  )}
                 </p>
                 {!project.risks.length && (
                   <p role="status">
@@ -225,7 +245,7 @@ export function RagWorkspace({
             : "Select a project and risk to prepare a query, or choose Free query."}
         </p>
       )}
-      {!readOnly && !free && risk && (
+      {(!readOnly || showApplicationLinks) && !free && risk && (
         <section className="live-card">
           <h2>
             {es

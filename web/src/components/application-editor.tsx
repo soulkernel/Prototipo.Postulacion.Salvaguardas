@@ -206,6 +206,7 @@ export function ApplicationEditor({
   call,
   locale,
   editable,
+  academicReadOnly = false,
   serverNow,
   accountEmail = "",
   catalog,
@@ -218,6 +219,7 @@ export function ApplicationEditor({
   call: Call;
   locale: Locale;
   editable: boolean;
+  academicReadOnly?: boolean;
   serverNow: number;
   accountEmail?: string;
   catalog: Catalog[];
@@ -243,7 +245,7 @@ export function ApplicationEditor({
   const [autoSaving, setAutoSaving] = useState(false);
   const [autoError, setAutoError] = useState("");
   const [lastSaved, setLastSaved] = useState(application.updated_at);
-  const [step, setStep] = useState(editable ? 0 : 3);
+  const [step, setStep] = useState(editable || academicReadOnly ? 0 : 3);
   const [busy, setBusy] = useState(false);
   const [budgetUiValid, setBudgetUiValid] = useState(true);
   const [operation, setOperation] = useState<
@@ -854,9 +856,13 @@ export function ApplicationEditor({
         <div className="live-notice">
           <LockKeyhole size={20} />
           <p>
-            {es
-              ? "Esta versión está bloqueada. Las correcciones requieren autorización del GLF dentro del plazo permitido."
-              : "This version is locked. Corrections require GLF authorization within the allowed deadline."}
+            {academicReadOnly
+              ? es
+                ? "Consulta académica: puede recorrer el formulario y descargar los documentos disponibles."
+                : "Academic review: browse the form and download available documents."
+              : es
+                ? "Esta versión está bloqueada. Las correcciones requieren autorización del GLF dentro del plazo permitido."
+                : "This version is locked. Corrections require GLF authorization within the allowed deadline."}
           </p>
         </div>
       )}

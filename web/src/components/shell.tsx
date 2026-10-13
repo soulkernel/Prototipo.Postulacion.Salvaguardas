@@ -47,6 +47,25 @@ export async function Shell({
               <MenuLink href="/evaluation">
                 {locale === "es" ? "Asistente RAG" : "RAG assistant"}
               </MenuLink>
+              <MenuLink href="/internal">
+                {locale === "es"
+                  ? "Expedientes recibidos"
+                  : "Received applications"}
+              </MenuLink>
+              <MenuLink href="/evaluation?view=files">
+                {locale === "es"
+                  ? "Expedientes y archivos"
+                  : "Applications and files"}
+              </MenuLink>
+              <MenuLink href="/evaluation?view=calls">
+                {locale === "es" ? "Convocatorias" : "Calls"}
+              </MenuLink>
+              <MenuLink href="/internal/reports">
+                {locale === "es" ? "Reportes" : "Reports"}
+              </MenuLink>
+              <MenuLink href="/manual">
+                {locale === "es" ? "Manual de uso" : "User manual"}
+              </MenuLink>
               <MenuLink href="/evaluation?view=workflow">
                 {locale === "es"
                   ? "Recorrido del portal"

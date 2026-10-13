@@ -3,7 +3,7 @@ import { DocumentDownload } from "@/components/document-download";
 import Link from "@/components/feedback-link";
 import Form from "next/form";
 import { SubmitButton } from "@/components/submit-button";
-import { requireViewer, getCalls } from "@/lib/data";
+import { requireReadViewer, getCalls } from "@/lib/data";
 import { getLocale } from "@/lib/locale";
 import { Shell } from "@/components/shell";
 export default async function Reports({
@@ -11,7 +11,7 @@ export default async function Reports({
 }: {
   searchParams: Promise<{ call?: string }>;
 }) {
-  const { db } = await requireViewer([
+  const { db, profile } = await requireReadViewer([
     "grants_manager",
     "project_coordinator",
     "sustainability_reviewer",
@@ -24,7 +24,12 @@ export default async function Reports({
   const params = await searchParams;
   const id = params.call || calls[0]?.id;
   const { data: report, error } = id
-    ? await db.rpc("call_report", { requested_call: id })
+    ? await db.rpc(
+        profile.access_kind === "academic"
+          ? "academic_call_report"
+          : "call_report",
+        { requested_call: id },
+      )
     : { data: null, error: null };
   if (error) throw new Error("Report unavailable");
   return (

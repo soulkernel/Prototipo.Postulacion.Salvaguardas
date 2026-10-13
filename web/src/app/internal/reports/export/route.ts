@@ -1,11 +1,11 @@
 import { callThemeLabel } from "@/lib/call-themes";
 import { NextResponse, type NextRequest } from "next/server";
-import { requireViewer } from "@/lib/data";
+import { requireReadViewer } from "@/lib/data";
 import { csvCell } from "@/lib/files";
 import { getLocale } from "@/lib/locale";
 import { z } from "zod";
 export async function GET(request: NextRequest) {
-  const { db } = await requireViewer([
+  const { db, profile } = await requireReadViewer([
     "grants_manager",
     "project_coordinator",
     "sustainability_reviewer",
@@ -14,9 +14,12 @@ export async function GET(request: NextRequest) {
   ]);
   const id = z.uuid().safeParse(request.nextUrl.searchParams.get("call"));
   if (!id.success) return new NextResponse("Invalid call", { status: 400 });
-  const { data, error } = await db.rpc("call_report", {
-    requested_call: id.data,
-  });
+  const { data, error } = await db.rpc(
+    profile.access_kind === "academic" ? "academic_call_report" : "call_report",
+    {
+      requested_call: id.data,
+    },
+  );
   if (error) return new NextResponse("Unavailable", { status: 500 });
   const locale = await getLocale();
   const { data: call, error: callError } = await db

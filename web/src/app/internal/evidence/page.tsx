@@ -1,5 +1,5 @@
 import Link from "@/components/feedback-link";
-import { requireViewer } from "@/lib/data";
+import { requireRagViewer } from "@/lib/data";
 import { getLocale } from "@/lib/locale";
 import { Shell } from "@/components/shell";
 import { RagWorkspace } from "@/components/rag-workspace";
@@ -13,10 +13,7 @@ export default async function EvidencePage({
 }: {
   searchParams: Promise<{ project?: string }>;
 }) {
-  const { profile, db } = await requireViewer([
-    "sustainability_reviewer",
-    "administrator",
-  ]);
+  const { profile, db } = await requireRagViewer();
   const locale = await getLocale();
   const es = locale === "es";
   const projects: RagProject[] = [];
@@ -68,7 +65,11 @@ export default async function EvidencePage({
     .select("id", { count: "exact", head: true })
     .eq("approved", true);
   if (countError) throw new Error("Corpus status unavailable");
-  const hasApprovedSources = (approvedCount || 0) > 0;
+  const academic = profile.access_kind === "academic";
+  const academicCount = academic ? await db.rpc("academic_source_count") : null;
+  const hasApprovedSources = academic
+    ? !academicCount?.error && (academicCount?.data || 0) > 0
+    : (approvedCount || 0) > 0;
   return (
     <Shell locale={locale} internal>
       <Link href="/internal">← GLF</Link>
@@ -93,6 +94,8 @@ export default async function EvidencePage({
         }))}
         initialProject={(await searchParams).project || ""}
         notes={notes || []}
+        readOnly={academic}
+        showApplicationLinks
       />
       {profile.role === "administrator" && (
         <section

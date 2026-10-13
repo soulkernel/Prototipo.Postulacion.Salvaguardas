@@ -364,3 +364,13 @@ QA local: 35 pruebas SQL/PGlite +65 TypeScript (100), lint/tsc/build correctos. 
 - Edge user-administration: crea identidad nueva confirmada y contraseña aleatoria que devuelve una sola vez al administrador, sin correos automáticos; elimina mediante auth.admin.deleteUser y cascada protegida. Las credenciales administrativas permanecen en Supabase.
 - QA local: 40 pruebas SQL y 65 TypeScript, lint y build correctos. Migración 031 instalada en Supabase con transacción y recarga de esquema. Cuenta de profesora todavía NO creada; pendiente confirmación final desde la interfaz, entrega de credenciales y prueba de login académico real.
 
+
+## v0.6.1 - Alcance académico aclarado por el titular
+- El usuario confirmó que TODOS los expedientes actuales son de prueba y autorizó a la profesora a consultar expedientes y descargar archivos. Esto sustituye el alcance exclusivo de ejemplos de v0.6.0.
+- Migración 032: cerrar sesiones/desactivar/archivar también elimina las sesiones Auth del destinatario, con revocación por fecha como defensa adicional. No ejecuta cierres al instalarse.
+- Migración 033: fotografía explícita de los expedientes actuales en private.academic_application_scope; no incorpora automáticamente expedientes futuros. can_read_application habilita solo lectura al académico activo/no vencido; current_role sigue NULL y todas las mutaciones conservan requireViewer y roles originales. RLS de archivos, versiones, documentos, revisiones, decisiones y reportes filtra a los expedientes compartidos.
+- Corpus E5 aprobado: sus 36 documentos conservan source_kind=unclassified. Se usa lista exacta de nombres/versiones (hashes del corpus validado), sin modificar contenido ni reclasificar documentos arbitrariamente. Qwen conserva su corpus público independiente.
+- Profesor: /evaluation redirige al RAG real; menú de expedientes recibidos, todos los expedientes/archivos de prueba (incluye borradores), formularios completos solo consulta, convocatorias, reportes/CSV, manual y recorrido. No administra cuentas ni modifica convocatorias/decisiones. No es una maqueta ni un dashboard ficticio.
+- 41 pruebas SQL y 65 TypeScript pasan; controles verifican consulta de expediente/Storage habilitado, rechazo de caso futuro y de escrituras, y retirada del acceso al desactivar. Servicio Edge autenticado probado: disponible. Cuenta de profesora aún pendiente de creación final/entrega; no se envió correo.
+- Descargas firmadas de Storage ya emitidas tienen vigencia máxima de 60 segundos; la revocación impide emitir nuevas. Los archivos ya descargados no se retiran del equipo de quien los recibió.
+

@@ -178,7 +178,7 @@ function AccountControls({
             pendingLabel={es ? "Procesando…" : "Processing…"}
             className={
               operation === "delete"
-                ? "button danger-outline"
+                ? "button danger"
                 : "button secondary"
             }
           >
@@ -328,8 +328,8 @@ export function AcademicAccountForm({ es }: { es: boolean }) {
       </h2>
       <p>
         {es
-          ? "Vigencia: tres meses desde su creación. Ingreso con correo y contraseña, sin doble factor. Solo ejemplos de evaluación y consultas RAG; no concede acceso a expedientes institucionales."
-          : "Valid for three months from creation. Email/password sign-in without MFA. Evaluation examples and RAG queries only; no institutional application access."}
+          ? "Vigencia: tres meses desde su creación. Ingreso con correo y contraseña, sin doble factor. Permite consultar los expedientes de prueba habilitados, descargar sus archivos, recorrer formularios y reportes y utilizar los dos motores RAG. No permite modificar datos ni administrar usuarios."
+          : "Valid for three months from creation. Email/password sign-in without MFA. Allows access to the enabled test applications, file downloads, forms, reports and both RAG engines. Does not allow editing data or administering users."}
       </p>
       <Link href="/evaluation">
         {es ? "Vista previa del acceso académico" : "Preview academic access"}

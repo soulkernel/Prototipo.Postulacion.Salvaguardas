@@ -6,7 +6,7 @@ import { resultText } from "@/lib/project-results";
 import { SubmitButton } from "@/components/submit-button";
 import { getRequestTime } from "@/lib/data";
 import Link from "@/components/feedback-link";
-import { getApplication, requireViewer } from "@/lib/data";
+import { getApplication, requireReadViewer } from "@/lib/data";
 import { getLocale } from "@/lib/locale";
 import { Shell } from "@/components/shell";
 import { UploadForm } from "@/components/upload-form";
@@ -29,7 +29,7 @@ export default async function ReviewPage({
   searchParams: Promise<{ error?: string; saved?: string; returnTo?: string }>;
 }) {
   const requestTime = await getRequestTime();
-  await requireViewer([
+  await requireReadViewer([
     "grants_manager",
     "sustainability_reviewer",
     "project_coordinator",
@@ -88,15 +88,15 @@ export default async function ReviewPage({
     callError
   )
     throw new Error("Cannot load the complete submitted dossier");
-  if (!versions?.[0]?.payload)
+  if (!versions?.[0]?.payload && viewer.profile.access_kind !== "academic")
     throw new Error("Submitted dossier has no submitted version");
-  a.payload = versions[0].payload;
+  if (versions?.[0]?.payload) a.payload = versions[0].payload;
   if (a.payload.concept.strategic_alignment)
     a.payload.concept = {
       ...a.payload.concept,
       ...strategicText(a.payload.concept.strategic_alignment, locale),
     };
-  const submittedStage = versions[0].stage;
+  const submittedStage = versions?.[0]?.stage || a.stage;
   const phase2Fields = (call?.phase2_schema || []) as Call["phase2_schema"];
   const role = viewer.profile.role;
   const underReview = [
@@ -134,7 +134,13 @@ export default async function ReviewPage({
           {statusLabel(a.status, locale)}
         </span>
       </div>
-      {(viewer.profile.role === "administrator" ||
+      {viewer.profile.access_kind === "academic" && (
+        <Link className="button secondary" href={`/applicant/${id}`}>
+          {es ? "Consultar formulario completo" : "View complete form"}
+        </Link>
+      )}
+      {(viewer.profile.access_kind === "academic" ||
+        viewer.profile.role === "administrator" ||
         viewer.profile.role === "sustainability_reviewer") && (
         <Link
           className="button secondary"
@@ -224,7 +230,8 @@ export default async function ReviewPage({
         {docs?.map((d) => (
           <div className="document-row" key={d.id}>
             <span>
-              {attachmentLabel(a.rules_snapshot, d.kind, locale)} · {d.file_name}
+              {attachmentLabel(a.rules_snapshot, d.kind, locale)} ·{" "}
+              {d.file_name}
             </span>
             <DocumentDownload href={"/files/" + d.id} locale={locale}>
               {es ? "Descargar" : "Download"}

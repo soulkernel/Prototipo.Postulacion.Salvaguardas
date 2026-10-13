@@ -58,6 +58,7 @@ export default async function ApplicationPage({
   const deadline =
     application.stage === 1 ? call.closes_at : application.phase2_deadline;
   const editable = Boolean(
+    viewer.profile.access_kind !== "academic" &&
     !application.deletion_pending &&
     deadline &&
     Date.parse(deadline) > requestTime &&
@@ -68,7 +69,7 @@ export default async function ApplicationPage({
         Date.parse(application.correction_deadline) > requestTime)),
   );
   return (
-    <Shell locale={locale}>
+    <Shell locale={locale} internal={viewer.profile.access_kind === "academic"}>
       {versions?.[0] && (
         <section
           className="live-card"
@@ -106,6 +107,7 @@ export default async function ApplicationPage({
         call={call as Call}
         locale={locale}
         editable={editable}
+        academicReadOnly={viewer.profile.access_kind === "academic"}
         serverNow={requestTime}
         accountEmail={viewer.user.email || ""}
         catalog={catalog || []}

@@ -1,7 +1,7 @@
 import { InboxFilters } from "@/components/inbox-filters";
 import { resolveFilters } from "@/lib/inbox-filters";
 import Link from "@/components/feedback-link";
-import { requireViewer, getCalls } from "@/lib/data";
+import { requireReadViewer, getCalls } from "@/lib/data";
 import { getLocale } from "@/lib/locale";
 import { Shell } from "@/components/shell";
 import { roleLabels, statusLabel } from "@/lib/fields";
@@ -10,7 +10,7 @@ export default async function InternalPage({
 }: {
   searchParams: Promise<{ call?: string; category?: string }>;
 }) {
-  const { db, profile } = await requireViewer([
+  const { db, profile } = await requireReadViewer([
     "grants_manager",
     "sustainability_reviewer",
     "project_coordinator",
@@ -102,7 +102,12 @@ export default async function InternalPage({
             {es ? "Expedientes y decisiones" : "Applications and decisions"}
           </h1>
           <p>
-            {profile.full_name} · {roleLabels[profile.role][es ? 0 : 1]}
+            {profile.full_name} ·{" "}
+            {profile.access_kind === "academic"
+              ? es
+                ? "Evaluación académica"
+                : "Academic evaluation"
+              : roleLabels[profile.role][es ? 0 : 1]}
           </p>
         </div>
       </div>
