@@ -1084,6 +1084,9 @@ a {
 .working-review select { max-width:400px; font:inherit; font-weight:400; }
 .working-review h2 { margin:0; }
 
+.rag-tabs button { display: inline-flex; align-items: center; gap: 8px; }
+.rag-tabs button > svg { flex: 0 0 18px; }
+
 /* Shared, restrained title scale; status cards share a row when space permits. */
 .live-main > h1,
 .live-title h1 {
