@@ -131,5 +131,19 @@ class DeploymentDiagnostics(unittest.TestCase):
             self.assertEqual(client.post('/api/ask',json={'query':'Consulta','retrieval_query':['invalid']}).status_code,401)
             model.assert_not_called()
 
+
+    def test_normative_context_prioritizes_provisions_over_definitions_without_changing_base_scores(self):
+        rows=[{'source_name':'Anexo J - Definiciones','score':1}, {'source_name':'Anexo D - Marco legal','score':.9}, {'source_name':'Anexo J - Definiciones','score':.8}, {'source_name':'Lista de Exclusión','score':.7}, {'source_name':'Política Ambiental','score':.6}]
+        class Base:
+            def search(self, query, limit=5): return list(rows)
+        adapter=runtime.FocusedReviewIndex(Base())
+        with runtime.app.test_request_context():
+            runtime.g.glf_retrieval_query='manglar biodiversidad'
+            selected=adapter.search('¿Qué disposiciones normativas orientan este riesgo?')
+            self.assertEqual([x['source_name'] for x in selected[:3]],['Anexo D - Marco legal','Lista de Exclusión','Política Ambiental'])
+            self.assertEqual(sorted(x['score'] for x in selected),sorted(x['score'] for x in rows))
+            self.assertEqual(adapter.search('¿Qué es un hábitat?'),rows)
+        self.assertEqual(adapter.search('¿Qué disposiciones normativas?'),rows)
+
 if __name__ == '__main__':
     unittest.main()

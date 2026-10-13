@@ -6,6 +6,7 @@ import io
 import time
 import requests
 import re
+import unicodedata
 from flask import g, request as flask_request, jsonify, has_request_context
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
@@ -125,7 +126,13 @@ class FocusedReviewIndex:
 
     def search(self, query, limit=5):
         focused = getattr(g, "glf_retrieval_query", None) if has_request_context() else None
-        return self.base.search(focused or query, limit=limit)
+        rows = self.base.search(focused or query, limit=limit)
+        intent = "".join(c for c in unicodedata.normalize("NFD",query.lower()) if not unicodedata.combining(c))
+        if focused and re.search(r"disposicion|normativ|criterio|exclusion|pgas",intent):
+            # The original generator takes only four passages. Preserve retrieval scores,
+            # but avoid letting definitions displace provisions in that limited context.
+            rows = sorted(rows, key=lambda row: "definicion" in "".join(c for c in unicodedata.normalize("NFD",row.get("source_name", "").lower()) if not unicodedata.combining(c)))
+        return rows
 
 
 def ensure_review_index():
@@ -173,7 +180,7 @@ def review_ask():
         # These passages are supporting material, never citations for an abstained answer.
         data["sources"] = []
     data["reason"] = getattr(g, "glf_answer_reason", "answered" if data.get("generated") else "insufficient_context")
-    data["review_support_version"] = "1.3"
+    data["review_support_version"] = "1.4"
     if retrieval_query is not None:
         data["retrieval_query"] = g.glf_retrieval_query
     return jsonify(data)

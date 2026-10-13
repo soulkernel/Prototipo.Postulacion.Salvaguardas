@@ -73,7 +73,19 @@ export function riskQuery(
 
 /** Search terms only: these expansions are not a legal classification or a new obligation. */
 export function riskRetrievalQuery(risk: RagRisk, purpose = "assessment") {
-  const core = riskQuery(risk, 1, "e5");
+  const name = risk.name.trim();
+  const description = risk.description.trim();
+  const core =
+    [
+      name,
+      description &&
+      description.replace(/[.\s]+$/g, "").toLowerCase() !==
+        name.replace(/[.\s]+$/g, "").toLowerCase()
+        ? description
+        : "",
+    ]
+      .filter(Boolean)
+      .join(" ") || risk.activity.trim();
   const topic = `${risk.name} ${risk.description}`
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
