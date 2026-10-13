@@ -845,12 +845,6 @@ export function ApplicationEditor({
           </p>
         </div>
       )}
-      <p className="field-help required-fields-help">
-        <RequiredMark locale={locale} />{" "}
-        {es
-          ? "Campo obligatorio para enviar la postulación. Puede guardar un borrador incompleto. Los campos opcionales se indican expresamente."
-          : "Required to submit the application. You can save an incomplete draft. Optional fields are explicitly identified."}
-      </p>
       <p className="field-help">
         <Link
           href={`/manual#${["datos", "descripcion", "screening", "documentos"][step]}`}
