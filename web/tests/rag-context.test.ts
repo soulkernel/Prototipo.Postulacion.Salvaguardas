@@ -142,3 +142,24 @@ test("observation drafts request clarification, retain selected references and r
     ),
   );
 });
+
+import { riskRetrievalQuery } from "../src/lib/rag-context";
+test("focused search keeps risk terms separate from review question and bounds expansion", () => {
+  const p = emptyPayload();
+  const a = newActivity();
+  a.title = "Programa educativo-artístico para la infancia";
+  const r = newRisk();
+  r.name =
+    "Presión sobre áreas sensibles del manglar por tránsito durante actividades educativas";
+  a.risks = [r];
+  p.activities = [a];
+  const [risk] = projectRisks(p, "es");
+  const search = riskRetrievalQuery(risk);
+  assert.match(search, /manglar/);
+  assert.match(search, /biodiversidad conservación hábitats/);
+  assert.ok(!search.includes("identificación y evaluación inicial"));
+  assert.ok(!search.includes("nota conceptual"));
+  assert.match(riskRetrievalQuery(risk, "exclusions"), /lista exclusión/);
+  risk.description = "x".repeat(5000);
+  assert.ok(riskRetrievalQuery(risk).length <= 600);
+});

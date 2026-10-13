@@ -60,6 +60,14 @@ export async function consultQwen(
   const viewer = await requireRagViewer();
   const query = z.string().trim().min(3).max(600).safeParse(form.get("query"));
   if (!query.success) return { status: "invalid" };
+  const retrieval = z
+    .string()
+    .trim()
+    .min(3)
+    .max(600)
+    .optional()
+    .safeParse(form.get("retrieval_query") || undefined);
+  if (!retrieval.success) return { status: "invalid" };
   if (viewer.profile.access_kind === "academic") {
     const { data, error } = await viewer.db.rpc("consume_academic_query");
     if (error || !data) return { status: "quota" };
@@ -67,7 +75,7 @@ export async function consultQwen(
   try {
     return {
       status: "ok",
-      response: await askQwen(query.data),
+      response: await askQwen(query.data, retrieval.data),
       query: query.data,
     };
   } catch (error) {

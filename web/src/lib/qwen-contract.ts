@@ -22,6 +22,7 @@ export const qwenResponse = z
   .object({
     answer: z.string().min(1).max(20000),
     generated: z.boolean(),
+    retrieval_query: z.string().trim().min(3).max(600).optional(),
     reason: z
       .enum(["answered", "insufficient_context", "citation_validation_failed"])
       .optional(),
@@ -80,6 +81,7 @@ export async function requestQwen(
   key: string,
   query: string,
   request: typeof fetch = fetch,
+  retrievalQuery?: string,
 ): Promise<QwenResponse> {
   const url = new URL(endpoint);
   if (
@@ -95,10 +97,20 @@ export async function requestQwen(
     throw new Error("configuration");
   if (!key || query.trim().length < 3 || query.length > 600)
     throw new Error("invalid");
+  if (
+    retrievalQuery !== undefined &&
+    (retrievalQuery.trim().length < 3 || retrievalQuery.length > 600)
+  )
+    throw new Error("invalid");
   const response = await request(url, {
     method: "POST",
     headers: { "Content-Type": "application/json", "X-Demo-Key": key },
-    body: JSON.stringify({ query: query.trim() }),
+    body: JSON.stringify({
+      query: query.trim(),
+      ...(retrievalQuery === undefined
+        ? {}
+        : { retrieval_query: retrievalQuery.trim() }),
+    }),
     cache: "no-store",
     redirect: "error",
     signal: AbortSignal.timeout(55000),

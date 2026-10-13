@@ -117,3 +117,37 @@ test("partial retrieval on abstention remains evidence and never grounded source
     false,
   );
 });
+
+test("question and focused retrieval are transmitted separately and invalid search is rejected before transport", async () => {
+  let calls = 0;
+  const transport = (async (_url, options) => {
+    calls++;
+    assert.deepEqual(JSON.parse(String(options?.body)), {
+      query: "Pregunta de revisión",
+      retrieval_query: "manglar biodiversidad hábitats",
+    });
+    return Response.json({
+      ...grounded,
+      retrieval_query: "manglar biodiversidad hábitats",
+    });
+  }) as typeof fetch;
+  const result = await requestQwen(
+    "https://glf.hf.space/api/ask",
+    "secret",
+    "Pregunta de revisión",
+    transport,
+    "manglar biodiversidad hábitats",
+  );
+  assert.equal(result.retrieval_query, "manglar biodiversidad hábitats");
+  await assert.rejects(
+    requestQwen(
+      "https://glf.hf.space/api/ask",
+      "secret",
+      "Pregunta de revisión",
+      transport,
+      "x".repeat(601),
+    ),
+    /invalid/,
+  );
+  assert.equal(calls, 1);
+});

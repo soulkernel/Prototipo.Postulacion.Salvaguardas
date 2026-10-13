@@ -34,3 +34,5 @@ E5 continúa independiente y no envía sus fragmentos a Qwen. Su guía de lectur
 Cuotas, autenticación, proveedor y límite monetario no cambian. Las métricas académicas anteriores no validan este adaptador de redacción.
 
 Adaptador 1.2: si el proveedor redacta sin citas exactas, un único intento de regeneración exige el formato válido; nunca agrega citas automáticamente. La abstención explícita no se reintenta. Ambas generaciones comparten un presupuesto de 43 segundos. El validador original decide sobre la salida final; cuotas y límite USD 5 permanecen iguales.
+
+Adaptador 1.3: parámetro opcional retrieval_query (3–600 caracteres) para buscar por riesgo y actividad. La pregunta original se conserva para la generación. El adaptador por petición delega al mismo recuperador BM25 sin cambiar corpus, pesos ni validador. Las consultas libres sin parámetro mantienen su comportamiento anterior. El texto de búsqueda utilizado vuelve en la respuesta y queda trazable en el portal. Las expansiones temáticas solo son términos de búsqueda, no determinaciones normativas.

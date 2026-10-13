@@ -5,7 +5,12 @@ import { consultQwen, type QwenState } from "@/app/internal/evidence/actions";
 import { EvidenceReading } from "./evidence-reading";
 import { EvidenceSearch } from "./evidence-search";
 import { ActionLabel } from "./submit-button";
-import { riskQuery, type RagProject, type RagRisk } from "@/lib/rag-context";
+import {
+  riskRetrievalQuery,
+  riskQuery,
+  type RagProject,
+  type RagRisk,
+} from "@/lib/rag-context";
 import { RagNoteForm } from "./rag-note-form";
 import type { Locale } from "@/lib/domain";
 
@@ -31,6 +36,12 @@ export function RagMethods({
     context ? riskQuery(context.risk, context.project.stage, "qwen") : "",
   );
   const [method, setMethod] = useState("e5");
+  const retrievalQuery =
+    context &&
+    query.trim() ===
+      riskQuery(context.risk, context.project.stage, "qwen", purpose).trim()
+      ? riskRetrievalQuery(context.risk, purpose)
+      : query.trim();
   const [state, action, pending] = useActionState(consultQwen, {
     status: "idle",
   } as QwenState);
@@ -163,6 +174,11 @@ export function RagMethods({
               setReviewSaved(false);
             }}
           >
+            <input
+              type="hidden"
+              name="retrieval_query"
+              value={retrievalQuery}
+            />
             {context && (
               <label>
                 {es ? "Qué desea revisar" : "Review focus"}
@@ -269,6 +285,21 @@ export function RagMethods({
                     ? "La respuesta solo debe tratar como obligaciones los requisitos expresos de la fuente. Las definiciones y orientaciones generales requieren comprobar su aplicabilidad al caso."
                     : "Only explicit source requirements should be treated as obligations. Definitions and general guidance require checking applicability."}
                 </p>
+                {state.response.retrieval_query && (
+                  <details className="evidence-metadata">
+                    <summary>
+                      {es
+                        ? "Ver texto utilizado para buscar evidencia"
+                        : "View evidence search text"}
+                    </summary>
+                    <p>{state.response.retrieval_query}</p>
+                    <p>
+                      {es
+                        ? "La búsqueda se centra en el riesgo y la actividad. Qwen recibe por separado la pregunta completa para interpretar la evidencia en su contexto. Los términos relacionados amplían la búsqueda; no establecen requisitos ni califican el riesgo."
+                        : "Search focuses on the risk and activity. Qwen separately receives the full question. Related search terms do not establish requirements or rate the risk."}
+                    </p>
+                  </details>
+                )}
                 <p>
                   {es ? "Tiempo de procesamiento: " : "Processing time: "}
                   {state.response.timings.total_seconds.toFixed(1)} s

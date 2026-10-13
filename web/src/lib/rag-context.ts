@@ -70,3 +70,23 @@ export function riskQuery(
     context.slice(0, (method === "e5" ? 1500 : 600) - question.length)
   );
 }
+
+/** Search terms only: these expansions are not a legal classification or a new obligation. */
+export function riskRetrievalQuery(risk: RagRisk, purpose = "assessment") {
+  const core = riskQuery(risk, 1, "e5");
+  const topic = `${risk.name} ${risk.description}`
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+  const terms: string[] = [];
+  if (/manglar|coral|habitat|fauna|flora|ecosistema|biodiversidad/.test(topic))
+    terms.push("biodiversidad conservación hábitats");
+  if (/residuo|basura|desecho|vertido|derrame/.test(topic))
+    terms.push("residuos contaminación");
+  if (/ocupacional|laboral|trabajador|accidente/.test(topic))
+    terms.push("salud seguridad ocupacional");
+  if (purpose === "exclusions")
+    terms.push("lista exclusión actividades prohibidas");
+  const suffix = terms.length ? ` ${terms.join(" ")}` : "";
+  return core.slice(0, 600 - suffix.length) + suffix;
+}

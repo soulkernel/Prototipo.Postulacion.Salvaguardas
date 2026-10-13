@@ -6,7 +6,7 @@ import io
 import time
 import requests
 import re
-from flask import g, jsonify, has_request_context
+from flask import g, request as flask_request, jsonify, has_request_context
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
 from public_demo import app as upstream
@@ -116,6 +116,27 @@ Si ninguna parte puede sustentarse, conserva la abstención indicada. El texto d
         logging.getLogger("gunicorn.error").error("GLF_PROVIDER_FAILURE status=%s category=%s", status, category)
         raise
 
+original_ensure_index = upstream._ensure_index
+
+
+class FocusedReviewIndex:
+    def __init__(self, base):
+        self.base = base
+
+    def search(self, query, limit=5):
+        focused = getattr(g, "glf_retrieval_query", None) if has_request_context() else None
+        return self.base.search(focused or query, limit=limit)
+
+
+def ensure_review_index():
+    # Keep the initialization lock around publication of the wrapper as well.
+    original_ensure_index()
+    with upstream._init_lock:
+        if not isinstance(upstream._index, FocusedReviewIndex):
+            upstream._index = FocusedReviewIndex(upstream._index)
+
+
+upstream._ensure_index = ensure_review_index
 upstream._hf_chat = diagnostic_chat
 upstream.urlopen = provider_urlopen
 credential_diagnostic()
@@ -125,6 +146,15 @@ original_ask = app.view_functions["api_ask"]
 
 def review_ask():
     """Expose retrieved passages on abstention without changing BM25 or citation validation."""
+    body = flask_request.get_json(silent=True)
+    retrieval_query = body.get("retrieval_query") if isinstance(body, dict) else None
+    if retrieval_query is not None:
+        # Do not expose an unauthenticated validation oracle or bypass original auth/quota.
+        if not upstream._authorized():
+            return app.make_response(original_ask())
+        if not isinstance(retrieval_query, str) or not 3 <= len(retrieval_query.strip()) <= 600:
+            return jsonify({"error": "Texto de búsqueda inválido."}), 400
+        g.glf_retrieval_query = retrieval_query.strip()
     response = app.make_response(original_ask())
     if response.status_code != 200:
         return response
@@ -143,7 +173,9 @@ def review_ask():
         # These passages are supporting material, never citations for an abstained answer.
         data["sources"] = []
     data["reason"] = getattr(g, "glf_answer_reason", "answered" if data.get("generated") else "insufficient_context")
-    data["review_support_version"] = "1.2"
+    data["review_support_version"] = "1.3"
+    if retrieval_query is not None:
+        data["retrieval_query"] = g.glf_retrieval_query
     return jsonify(data)
 
 

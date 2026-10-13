@@ -101,5 +101,35 @@ class DeploymentDiagnostics(unittest.TestCase):
             self.assertEqual(model.call_count, 1)
             self.assertEqual(runtime.g.glf_answer_reason, 'insufficient_context')
 
+
+    def test_focused_search_is_request_scoped_and_original_question_reaches_generation(self):
+        from public_demo.smoke_test import reset_state, ROW
+        reset_state()
+        class RecordingIndex:
+            def __init__(self): self.queries=[]
+            def search(self, query, limit=5): self.queries.append(query);return [ROW]
+        index=RecordingIndex()
+        runtime.upstream._index=index
+        with patch.object(runtime.upstream,'_generate_answer',return_value=('Insuficiente',[])) as generate:
+            client=runtime.app.test_client()
+            response=client.post('/api/ask',json={'query':'Pregunta completa para la nota conceptual','retrieval_query':'manglar biodiversidad'},headers={'X-Demo-Key':'smoke-secret'})
+            self.assertEqual(response.status_code,200)
+            self.assertTrue(all(q=='manglar biodiversidad' for q in index.queries))
+            self.assertEqual(generate.call_args.args[0],'Pregunta completa para la nota conceptual')
+            self.assertEqual(response.get_json()['retrieval_query'],'manglar biodiversidad')
+            client.post('/api/ask',json={'query':'Otra pregunta libre'},headers={'X-Demo-Key':'smoke-secret'})
+            self.assertEqual(index.queries[-1],'Otra pregunta libre')
+        self.assertIs(runtime.upstream._index.base,index)
+
+    def test_invalid_focus_never_calls_model_and_does_not_bypass_auth(self):
+        from public_demo.smoke_test import reset_state
+        reset_state()
+        client=runtime.app.test_client()
+        with patch.object(runtime.upstream,'_generate_answer') as model:
+            response=client.post('/api/ask',json={'query':'Consulta','retrieval_query':['invalid']},headers={'X-Demo-Key':'smoke-secret'})
+            self.assertEqual(response.status_code,400)
+            self.assertEqual(client.post('/api/ask',json={'query':'Consulta','retrieval_query':['invalid']}).status_code,401)
+            model.assert_not_called()
+
 if __name__ == '__main__':
     unittest.main()
