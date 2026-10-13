@@ -1,5 +1,4 @@
-import { qwenResponse } from "@/lib/qwen-contract";
-import { z } from "zod";
+import { parseReviewEvidence, selectedReferences } from "@/lib/rag-review";
 export function RagSavedEvidence({
   evidence,
   method,
@@ -9,54 +8,34 @@ export function RagSavedEvidence({
   method: string;
   es: boolean;
 }) {
-  const qwen = method === "qwen" ? qwenResponse.safeParse(evidence) : null;
-  const e5 =
-    method === "e5"
-      ? z
-          .object({
-            results: z.array(
-              z.object({
-                document_name: z.string(),
-                document_version: z.string(),
-                locator: z.string(),
-                content: z.string(),
-              }),
-            ),
-          })
-          .safeParse(evidence)
-      : null;
+  const parsed = parseReviewEvidence(method, evidence);
+  if (!parsed) return null;
+  const ids =
+    parsed.selected_ids ??
+    parsed.results.map((row) => ("id" in row ? String(row.id) : row.chunk_id));
+  const references = selectedReferences(method, evidence, ids, es);
   return (
     <details>
       <summary>
         {es
-          ? "Ver respuesta y evidencia guardadas"
-          : "View saved response and evidence"}
+          ? parsed.selected_ids
+            ? `Ver evidencia seleccionada (${references.length})`
+            : "Ver respuesta y evidencia guardadas"
+          : parsed.selected_ids
+            ? `View selected evidence (${references.length})`
+            : "View saved answer and evidence"}
       </summary>
-      {qwen?.success && (
-        <>
-          <p>{qwen.data.answer}</p>
-          {qwen.data.sources.map((s) => (
-            <p key={s.chunk_id}>
-              <a
-                href={`${s.source_url.split("#")[0]}#page=${s.page}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {s.source_name} · {es ? "Página" : "Page"} {s.page}
-              </a>
-            </p>
-          ))}
-        </>
+      {"answer" in parsed && parsed.generated && (
+        <p className="rag-answer">{parsed.answer}</p>
       )}
-      {e5?.success &&
-        e5.data.results.map((s, i) => (
-          <article key={i}>
-            <strong>
-              {s.document_name} · {s.document_version} · {s.locator}
-            </strong>
-            <p>{s.content}</p>
-          </article>
-        ))}
+      {references.map((ref) => (
+        <article key={ref.id}>
+          <strong>
+            {ref.name} · {ref.locator}
+          </strong>
+          <p className="rag-answer">{ref.text}</p>
+        </article>
+      ))}
     </details>
   );
 }

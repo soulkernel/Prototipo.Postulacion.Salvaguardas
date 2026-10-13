@@ -3,7 +3,8 @@ import { requireViewer, requireRagViewer } from "@/lib/data";
 import { embedQuery } from "@/lib/rag";
 import { z } from "zod";
 import { askQwen } from "@/lib/qwen";
-import { qwenResponse, type QwenResponse } from "@/lib/qwen-contract";
+import { type QwenResponse } from "@/lib/qwen-contract";
+import { parseReviewEvidence } from "@/lib/rag-review";
 import { revalidatePath } from "next/cache";
 
 export async function saveRagNote(
@@ -30,27 +31,15 @@ export async function saveRagNote(
     const evidence = JSON.parse(parsed.data.evidence);
     if (!evidence || Array.isArray(evidence) || typeof evidence !== "object")
       return { status: "invalid" };
-    const schema =
-      parsed.data.method === "qwen"
-        ? qwenResponse
-        : z.object({
-            results: z
-              .array(
-                z.object({
-                  id: z.number().int(),
-                  document_name: z.string().max(1000),
-                  document_version: z.string().max(1000),
-                  locator: z.string().max(1000),
-                  content: z.string().max(20000),
-                  similarity: z.number().finite(),
-                }),
-              )
-              .max(6),
-          });
-    if (!schema.safeParse(evidence).success) return { status: "invalid" };
+    const validated = parseReviewEvidence(parsed.data.method, evidence);
+    if (
+      !validated ||
+      (validated.draft_kind && form.get("review_confirmed") !== "on")
+    )
+      return { status: "invalid" };
     const { error } = await db
       .from("rag_review_notes")
-      .insert({ ...parsed.data, evidence, created_by: user.id });
+      .insert({ ...parsed.data, evidence: validated, created_by: user.id });
     if (error) return { status: "error" };
     revalidatePath("/internal/evidence");
     return { status: "saved" };

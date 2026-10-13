@@ -61,3 +61,84 @@ test("reading labels preserve source identity without inventing pages", () => {
   );
   assert.equal(evidenceLocation("custom locator", true), "custom locator");
 });
+
+import {
+  parseReviewEvidence,
+  selectedReferences,
+  prepareApplicantObservation,
+} from "../src/lib/rag-review";
+test("selected evidence rejects foreign and duplicate references and preserves old records", () => {
+  const evidence = {
+    results: [
+      {
+        id: 17,
+        document_name: "Manual GLF",
+        document_version: "v1",
+        locator: "página 2",
+        content: "Definición normativa",
+        similarity: 0.8,
+      },
+    ],
+  };
+  assert.ok(parseReviewEvidence("e5", evidence));
+  assert.equal(
+    parseReviewEvidence("e5", { ...evidence, selected_ids: ["18"] }),
+    null,
+  );
+  assert.equal(
+    parseReviewEvidence("e5", { ...evidence, selected_ids: ["17", "17"] }),
+    null,
+  );
+  assert.equal(
+    parseReviewEvidence("e5", {
+      ...evidence,
+      selected_ids: [],
+      draft_kind: "applicant_observation",
+    }),
+    null,
+  );
+  const valid = {
+    ...evidence,
+    selected_ids: ["17"],
+    draft_kind: "applicant_observation",
+  };
+  assert.ok(parseReviewEvidence("e5", valid));
+  assert.equal(
+    selectedReferences("e5", valid, ["17"], true)[0].text,
+    "Definición normativa",
+  );
+  assert.deepEqual(selectedReferences("e5", valid, ["forged"], true), []);
+});
+test("observation drafts request clarification, retain selected references and respect phase boundaries", () => {
+  const p = emptyPayload();
+  const a = newActivity();
+  a.title = "Instalación de fondeos";
+  const r = newRisk();
+  r.name = "Perturbación de fauna";
+  a.risks = [r];
+  p.activities = [a];
+  const [risk] = projectRisks(p, "es");
+  const refs = [
+    {
+      id: "17",
+      name: "Manual GLF",
+      locator: "página 2",
+      text: "Definición normativa",
+    },
+  ];
+  const phase1 = prepareApplicantObservation(risk, 1, refs, "", true);
+  assert.match(phase1, /probabilidad y la gravedad/);
+  assert.match(phase1, /Manual GLF/);
+  assert.ok(!phase1.includes("PGAS"));
+  assert.match(prepareApplicantObservation(risk, 2, refs, "", true), /PGAS/);
+  assert.match(
+    prepareApplicantObservation(risk, 1, refs, "Precise la duración.", true),
+    /Precise la duración/,
+  );
+  assert.throws(() => prepareApplicantObservation(risk, 1, [], "", true));
+  assert.ok(
+    prepareApplicantObservation(risk, 1, refs, "", false).includes(
+      "technical review",
+    ),
+  );
+});

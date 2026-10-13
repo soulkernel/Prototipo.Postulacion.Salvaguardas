@@ -4,7 +4,7 @@ import {
   evidenceLocation,
 } from "@/lib/evidence-presentation";
 import { EvidenceReading } from "./evidence-reading";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import {
   searchEvidence,
   type EvidenceState,
@@ -29,10 +29,19 @@ export function EvidenceSearch({
   suggestedQuery?: string;
 }) {
   const es = locale === "es";
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [reviewSaved, setReviewSaved] = useState(false);
   const [state, action, pending] = useActionState(searchEvidence, initial);
   return (
     <section className="live-card">
-      <form action={action} className="live-form">
+      <form
+        action={action}
+        className="live-form"
+        onSubmit={() => {
+          setSelectedIds([]);
+          setReviewSaved(false);
+        }}
+      >
         <label>
           {es ? "Actividad o riesgo a consultar" : "Activity or risk to search"}
           <textarea
@@ -121,6 +130,27 @@ export function EvidenceSearch({
         {!pending &&
           state.results.map((r) => (
             <article className="live-card" key={r.id}>
+              {!readOnly && context && (
+                <label className="rag-evidence-choice">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.includes(String(r.id))}
+                    disabled={reviewSaved}
+                    onChange={(e) =>
+                      setSelectedIds((ids) =>
+                        e.target.checked
+                          ? [...ids, String(r.id)]
+                          : ids.filter((id) => id !== String(r.id)),
+                      )
+                    }
+                  />
+                  <span>
+                    {es
+                      ? "Evidencia pertinente para este riesgo"
+                      : "Relevant evidence for this risk"}
+                  </span>
+                </label>
+              )}
               <h3>{evidenceSourceName(r.document_name)}</h3>
               <p>{evidenceLocation(r.locator, es)}</p>
               <EvidenceReading
@@ -153,6 +183,8 @@ export function EvidenceSearch({
               query={state.query}
               evidence={{ results: state.results }}
               es={es}
+              selectedIds={selectedIds}
+              onSaved={() => setReviewSaved(true)}
             />
           )}
       </div>

@@ -23,6 +23,8 @@ export function RagMethods({
   readOnly?: boolean;
 }) {
   const es = locale === "es";
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [reviewSaved, setReviewSaved] = useState(false);
   const [e5Query, setE5Query] = useState<string | undefined>();
   const [purpose, setPurpose] = useState("assessment");
   const [query, setQuery] = useState(
@@ -153,7 +155,14 @@ export function RagMethods({
               : "Ask in Spanish. Do not include names, emails or personal information. The question and public evidence are processed by external services."}
           </p>
           {!qwenEnabled && <p role="status">{messages.configuration}</p>}
-          <form action={action} className="live-form">
+          <form
+            action={action}
+            className="live-form"
+            onSubmit={() => {
+              setSelectedIds([]);
+              setReviewSaved(false);
+            }}
+          >
             {context && (
               <label>
                 {es ? "Qué desea revisar" : "Review focus"}
@@ -280,6 +289,27 @@ export function RagMethods({
                 )}
                 {state.response.results.map((source) => (
                   <article className="live-card" key={source.chunk_id}>
+                    {!readOnly && context && (
+                      <label className="rag-evidence-choice">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(source.chunk_id)}
+                          disabled={reviewSaved}
+                          onChange={(e) =>
+                            setSelectedIds((ids) =>
+                              e.target.checked
+                                ? [...ids, source.chunk_id]
+                                : ids.filter((id) => id !== source.chunk_id),
+                            )
+                          }
+                        />
+                        <span>
+                          {es
+                            ? "Evidencia pertinente para este riesgo"
+                            : "Relevant evidence for this risk"}
+                        </span>
+                      </label>
+                    )}
                     <h3>{source.source_name}</h3>
                     <p>
                       {es ? "Página " : "Page "}
@@ -352,6 +382,8 @@ export function RagMethods({
                   query={state.query}
                   evidence={state.response}
                   es={es}
+                  selectedIds={selectedIds}
+                  onSaved={() => setReviewSaved(true)}
                 />
               )}
           </div>

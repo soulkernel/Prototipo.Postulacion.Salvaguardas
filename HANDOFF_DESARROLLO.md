@@ -396,3 +396,10 @@ QA local: 35 pruebas SQL/PGlite +65 TypeScript (100), lint/tsc/build correctos. 
 
 - Ajuste de lectura: nombres amigables de fuentes E5 y referencia de fragmento/página sin inventar paginación; identificadores y versión originales conservados en detalle expandible. Aviso contextual cuando la fuente histórica menciona VEAS. Corregida puntuación duplicada de riesgos cuyo nombre ya terminaba en punto.
 - Adaptador 1.2: los logs confirmaron una respuesta sin identificadores de citas (finish=stop, no truncada). Se añade un único intento de regeneración del formato, sin insertar citas automáticamente y conservando el validador original; no reintenta abstención explícita. Presupuesto conjunto de generación de 43 segundos. Ocho pruebas del adaptador pasan. No cambian proveedor, corpus, cuotas ni límite monetario.
+
+## v0.6.5 - Evidencia pertinente y observaciones editables
+- Cada pasaje E5/BM25 puede marcarse como pertinente para el riesgo seleccionado. La selección se guarda con la consulta, versión enviada, riesgo, autor y fecha, sin modificar la calificación.
+- Preparar observación genera localmente un borrador editable a partir de actividad/riesgo, referencias seleccionadas y aclaración opcional del técnico. No afirma obligaciones automáticamente ni consume inferencia adicional. Fase 1 solicita caracterización/fundamento; fase 2 contempla PGAS. No envía mensajes al aplicante.
+- Confirmación de revisión antes de guardar, selección obligatoria, IDs únicos y pertenecientes al resultado validados en servidor, sustitución de texto con advertencia y cambio de selección/instrucción invalida la confirmación. Conjunto guardado queda bloqueado; otra consulta inicia otro registro.
+- Historial distingue evidencia seleccionada y mantiene compatibilidad con notas anteriores. Se mantienen roles, MFA, RLS y acceso académico de consulta; sin migraciones.
+- QA: 41 pruebas SQL y 70 TypeScript pasan, lint/build correctos; prueba visual y de guardado tras publicación pendiente.
