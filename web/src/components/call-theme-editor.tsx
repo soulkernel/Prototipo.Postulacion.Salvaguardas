@@ -156,7 +156,7 @@ export function CallThemeEditor({
             </p>
           )}
           <div className="live-actions">
-            <button type="button" className="button" onClick={apply}>
+            <button type="button" className="button primary" onClick={apply}>
               {editing === "new"
                 ? es
                   ? "Agregar"
