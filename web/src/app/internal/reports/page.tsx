@@ -94,13 +94,6 @@ export default async function Reports({
               {es ? "Con convenio firmado" : "Under signed agreements"}:{" "}
               {Number(report.signed_total).toLocaleString(locale)}
             </p>
-            <DocumentDownload
-              className="button primary"
-              href={"/internal/reports/export?call=" + id}
-              locale={locale}
-            >
-              {es ? "Descargar CSV" : "Download CSV"}
-            </DocumentDownload>
           </section>
           <section className="live-card">
             <h2>
@@ -127,6 +120,46 @@ export default async function Reports({
                 ? "Los indicadores sociales y ambientales permanecen como metas narrativas de cada expediente hasta que GLF apruebe sus definiciones y unidades de agregación."
                 : "Social and environmental indicators remain narrative targets in each application until GLF approves their definitions and aggregation units."}
             </p>
+          </section>
+          <section className="live-card report-downloads">
+            <h2>{es ? "Descargar reporte" : "Download report"}</h2>
+            <p>
+              {es
+                ? "Descargue el reporte de la convocatoria seleccionada, con fecha y hora de corte de Galápagos."
+                : "Download the selected call report with its Galapagos cut-off date and time."}
+            </p>
+            <div className="report-download-actions">
+              <DocumentDownload
+                className="button primary"
+                href={"/internal/reports/export?call=" + id + "&format=xlsx"}
+                locale={locale}
+              >
+                {es ? "Descargar Excel" : "Download Excel"}
+              </DocumentDownload>
+              <DocumentDownload
+                className="button secondary"
+                href={"/internal/reports/export?call=" + id + "&format=pdf"}
+                locale={locale}
+              >
+                {es ? "Descargar PDF" : "Download PDF"}
+              </DocumentDownload>
+            </div>
+            <details className="report-csv-option">
+              <summary>
+                {es ? "Otras opciones de exportación" : "Other export options"}
+              </summary>
+              <p>
+                {es
+                  ? "Para exportar datos a bases de datos o herramientas de análisis estadístico."
+                  : "To export data to databases or statistical analysis tools."}
+              </p>
+              <DocumentDownload
+                href={"/internal/reports/export?call=" + id + "&format=csv"}
+                locale={locale}
+              >
+                {es ? "Exportar CSV" : "Export CSV"}
+              </DocumentDownload>
+            </details>
           </section>
         </>
       )}

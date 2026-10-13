@@ -2940,3 +2940,8 @@ select {
   .module-heading { padding: 16px; margin-bottom: 20px; }
   .module-heading h1 { font-size: 22px; }
 }
+
+.report-download-actions { display: flex; flex-wrap: wrap; gap: 14px; margin: 18px 0; }
+.report-csv-option { border-top: 1px solid #dbe3ee; padding-top: 16px; margin-top: 20px; }
+.report-csv-option summary { cursor: pointer; color: var(--teal-dark); font-weight: 600; }
+.report-csv-option summary:hover { color: var(--navy); }
