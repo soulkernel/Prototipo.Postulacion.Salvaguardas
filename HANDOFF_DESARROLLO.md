@@ -386,4 +386,4 @@ QA local: 35 pruebas SQL/PGlite +65 TypeScript (100), lint/tsc/build correctos. 
 ## v0.6.3 - Identidad integrada en la cabecera
 - Correo de la cuenta bajo el logotipo, 12 px, sin avatar ni espacio reservado en el contenido. Correos largos se abrevian visualmente y se muestran completos al pasar el puntero o enfocar con teclado.
 - Cabecera compartida externa, interna y académica. Menús e idioma/cierre mantienen altura uniforme de 40 px en escritorio y 44 px con puntero táctil. Navegación sigue de izquierda a derecha y controles de cuenta separados.
-- No modifica permisos, autenticación ni datos. Lint y compilación correctos; verificación visual del despliegue pendiente.
+- No modifica permisos, autenticación ni datos. Lint, pruebas, compilación y auditoría de dependencias correctos (GitHub 38458311614). Vercel success; manual externo verificado a 958 px y 390 px sin desbordamiento, contenido a ancho completo; cabecera interna verificada. Captura scratch/cabecera-correo-logo-0.6.3.png.
