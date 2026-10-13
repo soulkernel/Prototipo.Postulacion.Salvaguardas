@@ -1,7 +1,7 @@
 import { budgetText } from "./budget";
 import { submissionNotice } from "./grant-rules";
 import { alignmentNarrative, riskNarrative } from "./document-language";
-import { resultText, resultUnits } from "@/lib/project-results";
+import { resultUnits } from "@/lib/project-results";
 import { PDFDocument, rgb, type PDFFont } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import QRCode from "qrcode";
@@ -116,12 +116,24 @@ export async function applicationPdf({
     pageHeader();
   }
   pageHeader();
-  function lines(value: string, font: PDFFont, size: number) {
+  function lines(
+    value: string,
+    font: PDFFont,
+    size: number,
+    availableWidth = width,
+  ) {
     const result: string[] = [];
-    for (const paragraph of value.replace(/\r/g, "").split("\n")) {
+    for (const paragraph of value
+      .replace(/\r/g, "")
+      .replace(/\n[ \t]*\n(?:[ \t]*\n)+/g, "\n\n")
+      .trim()
+      .split("\n")) {
       let current = "";
       for (const char of Array.from(paragraph)) {
-        if (font.widthOfTextAtSize(current + char, size) > width && current) {
+        if (
+          font.widthOfTextAtSize(current + char, size) > availableWidth &&
+          current
+        ) {
           const space = current.lastIndexOf(" ");
           if (space > current.length / 2) {
             result.push(current.slice(0, space));
@@ -168,6 +180,73 @@ export async function applicationPdf({
     if (y < 72 + lines(label, bold, 12).length * 15 + 35) newPage();
     draw(label, true, false);
     draw(String(value ?? "—") || "—");
+  }
+
+  // Split long rows across pages and repeat column labels; never reserve a whole
+  // narrative block that would leave a large unused part of the current page.
+  function table(headers: string[], rows: string[][], widths: number[]) {
+    const lineHeight = 14;
+    function cells(values: string[], heading: boolean) {
+      return values.map((v, i) =>
+        lines(v || "—", heading ? bold : font, 10, widths[i] - 16),
+      );
+    }
+    function paint(
+      parts: string[][],
+      offset: number,
+      count: number,
+      heading: boolean,
+    ) {
+      const height = count * lineHeight + 16;
+      let x = 52;
+      parts.forEach((column, i) => {
+        page.drawRectangle({
+          x,
+          y: y - height + 4,
+          width: widths[i],
+          height,
+          color: heading ? pale : rgb(1, 1, 1),
+          borderColor: rgb(0.82, 0.85, 0.88),
+          borderWidth: 0.5,
+        });
+        column.slice(offset, offset + count).forEach((text, j) => {
+          page.drawText(text, {
+            x: x + 8,
+            y: y - 10 - j * lineHeight,
+            size: 10,
+            font: heading ? bold : font,
+            color: rgb(0, 0, 0),
+          });
+        });
+        x += widths[i];
+      });
+      y -= height;
+    }
+    const head = cells(headers, true);
+    const headCount = Math.max(...head.map((c) => c.length));
+    const headHeight = headCount * lineHeight + 16;
+    function header() {
+      paint(head, 0, headCount, true);
+    }
+    if (y < 72 + headHeight + 44) newPage();
+    header();
+    for (const row of rows) {
+      const parts = cells(row, false);
+      const total = Math.max(...parts.map((c) => c.length));
+      let offset = 0;
+      while (offset < total) {
+        let count = Math.floor((y - 72 - 16) / lineHeight);
+        if (count < 1) {
+          newPage();
+          header();
+          count = Math.floor((y - 72 - 16) / lineHeight);
+        }
+        count = Math.min(count, total - offset);
+        paint(parts, offset, count, false);
+        offset += count;
+      }
+    }
+    y -= 14;
   }
 
   draw(
@@ -256,20 +335,11 @@ export async function applicationPdf({
         fieldSpec.key === "alignment" &&
         payload.concept.strategic_alignment?.objectives.length
       ) {
-        if (y < 380) newPage();
         draw(es ? "ALINEACIÓN ESTRATÉGICA" : "STRATEGIC ALIGNMENT", true);
         let i = 0;
         for (const objective of payload.concept.strategic_alignment
           .objectives) {
           const narrative = alignmentNarrative(objective, locale);
-          const blockHeight =
-            50 +
-            narrative.reduce(
-              (total, paragraph) =>
-                total + lines(paragraph, font, 11).length * 15 + 9,
-              0,
-            );
-          if (y < 72 + Math.min(blockHeight, 500)) newPage();
           draw(
             objective.kind === "general"
               ? es
@@ -312,44 +382,49 @@ export async function applicationPdf({
         payload.concept.project_results?.length
       ) {
         draw(es ? "RESULTADOS E INDICADORES" : "RESULTS AND INDICATORS", true);
+        draw(
+          es
+            ? "Cada resultado se vincula con un objetivo específico y se expresa mediante un indicador y una meta preliminar."
+            : "Each result is linked to a specific objective and described by an indicator and a preliminary target.",
+        );
         payload.concept.project_results.forEach((r, i) => {
-          draw((es ? "Resultado " : "Result ") + (i + 1), true);
-          field(
-            es
-              ? "Se espera alcanzar el siguiente resultado"
-              : "The following result is expected",
-            r.result,
-          );
-          field(
-            es
-              ? "Este resultado contribuye al siguiente objetivo específico"
-              : "This result contributes to the following specific objective",
+          draw((es ? "Resultado " : "Result ") + (i + 1), true, false);
+          const objective =
             payload.concept.strategic_alignment?.objectives.find(
               (o) => o.id === r.objective_id,
-            )?.text || r.objective_id,
-          );
-          field(
+            )?.text || r.objective_id;
+          table(
             es
-              ? "El resultado se medirá mediante el siguiente indicador"
-              : "The result will be measured using the following indicator",
-            r.indicator,
+              ? ["Resultado esperado", "Indicador", "Meta preliminar"]
+              : ["Expected result", "Indicator", "Preliminary target"],
+            [
+              [
+                r.result,
+                r.indicator,
+                String(r.target ?? "—") +
+                  " " +
+                  (r.unit === "other"
+                    ? r.other_unit
+                    : resultUnits.find((u) => u[0] === r.unit)?.[es ? 1 : 2] ||
+                      r.unit),
+              ],
+            ],
+            [196, 185, 110],
           );
-          field(
+          table(
             es
-              ? "La meta preliminar prevista es"
-              : "The planned preliminary target is",
-            String(r.target ?? "—") +
-              " " +
-              (r.unit === "other"
-                ? r.other_unit
-                : resultUnits.find((u) => u[0] === r.unit)?.[es ? 1 : 2] ||
-                  r.unit),
-          );
-          field(
-            es
-              ? "El cumplimiento se comprobará mediante la siguiente evidencia"
-              : "Achievement will be verified using the following evidence",
-            r.evidence,
+              ? ["Relación y verificación", "Descripción"]
+              : ["Alignment and verification", "Description"],
+            [
+              [
+                es
+                  ? "Objetivo específico al que contribuye"
+                  : "Specific objective supported",
+                objective,
+              ],
+              [es ? "Evidencia prevista" : "Planned evidence", r.evidence],
+            ],
+            [150, 341],
           );
         });
         continue;
@@ -367,18 +442,48 @@ export async function applicationPdf({
           );
         continue;
       }
+      if (
+        fieldSpec.key === "beneficiaries" ||
+        fieldSpec.key === "sustainability" ||
+        fieldSpec.key === "results"
+      ) {
+        draw(es ? fieldSpec.es : fieldSpec.en, true);
+        draw(
+          fieldSpec.key === "beneficiaries"
+            ? es
+              ? "Esta sección describe a quién beneficia el proyecto y su contribución a los medios de vida."
+              : "This section describes who benefits from the project and its contribution to livelihoods."
+            : fieldSpec.key === "sustainability"
+              ? es
+                ? "Esta sección describe la continuidad de los beneficios y las posibilidades de replicar la iniciativa."
+                : "This section describes the continuity of benefits and opportunities to replicate the initiative."
+              : es
+                ? "Resultados e indicadores consignados por el postulante."
+                : "Results and indicators provided by the applicant.",
+        );
+        table(
+          es
+            ? ["Apartado", "Información presentada"]
+            : ["Section", "Submitted information"],
+          [
+            [
+              es ? fieldSpec.es : fieldSpec.en,
+              String(payload.concept[fieldSpec.key] || "—"),
+            ],
+          ],
+          [140, 351],
+        );
+        continue;
+      }
       field(
         es ? fieldSpec.es : fieldSpec.en,
-        fieldSpec.key === "results"
-          ? resultText(payload.concept, locale)
-          : fieldSpec.key === "partners" &&
-              payload.concept.associated_organizations
-            ? payload.concept.associated_organizations
-                .map((name, i) => `${i + 1}. ${name}`)
-                .join("\n")
-            : Array.isArray(payload.concept[fieldSpec.key])
-              ? (payload.concept[fieldSpec.key] as string[]).join(", ")
-              : payload.concept[fieldSpec.key],
+        fieldSpec.key === "partners" && payload.concept.associated_organizations
+          ? payload.concept.associated_organizations
+              .map((name, i) => `${i + 1}. ${name}`)
+              .join("\n")
+          : Array.isArray(payload.concept[fieldSpec.key])
+            ? (payload.concept[fieldSpec.key] as string[]).join(", ")
+            : payload.concept[fieldSpec.key],
       );
     }
     field(

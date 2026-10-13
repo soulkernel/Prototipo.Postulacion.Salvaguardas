@@ -176,3 +176,58 @@ test("document prose preserves selected policies and scores without inventing al
   assert.match(riskNarrative(4, 4, "en"), /16.*very high risk/);
   assert.match(riskNarrative(null, 4, "es"), /incompleta/);
 });
+
+test("result tables paginate long cells and redundant blank lines do not inflate pages", async () => {
+  await mkdir(".test-artifacts", { recursive: true });
+  for (const long of [false, true]) {
+    const payload = emptyPayload();
+    payload.concept.title = "Conservación marina y participación comunitaria";
+    payload.concept.contact_name = "María Elena Pérez";
+    payload.concept.beneficiaries =
+      "Comunidades costeras y organizaciones locales.\n\nParticipación en actividades educativas y oportunidades de formación.";
+    payload.concept.sustainability =
+      "Las organizaciones participantes mantendrán los materiales y las capacidades adquiridas.\n\nLa metodología podrá replicarse en otras islas.";
+    payload.concept.project_results = [
+      {
+        id: crypto.randomUUID(),
+        objective_id: "OE1",
+        result: long
+          ? "Resultado extenso de conservación marina con participación comunitaria. ".repeat(
+              110,
+            ) + "FIN RESULTADO"
+          : "Mejorar las capacidades de conservación marina.",
+        indicator: "Número de participantes que completan la formación.",
+        target: 120,
+        unit: "people",
+        other_unit: "",
+        evidence: "Listas de asistencia e informes de formación.",
+      },
+    ];
+    const args = {
+      payload,
+      reference: "GLF-LAYOUT-001",
+      revision: 1,
+      submittedAt: "2026-10-13T12:00:00Z",
+      kind: "concept" as const,
+      locale: "es" as const,
+      downloadUrl: "https://example.test/document",
+      stage: 1,
+    };
+    const result = await applicationPdf(args);
+    assert.ok(result.pages > 0 && result.pages < 20);
+    await writeFile(
+      `.test-artifacts/layout-${long ? "long" : "short"}.pdf`,
+      result.bytes,
+    );
+    payload.concept.beneficiaries = payload.concept.beneficiaries.replace(
+      /\n\n/g,
+      "\n".repeat(30),
+    );
+    const spaced = await applicationPdf(args);
+    assert.equal(
+      spaced.pages,
+      result.pages,
+      "Blank pasted lines must not create empty pages",
+    );
+  }
+});

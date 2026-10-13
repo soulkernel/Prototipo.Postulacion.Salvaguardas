@@ -751,7 +751,7 @@ export function ApplicationEditor({
       <Link href="/applicant/applications" className="text-button">
         ← {es ? "Mis postulaciones" : "My applications"}
       </Link>
-      <div className="live-title">
+      <div className="live-title application-heading">
         <div>
           <p className="eyebrow">
             {application.reference_code} · {es ? "Fase" : "Phase"}{" "}
@@ -773,64 +773,66 @@ export function ApplicationEditor({
             </p>
           )}
           <p>{es ? call.title_es : call.title_en}</p>
-          <DeadlineCountdown
-            deadline={
-              application.stage === 1
-                ? call.closes_at
-                : application.phase2_deadline
-            }
-            serverNow={serverNow}
-            locale={locale}
-            stage={application.stage}
-          />
-        </div>
-        <div className="application-save-heading">
-          <span className="status-pill neutral">
-            {statusLabel(application.status, locale, "applicant")}
-          </span>
-          {editable && (
-            <span
-              className="application-save-time"
-              role="status"
-              aria-live="polite"
-            >
-              <ActionLabel
-                busy={autoSaving || (busy && operation === "save")}
-                pendingLabel={es ? "Guardando…" : "Saving…"}
-              >
-                {autoError ? (
-                  es ? (
-                    "No guardado"
-                  ) : (
-                    "Not saved"
-                  )
-                ) : dirty ? (
-                  es ? (
-                    "Cambios sin guardar"
-                  ) : (
-                    "Unsaved changes"
-                  )
-                ) : (
-                  <>
-                    {es ? "Guardado " : "Saved "}
-                    <time dateTime={lastSaved}>
-                      {new Date(lastSaved)
-                        .toLocaleString("en-GB", {
-                          day: "2-digit",
-                          month: "2-digit",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          hourCycle: "h23",
-                          timeZone: "Pacific/Galapagos",
-                        })
-                        .replace(",", "")}
-                    </time>
-                  </>
-                )}
-              </ActionLabel>
-            </span>
-          )}
+          <div className="application-status-grid">
+            <DeadlineCountdown
+              deadline={
+                application.stage === 1
+                  ? call.closes_at
+                  : application.phase2_deadline
+              }
+              serverNow={serverNow}
+              locale={locale}
+              stage={application.stage}
+            />
+            <div className="application-save-heading">
+              <span className="status-pill neutral">
+                {statusLabel(application.status, locale, "applicant")}
+              </span>
+              {editable && (
+                <span
+                  className="application-save-time"
+                  role="status"
+                  aria-live="polite"
+                >
+                  <ActionLabel
+                    busy={autoSaving || (busy && operation === "save")}
+                    pendingLabel={es ? "Guardando…" : "Saving…"}
+                  >
+                    {autoError ? (
+                      es ? (
+                        "No guardado"
+                      ) : (
+                        "Not saved"
+                      )
+                    ) : dirty ? (
+                      es ? (
+                        "Cambios sin guardar"
+                      ) : (
+                        "Unsaved changes"
+                      )
+                    ) : (
+                      <>
+                        {es ? "Guardado " : "Saved "}
+                        <time dateTime={lastSaved}>
+                          {new Date(lastSaved)
+                            .toLocaleString("en-GB", {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              hourCycle: "h23",
+                              timeZone: "Pacific/Galapagos",
+                            })
+                            .replace(",", "")}
+                        </time>
+                      </>
+                    )}
+                  </ActionLabel>
+                </span>
+              )}
+            </div>
+          </div>
         </div>
       </div>
       {!editable && (
