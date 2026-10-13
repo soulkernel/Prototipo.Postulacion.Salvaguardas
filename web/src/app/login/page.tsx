@@ -18,7 +18,13 @@ export default async function LoginPage({
 }) {
   const viewer = await getViewer();
   if (viewer)
-    redirect(viewer.profile.role === "applicant" ? "/applicant" : "/internal");
+    redirect(
+      viewer.profile.access_kind === "academic"
+        ? "/evaluation"
+        : viewer.profile.role === "applicant"
+          ? "/applicant"
+          : "/internal",
+    );
   const email = z
     .email()
     .max(254)

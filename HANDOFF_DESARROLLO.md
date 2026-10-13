@@ -355,3 +355,12 @@ QA local: 35 pruebas SQL/PGlite +65 TypeScript (100), lint/tsc/build correctos. 
 - Solo presentación: sin cambios en consultas, filtros, roles o datos. Encabezado Espacio interno GLF pendiente de elección del usuario; recomendación Panel interno GLF.
 - Validación: lint y compilación de producción con TypeScript correctos.
 
+
+## v0.6.0 - Cuentas y evaluación académica
+- Migración 031: ciclo de cuentas, auditoría privada, archivado, revocación por sesión (auth.sessions), eliminación con ticket y bloqueo de FK/historial. Ningún expediente existente se elimina. Mantiene todos los roles y el doble factor del personal.
+- Acceso académico usa perfil applicant aislado mediante access_kind; current_role retorna NULL, sin acceso a expedientes ni operaciones internas. Tres meses calendario desde creación, vencimiento comprobado en cada petición. E5 solo fuentes aprobadas official/translation; BM25/Qwen sin cambios. Límite académico compartido 15/hora y 60/día; tope de facturación HF sin cambios.
+- /evaluation: RAG real con ejemplos sintéticos independientes y recorrido de consulta del ciclo. No es una copia editable del sistema institucional. Administrador con AAL2 puede previsualizarlo; cuenta académica no importa corpus ni guarda notas en expedientes.
+- Gestión de usuarios: búsqueda, filtros, desactivar/reactivar, archivar/desarchivar, cerrar sesiones; eliminación solo administrador, cuenta inactiva archivada sin historial y confirmación. No se cambia el acceso propio. Se conservan límites por área.
+- Edge user-administration: crea identidad nueva confirmada y contraseña aleatoria que devuelve una sola vez al administrador, sin correos automáticos; elimina mediante auth.admin.deleteUser y cascada protegida. Las credenciales administrativas permanecen en Supabase.
+- QA local: 40 pruebas SQL y 65 TypeScript, lint y build correctos. Migración 031 instalada en Supabase con transacción y recarga de esquema. Cuenta de profesora todavía NO creada; pendiente confirmación final desde la interfaz, entrega de credenciales y prueba de login académico real.
+

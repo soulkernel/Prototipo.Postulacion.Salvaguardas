@@ -2,3 +2,6 @@ project_id = "glf-postulaciones"
 
 [functions.staff-invitations]
 verify_jwt = true
+
+[functions.user-administration]
+verify_jwt = true

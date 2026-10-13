@@ -19,15 +19,22 @@ export const getViewer = cache(async () => {
   if (error || !user) return null;
   const { data: profile } = await db
     .from("profiles")
-    .select("id,full_name,role,active,user_admin_scope")
+    .select(
+      "id,full_name,role,active,user_admin_scope,access_kind,access_expires_at,archived_at",
+    )
     .eq("id", user.id)
     .maybeSingle();
   if (!profile?.active || !roles.includes(profile.role)) return null;
+  const { data: sessionValid, error: sessionError } = await db.rpc(
+    "access_session_valid",
+  );
+  if (sessionError || !sessionValid) return null;
   return { db, user, profile: { ...profile, role: profile.role as Role } };
 });
 export async function requireViewer(allowed?: readonly Role[]) {
   const viewer = await getViewer();
   if (!viewer) redirect("/login");
+  if (viewer.profile.access_kind === "academic") redirect("/evaluation");
   if (allowed && !allowed.includes(viewer.profile.role))
     redirect(viewer.profile.role === "applicant" ? "/applicant" : "/internal");
   if (viewer.profile.role !== "applicant") {
@@ -36,6 +43,12 @@ export async function requireViewer(allowed?: readonly Role[]) {
     if (error || data?.currentLevel !== "aal2") redirect("/security");
   }
   return viewer;
+}
+export async function requireRagViewer() {
+  const viewer = await getViewer();
+  if (!viewer) redirect("/login");
+  if (viewer.profile.access_kind === "academic") return viewer;
+  return requireViewer(["sustainability_reviewer", "administrator"]);
 }
 export async function getCalls(): Promise<Call[]> {
   const db = await createSupabaseServerClient();

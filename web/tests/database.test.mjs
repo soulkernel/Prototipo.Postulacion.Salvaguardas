@@ -403,6 +403,104 @@ const rules = {
   privacy_en: "Test notice",
 };
 let call, app;
+async function temporaryAccount(academic=false) {
+ const id=crypto.randomUUID();
+ await db.query("insert into auth.users(id,email,raw_user_meta_data) values($1,$2,$3)",[id,`${id}@example.test`,{full_name:"Account QA",glf_academic_provision:"true"}]);
+ if(academic) await db.query("select public.finish_academic_account($1,$2)",[id,ids.admin]);
+ return id;
+}
+async function accountOperation(id,operation,user="admin",reason="Account QA") {
+ const {rows:[p]}=await db.query("select account_revision from public.profiles where id=$1",[id]);
+ return rpc("manage_account",{target_user:id,expected_revision:p.account_revision,operation,reason},user);
+}
+test("academic account expires after three months, is not staff and cannot access institutional data",async()=>{
+ const id=await temporaryAccount(true);
+ const {rows:[p]}=await db.query("select access_expires_at > now()+interval '89 days' and access_expires_at <= now()+interval '3 months' as valid from public.profiles where id=$1",[id]);
+ assert.equal(p.valid,true);
+ await as(id,async()=>{
+  await db.query("select set_config('request.jwt.claim.aal','aal1',true)");
+  assert.equal((await db.query("select public.access_session_valid() as valid")).rows[0].valid,true);
+  assert.equal((await db.query("select private.current_role() as role")).rows[0].role,null);
+  assert.equal((await db.query("select private.is_staff() as staff")).rows[0].staff,false);
+  assert.equal((await db.query("select count(*)::int as n from public.applications")).rows[0].n,0);
+  assert.equal((await db.query("select count(*)::int as n from public.application_versions")).rows[0].n,0);
+ });
+ await assert.rejects(rpc("create_application",{call_id:call},id),/GLF_FORBIDDEN|GLF_INVALID_CALL/);
+ await assert.rejects(rpc("list_managed_accounts",{},id),/GLF_FORBIDDEN/);
+ await assert.rejects(rpc("assign_staff_role",{target_user:id,assigned_role:"administrator"},"admin"),/academic_profile/);
+ await db.query("update public.profiles set access_expires_at=now()-interval '1 second' where id=$1",[id]);
+ assert.equal(await rpc("access_session_valid",{},id),false);
+ await accountOperation(id,"deactivate");
+ await assert.rejects(accountOperation(id,"reactivate"),/GLF_CANNOT_REACTIVATE/);
+});
+test("academic RAG accesses only approved normative sources and has a shared enforced quota",async()=>{
+ const id=await temporaryAccount(true),embedding=Array(384).fill(0); embedding[0]=1;
+ await db.query("insert into public.knowledge_chunks(document_name,document_version,locator,content,approved,source_kind,embedding) values ('Academic official QA','1','p1','Official normative evidence',true,'official',$1),('Academic private QA','1','p1','Internal evidence',true,'unclassified',$1)",[JSON.stringify(embedding)]);
+ const results=await as(id,async()=>{
+  await db.query("select set_config('request.jwt.claim.aal','aal1',true)");
+  return (await db.query("select * from public.match_evidence($1,20)",[JSON.stringify(embedding)])).rows;
+ });
+ assert.ok(results.some(r=>r.document_name==="Academic official QA"));
+ assert.ok(!results.some(r=>r.document_name==="Academic private QA"));
+ for(let i=0;i<15;i++) assert.equal(await rpc("consume_academic_query",{},id),true);
+ assert.equal(await rpc("consume_academic_query",{},id),false);
+ await accountOperation(id,"deactivate");
+ await assert.rejects(rpc("consume_academic_query",{},id),/GLF_FORBIDDEN/);
+ await assert.rejects(rpc("match_evidence",{query_embedding:JSON.stringify(embedding)},id),/GLF_FORBIDDEN/);
+});
+test("account suspension preserves history, enforces scope and blocks old sessions after reactivation",async()=>{
+ const id=await temporaryAccount(),old=crypto.randomUUID(),fresh=crypto.randomUUID();
+ await db.query("insert into auth.sessions(id,user_id,created_at) values($1,$2,now()-interval '1 day')",[old,id]);
+ await assert.rejects(accountOperation(id,"deactivate","applicant"),/GLF_FORBIDDEN/);
+ await assert.rejects(accountOperation(id,"deactivate","grants"),/GLF_FORBIDDEN/);
+ await assert.rejects(accountOperation(ids.admin,"deactivate"),/GLF_SELF_ACCOUNT_CHANGE/);
+ await assert.rejects(accountOperation(id,"archive"),/GLF_DEACTIVATE_FIRST/);
+ await accountOperation(id,"deactivate");
+ assert.equal(await rpc("access_session_valid",{},id),false);
+ await accountOperation(id,"reactivate");
+ assert.equal(await rpc("access_session_valid",{},id),false);
+ await db.query("insert into auth.sessions(id,user_id,created_at) values($1,$2,clock_timestamp()+interval '1 second')",[fresh,id]);
+ await as(id,async()=>{
+  await db.query("select set_config('request.jwt.claim.session_id',$1,true)",[old]);
+  assert.equal((await db.query("select public.access_session_valid() as valid")).rows[0].valid,false);
+  await db.query("select set_config('request.jwt.claim.session_id',$1,true)",[fresh]);
+  assert.equal((await db.query("select public.access_session_valid() as valid")).rows[0].valid,true);
+ });
+ await accountOperation(id,"revoke_sessions");
+ await as(id,async()=>{
+  await db.query("select set_config('request.jwt.claim.session_id',$1,true)",[old]);
+  assert.equal((await db.query("select private.current_role() as role")).rows[0].role,null);
+ });
+ await assert.rejects(rpc("manage_account",{target_user:id,expected_revision:0,operation:"deactivate",reason:"Stale client"},"admin"),/GLF_CONCURRENT_CHANGE/);
+});
+test("permanent deletion requires inactive archived account without history and removes auth identity atomically",async()=>{
+ const id=await temporaryAccount();
+ await assert.rejects(db.query("delete from auth.users where id=$1",[id]),/GLF_ACCOUNT_DELETE_FORBIDDEN/);
+ await accountOperation(id,"deactivate"); await accountOperation(id,"archive");
+ await as("admin",async()=>{
+  await db.query("select set_config('request.jwt.claim.aal','aal1',true)");
+  await assert.rejects(db.query("select public.prepare_account_deletion($1,2,'QA')",[id]),/GLF_FORBIDDEN/);
+ });
+ // The rejected nested transaction above rolls back its error before the next action.
+ const revision=(await db.query("select account_revision from public.profiles where id=$1",[id])).rows[0].account_revision;
+ await rpc("prepare_account_deletion",{target_user:id,expected_revision:revision,reason:"Remove unused account"},"admin");
+ await db.query("delete from auth.users where id=$1",[id]);
+ assert.equal((await db.query("select count(*)::int as n from public.profiles where id=$1",[id])).rows[0].n,0);
+ assert.equal(await rpc("access_session_valid",{},id),false);
+ assert.ok((await db.query("select count(*)::int as n from private.account_events where target_id=$1",[id])).rows[0].n>=3);
+});
+test("linked applications forbid account deletion, academic creation requires service role and sessions remain MFA-protected",async()=>{
+ const id=await temporaryAccount();
+ await rpc("create_application",{call_id:call},id);
+ await accountOperation(id,"deactivate");await accountOperation(id,"archive");
+ const revision=(await db.query("select account_revision from public.profiles where id=$1",[id])).rows[0].account_revision;
+ await assert.rejects(rpc("prepare_account_deletion",{target_user:id,expected_revision:revision,reason:"Cannot remove linked account"},"admin"),/GLF_ACCOUNT_HAS_HISTORY/);
+ await assert.rejects(rpc("finish_academic_account",{target_user:id,actor:ids.admin},"admin"),/permission denied/);
+ await as("reviewer",async()=>{
+  await db.query("select set_config('request.jwt.claim.aal','aal1',true)");
+  assert.equal((await db.query("select private.current_role() as role")).rows[0].role,null);
+ });
+});
 async function as(user, fn) {
   await db.exec("begin; set local role authenticated;");
   await db.query("select set_config('request.jwt.claim.sub',$1,true)", [
@@ -440,8 +538,9 @@ before(async () => {
  create role anon nologin; create role authenticated nologin; create role service_role nologin bypassrls;
  create schema auth; create schema storage;
  create table auth.users(id uuid primary key,email text,raw_user_meta_data jsonb default '{}',invited_at timestamptz,email_confirmed_at timestamptz,encrypted_password text);
+ create table auth.sessions(id uuid primary key,user_id uuid references auth.users(id) on delete cascade,created_at timestamptz default now());
  create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
- create function auth.jwt() returns jsonb language sql stable as $$select jsonb_build_object('aal',coalesce(nullif(current_setting('request.jwt.claim.aal',true),''),'aal2'))$$;
+ create function auth.jwt() returns jsonb language sql stable as $$select jsonb_build_object('aal',coalesce(nullif(current_setting('request.jwt.claim.aal',true),''),'aal2'),'session_id',nullif(current_setting('request.jwt.claim.session_id',true),''))$$;
  grant usage on schema auth,storage,public to anon,authenticated,service_role;
  grant execute on function auth.uid() to anon,authenticated;
  create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);

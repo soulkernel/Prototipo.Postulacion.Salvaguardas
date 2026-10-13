@@ -42,22 +42,35 @@ export async function Shell({
             locale === "es" ? "Navegación principal" : "Main navigation"
           }
         >
-          {viewer?.profile.role === "applicant" && (
+          {viewer?.profile.access_kind === "academic" && (
             <>
-              <MenuLink href="/applicant">
-                {locale === "es" ? "Nueva postulación" : "New application"}
+              <MenuLink href="/evaluation">
+                {locale === "es" ? "Asistente RAG" : "RAG assistant"}
               </MenuLink>
-              <MenuLink href="/applicant/applications">
-                {locale === "es" ? "Mis postulaciones" : "My applications"}
-              </MenuLink>
-              <MenuLink href="/applicant/guide">
-                {locale === "es" ? "Cómo postular" : "How to apply"}
-              </MenuLink>
-              <MenuLink href="/manual">
-                {locale === "es" ? "Manual de uso" : "User manual"}
+              <MenuLink href="/evaluation?view=workflow">
+                {locale === "es"
+                  ? "Recorrido del portal"
+                  : "Portal walkthrough"}
               </MenuLink>
             </>
           )}
+          {viewer?.profile.role === "applicant" &&
+            viewer.profile.access_kind !== "academic" && (
+              <>
+                <MenuLink href="/applicant">
+                  {locale === "es" ? "Nueva postulación" : "New application"}
+                </MenuLink>
+                <MenuLink href="/applicant/applications">
+                  {locale === "es" ? "Mis postulaciones" : "My applications"}
+                </MenuLink>
+                <MenuLink href="/applicant/guide">
+                  {locale === "es" ? "Cómo postular" : "How to apply"}
+                </MenuLink>
+                <MenuLink href="/manual">
+                  {locale === "es" ? "Manual de uso" : "User manual"}
+                </MenuLink>
+              </>
+            )}
           {viewer && viewer.profile.role !== "applicant" && (
             <>
               <MenuLink href="/internal">
@@ -130,7 +143,13 @@ export async function Shell({
 
         {internal && (
           <p className="eyebrow">
-            {locale === "es" ? "MÓDULO INTERNO GLF" : "GLF INTERNAL MODULE"}
+            {viewer?.profile.access_kind === "academic"
+              ? locale === "es"
+                ? "EVALUACIÓN ACADÉMICA"
+                : "ACADEMIC EVALUATION"
+              : locale === "es"
+                ? "MÓDULO INTERNO GLF"
+                : "GLF INTERNAL MODULE"}
           </p>
         )}
         {children}

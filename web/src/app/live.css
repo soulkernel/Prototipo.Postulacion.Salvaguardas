@@ -1095,6 +1095,14 @@ a {
   font-size: 28px;
 }
 .inbox-contact { margin-top: 4px; font-size: 0.9em; color: #506071; }
+.account-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; flex-wrap: wrap; }
+.account-row h3 { margin-top: 0; }
+.account-row p { margin: 6px 0; overflow-wrap: anywhere; }
+.account-row label { min-width: min(240px,100%); }
+.account-card .live-form { margin-top: 20px; }
+.account-card textarea { min-height: 80px; }
+.live-main details { padding: 12px 0; }
+.live-main summary { cursor: pointer; font-weight: 600; }
 
 .working-review > .live-fieldset { display:grid; gap:16px; }
 .working-review .live-risk { margin:0; display:grid; gap:10px; padding:18px; }

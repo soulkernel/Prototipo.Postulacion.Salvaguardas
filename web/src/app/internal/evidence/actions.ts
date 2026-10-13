@@ -1,5 +1,5 @@
 "use server";
-import { requireViewer } from "@/lib/data";
+import { requireViewer, requireRagViewer } from "@/lib/data";
 import { embedQuery } from "@/lib/rag";
 import { z } from "zod";
 import { askQwen } from "@/lib/qwen";
@@ -68,9 +68,13 @@ export async function consultQwen(
   _previous: QwenState,
   form: FormData,
 ): Promise<QwenState> {
-  await requireViewer(["sustainability_reviewer", "administrator"]);
+  const viewer = await requireRagViewer();
   const query = z.string().trim().min(3).max(600).safeParse(form.get("query"));
   if (!query.success) return { status: "invalid" };
+  if (viewer.profile.access_kind === "academic") {
+    const { data, error } = await viewer.db.rpc("consume_academic_query");
+    if (error || !data) return { status: "quota" };
+  }
   try {
     return {
       status: "ok",
@@ -88,7 +92,7 @@ export async function consultQwen(
 
 export type EvidenceState = {
   query?: string;
-  status: "idle" | "ok" | "invalid" | "unavailable";
+  status: "idle" | "ok" | "invalid" | "unavailable" | "quota";
   results: {
     id: number;
     document_name: string;
@@ -103,10 +107,8 @@ export async function searchEvidence(
   _previous: EvidenceState,
   form: FormData,
 ): Promise<EvidenceState> {
-  const { db } = await requireViewer([
-    "sustainability_reviewer",
-    "administrator",
-  ]);
+  const viewer = await requireRagViewer();
+  const { db } = viewer;
   const parsed = z
     .string()
     .trim()
@@ -114,6 +116,10 @@ export async function searchEvidence(
     .max(1500)
     .safeParse(form.get("query"));
   if (!parsed.success) return { status: "invalid", results: [] };
+  if (viewer.profile.access_kind === "academic") {
+    const { data, error } = await db.rpc("consume_academic_query");
+    if (error || !data) return { status: "quota", results: [] };
+  }
   try {
     const embedding = await embedQuery(parsed.data);
     const { data, error } = await db.rpc("match_evidence", {

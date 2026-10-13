@@ -22,6 +22,7 @@ export function RagWorkspace({
   calls,
   initialProject,
   notes,
+  readOnly = false,
   ...enabled
 }: {
   locale: Locale;
@@ -29,6 +30,7 @@ export function RagWorkspace({
   calls: { id: string; title: string }[];
   initialProject: string;
   notes: RagNote[];
+  readOnly?: boolean;
   e5Enabled: boolean;
   qwenEnabled: boolean;
 }) {
@@ -212,6 +214,7 @@ export function RagWorkspace({
         <RagMethods
           key={`${free}-${projectId}-${riskId}`}
           locale={locale}
+          readOnly={readOnly}
           {...enabled}
           context={!free && project && risk ? { project, risk } : undefined}
         />
@@ -222,7 +225,7 @@ export function RagWorkspace({
             : "Select a project and risk to prepare a query, or choose Free query."}
         </p>
       )}
-      {!free && risk && (
+      {!readOnly && !free && risk && (
         <section className="live-card">
           <h2>
             {es

@@ -14,10 +14,12 @@ export function EvidenceSearch({
   locale,
   enabled,
   context,
+  readOnly = false,
 }: {
   locale: Locale;
   enabled: boolean;
   context?: { project: RagProject; risk: RagRisk };
+  readOnly?: boolean;
 }) {
   const es = locale === "es";
   const [state, action, pending] = useActionState(searchEvidence, initial);
@@ -66,6 +68,13 @@ export function EvidenceSearch({
         </button>
       </form>
       <div aria-live="polite">
+        {!pending && state.status === "quota" && (
+          <p role="alert">
+            {es
+              ? "Se alcanzó el límite de consultas del acceso académico. Intente más tarde."
+              : "The academic query limit has been reached. Try later."}
+          </p>
+        )}
         {!pending && state.status === "invalid" && (
           <p role="alert">
             {es
@@ -102,16 +111,20 @@ export function EvidenceSearch({
               </p>
             </article>
           ))}
-        {!pending && state.status === "ok" && context && state.query && (
-          <RagNoteForm
-            key={state.query + JSON.stringify(state.results)}
-            context={context}
-            method="e5"
-            query={state.query}
-            evidence={{ results: state.results }}
-            es={es}
-          />
-        )}
+        {!readOnly &&
+          !pending &&
+          state.status === "ok" &&
+          context &&
+          state.query && (
+            <RagNoteForm
+              key={state.query + JSON.stringify(state.results)}
+              context={context}
+              method="e5"
+              query={state.query}
+              evidence={{ results: state.results }}
+              es={es}
+            />
+          )}
       </div>
     </section>
   );

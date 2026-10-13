@@ -13,11 +13,13 @@ export function RagMethods({
   e5Enabled,
   qwenEnabled,
   context,
+  readOnly = false,
 }: {
   locale: Locale;
   e5Enabled: boolean;
   qwenEnabled: boolean;
   context?: { project: RagProject; risk: RagRisk };
+  readOnly?: boolean;
 }) {
   const es = locale === "es";
   const [method, setMethod] = useState("e5");
@@ -111,7 +113,12 @@ export function RagMethods({
               : "Available once the E5 service and approved sources are ready."}
           </p>
         )}
-        <EvidenceSearch locale={locale} enabled={e5Enabled} context={context} />
+        <EvidenceSearch
+          locale={locale}
+          enabled={e5Enabled}
+          context={context}
+          readOnly={readOnly}
+        />
       </div>
       <div
         id="rag-qwen-panel"
@@ -236,16 +243,20 @@ export function RagMethods({
                 </p>
               </>
             )}
-            {!pending && state.response && context && state.query && (
-              <RagNoteForm
-                key={state.query + JSON.stringify(state.response)}
-                context={context}
-                method="qwen"
-                query={state.query}
-                evidence={state.response}
-                es={es}
-              />
-            )}
+            {!readOnly &&
+              !pending &&
+              state.response &&
+              context &&
+              state.query && (
+                <RagNoteForm
+                  key={state.query + JSON.stringify(state.response)}
+                  context={context}
+                  method="qwen"
+                  query={state.query}
+                  evidence={state.response}
+                  es={es}
+                />
+              )}
           </div>
         </section>
       </div>
