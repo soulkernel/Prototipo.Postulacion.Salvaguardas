@@ -1,3 +1,4 @@
+import { defaultCall } from "@/lib/inbox-filters";
 import { ModuleHeading } from "@/components/module-heading";
 import { callThemeLabel } from "@/lib/call-themes";
 import { DocumentDownload } from "@/components/document-download";
@@ -23,7 +24,12 @@ export default async function Reports({
   const es = locale === "es";
   const calls = await getCalls();
   const params = await searchParams;
-  const id = params.call || calls[0]?.id;
+  const preferred = defaultCall(calls);
+  const id = calls.some((c) => c.id === params.call)
+    ? params.call
+    : preferred === "all"
+      ? calls[0]?.id
+      : preferred;
   const { data: report, error } = id
     ? await db.rpc(
         profile.access_kind === "academic"
