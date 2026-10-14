@@ -87,9 +87,9 @@ export function CallAttachmentEditor({
               </label>
             </div>
             <fieldset className="attachment-format-options" disabled={fixed}>
-              <legend>
+              <h3 className="section-card-title">
                 {es ? "Formatos admitidos *" : "Accepted formats *"}
-              </legend>
+              </h3>
               {attachmentFormats.map((f) => (
                 <label className="check-row" key={f}>
                   <input
@@ -112,9 +112,9 @@ export function CallAttachmentEditor({
               ))}
             </fieldset>
             <fieldset disabled={fixed}>
-              <legend>
+              <h3 className="section-card-title">
                 {es ? "Condiciones de presentación" : "Presentation conditions"}
-              </legend>
+              </h3>
               {attachmentConditions.map((c) => (
                 <label className="check-row" key={c}>
                   <input

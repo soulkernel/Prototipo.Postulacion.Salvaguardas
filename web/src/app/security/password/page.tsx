@@ -1,3 +1,4 @@
+import { PasswordInput } from "@/components/password-input";
 import { redirect } from "next/navigation";
 import { getViewer } from "@/lib/data";
 import { getLocale } from "@/lib/locale";
@@ -16,8 +17,9 @@ export default async function PasswordPage() {
             {locale === "es"
               ? "Contraseña (mínimo 12 caracteres)"
               : "Password (at least 12 characters)"}
-            <input
-              type="password"
+            <PasswordInput
+              locale={locale}
+
               name="password"
               required
               minLength={12}

@@ -1190,3 +1190,23 @@ a {
 .rag-evidence-choice input { width: 18px !important; height: 18px; flex: 0 0 18px; margin-top: 2px; }
 .rag-replace-notice { padding: 14px; border: 1px solid #ccd8e8; border-radius: 8px; }
 .rag-replace-notice button { margin: 6px 12px 0 0; }
+
+/* Shared validation and card headings — applicant/staff, 2026-10-14. */
+.section-card-title { margin: 0 0 16px; padding: 0; color: var(--navy); font-size: 17px; font-weight: 700; line-height: 1.4; }
+.live-title.module-heading { display: block; }
+.module-heading.application-heading h1 { font-size: 18px; }
+.module-heading.application-heading .application-project-title { font-size: 18px; }
+.password-control { display: block; position: relative; width: 100%; }
+.password-control input { padding-right: 52px !important; width: 100%; }
+.password-toggle { position: absolute; right: 5px; top: 50%; transform: translateY(-50%); width: 40px; height: 38px; min-height: 0; padding: 8px; display: grid; place-items: center; background: transparent; color: #26486d; border: 0; border-radius: 7px; box-shadow: none; }
+.password-toggle:hover, .password-toggle:focus-visible { background: #e7f3f3; color: #075e66; }
+.error, .auth-error, .live-shell [role="alert"] { color: #a3332b; font-weight: 600; line-height: 1.5; }
+.error { display: block; margin-top: 7px; }
+.error::before, .auth-error::before { content: "⚠ "; }
+input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: #a3332b !important; box-shadow: 0 0 0 1px #a3332b22; }
+.applicant-identification { display: block; margin: 16px 0 20px; }
+.applicant-identification small { display: block; margin-top: 6px; }
+
+.live-title.module-heading > div { width: 100%; }
+
+.live-shell [role="alert"]:not(.error):not(.auth-error)::before { content: "⚠ "; }

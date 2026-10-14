@@ -319,7 +319,7 @@ export function BackupDestination({
       <section className="live-card">
         <h2>{es ? "1. Qué descargar" : "1. What to download"}</h2>
         <fieldset disabled={busy}>
-          <legend>{es ? "Alcance del respaldo" : "Backup scope"}</legend>
+          <h3 className="section-card-title">{es ? "Alcance del respaldo" : "Backup scope"}</h3>
           {(
             [
               [
@@ -512,7 +512,7 @@ export function BackupDestination({
       <section className="live-card">
         <h2>{es ? "2. Contenido y destino" : "2. Content and destination"}</h2>
         <fieldset disabled={busy}>
-          <legend>{es ? "Destino" : "Destination"}</legend>
+          <h3 className="section-card-title">{es ? "Destino" : "Destination"}</h3>
           <label
             style={{
               display: "inline-flex",

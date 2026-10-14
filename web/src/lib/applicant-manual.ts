@@ -44,9 +44,9 @@ export const manualChapters: ManualChapter[] = [
       ],
       [
         "Contraseña",
-        "Entre 12 y 128 caracteres. Use una contraseña única y no la comparta.",
+        "Entre 12 y 128 caracteres. Use una contraseña única y no la comparta. El icono del ojo permite mostrarla u ocultarla; inicialmente está oculta.",
         "Password",
-        "12–128 characters. Use a unique password and do not share it.",
+        "12–128 characters. Use a unique password and do not share it. Use the eye icon to show or hide it; it is initially hidden.",
       ],
       [
         "Crear cuenta",
@@ -237,6 +237,12 @@ export const manualChapters: ManualChapter[] = [
         "Select the applicant's actual status and grant category. They must be compatible with the call.",
       ],
       [
+        "Credencial de residencia permanente / RUC",
+        "Persona natural: ingrese su número de credencial. La credencial de residencia permanente que se presente debe estar vigente. Organización: ingrese el RUC de 13 dígitos. La organización debe tener domicilio tributario en la provincia de Galápagos; si no cumple, su postulación podría ser descalificada. El GLF revisará los documentos.",
+        "Permanent residence card / RUC",
+        "Individuals enter their card number; the card presented must be current. Organizations enter their 13-digit RUC and must have tax domicile in Galápagos province; otherwise their application could be disqualified. GLF will review documents.",
+      ],
+      [
         "Título del proyecto",
         "Escriba un nombre claro que identifique esta propuesta; no use el título de otro expediente.",
         "Project title",
@@ -291,9 +297,9 @@ export const manualChapters: ManualChapter[] = [
         "Select the classification that best represents your proposal.",
       ],
       [
-        "Fechas de inicio y finalización propuestas",
-        "Use los calendarios. El fin debe ser posterior al inicio y respetar la duración máxima de la categoría.",
-        "Proposed start and end dates",
+        "Fechas de inicio y finalización del proyecto",
+        "Use los calendarios. La finalización debe ser posterior al inicio. Máximo: pequeña 12 meses, mediana 24 y grande 36. Si lo supera, debe corregir las fechas antes de continuar.",
+        "Project start and end dates",
         "Use the calendars. End must follow start and comply with the category's maximum duration.",
       ],
       [
@@ -509,8 +515,8 @@ export const manualChapters: ManualChapter[] = [
       "Objectives and strategic alignment",
     ],
     intro: [
-      "Cada objetivo se escribe por separado y se relaciona con los planes mediante listas de selección. La selección expresa su aporte previsto; no es una certificación de impacto.",
-      "Write each objective separately and link it to plans using selection lists. Selections express expected contributions; they do not certify impact.",
+      "Cada objetivo se escribe por separado. Solo el objetivo general se alinea con el Plan Galápagos 2030 y los ODS. Los objetivos específicos no requieren alineación. La selección expresa su aporte previsto; no es una certificación de impacto.",
+      "Write each objective separately. Align only the general objective with Plan Galápagos 2030 and SDGs. Specific objectives do not require alignment. Selections express expected contributions; they do not certify impact.",
     ],
     steps: [
       [
@@ -518,8 +524,8 @@ export const manualChapters: ManualChapter[] = [
         "Write the general objective and add the specific objectives you need.",
       ],
       [
-        "Para cada objetivo, seleccione la alineación pertinente y explique el beneficio esperado. Revise las sugerencias de ODS antes de elegir.",
-        "For each objective, select relevant alignments and explain the expected benefit. Review suggested SDGs before choosing.",
+        "Para el objetivo general, seleccione la alineación pertinente y explique el beneficio esperado. Revise las sugerencias de ODS antes de elegir.",
+        "For the general objective, select relevant alignments and explain the expected benefit. Review suggested SDGs before choosing.",
       ],
     ],
     rows: [
@@ -548,12 +554,6 @@ export const manualChapters: ManualChapter[] = [
         "Review SDGs suggested by the selected Plan objective or browse others. Select those genuinely relevant; suggestions do not replace your judgement.",
       ],
       [
-        "Prioridades estratégicas del GLF",
-        "Seleccione las prioridades disponibles para la convocatoria. No invente una prioridad ni elija una sin relación con su objetivo.",
-        "GLF strategic priorities",
-        "Select priorities available for the call. Do not invent a priority or choose one unrelated to your objective.",
-      ],
-      [
         "Contribución o beneficio esperado",
         "Explique cómo el objetivo aporta a la alineación elegida; hasta 600 caracteres.",
         "Expected contribution or benefit",
@@ -567,21 +567,18 @@ export const manualChapters: ManualChapter[] = [
       ],
     ],
     tip: [
-      "Ejemplo ilustrativo: «Fortalecer capacidades de jóvenes para la conservación marina» → seleccione el objetivo pertinente del Plan, el ODS y la prioridad GLF, y explique el aporte concreto.",
-      "Illustrative example: ‘Strengthen young people's capacity for marine conservation’ → select the relevant Plan objective, SDG and GLF priority, and explain the specific contribution.",
+      "Ejemplo ilustrativo: «Fortalecer capacidades de jóvenes para la conservación marina» → seleccione el objetivo pertinente del Plan, el ODS, y explique el aporte concreto.",
+      "Illustrative example: ‘Strengthen young people's capacity for marine conservation’ → select the relevant Plan objective, SDG, and explain the specific contribution.",
     ],
     screen: [
-      [
-        "Objetivo general * → Plan · ODS · Prioridad GLF",
-        "General objective * → Plan · SDGs · GLF priority",
-      ],
+      ["Objetivo general * → Plan · ODS", "General objective * → Plan · SDGs"],
       [
         "Contribución o beneficio esperado *",
         "Expected contribution or benefit *",
       ],
       [
-        "OE1: objetivo específico → alineaciones",
-        "SO1: specific objective → alignments",
+        "OE1: objetivo específico (sin alineación)",
+        "SO1: specific objective (no alignment)",
       ],
       ["+ Añadir objetivo específico", "+ Add specific objective"],
     ],

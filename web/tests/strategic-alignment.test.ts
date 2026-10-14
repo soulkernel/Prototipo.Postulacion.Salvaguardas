@@ -40,32 +40,47 @@ test("objective IDs, versions and catalogue references cannot be forged", () => 
     false,
   );
 });
-test("completion requires actual contribution and project-wide coverage; does not force all frameworks per objective", () => {
+test("only the general objective requires Plan, SDGs and contribution", () => {
   const general = {
     ...newObjective("general"),
     text: "Conservar ecosistemas",
     plan: ["E1"],
     ods: [14],
-    glf: ["GLF-L07"],
+    glf: [],
     contribution: "Restauración de hábitat costero",
   };
   const specific = {
     ...newObjective("specific"),
     text: "Restaurar hábitat",
-    plan: ["E1"],
-    contribution: "Recuperar sitios degradados",
+    contribution: "",
   };
   const value: StrategicAlignment = {
     version: alignmentVersion,
     objectives: [general, specific],
   };
   assert.deepEqual(alignmentIssues(value), []);
+  assert.deepEqual(alignmentIssues(value), []);
   assert.ok(
     alignmentIssues({
       ...value,
-      objectives: [general, { ...specific, contribution: "" }],
+      objectives: [{ ...general, ods: [] }, specific],
     }).includes("alignment"),
   );
+  assert.ok(
+    alignmentIssues({
+      ...value,
+      objectives: [{ ...general, contribution: "" }, specific],
+    }).includes("alignment"),
+  );
+  assert.equal(strategicSchema.safeParse(value).success, true);
+  assert.equal(
+    strategicSchema.safeParse({
+      ...value,
+      objectives: [general, { ...specific, plan: ["E1"] }],
+    }).success,
+    false,
+  );
+  assert.doesNotMatch(strategicText(value).alignment, /GLF|Restaurar hábitat/);
   assert.match(strategicText(value).alignment, /E1/);
   assert.match(strategicText(value, "en").alignment, /Expected contribution/);
 });

@@ -1,4 +1,5 @@
 "use client";
+import { PasswordInput } from "./password-input";
 import { useEffect, useRef } from "react";
 import type { Locale } from "@/lib/domain";
 
@@ -73,9 +74,10 @@ export function LoginFields({
       </label>
       <label>
         {locale === "es" ? "Contraseña" : "Password"}
-        <input
-          ref={password}
-          type="password"
+        <PasswordInput
+          locale={locale}
+          inputRef={password}
+
           name="password"
           autoComplete="off"
           defaultValue=""

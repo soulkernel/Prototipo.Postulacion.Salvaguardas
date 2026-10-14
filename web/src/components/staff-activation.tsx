@@ -1,4 +1,5 @@
 "use client";
+import { PasswordInput } from "./password-input";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "@/components/feedback-link";
@@ -132,8 +133,9 @@ export function StaffActivation({
             <input type="hidden" name="id" value={resolvedId} />
             <label>
               {es ? "Nueva contraseña *" : "New password *"}
-              <input
-                type="password"
+              <PasswordInput
+                locale={locale}
+
                 name="password"
                 required
                 minLength={12}
@@ -144,8 +146,9 @@ export function StaffActivation({
             </label>
             <label>
               {es ? "Repita la contraseña *" : "Repeat password *"}
-              <input
-                type="password"
+              <PasswordInput
+                locale={locale}
+
                 name="confirm"
                 required
                 minLength={12}

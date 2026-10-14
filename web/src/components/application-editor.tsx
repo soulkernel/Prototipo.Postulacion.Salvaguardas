@@ -38,6 +38,12 @@ import { RiskReferenceTable } from "./risk-reference-table";
 import { RiskOverview } from "./risk-overview";
 import { PotentialRiskFields } from "./potential-risk-fields";
 import { riskLabel } from "@/lib/potential-risks";
+import {
+  identificationIssue,
+  projectDateErrors,
+  maxProjectEnd,
+} from "@/lib/applicant-validation";
+import { alignmentVersion } from "@/lib/strategic-alignment";
 import { strategicText } from "@/lib/strategic-alignment";
 import { ActionLabel } from "./submit-button";
 import { summaryText, summarySections } from "@/lib/summary";
@@ -136,7 +142,7 @@ function message(code: string, es: boolean) {
   if (code.includes("ALIGNMENT"))
     return es
       ? "Complete los objetivos, la contribución esperada y la alineación del proyecto con Plan Galápagos 2030, ODS y GLF."
-      : "Complete objectives, expected contribution and project alignment with Plan Galápagos 2030, SDGs and GLF.";
+      : "Complete objectives and the general objective contribution and alignment with Plan Galápagos 2030 and SDGs.";
   if (code.includes("SUMMARY"))
     return es
       ? "Complete las seis secciones del resumen y respete el límite total de palabras."
@@ -181,6 +187,18 @@ function message(code: string, es: boolean) {
     return es
       ? "Los gastos administrativos superan el límite de la convocatoria."
       : "Administrative expenses exceed the call's limit.";
+  if (code.includes("RUC_REQUIRED"))
+    return es
+      ? "Ingrese el RUC de 13 dígitos de la organización."
+      : "Enter the organization 13-digit RUC.";
+  if (code.includes("RESIDENCE_REQUIRED"))
+    return es
+      ? "Ingrese el número de credencial de residencia permanente."
+      : "Enter the permanent residence card number.";
+  if (code.includes("INVALID_DATES"))
+    return es
+      ? "La finalización del proyecto debe ser posterior al inicio."
+      : "The project end must follow its start.";
   if (code.includes("CATEGORY_AMOUNT") || code.includes("CATEGORY_DURATION"))
     return es
       ? "Revise el monto y las fechas según la categoría seleccionada."
@@ -231,12 +249,37 @@ export function ApplicationEditor({
   const es = locale === "es";
   const router = useRouter();
   const [payload, setPayload] = useState<Payload>(() =>
-    editable && !application.payload.concept.email.trim() && accountEmail
+    editable &&
+    application.payload.concept.strategic_alignment?.version !==
+      alignmentVersion &&
+    application.payload.concept.strategic_alignment
       ? {
           ...application.payload,
-          concept: { ...application.payload.concept, email: accountEmail },
+          concept: {
+            ...application.payload.concept,
+            email: application.payload.concept.email || accountEmail,
+            strategic_alignment: {
+              ...application.payload.concept.strategic_alignment,
+              version: alignmentVersion,
+              objectives:
+                application.payload.concept.strategic_alignment.objectives.map(
+                  (o) => ({
+                    ...o,
+                    glf: [],
+                    ...(o.kind === "specific"
+                      ? { plan: [], ods: [], contribution: "" }
+                      : {}),
+                  }),
+                ),
+            },
+          },
         }
-      : application.payload,
+      : editable && !application.payload.concept.email.trim() && accountEmail
+        ? {
+            ...application.payload,
+            concept: { ...application.payload.concept, email: accountEmail },
+          }
+        : application.payload,
   );
   const [revision, setRevision] = useState(application.revision);
   const [saved, setSaved] = useState(JSON.stringify(application.payload));
@@ -727,7 +770,11 @@ export function ApplicationEditor({
             : "Risk fields or quarters, activity/risk ") + numbers
     );
   };
-  const financial = financialErrors(payload.concept, rules);
+  const financial = {
+    ...financialErrors(payload.concept, rules),
+    ...projectDateErrors(payload.concept, rules),
+  };
+  const identification = identificationIssue(payload.concept);
   const selectedCategory = rules.categories.find(
     (c) => c.id === payload.concept.category_id,
   );
@@ -768,7 +815,7 @@ export function ApplicationEditor({
       <Link href="/applicant/applications" className="text-button">
         ← {es ? "Mis postulaciones" : "My applications"}
       </Link>
-      <div className="live-title application-heading">
+      <div className="live-title application-heading module-heading">
         <div>
           <p className="eyebrow">
             {application.reference_code} · {es ? "Fase" : "Phase"}{" "}
@@ -1083,6 +1130,85 @@ export function ApplicationEditor({
                   </label>
                 </div>
               )}
+              {step === 0 &&
+                ["individual", "organization"].includes(
+                  payload.concept.applicant_type,
+                ) && (
+                  <label className="applicant-identification">
+                    {payload.concept.applicant_type === "individual"
+                      ? es
+                        ? "Número de credencial de residencia permanente"
+                        : "Permanent residence card number"
+                      : es
+                        ? "RUC de la organización"
+                        : "Organization RUC"}
+                    <RequiredMark locale={locale} />
+                    <input
+                      aria-required="true"
+                      data-validation-field={
+                        payload.concept.applicant_type === "individual"
+                          ? "residence_number"
+                          : "ruc"
+                      }
+                      maxLength={
+                        payload.concept.applicant_type === "individual"
+                          ? 50
+                          : 13
+                      }
+                      inputMode={
+                        payload.concept.applicant_type === "organization"
+                          ? "numeric"
+                          : "text"
+                      }
+                      value={
+                        (payload.concept.applicant_type === "individual"
+                          ? payload.concept.residence_number
+                          : payload.concept.ruc) || ""
+                      }
+                      aria-invalid={
+                        !!identification &&
+                        (showCompletion ||
+                          checkedStep === step ||
+                          !!(payload.concept.applicant_type === "individual"
+                            ? payload.concept.residence_number
+                            : payload.concept.ruc))
+                      }
+                      onChange={(e) =>
+                        updateConcept(
+                          payload.concept.applicant_type === "individual"
+                            ? "residence_number"
+                            : "ruc",
+                          e.target.value,
+                        )
+                      }
+                    />
+                    <small>
+                      {payload.concept.applicant_type === "individual"
+                        ? es
+                          ? "La credencial de residencia permanente que se presente debe estar vigente."
+                          : "The permanent residence card presented must be current."
+                        : es
+                          ? "La organización debe tener domicilio tributario en la provincia de Galápagos. Si no cumple este requisito, su postulación podría ser descalificada."
+                          : "The organization must have its tax domicile in Galápagos province. Failure to meet this requirement could disqualify the application."}
+                    </small>
+                    {identification &&
+                      (showCompletion ||
+                        checkedStep === step ||
+                        !!(payload.concept.applicant_type === "individual"
+                          ? payload.concept.residence_number
+                          : payload.concept.ruc)) && (
+                        <span className="error" role="alert">
+                          {payload.concept.applicant_type === "individual"
+                            ? es
+                              ? "Ingrese el número de credencial de residencia permanente."
+                              : "Enter the permanent residence card number."
+                            : es
+                              ? "Ingrese un RUC de 13 dígitos."
+                              : "Enter a 13-digit RUC."}
+                        </span>
+                      )}
+                  </label>
+                )}
               <div
                 className={step === 0 ? "live-grid form-columns" : "live-form"}
               >
@@ -1274,13 +1400,24 @@ export function ApplicationEditor({
                             ].includes(field.key)
                           }
                           type={field.type || "text"}
-                          min={field.type === "number" ? 0 : undefined}
-                          max={
-                            field.key === "requested_amount"
-                              ? (selectedCategory?.max_amount ?? undefined)
-                              : field.key === "admin_cost"
-                                ? adminLimit
+                          min={
+                            field.type === "number"
+                              ? 0
+                              : field.key === "end_date"
+                                ? payload.concept.start_date || undefined
                                 : undefined
+                          }
+                          max={
+                            field.key === "end_date"
+                              ? maxProjectEnd(
+                                  payload.concept.start_date,
+                                  selectedCategory?.max_months || 36,
+                                )
+                              : field.key === "requested_amount"
+                                ? (selectedCategory?.max_amount ?? undefined)
+                                : field.key === "admin_cost"
+                                  ? adminLimit
+                                  : undefined
                           }
                           aria-invalid={
                             Boolean(financial[field.key]) ||
@@ -1317,7 +1454,21 @@ export function ApplicationEditor({
                       )}
                       {financial[field.key] && (
                         <span className="error" role="alert">
-                          {message(financial[field.key]!, es)}
+                          {field.key === "end_date" ||
+                          field.key === "start_date"
+                            ? financial[field.key] === "CATEGORY_DURATION"
+                              ? es
+                                ? `La duración supera el máximo de ${selectedCategory?.max_months} meses de la categoría seleccionada. Corrija las fechas para continuar.`
+                                : `Duration exceeds the selected category maximum of ${selectedCategory?.max_months} months. Correct the dates to continue.`
+                              : es
+                                ? "Ingrese fechas válidas. La finalización debe ser posterior al inicio del proyecto."
+                                : "Enter valid dates. The project end must follow its start."
+                            : financial[field.key] === "CATEGORY_AMOUNT"
+                              ? (es
+                                  ? "El monto solicitado no corresponde a la categoría seleccionada. "
+                                  : "The requested amount is outside the selected category. ") +
+                                financialHelp(field.key)
+                              : message(financial[field.key]!, es)}
                         </span>
                       )}
                     </label>

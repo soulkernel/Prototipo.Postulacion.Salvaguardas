@@ -49,11 +49,11 @@ export function PhoneField({
     );
   };
   return (
-    <fieldset className="activity-card" data-validation-field="phone">
-      <legend>
+    <section role="group" className="activity-card" data-validation-field="phone">
+      <h3 className="section-card-title">
         {es ? "Teléfono de contacto" : "Contact phone"}
         <RequiredMark locale={locale} />
-      </legend>
+      </h3>
       <div className="live-grid">
         <label>
           {es ? "País y código" : "Country and code"}
@@ -99,6 +99,6 @@ export function PhoneField({
             ? "Ingrese el número sin repetir el código de país. Se admiten celulares y teléfonos convencionales."
             : "Enter the number without repeating the country code. Mobile and landline numbers are accepted."}
       </small>
-    </fieldset>
+    </section>
   );
 }

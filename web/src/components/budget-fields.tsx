@@ -137,10 +137,10 @@ export function BudgetFields({
         </select>
       </label>
       {value.lines.map((l, i) => (
-        <fieldset key={l.id}>
-          <legend>
+        <section role="group" className="activity-card" key={l.id}>
+          <h3 className="section-card-title">
             {es ? "Partida" : "Line"} {i + 1}
-          </legend>
+          </h3>
           <div className="live-grid">
             <label>
               {es ? "Año" : "Year"}
@@ -232,7 +232,7 @@ export function BudgetFields({
           >
             {es ? "Eliminar partida" : "Remove line"}
           </button>
-        </fieldset>
+        </section>
       ))}
       <button
         type="button"

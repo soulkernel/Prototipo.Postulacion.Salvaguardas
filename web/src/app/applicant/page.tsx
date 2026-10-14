@@ -32,7 +32,7 @@ export default async function ApplicantPage({
   );
   return (
     <Shell locale={locale}>
-      <div className="live-title">
+      <div className="live-title module-heading">
         <div>
           <p className="eyebrow">{viewer.profile.full_name}</p>
           <h1>{es ? "Nueva postulación" : "New application"}</h1>

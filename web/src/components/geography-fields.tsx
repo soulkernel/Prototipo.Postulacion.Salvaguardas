@@ -24,8 +24,8 @@ export function GeographyFields({
     const options = cities[c.province] || [];
     const custom = Boolean(c.city && !options.includes(c.city));
     return (
-      <fieldset className="activity-card full-width">
-        <legend>{es ? "Domicilio del proponente" : "Applicant address"}</legend>
+      <section role="group" className="activity-card full-width">
+        <h3 className="section-card-title">{es ? "Domicilio del proponente" : "Applicant address"}</h3>
         <div className="live-grid">
           <label>
             {label(es ? "Provincia" : "Province")}
@@ -94,7 +94,7 @@ export function GeographyFields({
             />
           </label>
         </div>
-      </fieldset>
+      </section>
     );
   }
   const toggle = (island: string, checked: boolean) => {
@@ -109,17 +109,17 @@ export function GeographyFields({
     });
   };
   return (
-    <fieldset
+    <section role="group"
       className="activity-card full-width"
       data-validation-field="project_islands"
     >
-      <legend>
+      <h3 className="section-card-title">
         {label(
           es
             ? "Islas de ejecución del proyecto"
             : "Project implementation islands",
         )}
-      </legend>
+      </h3>
       <p className="field-help">
         {es
           ? "Seleccione una o varias islas, o Todo Galápagos."
@@ -172,6 +172,6 @@ export function GeographyFields({
           onChange={(e) => onChange({ location: e.target.value })}
         />
       </label>
-    </fieldset>
+    </section>
   );
 }

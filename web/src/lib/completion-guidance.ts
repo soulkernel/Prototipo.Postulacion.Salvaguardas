@@ -1,3 +1,4 @@
+import { alignmentVersion } from "./strategic-alignment";
 import { stepIssues } from "./step-validation";
 import {
   validateComplete,
@@ -76,6 +77,12 @@ export function completionGuidance(
       (x) => x.key === key,
     );
     const names: Record<string, string> = {
+      residence_number: es
+        ? "Número de credencial de residencia permanente"
+        : "Permanent residence card number",
+      ruc: es
+        ? "RUC de la organización (13 dígitos)"
+        : "Organization RUC (13 digits)",
       applicant_type: es ? "Tipo de solicitante" : "Applicant type",
       category_id: es ? "Categoría de subvención" : "Grant category",
       activities: es
@@ -93,7 +100,7 @@ export function completionGuidance(
     };
     const step =
       identityFields.some((x) => x.key === key) ||
-      ["applicant_type", "category_id"].includes(key)
+      ["applicant_type", "category_id", "residence_number", "ruc"].includes(key)
         ? 0
         : key === "activities" ||
             key.startsWith("no_risks_reason") ||
@@ -143,7 +150,10 @@ export function completionGuidance(
           title + (es ? ": escriba el objetivo" : ": enter the objective"),
           `[id="objective-${o.id}"]`,
         );
-      if (!o.contribution.trim())
+      if (
+        (alignment.version !== alignmentVersion || o.kind === "general") &&
+        !o.contribution.trim()
+      )
         add(
           "benefit-" + o.id,
           1,
@@ -153,7 +163,10 @@ export function completionGuidance(
               : ": describe the expected contribution"),
           `[id="benefit-${o.id}"]`,
         );
-      if (!(o.plan.length || o.ods.length || o.glf.length))
+      if (
+        (alignment.version !== alignmentVersion || o.kind === "general") &&
+        !(o.plan.length || o.ods.length || o.glf.length)
+      )
         add(
           "align-" + o.id,
           1,
@@ -173,8 +186,16 @@ export function completionGuidance(
           : "Add at least one specific objective",
         ".strategic-fields",
       );
-    for (const key of ["plan", "ods", "glf"] as const)
-      if (!alignment.objectives.some((o) => o[key].length))
+    for (const key of (alignment.version === alignmentVersion
+      ? ["plan", "ods"]
+      : ["plan", "ods", "glf"]) as ("plan" | "ods" | "glf")[])
+      if (
+        !alignment.objectives.some(
+          (o) =>
+            (alignment.version !== alignmentVersion || o.kind === "general") &&
+            o[key].length,
+        )
+      )
         add(
           "coverage-" + key,
           1,

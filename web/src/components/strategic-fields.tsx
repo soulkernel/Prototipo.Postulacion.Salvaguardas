@@ -72,8 +72,8 @@ export function StrategicFields({
       </h3>
       <p>
         {es
-          ? "Para cada objetivo de su proyecto, seleccione las referencias estratégicas a las que contribuirá. Puede elegir más de una."
-          : "For each project objective, select the strategic references it will contribute to. You may select more than one."}
+          ? "Alinee únicamente el objetivo general con el Plan Galápagos 2030 y los ODS. Ingrese los objetivos específicos por separado, sin alineación."
+          : "Align only the general objective with Plan Galápagos 2030 and the SDGs. Enter specific objectives separately, without alignment."}
       </p>
       {value.legacy_text && (
         <details>
@@ -184,9 +184,15 @@ export function StrategicFields({
           );
         };
         return (
-          <fieldset className="strategic-objective" key={o.id}>
-            <legend>{title}</legend>
-            <div className="strategic-objective-row">
+          <section role="group" className="strategic-objective" key={o.id}>
+            <h3 className="section-card-title">{title}</h3>
+            <div
+              className={
+                o.kind === "general"
+                  ? "strategic-objective-row"
+                  : "strategic-objective-text"
+              }
+            >
               <div className="strategic-objective-text">
                 <label htmlFor={`objective-${o.id}`}>{title} *</label>
                 <LimitedTextarea
@@ -203,54 +209,54 @@ export function StrategicFields({
                   }
                   onChange={(e) => update(o.id, { text: e.target.value })}
                 />
-                <label
-                  className="alignment-benefit-label"
-                  htmlFor={`benefit-${o.id}`}
-                >
-                  {es
-                    ? "Contribución o beneficio esperado *"
-                    : "Expected contribution or benefit *"}
-                </label>
-                <LimitedTextarea
-                  locale={locale}
-                  id={`benefit-${o.id}`}
-                  aria-required="true"
-                  rows={2}
-                  maxLength={600}
-                  value={o.contribution}
-                  placeholder={
+                {o.kind === "general" && (
+                  <>
+                    <label
+                      className="alignment-benefit-label"
+                      htmlFor={`benefit-${o.id}`}
+                    >
+                      {es
+                        ? "Contribución o beneficio esperado *"
+                        : "Expected contribution or benefit *"}
+                    </label>
+                    <LimitedTextarea
+                      locale={locale}
+                      id={`benefit-${o.id}`}
+                      aria-required="true"
+                      rows={2}
+                      maxLength={600}
+                      value={o.contribution}
+                      placeholder={
+                        es
+                          ? "¿Qué resultado aportará a las referencias elegidas?"
+                          : "What result will contribute to the selected references?"
+                      }
+                      onChange={(e) =>
+                        update(o.id, { contribution: e.target.value })
+                      }
+                    />
+                  </>
+                )}
+              </div>
+              {o.kind === "general" && (
+                <div className="strategic-objective-selectors">
+                  {selector(
+                    "plan",
                     es
-                      ? "¿Qué resultado aportará a las referencias elegidas?"
-                      : "What result will contribute to the selected references?"
-                  }
-                  onChange={(e) =>
-                    update(o.id, { contribution: e.target.value })
-                  }
-                />
-              </div>
-              <div className="strategic-objective-selectors">
-                {selector(
-                  "plan",
-                  es
-                    ? "Alinear con el Plan Galápagos 2030"
-                    : "Align with Plan Galápagos 2030",
-                )}
-                {selector(
-                  "ods",
-                  es ? "Alinear con los ODS" : "Align with the SDGs",
-                )}
-                <small>
-                  {es
-                    ? "Los ODS relacionados se muestran primero. Usted confirma cuáles corresponden."
-                    : "Related SDGs are shown first. You confirm which apply."}
-                </small>
-                {selector(
-                  "glf",
-                  es
-                    ? "Alinear con las prioridades estratégicas del GLF"
-                    : "Align with GLF strategic priorities",
-                )}
-              </div>
+                      ? "Alinear con el Plan Galápagos 2030"
+                      : "Align with Plan Galápagos 2030",
+                  )}
+                  {selector(
+                    "ods",
+                    es ? "Alinear con los ODS" : "Align with the SDGs",
+                  )}
+                  <small>
+                    {es
+                      ? "Los ODS relacionados se muestran primero. Usted confirma cuáles corresponden."
+                      : "Related SDGs are shown first. You confirm which apply."}
+                  </small>
+                </div>
+              )}
             </div>
             {o.kind === "specific" && (
               <button
@@ -267,7 +273,7 @@ export function StrategicFields({
                 {es ? "Eliminar este objetivo" : "Remove this objective"}
               </button>
             )}
-          </fieldset>
+          </section>
         );
       })}
       {value.objectives.length < 11 && (
@@ -288,8 +294,8 @@ export function StrategicFields({
       {alignmentIssues(value).length > 0 && (
         <p className="help">
           {es
-            ? "Complete cada objetivo y su contribución. El conjunto del proyecto debe vincularse a Plan Galápagos 2030, ODS y GLF. Puede guardar un borrador incompleto."
-            : "Complete each objective and its contribution. The project as a whole must address Plan Galápagos 2030, SDGs and GLF. You may save an incomplete draft."}
+            ? "Complete los objetivos. Para el objetivo general, seleccione Plan Galápagos 2030 y ODS e indique la contribución esperada. Puede guardar un borrador incompleto."
+            : "Complete the objectives. For the general objective, select Plan Galápagos 2030 and SDGs and describe the expected contribution. You may save an incomplete draft."}
         </p>
       )}
     </section>

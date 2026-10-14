@@ -1,6 +1,7 @@
 import { z } from "zod";
 
-export const alignmentVersion = "pg2030-anexo6-glf2024-ods2015-v1";
+export const legacyAlignmentVersion = "pg2030-anexo6-glf2024-ods2015-v1";
+export const alignmentVersion = "pg2030-ods-general-v2";
 export const planSource =
   "https://unidosporgalapagos.wordpress.com/wp-content/uploads/2021/05/anexo-no.-6-alineacion-pg2030-con-planificacion-nacional-final-sc.pdf";
 export const glfSource =
@@ -192,12 +193,25 @@ export const objectiveSchema = z
   .strict();
 export const strategicSchema = z
   .object({
-    version: z.literal(alignmentVersion),
+    version: z.enum([alignmentVersion, legacyAlignmentVersion]),
     legacy_text: z.string().max(24001).optional(),
     objectives: z.array(objectiveSchema).min(1).max(11),
   })
   .strict()
   .superRefine((v, ctx) => {
+    if (
+      v.version === alignmentVersion &&
+      v.objectives.some(
+        (o) =>
+          o.glf.length ||
+          (o.kind === "specific" &&
+            (o.plan.length || o.ods.length || o.contribution)),
+      )
+    )
+      ctx.addIssue({
+        code: "custom",
+        message: "Only the general objective can align with Plan and SDGs",
+      });
     if (
       !unique(v.objectives.map((o) => o.id)) ||
       v.objectives.filter((o) => o.kind === "general").length !== 1
@@ -238,6 +252,16 @@ export function alignmentIssues(value: StrategicAlignment | undefined) {
   if (!value.objectives.some((o) => o.kind === "specific"))
     issues.push("objectives");
   if (value.objectives.some((o) => !o.text.trim())) issues.push("objectives");
+  if (value.version === alignmentVersion) {
+    const general = value.objectives.find((o) => o.kind === "general");
+    if (
+      !general?.contribution.trim() ||
+      !general.plan.length ||
+      !general.ods.length
+    )
+      issues.push("alignment");
+    return [...new Set(issues)];
+  }
   if (
     value.objectives.some(
       (o) =>
@@ -267,6 +291,7 @@ export function strategicText(
     )
     .join("\n\n");
   const alignment = value.objectives
+    .filter((o) => value.version !== alignmentVersion || o.kind === "general")
     .map((o) => {
       const labels = (
         ids: string[],
@@ -277,11 +302,11 @@ export function strategicText(
             (id) => `${id}: ${items.find((p) => p.id === id)?.[locale] || id}`,
           )
           .join("; ");
-      return `${o.text}\nPlan Galápagos 2030: ${labels(o.plan, planPolicies)}\nODS: ${o.ods.map((id) => `${id}: ${sdgGoals[id - 1]?.[locale] ?? id}`).join("; ")}\n${locale === "es" ? "Prioridades estratégicas del GLF" : "GLF strategic priorities"}: ${labels(o.glf, glfLines)}\n${locale === "es" ? "Contribución esperada" : "Expected contribution"}: ${o.contribution}`;
+      return `${o.text}\nPlan Galápagos 2030: ${labels(o.plan, planPolicies)}\nODS: ${o.ods.map((id) => `${id}: ${sdgGoals[id - 1]?.[locale] ?? id}`).join("; ")}\n${value.version === alignmentVersion ? "" : `${locale === "es" ? "Prioridades estratégicas del GLF" : "GLF strategic priorities"}: ${labels(o.glf, glfLines)}\n`}${locale === "es" ? "Contribución esperada" : "Expected contribution"}: ${o.contribution}`;
     })
     .join("\n\n");
   return {
     objectives,
-    alignment: `${locale === "es" ? "Referencias" : "References"}: ${value.version}\n${alignment}\n\nPlan: ${planSource}\nODS: https://sdgs.un.org/es/goals\nGLF: ${glfSource}`,
+    alignment: `${locale === "es" ? "Referencias" : "References"}: ${value.version}\n${alignment}\n\nPlan: ${planSource}\nODS: https://sdgs.un.org/es/goals${value.version === alignmentVersion ? "" : `\nGLF: ${glfSource}`}`,
   };
 }

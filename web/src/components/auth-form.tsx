@@ -1,3 +1,4 @@
+import { PasswordInput } from "@/components/password-input";
 import Image from "next/image";
 import Link from "@/components/feedback-link";
 import {
@@ -124,8 +125,9 @@ export function AuthForm({
               </label>
               <label>
                 {es ? "Contraseña" : "Password"}
-                <input
-                  type="password"
+                <PasswordInput
+                  locale={locale}
+
                   name="password"
                   autoComplete={register ? "new-password" : "off"}
                   minLength={register ? 12 : undefined}

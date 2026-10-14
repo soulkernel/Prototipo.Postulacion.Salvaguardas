@@ -1,3 +1,4 @@
+import { identificationIssue, projectDateErrors } from "./applicant-validation";
 import type { AttachmentRequirement } from "./attachment-requirements";
 import { z } from "zod";
 import { budgetSchema, budgetIssues } from "./budget";
@@ -27,6 +28,8 @@ export const conceptSchema = z
     title: text,
     applicant_type: text,
     applicant_name: text,
+    residence_number: z.string().max(50).optional(),
+    ruc: z.string().max(13).optional(),
     contact_name: text,
     email: text,
     phone: z.string().max(32),
@@ -176,6 +179,8 @@ export function applicantDefaults(
     .pick({
       applicant_type: true,
       applicant_name: true,
+      residence_number: true,
+      ruc: true,
       contact_name: true,
       email: true,
       phone: true,
@@ -402,6 +407,9 @@ export function validateComplete(
 ): string[] {
   const missing: string[] = [];
   const c = payload.concept;
+  const identification = identificationIssue(c);
+  if (identification) missing.push(identification);
+  missing.push(...Object.keys(projectDateErrors(c, rules)));
   missing.push(...budgetIssues(payload.budget, c));
   if (
     rules.themes?.length &&
@@ -418,6 +426,8 @@ export function validateComplete(
   if (c.phone && !normalizePhone(c.phone)) missing.push("phone");
   for (const [key, value] of Object.entries(c)) {
     if (
+      key !== "residence_number" &&
+      key !== "ruc" &&
       key !== "partners" &&
       key !== "results_source" &&
       key !== "other_islands" &&

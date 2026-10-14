@@ -17,6 +17,8 @@ test("concept and matrix PDFs embed fonts, paginate and contain a QR image", asy
   }
   payload.concept.title = "PRUEBA FICTICIA · Restauración de hábitats";
   payload.concept.contact_name = "María Elena Pérez";
+  payload.concept.applicant_type = "organization";
+  payload.concept.ruc = "2090000000001";
   payload.concept.associated_organizations = [
     "Fundación Marina de Prueba",
     "Organización Comunitaria de Prueba",
@@ -41,17 +43,17 @@ test("concept and matrix PDFs embed fonts, paginate and contain a QR image", asy
         text: "Restaurar hábitats costeros",
         plan: ["E1"],
         ods: [14],
-        glf: ["GLF-L07"],
+        glf: [],
         contribution:
           "Recuperación de ecosistemas con participación comunitaria",
       },
       {
         ...newObjective("specific"),
         text: "Restaurar dos zonas degradadas",
-        plan: ["E1"],
-        ods: [14],
-        glf: ["GLF-L07"],
-        contribution: "Recuperación ecológica de sitios intervenidos",
+        plan: [],
+        ods: [],
+        glf: [],
+        contribution: "",
       },
     ],
   };
@@ -183,6 +185,8 @@ test("result tables paginate long cells and redundant blank lines do not inflate
     const payload = emptyPayload();
     payload.concept.title = "Conservación marina y participación comunitaria";
     payload.concept.contact_name = "María Elena Pérez";
+    payload.concept.applicant_type = "organization";
+    payload.concept.ruc = "2090000000001";
     payload.concept.beneficiaries =
       "Comunidades costeras y organizaciones locales.\n\nParticipación en actividades educativas y oportunidades de formación.";
     payload.concept.sustainability =

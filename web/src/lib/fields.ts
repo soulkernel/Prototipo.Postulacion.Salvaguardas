@@ -55,14 +55,14 @@ export const identityFields: Field[] = [
   { key: "project_type", es: "Tipo de proyecto", en: "Project type" },
   {
     key: "start_date",
-    es: "Fecha de inicio propuesta",
-    en: "Proposed start date",
+    es: "Fecha de inicio del proyecto",
+    en: "Project start date",
     type: "date",
   },
   {
     key: "end_date",
-    es: "Fecha de finalización propuesta",
-    en: "Proposed end date",
+    es: "Fecha de finalización del proyecto",
+    en: "Project end date",
     type: "date",
   },
   {

@@ -1,3 +1,4 @@
+import { alignmentVersion } from "./strategic-alignment";
 import { callThemeLabel } from "./call-themes";
 import { budgetText } from "./budget";
 import { submissionNotice } from "./grant-rules";
@@ -332,6 +333,24 @@ export async function applicationPdf({
         : `The applicant requests ${payload.concept.requested_amount === null ? "an unspecified amount" : money(payload.concept.requested_amount)} from GLF and plans cofinancing of ${payload.concept.cofinance_amount === null ? "an unspecified amount" : money(payload.concept.cofinance_amount)}.`,
     );
     draw(es ? "1. DATOS GENERALES" : "1. PROJECT DETAILS", true);
+    if (
+      payload.concept.applicant_type === "individual" &&
+      payload.concept.residence_number
+    )
+      field(
+        es
+          ? "Número de credencial de residencia permanente"
+          : "Permanent residence card number",
+        payload.concept.residence_number,
+      );
+    if (
+      payload.concept.applicant_type === "organization" &&
+      payload.concept.ruc
+    )
+      field(
+        es ? "RUC de la organización" : "Organization RUC",
+        payload.concept.ruc,
+      );
     for (const fieldSpec of [...identityFields, ...narrativeFields]) {
       if (fieldSpec.key === "title") continue;
       if (
@@ -342,6 +361,11 @@ export async function applicationPdf({
         let i = 0;
         for (const objective of payload.concept.strategic_alignment
           .objectives) {
+          if (
+            payload.concept.strategic_alignment.version === alignmentVersion &&
+            objective.kind !== "general"
+          )
+            continue;
           const narrative = alignmentNarrative(objective, locale);
           draw(
             objective.kind === "general"

@@ -56,10 +56,10 @@ export function CallThemeEditor({
     reset();
   }
   return (
-    <fieldset className="call-theme-editor">
-      <legend>
+    <section role="group" className="call-theme-editor">
+      <h3 className="section-card-title">
         {es ? "Líneas temáticas de esta convocatoria" : "Themes for this call"}
-      </legend>
+      </h3>
       <input
         type="hidden"
         name="theme_options"
@@ -188,6 +188,6 @@ export function CallThemeEditor({
           + {es ? "Agregar línea temática" : "Add theme"}
         </button>
       )}
-    </fieldset>
+    </section>
   );
 }

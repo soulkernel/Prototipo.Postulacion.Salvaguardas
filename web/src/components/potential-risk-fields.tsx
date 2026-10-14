@@ -140,8 +140,8 @@ export function PotentialRiskFields({
           : "Enter one risk per field. Link it to the relevant activities and assess it there. If no risks are identified in a dimension, explain why."}
       </p>
       {(["environmental", "social"] as const).map((dimension) => (
-        <fieldset key={dimension} className="strategic-objective">
-          <legend>
+        <section role="group" key={dimension} className="strategic-objective">
+          <h3 className="section-card-title">
             {dimension === "environmental"
               ? es
                 ? "Riesgos ambientales potenciales"
@@ -149,7 +149,7 @@ export function PotentialRiskFields({
               : es
                 ? "Riesgos sociales potenciales"
                 : "Potential social risks"}
-          </legend>
+          </h3>
           {rows
             .filter((r) => r.dimension === dimension)
             .map((r) => {
@@ -253,7 +253,7 @@ export function PotentialRiskFields({
               />
             </label>
           )}
-        </fieldset>
+        </section>
       ))}
     </section>
   );

@@ -9,7 +9,7 @@ export default async function ApplicationGuide() {
   const es = locale === "es";
   return (
     <Shell locale={locale}>
-      <div className="live-title">
+      <div className="live-title module-heading">
         <div>
           <h1>{es ? "Cómo postular" : "How to apply"}</h1>
           <p>

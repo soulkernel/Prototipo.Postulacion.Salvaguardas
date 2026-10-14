@@ -54,16 +54,16 @@ export function ApplicantManual({ locale }: { locale: Locale }) {
   const icons = [UserRound, BookOpen, ListChecks, FileCheck2, Send];
   return (
     <div className="manual">
+      <header className="module-heading">
+        <h1>{es ? "Manual de uso" : "User manual"}</h1>
+      </header>
       <section className="manual-hero">
         <div className="manual-hero-copy">
           <span className="manual-kicker">
             <BookOpen size={18} />
             {es ? "GUÍA DEL APLICANTE" : "APPLICANT GUIDE"}
           </span>
-          <h1>{es ? "Manual de uso" : "User manual"}</h1>
-          <p>
-            {es ? "Su proyecto, paso a paso." : "Your project, step by step."}
-          </p>
+          <h2>{es ? "Su proyecto, paso a paso." : "Your project, step by step."}</h2>
           <div className="manual-lead">
             {es
               ? "Desde la creación de su cuenta hasta la recepción de su nota conceptual. Conozca qué completar, qué revisar y qué ocurre después de cada acción."

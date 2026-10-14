@@ -76,13 +76,13 @@ export function ActivityPlanningFields({
                 onChange={(e) => update(i, { description: e.target.value })}
               />
             </label>
-            <fieldset className="strategic-fields">
-              <legend>
+            <section role="group" className="strategic-fields">
+              <h3 className="section-card-title">
                 {es
                   ? "Objetivos específicos a los que contribuye"
                   : "Specific objectives this activity contributes to"}
                 <RequiredMark locale={locale} />
-              </legend>
+              </h3>
               {objectives.map((o, n) => (
                 <label className="activity-objective-option" key={o.id}>
                   <input
@@ -125,7 +125,7 @@ export function ActivityPlanningFields({
                       : "Select at least one specific objective."}
                   </p>
                 )}
-            </fieldset>
+            </section>
             {activity.risks.length > 0 && (
               <p className="field-help">
                 {es

@@ -58,14 +58,14 @@ export function ProjectResultFields({
             </details>
           )}
           {value.map((r, i) => (
-            <fieldset
+            <section role="group"
               className="activity-card"
               key={r.id}
               data-validation-result={i + 1}
             >
-              <legend>
+              <h3 className="section-card-title">
                 {es ? "Resultado" : "Result"} {i + 1}
-              </legend>
+              </h3>
               <label>
                 {es ? "Resultado esperado" : "Expected result"} *
                 <LimitedTextarea
@@ -204,7 +204,7 @@ export function ProjectResultFields({
               >
                 {es ? "Quitar resultado" : "Remove result"} {i + 1}
               </button>
-            </fieldset>
+            </section>
           ))}
           <button
             type="button"

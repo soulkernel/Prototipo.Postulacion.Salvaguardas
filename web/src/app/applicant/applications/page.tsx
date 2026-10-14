@@ -23,7 +23,7 @@ export default async function MyApplicationsPage({
   if (error) throw new Error("Cannot read applications");
   return (
     <Shell locale={locale}>
-      <div className="live-title">
+      <div className="live-title module-heading">
         <div>
           <p className="eyebrow">{viewer.profile.full_name}</p>
           <h1>{es ? "Mis postulaciones" : "My applications"}</h1>
