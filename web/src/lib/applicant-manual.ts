@@ -372,9 +372,9 @@ export const manualChapters: ManualChapter[] = [
     rows: [
       [
         "Montos estimados",
-        "Puede editarlos directamente y corregirlos antes del envío.",
+        "Los campos nuevos están vacíos. Ingrese sus estimaciones; los avisos aparecen al terminar de editar o al pulsar Continuar. Un importe guardado se conserva al retomar el borrador.",
         "Estimated amounts",
-        "Edit amounts directly and correct them before submission.",
+        "New fields are blank. Enter your estimates; warnings appear after editing or when selecting Continue. Saved amounts remain when resuming the draft.",
       ],
       [
         "Costo total",

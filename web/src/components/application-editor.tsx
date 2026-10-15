@@ -34,6 +34,11 @@ import { ProjectResultFields } from "./project-result-fields";
 import { resultText } from "@/lib/project-results";
 import { BudgetFields } from "./budget-fields";
 import { budgetTotals, budgetYears } from "@/lib/budget";
+import {
+  financialFeedback,
+  isMoneyField,
+  type MoneyField,
+} from "@/lib/financial-feedback";
 import { RiskReferenceTable } from "./risk-reference-table";
 import { RiskOverview } from "./risk-overview";
 import { PotentialRiskFields } from "./potential-risk-fields";
@@ -306,6 +311,10 @@ export function ApplicationEditor({
   }, [completionAttempt]);
   const [focusIssue, setFocusIssue] = useState<CompletionIssue | null>(null);
   const [checkedStep, setCheckedStep] = useState<number | null>(null);
+  const [moneyTouched, setMoneyTouched] = useState<
+    Partial<Record<MoneyField, boolean>>
+  >({});
+  const [moneyFocused, setMoneyFocused] = useState<MoneyField | null>(null);
   const [documents, setDocuments] = useState(initialDocuments);
   const [prepared, setPrepared] = useState<{
     id: string;
@@ -792,29 +801,18 @@ export function ApplicationEditor({
   const adminLimit = (totalCost * rules.max_admin_percent) / 100;
   const currency = (amount: number) =>
     amount.toLocaleString(locale, { style: "currency", currency: "USD" });
+  const moneyFeedback = financialFeedback(
+    payload.concept,
+    rules,
+    locale,
+    moneyTouched,
+    moneyFocused,
+    showCompletion || checkedStep === 0,
+  );
   const financialHelp = (key: keyof Concept) =>
-    key === "requested_amount" && selectedCategory
-      ? (es ? "Monto permitido: " : "Allowed amount: ") +
-        currency(selectedCategory.min_amount) +
-        (selectedCategory.max_amount !== null
-          ? " – " + currency(selectedCategory.max_amount)
-          : es
-            ? " en adelante"
-            : " and above")
-      : key === "admin_cost"
-        ? (es ? "Máximo: " : "Maximum: ") +
-          currency(adminLimit) +
-          " (" +
-          rules.max_admin_percent +
-          (es ? "% del costo total)." : "% of total cost).")
-        : key === "cofinance_amount" && selectedCategory
-          ? (es ? "Cofinanciamiento mínimo: " : "Minimum cofinancing: ") +
-            currency(
-              ((payload.concept.requested_amount || 0) *
-                selectedCategory.cofinance_percent) /
-                100,
-            )
-          : "";
+    isMoneyField(key) ? moneyFeedback[key].text : "";
+  const visibleFinancialError = (key: keyof Concept) =>
+    isMoneyField(key) ? moneyFeedback[key].invalid : Boolean(financial[key]);
   const initialTotal = payload.activities
     .flatMap((a) => a.risks)
     .reduce((sum, r) => sum + (riskScore(r.probability, r.severity) || 0), 0);
@@ -992,7 +990,7 @@ export function ApplicationEditor({
         </section>
       )}
       <CompletionFeedback
-        issues={completion}
+        issues={completion.filter((issue) => issue.id !== moneyFocused)}
         step={step}
         focusIssue={focusIssue}
         locale={locale}
@@ -1438,9 +1436,24 @@ export function ApplicationEditor({
                                   : undefined
                           }
                           aria-invalid={
-                            Boolean(financial[field.key]) ||
-                            fieldIssue(field.key)
+                            isMoneyField(field.key)
+                              ? moneyFeedback[field.key].invalid
+                              : Boolean(financial[field.key]) ||
+                                fieldIssue(field.key)
                           }
+                          onFocus={() => {
+                            if (isMoneyField(field.key))
+                              setMoneyFocused(field.key);
+                          }}
+                          onBlur={() => {
+                            if (isMoneyField(field.key)) {
+                              setMoneyTouched((t) => ({
+                                ...t,
+                                [field.key]: true,
+                              }));
+                              setMoneyFocused(null);
+                            }
+                          }}
                           step={field.type === "number" ? "0.01" : undefined}
                           maxLength={
                             field.type === "date" || field.type === "number"
@@ -1464,17 +1477,26 @@ export function ApplicationEditor({
                         <small
                           id={`field-message-${field.key}`}
                           data-field-message={
-                            financial[field.key] ? "error" : undefined
+                            visibleFinancialError(field.key)
+                              ? "error"
+                              : undefined
                           }
                           className={
-                            financial[field.key] ? "field-warning" : undefined
+                            visibleFinancialError(field.key)
+                              ? "field-warning"
+                              : undefined
                           }
-                          role={financial[field.key] ? "alert" : undefined}
+                          role={
+                            visibleFinancialError(field.key)
+                              ? "alert"
+                              : undefined
+                          }
                         >
                           {financialHelp(field.key)}
                         </small>
                       )}
                       {currentIssues.missing.includes(field.key) &&
+                        !isMoneyField(field.key) &&
                         !financial[field.key] && (
                           <small
                             className="field-warning"

@@ -7,6 +7,9 @@ import {
   projectDateErrors,
 } from "../src/lib/applicant-validation";
 import { stepIssues } from "../src/lib/step-validation";
+import { financialFeedback, moneyFields } from "../src/lib/financial-feedback";
+import { grantRanges } from "../src/lib/grant-rules";
+import { financialErrors } from "../src/lib/domain";
 import {
   alignmentVersion,
   legacyAlignmentVersion,
@@ -27,6 +30,75 @@ const rules = {
   max_admin_percent: 10,
   summary_word_limit: 500,
 } as Rules;
+test("money warnings wait for blur or an attempt, while required values and category limits remain enforced", () => {
+  const r = {
+    ...rules,
+    categories: Object.entries(grantRanges).map(([id, x]) => ({
+      id,
+      min_amount: x.min,
+      max_amount: x.max,
+      max_months: 36,
+      cofinance_percent: id === "small" ? 0 : id === "medium" ? 10 : 25,
+    })),
+  } as Rules;
+  const c = { ...emptyPayload().concept, category_id: "large" };
+  assert.ok(moneyFields.every((k) => c[k] === null));
+  let feedback = financialFeedback(c, r, "es", {}, null, false);
+  assert.ok(moneyFields.every((k) => !feedback[k].invalid));
+  assert.match(feedback.cofinance_amount.text, /25%/);
+  assert.match(feedback.admin_cost.text, /10%/);
+  assert.ok(!feedback.admin_cost.text.includes("0,00"));
+  feedback = financialFeedback(c, r, "es", {}, null, true);
+  assert.ok(moneyFields.every((k) => feedback[k].invalid));
+  assert.match(feedback.requested_amount.text, /Complete este campo/);
+  Object.assign(c, {
+    requested_amount: 250000,
+    cofinance_amount: 0,
+    admin_cost: 0,
+  });
+  assert.equal(financialErrors(c, r).requested_amount, "CATEGORY_AMOUNT");
+  assert.equal(
+    financialFeedback(c, r, "es", {}, null, false).requested_amount.invalid,
+    false,
+  );
+  assert.equal(
+    financialFeedback(c, r, "es", { requested_amount: true }, null, false)
+      .requested_amount.invalid,
+    true,
+  );
+  assert.equal(
+    financialFeedback(
+      c,
+      r,
+      "es",
+      { requested_amount: true },
+      "requested_amount",
+      true,
+    ).requested_amount.invalid,
+    false,
+  );
+  Object.assign(c, { requested_amount: 250000.01, cofinance_amount: 62500.01 });
+  assert.deepEqual(financialErrors(c, r), {});
+  assert.equal(
+    financialFeedback(c, r, "en", {}, null, true).cofinance_amount.invalid,
+    false,
+  );
+  c.category_id = "medium";
+  c.requested_amount = 250000;
+  assert.deepEqual(financialErrors(c, r), {});
+  c.category_id = "small";
+  c.requested_amount = 100000;
+  c.cofinance_amount = 0;
+  assert.equal(
+    financialFeedback(c, r, "es", {}, null, true).cofinance_amount.invalid,
+    false,
+  );
+  c.requested_amount = 0;
+  assert.equal(
+    financialFeedback(c, r, "es", {}, null, true).requested_amount.invalid,
+    true,
+  );
+});
 test("concept estimates ignore dormant annual lines while full projects reconcile them", () => {
   const p = emptyPayload();
   Object.assign(p.concept, {
