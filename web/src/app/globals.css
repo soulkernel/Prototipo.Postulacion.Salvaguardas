@@ -2980,3 +2980,21 @@ select {
  .concept-review-table th, .concept-review-table td { padding: 9px; }
 }
 
+.unified-summary {
+  width: 100%;
+}
+.unified-summary textarea {
+  display: block;
+  width: 100%;
+  min-height: 240px;
+  resize: vertical;
+}
+.summary-counter-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+.unified-summary .danger-text {
+  font-size: 13px;
+  font-weight: 400;
+}

@@ -1,78 +1,63 @@
 "use client";
-import {
-  summarySections,
-  summaryText,
-  hasSummaryParts,
-  type SummaryParts,
-} from "@/lib/summary";
+import { useId } from "react";
 import { words, type Locale } from "@/lib/domain";
 import { RequiredMark } from "./required-mark";
+
 export function SummaryFields({
-  parts,
-  legacy,
+  value,
   limit,
   locale,
+  invalid,
   onChange,
 }: {
-  parts: SummaryParts;
-  legacy: string;
+  value: string;
   limit: number;
   locale: Locale;
-  onChange: (parts: SummaryParts) => void;
+  invalid: boolean;
+  onChange: (value: string) => void;
 }) {
+  const id = useId();
   const es = locale === "es";
-  const shown =
-    !hasSummaryParts(parts) && legacy.trim()
-      ? { ...parts, context: legacy }
-      : parts;
-  const total = words(summaryText(shown));
+  const total = words(value);
+  const overLimit = total > limit;
   return (
-    <section className="activity-card" data-validation-field="summary">
-      <h3>{es ? "Resumen del proyecto" : "Project summary"}</h3>
-      <p
-        className={total > limit ? "auth-error" : "field-help"}
-        aria-live="polite"
-      >
-        {total} / {limit}{" "}
+    <section
+      className="activity-card unified-summary"
+      data-validation-field="summary"
+    >
+      <h3 id={`${id}-label`}>
+        {es ? "Resumen del proyecto" : "Project summary"}
+        <RequiredMark locale={locale} />
+      </h3>
+      <p className="field-help" id={`${id}-help`}>
         {es
-          ? "palabras en total entre las seis secciones"
-          : "words in total across all six sections"}
-        {total > limit &&
-          (es
-            ? ". Reduzca el texto antes de continuar."
-            : ". Shorten the text before continuing.")}
+          ? "Describa el contexto, el problema y las amenazas que abordará, por qué es necesario intervenir, cuál es la solución propuesta y qué resultados espera lograr."
+          : "Describe the context, the problem and threats to address, why intervention is needed, the proposed solution and the results you expect to achieve."}
       </p>
-      {!hasSummaryParts(parts) && legacy.trim() && (
-        <p className="field-help">
-          {es
-            ? "Su resumen anterior se conserva en Contexto. Distribúyalo entre las secciones antes de guardar cambios."
-            : "Your previous summary is preserved in Context. Redistribute it across the sections before saving changes."}
-        </p>
-      )}
-      <div className="live-grid">
-        {summarySections.map((s) => (
-          <label key={s.key} data-validation-field={"summary:" + s.key}>
-            <span className="field-label">
-              {es ? s.es : s.en}
-              <RequiredMark locale={locale} />
-            </span>
-            <small>{s.help[es ? 0 : 1]}</small>
-            <textarea
-              aria-required="true"
-              rows={3}
-              maxLength={12000}
-              value={shown[s.key]}
-              onChange={(e) => onChange({ ...shown, [s.key]: e.target.value })}
-            />
-            <small>
-              {words(shown[s.key])}{" "}
-              {es
-                ? "palabras · incluidas en el total"
-                : "words · included in the total"}
-            </small>
-          </label>
-        ))}
+      <textarea
+        aria-labelledby={`${id}-label`}
+        aria-describedby={`${id}-help ${id}-count${overLimit ? ` ${id}-error` : ""}`}
+        aria-required="true"
+        aria-invalid={invalid || overLimit}
+        rows={10}
+        maxLength={12000}
+        spellCheck
+        lang={locale}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
+      <div className="summary-counter-row">
+        <small id={`${id}-count`} aria-live="polite">
+          {total} / {limit} {es ? "palabras" : "words"}
+        </small>
       </div>
+      {overLimit && (
+        <small className="danger-text" id={`${id}-error`} role="alert">
+          {es
+            ? `El resumen supera el límite de ${limit} palabras. Reduzca el texto antes de continuar; puede guardar el borrador.`
+            : `The summary exceeds the ${limit}-word limit. Shorten it before continuing; you can save the draft.`}
+        </small>
+      )}
     </section>
   );
 }

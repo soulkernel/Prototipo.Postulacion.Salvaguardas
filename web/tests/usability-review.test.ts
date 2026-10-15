@@ -6,6 +6,7 @@ import {
   emptyPayload,
   newActivity,
   newRisk,
+  validateComplete,
   type Rules,
 } from "../src/lib/domain";
 const rules: Rules = {
@@ -122,7 +123,7 @@ test("file selection refuses multiple, empty, oversize and disallowed files", ()
   );
 });
 
-test("progress excludes hidden summary and future phase requirements", () => {
+test("progress counts a single summary, reads legacy parts and excludes future phase requirements", () => {
   const p = complete();
   p.concept.summary_parts = {
     context: "Contexto",
@@ -148,6 +149,25 @@ test("progress excludes hidden summary and future phase requirements", () => {
     100,
   );
   p.concept.summary_parts.problem = "";
+  assert.equal(
+    submissionProgress(p, rules, 1, fields, docs, true, true).percent,
+    100,
+  );
+  assert.ok(!validateComplete(p, rules, 1).includes("summary"));
+  for (const key of Object.keys(p.concept.summary_parts))
+    p.concept.summary_parts[key as keyof typeof p.concept.summary_parts] = "";
+  assert.ok(
+    submissionProgress(p, rules, 1, fields, docs, true, true).percent < 100,
+  );
+  assert.ok(validateComplete(p, rules, 1).includes("summary"));
+  p.concept.summary = "palabra ".repeat(500);
+  assert.equal(
+    submissionProgress(p, rules, 1, fields, docs, true, true).percent,
+    100,
+  );
+  assert.ok(!validateComplete(p, rules, 1).includes("summary_word_limit"));
+  p.concept.summary += "adicional";
+  assert.ok(validateComplete(p, rules, 1).includes("summary_word_limit"));
   assert.ok(
     submissionProgress(p, rules, 1, fields, docs, true, true).percent < 100,
   );

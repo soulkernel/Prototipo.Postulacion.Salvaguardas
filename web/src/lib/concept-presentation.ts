@@ -3,7 +3,7 @@ import { identityFields, narrativeFields } from "./fields";
 import { callThemeLabel } from "./call-themes";
 import { alignmentNarrative } from "./document-language";
 import { alignmentVersion } from "./strategic-alignment";
-import { hasSummaryParts, summarySections } from "./summary";
+import { projectSummary } from "./summary";
 import { resultUnits } from "./project-results";
 
 export type ContentBlock =
@@ -345,15 +345,7 @@ export function conceptSections(
   };
   for (const f of narrativeFields) {
     let blocks = paragraphs(String(c[f.key] ?? ""));
-    if (
-      f.key === "summary" &&
-      c.summary_parts &&
-      hasSummaryParts(c.summary_parts)
-    )
-      blocks = summarySections.flatMap((s) => [
-        { type: "paragraph" as const, text: (es ? s.es : s.en) + ":" },
-        ...paragraphs(c.summary_parts[s.key]),
-      ]);
+    if (f.key === "summary") blocks = paragraphs(projectSummary(c));
     if (f.key === "objectives" && c.strategic_alignment?.objectives.length) {
       let index = 0;
       blocks = c.strategic_alignment.objectives.flatMap((o) =>

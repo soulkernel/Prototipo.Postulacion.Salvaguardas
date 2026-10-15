@@ -60,7 +60,7 @@ import { csvCell, validateFile } from "../src/lib/files";
 import { normalizePhone } from "../src/lib/phone";
 import { stepIssues } from "../src/lib/step-validation";
 import { geographyIssues } from "../src/lib/geography";
-import { emptySummary, summaryText } from "../src/lib/summary";
+import { emptySummary, projectSummary } from "../src/lib/summary";
 import {
   sessionCookieOptions,
   rememberSeconds,
@@ -121,7 +121,7 @@ test("remembered sessions preserve a fixed 90-day deadline and cookie deletion",
   );
   assert.equal(sessionCookieOptions(options, "invalid", now).maxAge, undefined);
 });
-test("summary limit applies to the combined six sections without counting headings", () => {
+test("legacy summary parts merge in order and share the unified word limit", () => {
   const p = emptyPayload();
   p.concept.summary_parts = {
     ...emptySummary,
@@ -132,13 +132,38 @@ test("summary limit applies to the combined six sections without counting headin
     solution: "four",
     results: "five",
   };
-  p.concept.summary = summaryText(p.concept.summary_parts);
+  p.concept.summary = "Old scalar copy must not duplicate the six parts.";
+  assert.equal(
+    projectSummary(p.concept),
+    "word ".repeat(495).trim() + "\n\none\n\ntwo\n\nthree\n\nfour\n\nfive",
+  );
   const rules = { summary_word_limit: 500 } as Rules;
   assert.deepEqual(stepIssues(p, rules, 1, 1).invalid, []);
   p.concept.summary_parts.context += "another";
   assert.ok(stepIssues(p, rules, 1, 1).invalid.includes("summary"));
   p.concept.summary_parts.problem = "";
-  assert.ok(stepIssues(p, rules, 1, 1).missing.includes("summary:problem"));
+  assert.ok(
+    !stepIssues(p, rules, 1, 1).missing.some((key) =>
+      key.startsWith("summary"),
+    ),
+  );
+  assert.deepEqual(stepIssues(p, rules, 1, 1).invalid, []);
+});
+
+test("one project summary is required and counted without six subsection requirements", () => {
+  const p = emptyPayload();
+  const rules = { summary_word_limit: 500 } as Rules;
+  assert.ok(stepIssues(p, rules, 1, 1).missing.includes("summary"));
+  p.concept.summary = "palabra ".repeat(500);
+  assert.ok(!stepIssues(p, rules, 1, 1).missing.includes("summary"));
+  assert.ok(!stepIssues(p, rules, 1, 1).invalid.includes("summary"));
+  p.concept.summary += "adicional";
+  assert.ok(stepIssues(p, rules, 1, 1).invalid.includes("summary"));
+  assert.equal(
+    payloadSchema.safeParse(p).success,
+    true,
+    "Over-limit content can still be saved as a draft",
+  );
 });
 test("geography requires address location and consistent project islands", () => {
   assert.deepEqual(

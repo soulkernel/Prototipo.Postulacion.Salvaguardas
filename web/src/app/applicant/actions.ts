@@ -15,7 +15,7 @@ import { activityPlanningIssues } from "@/lib/activity-planning";
 import { resultIssues, resultText } from "@/lib/project-results";
 import { synchronizeRisks } from "@/lib/potential-risks";
 import { geographyIssues } from "@/lib/geography";
-import { hasSummaryParts, summaryText } from "@/lib/summary";
+import { projectSummary } from "@/lib/summary";
 import { words } from "@/lib/domain";
 import { detectPdfSignature } from "@/lib/pdf-signature";
 import { submissionError } from "@/lib/submission-error";
@@ -84,14 +84,10 @@ async function validStoredSummary(db: SupabaseClient, id: string) {
   const parsed = payloadSchema.safeParse(data?.payload);
   if (error || !data || !parsed.success) return false;
   const c = parsed.data.concept;
+  const summary = projectSummary(c);
   return (
-    (!hasSummaryParts(c.summary_parts) ||
-      Object.values(c.summary_parts).every((v) => v.trim())) &&
-    words(
-      hasSummaryParts(c.summary_parts)
-        ? summaryText(c.summary_parts)
-        : c.summary,
-    ) <= data.rules_snapshot.summary_word_limit
+    Boolean(summary.trim()) &&
+    words(summary) <= data.rules_snapshot.summary_word_limit
   );
 }
 export type MutationResult =
@@ -195,9 +191,7 @@ export async function saveDraft(
         ...(parsed.data.concept.strategic_alignment
           ? strategicText(parsed.data.concept.strategic_alignment)
           : {}),
-        summary: hasSummaryParts(parsed.data.concept.summary_parts)
-          ? summaryText(parsed.data.concept.summary_parts)
-          : parsed.data.concept.summary,
+        summary: projectSummary(parsed.data.concept),
         phone:
           normalizePhone(parsed.data.concept.phone) ||
           parsed.data.concept.phone,

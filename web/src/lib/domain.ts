@@ -7,7 +7,7 @@ import { z } from "zod";
 import { budgetSchema, budgetIssues } from "./budget";
 import { normalizePhone } from "./phone";
 import { geographyIssues } from "./geography";
-import { emptySummary, hasSummaryParts } from "./summary";
+import { emptySummary, projectSummary } from "./summary";
 import { strategicSchema, alignmentIssues } from "./strategic-alignment";
 import { potentialRiskIssues } from "./potential-risks";
 import { partnerIssues } from "./partners";
@@ -435,18 +435,16 @@ export function validateComplete(
       key !== "ruc" &&
       key !== "partners" &&
       key !== "results_source" &&
+      key !== "summary" &&
       key !== "other_islands" &&
       (value === null || (typeof value === "string" && !value.trim()))
     )
       missing.push(key);
   }
-  if (c.summary && words(c.summary) > rules.summary_word_limit)
+  const summary = projectSummary(c);
+  if (!summary.trim()) missing.push("summary");
+  if (words(summary) > rules.summary_word_limit)
     missing.push("summary_word_limit");
-  if (
-    hasSummaryParts(c.summary_parts) &&
-    Object.values(c.summary_parts).some((v) => !v.trim())
-  )
-    missing.push("summary");
   if (!payload.activities.length) missing.push("activities");
   payload.activities.forEach((a, i) => {
     if (

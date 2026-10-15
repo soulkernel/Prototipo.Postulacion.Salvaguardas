@@ -39,7 +39,6 @@ export function submissionProgress(
   void _saved;
   const applicable = (p: Payload) => {
     const copy = structuredClone(p);
-    if (copy.concept.summary_parts) copy.concept.summary = "structured";
     if (copy.concept.strategic_alignment) {
       copy.concept.objectives = "structured";
       copy.concept.alignment = "structured";

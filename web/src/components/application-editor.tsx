@@ -54,7 +54,7 @@ import {
 import { alignmentVersion } from "@/lib/strategic-alignment";
 import { strategicText } from "@/lib/strategic-alignment";
 import { ActionLabel } from "./submit-button";
-import { summaryText, summarySections } from "@/lib/summary";
+import { projectSummary, emptySummary } from "@/lib/summary";
 import { useRouter } from "next/navigation";
 import { Plus, Save, Send, ShieldCheck, LockKeyhole } from "lucide-react";
 import {
@@ -146,8 +146,8 @@ function message(code: string, es: boolean) {
       : "Complete objectives and the general objective contribution and alignment with Plan Galápagos 2030 and SDGs.";
   if (code.includes("SUMMARY"))
     return es
-      ? "Complete las seis secciones del resumen y respete el límite total de palabras."
-      : "Complete all six summary sections and respect the total word limit.";
+      ? "Complete el resumen del proyecto y respete el límite de palabras."
+      : "Complete the project summary and respect the word limit.";
   if (code.includes("GEOGRAPHY"))
     return es
       ? "Complete provincia, ciudad o localidad e islas de ejecución; especifique las otras islas si las seleccionó."
@@ -753,10 +753,8 @@ export function ApplicationEditor({
       return es
         ? "Complete cada riesgo registrado"
         : "Complete each registered risk";
-    if (key.startsWith("summary:")) {
-      const s = summarySections.find((s) => s.key === key.slice(8));
-      return (es ? "Resumen: " : "Summary: ") + (s ? (es ? s.es : s.en) : key);
-    }
+    if (key.startsWith("summary:"))
+      return es ? "Resumen del proyecto" : "Project summary";
     const field = [...identityFields, ...narrativeFields].find(
       (f) => f.key === key,
     );
@@ -1321,17 +1319,17 @@ export function ApplicationEditor({
                     "summary" ? (
                     <SummaryFields
                       key={field.key}
-                      parts={payload.concept.summary_parts}
-                      legacy={payload.concept.summary}
+                      value={projectSummary(payload.concept)}
+                      invalid={fieldIssue("summary")}
                       limit={rules.summary_word_limit}
                       locale={locale}
-                      onChange={(parts) =>
+                      onChange={(value) =>
                         setPayload((p) => ({
                           ...p,
                           concept: {
                             ...p.concept,
-                            summary_parts: parts,
-                            summary: summaryText(parts),
+                            summary_parts: { ...emptySummary },
+                            summary: value,
                           },
                         }))
                       }

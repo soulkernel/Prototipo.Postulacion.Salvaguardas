@@ -8,7 +8,6 @@ import {
   type Locale,
 } from "./domain";
 import { identityFields, narrativeFields } from "./fields";
-import { summarySections } from "./summary";
 export type CompletionIssue = {
   id: string;
   step: number;
@@ -64,12 +63,11 @@ export function completionGuidance(
       return;
     if (alignment && ["alignment", "objectives"].includes(key)) return;
     if (key.startsWith("summary:")) {
-      const part = summarySections.find((x) => x.key === key.slice(8));
       add(
-        key,
+        "summary",
         1,
-        (es ? "Resumen: " : "Summary: ") + (part?.[es ? "es" : "en"] || key),
-        field(key),
+        es ? "Resumen del proyecto" : "Project summary",
+        field("summary"),
       );
       return;
     }

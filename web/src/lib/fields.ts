@@ -87,8 +87,8 @@ export const identityFields: Field[] = [
 export const narrativeFields: Field[] = [
   {
     key: "summary",
-    es: "Resumen: contexto, problema, amenazas, justificación, solución y resultados",
-    en: "Summary: context, problem, threats, rationale, solution and results",
+    es: "Resumen del proyecto",
+    en: "Project summary",
     type: "textarea",
   },
   {

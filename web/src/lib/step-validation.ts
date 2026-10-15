@@ -6,7 +6,7 @@ import { budgetIssues } from "./budget";
 import { z } from "zod";
 import { normalizePhone } from "./phone";
 import { geographyIssues } from "./geography";
-import { hasSummaryParts, summarySections, summaryText } from "./summary";
+import { projectSummary } from "./summary";
 import {
   financialErrors,
   validateComplete,
@@ -38,7 +38,10 @@ export function stepIssues(
     for (const key of keys) {
       if (["partners", "other_islands", "project_islands"].includes(key))
         continue;
-      const value = payload.concept[key as keyof Payload["concept"]];
+      const value =
+        key === "summary"
+          ? projectSummary(payload.concept)
+          : payload.concept[key as keyof Payload["concept"]];
       if (
         value === null ||
         value === undefined ||
@@ -73,17 +76,7 @@ export function stepIssues(
         ),
       );
       missing.push(...alignmentIssues(payload.concept.strategic_alignment));
-      if (hasSummaryParts(payload.concept.summary_parts))
-        for (const section of summarySections)
-          if (!payload.concept.summary_parts[section.key].trim())
-            missing.push("summary:" + section.key);
-      if (
-        words(
-          hasSummaryParts(payload.concept.summary_parts)
-            ? summaryText(payload.concept.summary_parts)
-            : payload.concept.summary,
-        ) > rules.summary_word_limit
-      )
+      if (words(projectSummary(payload.concept)) > rules.summary_word_limit)
         invalid.push("summary");
       if (stage === 2)
         for (const f of phase2)

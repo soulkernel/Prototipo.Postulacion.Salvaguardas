@@ -60,3 +60,14 @@ export function summaryText(parts: SummaryParts) {
     .filter(Boolean)
     .join("\n\n");
 }
+
+// Older drafts keep their summary in six parts. Read them in the original
+// order; the editor stores a single summary when the applicant edits it.
+export function projectSummary(concept: {
+  summary: string;
+  summary_parts?: SummaryParts;
+}): string {
+  return concept.summary_parts && hasSummaryParts(concept.summary_parts)
+    ? summaryText(concept.summary_parts)
+    : concept.summary;
+}

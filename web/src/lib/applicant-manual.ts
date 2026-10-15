@@ -408,13 +408,13 @@ export const manualChapters: ManualChapter[] = [
     id: "descripcion",
     title: ["Paso 2 · Explicar la propuesta", "Step 2 · Describe the proposal"],
     intro: [
-      "Escriba de forma concreta y comprensible. Los contadores del formulario indican la extensión disponible; seis cajas de resumen comparten un solo límite total.",
-      "Write clearly and concisely. Form counters show available space; the six summary boxes share a single total word limit.",
+      "Escriba de forma concreta y comprensible. El resumen del proyecto se redacta en una sola caja, con párrafos si los necesita. Su contador muestra el límite total de palabras establecido para la convocatoria.",
+      "Write clearly and concisely. Write the project summary in a single box, using paragraphs if needed. Its counter shows the total word limit set for the call.",
     ],
     steps: [
       [
-        "Distribuya el resumen entre sus seis secciones. Evite repetir el mismo texto en todas.",
-        "Distribute the summary across its six sections. Avoid repeating the same text in every box.",
+        "Integre en el resumen el contexto, el problema, las amenazas, la justificación, la solución propuesta y los resultados esperados. Si supera el límite, puede guardar el borrador, pero debe reducir el texto antes de continuar.",
+        "Include the context, problem, threats, rationale, proposed solution and expected results in the summary. If you exceed the limit, you can save the draft, but must shorten the text before continuing.",
       ],
       [
         "Complete beneficiarios, sostenibilidad y seguimiento, y registre las organizaciones asociadas si las hay.",
@@ -423,40 +423,10 @@ export const manualChapters: ManualChapter[] = [
     ],
     rows: [
       [
-        "Contexto",
-        "Describa la situación actual y el lugar de intervención.",
-        "Context",
-        "Describe the current situation and intervention location.",
-      ],
-      [
-        "Problema",
-        "Explique qué necesidad concreta resolverá el proyecto.",
-        "Problem",
-        "Explain the specific need the project addresses.",
-      ],
-      [
-        "Amenazas",
-        "Indique las presiones o causas que agravan el problema.",
-        "Threats",
-        "Identify pressures or causes worsening the problem.",
-      ],
-      [
-        "Justificación",
-        "Explique por qué la intervención es necesaria y pertinente.",
-        "Rationale",
-        "Explain why the intervention is necessary and relevant.",
-      ],
-      [
-        "Solución",
-        "Describa el enfoque propuesto para responder al problema.",
-        "Solution",
-        "Describe the proposed approach to addressing the problem.",
-      ],
-      [
-        "Resultados del resumen",
-        "Sintetice qué cambiará con el proyecto; después detállelo en Resultados e indicadores esperados.",
-        "Summary results",
-        "Summarise what the project will change; detail it later under Expected results and indicators.",
+        "Resumen del proyecto",
+        "Describa la situación y el lugar, la necesidad que atenderá, las amenazas, por qué es necesario intervenir, cómo lo hará y qué cambios espera. No necesita rellenar secciones separadas. Detalle los resultados y sus indicadores en el apartado correspondiente. Los textos guardados anteriormente por partes se muestran unidos en su orden original.",
+        "Project summary",
+        "Describe the situation and location, the need to address, threats, why intervention is needed, how you will act and the changes you expect. Separate sections are not required. Detail results and indicators in their own section. Previously saved summary parts appear together in their original order.",
       ],
       [
         "Beneficiarios y contribuciones a los medios de vida",
@@ -498,10 +468,9 @@ export const manualChapters: ManualChapter[] = [
         "Resumen del proyecto · contador total",
         "Project summary · total word counter",
       ],
-      ["Contexto | Problema | Amenazas", "Context | Problem | Threats"],
       [
-        "Justificación | Solución | Resultados",
-        "Rationale | Solution | Results",
+        "Una sola caja de texto · puede usar párrafos",
+        "One text box · paragraphs allowed",
       ],
       [
         "Beneficiarios · Sostenibilidad · Seguimiento",

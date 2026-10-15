@@ -6,6 +6,41 @@ import {
   narrativeTextForEditing,
 } from "../src/lib/concept-presentation";
 import { emptyPayload } from "../src/lib/domain";
+import { emptySummary, projectSummary } from "../src/lib/summary";
+
+test("review and PDF share the integrated summary without restoring six headings or mutating drafts", () => {
+  const c = emptyPayload().concept;
+  c.summary_parts = {
+    context: "Situación actual.",
+    problem: "Necesidad identificada.",
+    threats: "Presiones existentes.",
+    rationale: "Motivo de intervención.",
+    solution: "Acciones propuestas.",
+    results: "Cambios esperados.",
+  };
+  const before = JSON.stringify(c);
+  for (const locale of ["es", "en"] as const) {
+    const summary = conceptSections(c, locale).find((s) => s.id === "summary")!;
+    assert.equal(
+      summary.title,
+      locale === "es" ? "Resumen del proyecto" : "Project summary",
+    );
+    assert.deepEqual(
+      summary.blocks,
+      projectSummary(c)
+        .split("\n\n")
+        .map((text) => ({ type: "paragraph", text })),
+    );
+  }
+  assert.equal(JSON.stringify(c), before);
+  c.summary = "Texto integrado actualizado.\n\nOtro párrafo.";
+  c.summary_parts = { ...emptySummary };
+  const summary = conceptSections(c, "es").find((s) => s.id === "summary")!;
+  assert.deepEqual(summary.blocks, [
+    { type: "paragraph", text: "Texto integrado actualizado." },
+    { type: "paragraph", text: "Otro párrafo." },
+  ]);
+});
 
 test("pasted paragraphs reflow without losing captions, list items or changing the source", () => {
   const source =
