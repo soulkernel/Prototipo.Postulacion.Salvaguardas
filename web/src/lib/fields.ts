@@ -117,8 +117,8 @@ export const narrativeFields: Field[] = [
   },
   {
     key: "alignment",
-    es: "Alineación estratégica: GLF, ODS y Plan Galápagos 2030",
-    en: "Strategic alignment: GLF, SDGs and Galápagos 2030 Plan",
+    es: "Alineación estratégica: Plan Galápagos 2030 y ODS",
+    en: "Strategic alignment: Galápagos 2030 Plan and SDGs",
     type: "textarea",
   },
   {

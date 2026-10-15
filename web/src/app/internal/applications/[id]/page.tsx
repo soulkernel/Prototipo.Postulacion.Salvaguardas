@@ -245,6 +245,24 @@ export default async function ReviewPage({
             {es ? "Nota Conceptual completa" : "Complete Concept Note"}
           </summary>
           <dl className="summary-list">
+            {a.payload.concept.applicant_type === "individual" &&
+              a.payload.concept.residence_number && (
+                <div>
+                  <dt>
+                    {es
+                      ? "Número de credencial de residencia permanente"
+                      : "Permanent residence card number"}
+                  </dt>
+                  <dd>{a.payload.concept.residence_number}</dd>
+                </div>
+              )}
+            {a.payload.concept.applicant_type === "organization" &&
+              a.payload.concept.ruc && (
+                <div>
+                  <dt>{es ? "RUC de la organización" : "Organization RUC"}</dt>
+                  <dd>{a.payload.concept.ruc}</dd>
+                </div>
+              )}
             {[...identityFields, ...narrativeFields].map((f) => (
               <div key={f.key}>
                 <dt>{es ? f.es : f.en}</dt>

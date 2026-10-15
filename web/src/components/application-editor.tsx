@@ -141,7 +141,7 @@ function message(code: string, es: boolean) {
       : "Check registered risks: link each risk to at least one activity and assess it without duplicates.";
   if (code.includes("ALIGNMENT"))
     return es
-      ? "Complete los objetivos, la contribución esperada y la alineación del proyecto con Plan Galápagos 2030, ODS y GLF."
+      ? "Complete los objetivos y la contribución y alineación del objetivo general con Plan Galápagos 2030 y ODS."
       : "Complete objectives and the general objective contribution and alignment with Plan Galápagos 2030 and SDGs.";
   if (code.includes("SUMMARY"))
     return es
