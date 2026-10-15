@@ -2945,3 +2945,17 @@ select {
 .report-csv-option { border-top: 1px solid #dbe3ee; padding-top: 16px; margin-top: 20px; }
 .report-csv-option summary { cursor: pointer; color: var(--teal-dark); font-weight: 600; }
 .report-csv-option summary:hover { color: var(--navy); }
+
+/* Shared removal control for applicant and internal forms. */
+.button.remove-icon-button {
+  display: inline-flex; align-items: center; justify-content: center;
+  flex: 0 0 auto; width: 44px; height: 44px; min-width: 44px; min-height: 44px;
+  padding: 0; gap: 0; border: 1px solid #d6a0a0; border-radius: 8px;
+  color: #a32626; background: #fff; cursor: pointer;
+}
+.button.remove-icon-button:hover:not(:disabled) {
+  color: #8b2020; border-color: #a32626; background: #fff3f3;
+}
+.button.remove-icon-button:focus-visible { outline: 2px solid #a32626; outline-offset: 3px; }
+.button.remove-icon-button:disabled { opacity: .45; cursor: not-allowed; }
+.alignment-chips .button.remove-icon-compact { width: 32px; height: 32px; min-width: 32px; min-height: 32px; }

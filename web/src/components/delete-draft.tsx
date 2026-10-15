@@ -1,4 +1,6 @@
 "use client";
+import { RemoveButton } from "./remove-button";
+import { Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { deleteDraft } from "@/app/applicant/actions";
@@ -66,19 +68,10 @@ export function DeleteDraft({
   }
   return (
     <>
-      <button
-        className="button draft-row-action draft-delete-action"
-        type="button"
+      <RemoveButton
+        aria-label={`${pending ? (es ? "Completar eliminación" : "Complete deletion") : es ? "Eliminar borrador" : "Delete draft"}: ${reference} · ${title}`}
         onClick={() => dialog.current?.showModal()}
-      >
-        {pending
-          ? es
-            ? "Completar eliminación"
-            : "Complete deletion"
-          : es
-            ? "Eliminar borrador"
-            : "Delete draft"}
-      </button>
+      />
       <dialog
         ref={dialog}
         className="draft-delete-dialog"
@@ -126,6 +119,7 @@ export function DeleteDraft({
               busy={busy}
               pendingLabel={es ? "Eliminando…" : "Deleting…"}
             >
+              <Trash2 size={16} aria-hidden="true" />
               {es ? "Sí, eliminar borrador" : "Yes, delete draft"}
             </ActionLabel>
           </button>

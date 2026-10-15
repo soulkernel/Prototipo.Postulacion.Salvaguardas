@@ -10,3 +10,6 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## Respuesta visual de operaciones
 Todo botón que inicia una operación asíncrona debe mostrar inmediatamente indicador de carga y texto de progreso ES/EN, aria-busy y bloqueo mientras está pendiente; restaurar el estado al finalizar o fallar. Usar SubmitButton dentro de formularios con Server Actions/Next Form; ActionLabel y estado busy para operaciones de cliente. Conservar validación, permisos y restricciones disabled existentes. No añadir esperas artificiales. Los controles locales de añadir/quitar/abrir se actualizan directamente.
+
+## Controles de eliminación
+En formularios externos e internos, usar el mismo icono Trash2 de lucide-react para quitar o eliminar elementos. Usar RemoveButton para controles locales y para abrir confirmaciones, con aria-label específico y título ES/EN; no mostrar el texto «Quitar» en el control. Las confirmaciones de eliminación definitiva conservan texto explícito junto a la papelera, advertencias, permisos y estados pendientes. No confundir desarchivar, cerrar o desmarcar con eliminar.

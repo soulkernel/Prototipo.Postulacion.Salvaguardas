@@ -1,4 +1,5 @@
 "use client";
+import { RemoveButton } from "./remove-button";
 import { LimitedTextarea } from "./limited-textarea";
 import type { Payload, Locale } from "@/lib/domain";
 import { newActivity } from "@/lib/domain";
@@ -137,16 +138,14 @@ export function ActivityPlanningFields({
                   : "This activity already has associated risks. If you change its content, review its screening too. To remove it, first remove its associated risks in the screening."}
               </p>
             )}
-            <button
+            <RemoveButton
               type="button"
-              className="button secondary"
               disabled={activity.risks.length > 0}
               onClick={() =>
                 onChange(payload.activities.filter((a) => a.id !== activity.id))
               }
-            >
-              {es ? "Quitar actividad" : "Remove activity"} {i + 1}
-            </button>
+              aria-label={`${es ? "Quitar actividad" : "Remove activity"} ${i + 1}`}
+            />
           </div>
         </section>
       ))}

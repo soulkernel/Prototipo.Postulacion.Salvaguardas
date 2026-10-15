@@ -1,6 +1,7 @@
 "use client";
+import { RemoveButton } from "./remove-button";
 import { LimitedTextarea } from "./limited-textarea";
-import { Plus, X } from "lucide-react";
+import { Plus } from "lucide-react";
 import {
   glfLines,
   planPolicies,
@@ -162,7 +163,7 @@ export function StrategicFields({
                   <span key={id}>
                     {key === "ods" ? `${es ? "ODS" : "SDG"} ` : ""}
                     {id} · {items.find((i) => String(i.id) === id)?.[locale]}
-                    <button
+                    <RemoveButton
                       type="button"
                       aria-label={`${es ? "Quitar" : "Remove"} ${label} ${id} · ${title}`}
                       onClick={() =>
@@ -174,9 +175,8 @@ export function StrategicFields({
                               [key]: o[key].filter((x) => x !== id),
                             })
                       }
-                    >
-                      <X size={14} />
-                    </button>
+                      compact
+                    />
                   </span>
                 ))}
               </div>
@@ -263,8 +263,7 @@ export function StrategicFields({
               )}
             </div>
             {o.kind === "specific" && (
-              <button
-                className="objective-remove"
+              <RemoveButton
                 type="button"
                 onClick={() =>
                   onChange({
@@ -272,10 +271,9 @@ export function StrategicFields({
                     objectives: value.objectives.filter((x) => x.id !== o.id),
                   })
                 }
-              >
-                <X size={14} />
-                {es ? "Eliminar este objetivo" : "Remove this objective"}
-              </button>
+                className="objective-remove"
+                aria-label={`${es ? "Eliminar" : "Remove"} ${title}`}
+              />
             )}
           </section>
         );

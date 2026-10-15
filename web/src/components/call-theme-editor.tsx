@@ -1,4 +1,5 @@
 "use client";
+import { RemoveButton } from "./remove-button";
 import { useState } from "react";
 import { themeOptionsSchema, type CallTheme } from "@/lib/call-themes";
 import type { Locale } from "@/lib/domain";
@@ -107,9 +108,8 @@ export function CallThemeEditor({
               >
                 {es ? "Editar" : "Edit"}
               </button>
-              <button
+              <RemoveButton
                 type="button"
-                className="button secondary"
                 aria-label={`${es ? "Quitar línea temática" : "Remove theme"}: ${es ? t.label_es : t.label_en}`}
                 disabled={editing !== null}
                 onClick={() => {
@@ -117,9 +117,7 @@ export function CallThemeEditor({
                   setChecked(checked.filter((id) => id !== t.id));
                   onEdit();
                 }}
-              >
-                {es ? "Quitar" : "Remove"}
-              </button>
+              />
             </div>
           )}
         </div>

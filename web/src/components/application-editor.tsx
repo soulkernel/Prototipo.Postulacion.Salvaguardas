@@ -1,4 +1,5 @@
 "use client";
+import { RemoveButton } from "./remove-button";
 import { RequiredAttachmentUploads } from "./required-attachment-uploads";
 import { attachmentLabel } from "@/lib/attachment-requirements";
 import { FileDropField } from "./file-drop-field";
@@ -54,14 +55,7 @@ import { strategicText } from "@/lib/strategic-alignment";
 import { ActionLabel } from "./submit-button";
 import { summaryText, summarySections } from "@/lib/summary";
 import { useRouter } from "next/navigation";
-import {
-  Plus,
-  Save,
-  Send,
-  Trash2,
-  ShieldCheck,
-  LockKeyhole,
-} from "lucide-react";
+import { Plus, Save, Send, ShieldCheck, LockKeyhole } from "lucide-react";
 import {
   saveDraft,
   submitDraft,
@@ -1860,9 +1854,8 @@ export function ApplicationEditor({
                               </>
                             )}
                           </h4>
-                          <button
+                          <RemoveButton
                             type="button"
-                            className="button ghost"
                             onClick={() =>
                               updateActivity(ai, {
                                 risks: activity.risks.filter(
@@ -1870,10 +1863,8 @@ export function ApplicationEditor({
                                 ),
                               })
                             }
-                          >
-                            <Trash2 size={16} />
-                            {es ? "Quitar" : "Remove"}
-                          </button>
+                            aria-label={`${es ? "Quitar evaluación de riesgo" : "Remove risk assessment"} ${ri + 1} · ${activity.title}`}
+                          />
                         </div>
                         <div className="live-grid form-columns">
                           {payload.concept.risk_register && (
@@ -2087,12 +2078,9 @@ export function ApplicationEditor({
                                       />
                                     </label>
                                   )}
-                                  <button
+                                  <RemoveButton
                                     type="button"
-                                    className="button ghost"
-                                    aria-label={
-                                      es ? "Quitar medida" : "Remove measure"
-                                    }
+                                    aria-label={`${es ? "Quitar medida" : "Remove measure"} ${mi + 1} · ${risk.name}`}
                                     onClick={() =>
                                       updateRisk(ai, ri, {
                                         measures: risk.measures.filter(
@@ -2100,9 +2088,7 @@ export function ApplicationEditor({
                                         ),
                                       })
                                     }
-                                  >
-                                    <Trash2 size={16} />
-                                  </button>
+                                  />
                                 </div>
                               ))}
                               <div className="live-actions">

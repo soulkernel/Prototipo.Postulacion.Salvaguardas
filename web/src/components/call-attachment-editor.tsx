@@ -1,4 +1,5 @@
 "use client";
+import { RemoveButton } from "./remove-button";
 import { useState } from "react";
 import {
   attachmentFormats,
@@ -45,17 +46,14 @@ export function CallAttachmentEditor({
                 {es ? "Anexo" : "Attachment"} {i + 1}
               </h4>
               {!fixed && (
-                <button
+                <RemoveButton
                   type="button"
-                  className="button secondary"
                   onClick={() => {
                     setRows(rows.filter((x) => x.id !== r.id));
                     onEdit();
                   }}
                   aria-label={`${es ? "Quitar anexo" : "Remove attachment"} ${i + 1}`}
-                >
-                  {es ? "Quitar" : "Remove"}
-                </button>
+                />
               )}
             </header>
             <div className="live-grid">

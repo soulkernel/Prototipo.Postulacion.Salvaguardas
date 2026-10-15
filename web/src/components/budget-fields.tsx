@@ -1,4 +1,5 @@
 "use client";
+import { RemoveButton } from "./remove-button";
 import { useState, useEffect } from "react";
 import {
   budgetCategories,
@@ -215,9 +216,8 @@ export function BudgetFields({
               ? "Si la partida mezcla conceptos, sepárela para identificar correctamente la remuneración."
               : "Split mixed lines to identify remuneration correctly."}
           </small>
-          <button
+          <RemoveButton
             type="button"
-            className="button danger-outline"
             onClick={() => {
               const next = Object.fromEntries(
                 Object.entries(invalid).filter(([k]) => !k.startsWith(l.id)),
@@ -229,9 +229,8 @@ export function BudgetFields({
                 lines: value.lines.filter((x) => x.id !== l.id),
               });
             }}
-          >
-            {es ? "Eliminar partida" : "Remove line"}
-          </button>
+            aria-label={`${es ? "Eliminar partida" : "Remove budget line"} ${i + 1}`}
+          />
         </section>
       ))}
       <button

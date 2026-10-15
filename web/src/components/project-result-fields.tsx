@@ -1,4 +1,5 @@
 "use client";
+import { RemoveButton } from "./remove-button";
 import { LimitedTextarea } from "./limited-textarea";
 import {
   newProjectResult,
@@ -213,12 +214,11 @@ export function ProjectResultFields({
                   onChange={(e) => update(i, { evidence: e.target.value })}
                 />
               </label>
-              <button
+              <RemoveButton
                 type="button"
                 onClick={() => onChange(value.filter((_, j) => i !== j))}
-              >
-                {es ? "Quitar resultado" : "Remove result"} {i + 1}
-              </button>
+                aria-label={`${es ? "Quitar resultado" : "Remove result"} ${i + 1}`}
+              />
             </section>
           ))}
           <button

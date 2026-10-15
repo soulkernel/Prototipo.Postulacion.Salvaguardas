@@ -1,6 +1,7 @@
 "use client";
+import { RemoveButton } from "./remove-button";
 import { LimitedTextarea } from "./limited-textarea";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import type { Payload, Locale } from "@/lib/domain";
 import {
   riskLabel,
@@ -178,9 +179,8 @@ export function PotentialRiskFields({
                       }
                     />
                   </label>
-                  <button
+                  <RemoveButton
                     type="button"
-                    className="button ghost"
                     aria-label={
                       (es ? "Quitar " : "Remove ") +
                       riskLabel(rows, r.id, es ? "es" : "en")
@@ -194,9 +194,7 @@ export function PotentialRiskFields({
                         : undefined
                     }
                     onClick={() => change(rows.filter((x) => x.id !== r.id))}
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                  />
                   {used && (
                     <small>
                       {es ? "Vinculado a actividades" : "Linked to activities"}

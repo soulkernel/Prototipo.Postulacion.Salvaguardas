@@ -478,9 +478,9 @@ export const manualChapters: ManualChapter[] = [
       ],
       [
         "Organizaciones asociadas (opcional)",
-        "Registre cada organización por separado. Use + para añadir otra y Quitar para retirar una entrada; no incluya organizaciones sin participación prevista.",
+        "Registre cada organización por separado. Use + para añadir otra y el icono de papelera para retirar una entrada; no incluya organizaciones sin participación prevista.",
         "Partner organizations (optional)",
-        "Register each organization separately. Use + to add another and Remove to delete an entry; only include organizations expected to participate.",
+        "Register each organization separately. Use + to add another and the trash icon to delete an entry; only include organizations expected to participate.",
       ],
       [
         "Contadores / revisión ortográfica",
@@ -561,9 +561,9 @@ export const manualChapters: ManualChapter[] = [
         "Explain how the objective contributes to the selected alignment; up to 600 characters.",
       ],
       [
-        "Quitar selección / Eliminar este objetivo",
+        "Papelera: quitar selección u objetivo",
         "Retira una asociación o un objetivo específico. Revise después las actividades y resultados que lo utilizaban.",
-        "Remove selection / Remove this objective",
+        "Trash icon: remove selection or objective",
         "Removes an alignment or specific objective. Afterwards, review activities and results linked to it.",
       ],
     ],
@@ -639,9 +639,9 @@ export const manualChapters: ManualChapter[] = [
         "Document or record verifying the result, up to 1,000 characters; for example, attendance and learning assessment.",
       ],
       [
-        "Agregar / Quitar resultado",
+        "Agregar / Papelera: quitar resultado",
         "Añade o retira un bloque. El formulario admite hasta 30 resultados.",
-        "Add / Remove result",
+        "Add / Trash icon: remove result",
         "Adds or removes a block. The form supports up to 30 results.",
       ],
       [
@@ -703,10 +703,10 @@ export const manualChapters: ManualChapter[] = [
         "Check one or more relevant objectives. Each option displays its code and full text.",
       ],
       [
-        "Agregar / Quitar actividad",
-        "Añade o retira una actividad. Quitarla también retira las evaluaciones de riesgo que contiene: revise antes de hacerlo.",
-        "Add / Remove activity",
-        "Adds or removes an activity. Removing it also removes its risk assessments: review before doing so.",
+        "Agregar / Papelera: quitar actividad",
+        "Añade o retira una actividad. Para retirarla con la papelera, primero quite sus evaluaciones de riesgo en el examen ambiental y social inicial.",
+        "Add / Trash icon: remove activity",
+        "Adds or removes an activity. Before removing it with the trash icon, remove its risk assessments in the initial environmental and social screening.",
       ],
       [
         "Riesgos ambientales potenciales",
@@ -721,9 +721,9 @@ export const manualChapters: ManualChapter[] = [
         "One entry per risk to people or communities. Do not confuse an expected benefit with a risk.",
       ],
       [
-        "Agregar / Quitar riesgo potencial",
+        "Agregar / Papelera: quitar riesgo potencial",
         "Mantiene un catálogo común para las actividades. Si cambia o elimina un riesgo ya utilizado, revise las evaluaciones relacionadas.",
-        "Add / Remove potential risk",
+        "Add / Trash icon: remove potential risk",
         "Maintains a shared register for activities. If you change or delete a risk already used, review related assessments.",
       ],
     ],
@@ -825,9 +825,9 @@ export const manualChapters: ManualChapter[] = [
         "Filter by dimension or activity. Select an occupied cell to view assessments. The chart summarises scores; it does not decide approval.",
       ],
       [
-        "Quitar riesgo",
+        "Papelera: quitar evaluación de riesgo",
         "Retira esa evaluación de la actividad; el riesgo del catálogo se administra en la nota conceptual.",
-        "Remove risk",
+        "Trash icon: remove risk assessment",
         "Removes that assessment from the activity; the risk register is managed in the concept note.",
       ],
     ],
@@ -894,9 +894,9 @@ export const manualChapters: ManualChapter[] = [
         "Lists your dossiers and opens the selected draft. Check title, code and category to avoid confusion.",
       ],
       [
-        "Eliminar borrador / Cancelar / Confirmar eliminación",
+        "Papelera: eliminar borrador / Cancelar / Confirmar eliminación",
         "Solo para borradores que nunca se han enviado. Revise la advertencia: la eliminación no se puede deshacer. Cancelar conserva el expediente.",
-        "Delete draft / Cancel / Confirm deletion",
+        "Trash icon: delete draft / Cancel / Confirm deletion",
         "Only for drafts that have never been submitted. Review the warning: deletion cannot be undone. Cancel preserves the dossier.",
       ],
       [
@@ -918,8 +918,8 @@ export const manualChapters: ManualChapter[] = [
         "Project · code · category · status",
       ],
       [
-        "Continuar borrador | Eliminar borrador",
-        "Continue draft | Delete draft",
+        "Continuar borrador | Papelera: eliminar borrador",
+        "Continue draft | Trash icon: delete draft",
       ],
     ],
   },

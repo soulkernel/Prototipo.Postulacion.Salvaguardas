@@ -1,4 +1,5 @@
 "use client";
+import { RemoveButton } from "./remove-button";
 import type { Concept, Locale } from "@/lib/domain";
 import { partnerOrganizations } from "@/lib/partners";
 export function PartnerFields({
@@ -49,9 +50,8 @@ export function PartnerFields({
               </small>
             )}
           </label>
-          <button
+          <RemoveButton
             type="button"
-            className="button secondary"
             aria-label={
               (es
                 ? "Quitar organización asociada "
@@ -59,9 +59,7 @@ export function PartnerFields({
               (i + 1)
             }
             onClick={() => onChange(names.filter((_, index) => index !== i))}
-          >
-            {es ? "Quitar" : "Remove"}
-          </button>
+          />
         </div>
       ))}
       <button

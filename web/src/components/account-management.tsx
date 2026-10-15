@@ -1,4 +1,5 @@
 "use client";
+import { Trash2 } from "lucide-react";
 import { useActionState, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -179,6 +180,7 @@ function AccountControls({
               operation === "delete" ? "button danger" : "button secondary"
             }
           >
+            {operation === "delete" && <Trash2 size={16} aria-hidden="true" />}
             {labels[operation]}
           </SubmitButton>
           <ErrorMessage code={state.error} es={es} />
