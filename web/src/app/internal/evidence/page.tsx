@@ -9,6 +9,7 @@ import { ragConfigured } from "@/lib/rag";
 import { CorpusImport } from "@/components/corpus-import";
 import { projectRisks, type RagProject } from "@/lib/rag-context";
 import type { Payload } from "@/lib/domain";
+export const maxDuration = 60;
 export default async function EvidencePage({
   searchParams,
 }: {
