@@ -10,6 +10,50 @@ export function riskLevelLabel(score: number | null, locale: Locale) {
   };
   return labels[riskLevel(score)][locale === "es" ? 0 : 1];
 }
+export function workflowLabel(
+  group: "event" | "review" | "decision" | "body",
+  value: string,
+  locale: Locale,
+) {
+  const labels: Record<string, Record<string, [string, string]>> = {
+    event: {
+      created: ["Expediente creado", "Application created"],
+      submitted: ["Postulación recibida", "Application received"],
+      document_added: ["Anexo incorporado", "Attachment added"],
+      correction_authorized: ["Corrección autorizada", "Correction authorized"],
+      review_recorded: ["Revisión registrada", "Review recorded"],
+      decision_recorded: ["Resolución registrada", "Decision recorded"],
+      agreement_signed: [
+        "Convenio firmado registrado",
+        "Signed agreement recorded",
+      ],
+    },
+    review: {
+      safeguards: ["Revisión de salvaguardas", "Safeguards review"],
+      grants: ["Revisión de subvenciones", "Grants review"],
+      coordination: [
+        "Revisión de coordinación de proyectos",
+        "Project coordination review",
+      ],
+    },
+    decision: {
+      recommend: ["Recomendación técnica", "Technical recommendation"],
+      invite: ["Invitación a fase 2", "Invitation to Phase 2"],
+      not_select: ["No seleccionada", "Not selected"],
+      approve: ["Proyecto aprobado", "Project approved"],
+      reject: ["Proyecto no aprobado", "Project not approved"],
+    },
+    body: {
+      CAT: [
+        "Comité Asesor Técnico (CAT)",
+        "Technical Advisory Committee (CAT)",
+      ],
+      committee: ["Comité", "Committee"],
+      council: ["Consejo", "Council"],
+    },
+  };
+  return labels[group][value]?.[locale === "es" ? 0 : 1] ?? value;
+}
 type Field = {
   key: keyof Concept;
   es: string;

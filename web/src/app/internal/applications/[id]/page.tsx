@@ -10,7 +10,7 @@ import { getLocale } from "@/lib/locale";
 import { Shell } from "@/components/shell";
 import { UploadForm } from "@/components/upload-form";
 import { ReceiptDownload } from "@/components/receipt-download";
-import { statusLabel, riskLevelLabel } from "@/lib/fields";
+import { statusLabel, riskLevelLabel, workflowLabel } from "@/lib/fields";
 import { safeReturnPath, riskScore } from "@/lib/domain";
 import { strategicText } from "@/lib/strategic-alignment";
 import type { Call } from "@/lib/domain";
@@ -225,7 +225,9 @@ export default async function ReviewPage({
                 href={"/documents/" + v.id + "/matrix"}
                 locale={locale}
               >
-                {es ? "Matriz PDF" : "Matrix PDF"}
+                {es
+                  ? "Evaluación ambiental y social PDF"
+                  : "Environmental and social assessment PDF"}
               </DocumentDownload>
             </div>
           </div>
@@ -559,7 +561,7 @@ export default async function ReviewPage({
           <div className="document-row" key={r.id}>
             <div>
               <strong>
-                {r.review_type} · v{r.revision}
+                {workflowLabel("review", r.review_type, locale)} · v{r.revision}
               </strong>
               <p className="preserve-text">{r.findings}</p>
               <p>{r.recommendation}</p>
@@ -569,7 +571,8 @@ export default async function ReviewPage({
         ))}
         {decisions?.map((d) => (
           <p key={d.id}>
-            {d.body} · {d.decision} · {d.reference}
+            {workflowLabel("body", d.body, locale)} ·{" "}
+            {workflowLabel("decision", d.decision, locale)} · {d.reference}
           </p>
         ))}
         {events?.map((e, i) => (
@@ -577,7 +580,7 @@ export default async function ReviewPage({
             {new Date(e.created_at).toLocaleString(locale, {
               timeZone: "Pacific/Galapagos",
             })}{" "}
-            · {e.event_type}
+            · {workflowLabel("event", e.event_type, locale)}
           </p>
         ))}
       </section>
