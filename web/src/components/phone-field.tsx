@@ -1,7 +1,6 @@
 "use client";
-import { useId, useMemo, useState } from "react";
+import { useId, useState } from "react";
 import {
-  getCountries,
   getCountryCallingCode,
   parsePhoneNumberFromString,
   type CountryCode,
@@ -9,6 +8,7 @@ import {
 import { normalizePhone } from "@/lib/phone";
 import type { Locale } from "@/lib/domain";
 import { RequiredMark } from "./required-mark";
+import countryOptions from "@/lib/phone-country-options.json";
 export function PhoneField({
   value,
   onChange,
@@ -25,18 +25,9 @@ export function PhoneField({
   );
   const id = useId();
   const es = locale === "es";
-  const countries = useMemo(() => {
-    const names = new Intl.DisplayNames([locale], { type: "region" });
-    return getCountries()
-      .map((code) => ({ code, label: names.of(code) || code }))
-      .sort((a, b) =>
-        a.code === "EC"
-          ? -1
-          : b.code === "EC"
-            ? 1
-            : a.label.localeCompare(b.label, locale),
-      );
-  }, [locale]);
+  // A single catalogue avoids CLDR differences between Node and Chrome causing
+  // React to discard the server-rendered form during hydration.
+  const countries = countryOptions[locale];
   const valid = !number || Boolean(normalizePhone(number, country));
   const update = (nextCountry: CountryCode, nextNumber: string) => {
     setCountry(nextCountry);
@@ -49,7 +40,11 @@ export function PhoneField({
     );
   };
   return (
-    <section role="group" className="activity-card" data-validation-field="phone">
+    <section
+      role="group"
+      className="activity-card"
+      data-validation-field="phone"
+    >
       <h3 className="section-card-title">
         {es ? "Teléfono de contacto" : "Contact phone"}
         <RequiredMark locale={locale} />
@@ -65,7 +60,7 @@ export function PhoneField({
           >
             {countries.map((c) => (
               <option key={c.code} value={c.code}>
-                {c.label} (+{getCountryCallingCode(c.code)})
+                {c.label} (+{getCountryCallingCode(c.code as CountryCode)})
               </option>
             ))}
           </select>

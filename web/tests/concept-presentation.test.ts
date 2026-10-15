@@ -87,3 +87,27 @@ test("shared presentation explains objective/result relationships without fabric
     "Rendering must never mutate stored or signed content",
   );
 });
+
+// The complete form must hydrate before the user can reach the review.
+test("country names and order are shared by server and browser for every supported country", async () => {
+  const { default: options } =
+    await import("../src/lib/phone-country-options.json");
+  const { getCountries, getCountryCallingCode } =
+    await import("libphonenumber-js/max");
+  for (const locale of ["es", "en"] as const) {
+    assert.equal(options[locale][0].code, "EC");
+    assert.deepEqual(
+      options[locale].map((c) => c.code).sort(),
+      getCountries().sort(),
+    );
+    assert.ok(
+      options[locale].every(
+        (c) =>
+          c.label.trim() &&
+          getCountryCallingCode(
+            c.code as Parameters<typeof getCountryCallingCode>[0],
+          ),
+      ),
+    );
+  }
+});
