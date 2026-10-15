@@ -921,6 +921,7 @@ before(async () => {
   app = await rpc("create_application", { call_id: call });
 });
 after(async () => await db.close());
+
 test("draft deletion requires ownership and an unchanged revision; files must be removed before finalization", async () => {
   const id = await rpc("create_application", { call_id: call });
   await assert.rejects(
@@ -2513,4 +2514,212 @@ test("structured attachment requirements survive publication and frozen rules wi
   ).rows[0];
   assert.deepEqual(app.rules_snapshot.attachment_requirements, [attachment]);
   assert.deepEqual(app.rules_snapshot.required_attachments, [attachment.id]);
+});
+
+test("v2 applicant dossiers flow through signing, internal review and phase two without GLF or specific-objective alignment", async () => {
+  for (const type of ["individual", "organization"]) {
+    const owner = "other";
+    const id = await rpc("create_application", { call_id: call }, owner);
+    const p = structuredClone(payload);
+    p.concept.applicant_type = type;
+    p.concept.residence_number = type === "individual" ? "RP-AUDIT-001" : "";
+    p.concept.ruc = type === "organization" ? "2090000000001" : "";
+    const general = crypto.randomUUID(),
+      specific = crypto.randomUUID();
+    p.concept.strategic_alignment = {
+      version: "pg2030-ods-general-v2",
+      objectives: [
+        {
+          id: general,
+          kind: "general",
+          text: "Conservar el ecosistema marino",
+          plan: ["E1"],
+          ods: [14],
+          glf: [],
+          contribution: "Restaurar hábitats costeros",
+        },
+        {
+          id: specific,
+          kind: "specific",
+          text: "Restaurar una hectárea",
+          plan: [],
+          ods: [],
+          glf: [],
+          contribution: "",
+        },
+      ],
+    };
+    p.activities = p.activities.map((a) => ({
+      ...a,
+      id: crypto.randomUUID(),
+      objective_ids: [specific],
+      risks: a.risks.map((r) => ({ ...r, id: crypto.randomUUID() })),
+    }));
+    assert.equal(
+      await rpc(
+        "save_application",
+        { application_id: id, expected_revision: 0, payload: p },
+        owner,
+      ),
+      1,
+    );
+    await rpc(
+      "prepare_application_documents",
+      { app_id: id, expected_revision: 1 },
+      owner,
+    );
+    for (const [i, kind] of ["concept_signed", "matrix_signed"].entries()) {
+      const path = `${id}/${ids[owner]}/attachment/${kind}.pdf`;
+      await as(owner, () =>
+        db.query(
+          "insert into storage.objects(bucket_id,name,metadata) values('application-files',$1,$2)",
+          [path, { size: 100 }],
+        ),
+      );
+      await rpc(
+        "register_signed_document",
+        {
+          app_id: id,
+          expected_revision: 1,
+          object_path: path,
+          original_name: `${kind}.pdf`,
+          mime: "application/pdf",
+          bytes: 100,
+          checksum: String(i + 1).repeat(64),
+          document_kind: kind,
+        },
+        owner,
+      );
+    }
+    assert.equal(
+      await rpc(
+        "submit_application",
+        { application_id: id, expected_revision: 1 },
+        owner,
+      ),
+      2,
+    );
+    const version = (
+      await as("grants", () =>
+        db.query(
+          "select id,payload from public.application_versions where application_id=$1 order by revision desc",
+          [id],
+        ),
+      )
+    ).rows[0];
+    assert.equal(
+      version.payload.concept.strategic_alignment.version,
+      "pg2030-ods-general-v2",
+    );
+    assert.deepEqual(
+      version.payload.concept.strategic_alignment.objectives,
+      p.concept.strategic_alignment.objectives,
+    );
+    assert.equal(
+      version.payload.concept[
+        type === "individual" ? "residence_number" : "ruc"
+      ],
+      p.concept[type === "individual" ? "residence_number" : "ruc"],
+    );
+    assert.equal(version.payload.attachments.length, 2);
+    assert.equal(
+      (
+        await as("applicant", () =>
+          db.query(
+            "select id from public.application_versions where application_id=$1",
+            [id],
+          ),
+        )
+      ).rows.length,
+      0,
+    );
+    await assert.rejects(
+      rpc(
+        "save_application",
+        { application_id: id, expected_revision: 2, payload: p },
+        owner,
+      ),
+      /GLF_APPLICATION_LOCKED/,
+    );
+    await rpc(
+      "record_review",
+      {
+        application_id: id,
+        expected_revision: 2,
+        review_type: "safeguards",
+        findings: "Evaluación humana documentada",
+        recommendation: "Continuar",
+        category: "B",
+      },
+      "reviewer",
+    );
+    await rpc(
+      "record_decision",
+      {
+        application_id: id,
+        expected_revision: 2,
+        body: "committee",
+        decision: "invite",
+        reference: `V2-${type}`,
+        rationale: "Preselección documentada",
+        invitation_deadline: "2099-01-01",
+      },
+      "committee",
+    );
+    const phase2 = structuredClone(fullPayload);
+    phase2.concept = {
+      ...p.concept,
+      title: "Proyecto completo en preparación",
+    };
+    phase2.phase2.proposal = "Detalle de la propuesta completa";
+    phase2.activities = phase2.activities.map((a, i) => ({
+      ...a,
+      id: p.activities[i].id,
+      objective_ids: [specific],
+      risks: a.risks.map((r, j) => ({ ...r, id: p.activities[i].risks[j].id })),
+    }));
+    assert.equal(
+      await rpc(
+        "save_application",
+        { application_id: id, expected_revision: 3, payload: phase2 },
+        owner,
+      ),
+      4,
+    );
+    const frozen = (
+      await as("grants", () =>
+        db.query(
+          "select payload from public.application_versions where id=$1",
+          [version.id],
+        ),
+      )
+    ).rows[0].payload;
+    assert.equal(frozen.concept.title, p.concept.title);
+    assert.deepEqual(frozen.activities[0].objective_ids, [specific]);
+    assert.equal(
+      await rpc(
+        "submit_application",
+        { application_id: id, expected_revision: 4 },
+        owner,
+      ),
+      5,
+    );
+    const latest = (
+      await as("grants", () =>
+        db.query(
+          "select stage,payload from public.application_versions where application_id=$1 order by revision desc",
+          [id],
+        ),
+      )
+    ).rows[0];
+    assert.equal(latest.stage, 2);
+    assert.equal(
+      latest.payload.concept.strategic_alignment.objectives[1].id,
+      specific,
+    );
+    assert.equal(
+      latest.payload.activities[0].risks[0].residual_probability,
+      fullPayload.activities[0].risks[0].residual_probability,
+    );
+  }
 });

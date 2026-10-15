@@ -123,10 +123,12 @@ export default async function ReviewPage({
       >
         ← {es ? "Expedientes" : "Applications"}
       </Link>
-      <div className="live-title">
+      <div className="live-title module-heading">
         <div>
           <p className="eyebrow">
-            {a.reference_code} · {es ? "Revisión" : "Revision"} {a.revision}
+            {a.reference_code} ·{" "}
+            {es ? "Versión presentada" : "Submitted revision"}{" "}
+            {versions?.[0]?.revision ?? a.revision}
           </p>
           <h1>{a.payload.concept.title}</h1>
         </div>

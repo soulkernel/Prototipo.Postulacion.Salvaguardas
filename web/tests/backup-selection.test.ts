@@ -167,7 +167,7 @@ test("expanded workbook separates proposed dates, numeric amounts, results and s
     main = strFromU8(files["xl/worksheets/sheet1.xml"]),
     results = strFromU8(files["xl/worksheets/sheet2.xml"]),
     risks = strFromU8(files["xl/worksheets/sheet3.xml"]);
-  assert.ok(main.includes('ref="A1:AJ2"'));
+  assert.ok(main.includes('ref="A1:AK2"'));
   assert.ok(main.includes('r="T2" s="0"><v>31</v>'));
   assert.ok(main.includes('r="V2" s="3"><v>100</v>'));
   assert.ok(main.includes('r="Z2" s="4"><v>0</v>'));
@@ -180,6 +180,41 @@ test("expanded workbook separates proposed dates, numeric amounts, results and s
   assert.ok(
     strFromU8(files["xl/workbook.xml"]).includes("Resultados e indicadores"),
   );
+});
+
+test("backup identification comes from the frozen submission, never from the next-phase draft", () => {
+  const records = {
+    applications: [
+      {
+        id: "x",
+        reference_code: "REF-X",
+        payload: {
+          concept: { applicant_type: "organization", ruc: "2099999999999" },
+        },
+        status: "phase2_draft",
+        stage: 2,
+      },
+    ],
+    application_versions: [
+      {
+        application_id: "x",
+        revision: 2,
+        stage: 1,
+        payload: {
+          concept: {
+            applicant_type: "individual",
+            residence_number: "RP-00123",
+          },
+        },
+      },
+    ],
+  };
+  const sheet = strFromU8(
+    unzipSync(summaryWorkbook(records, "es"))["xl/worksheets/sheet1.xml"],
+  );
+  assert.match(sheet, /RP-00123/);
+  assert.doesNotMatch(sheet, /2099999999999/);
+  assert.match(sheet, /Fecha de inicio del proyecto/);
 });
 
 test("risk summary uses maxima by dimension, never adds initial and residual or treats missing as zero", () => {

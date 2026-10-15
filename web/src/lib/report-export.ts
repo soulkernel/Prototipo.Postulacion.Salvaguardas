@@ -106,9 +106,13 @@ export function reportTables(report: ReportExport) {
       t("Estado", "Status"),
       t("Monto solicitado (USD)", "Requested amount (USD)"),
       t("Cofinanciamiento (USD)", "Co-financing (USD)"),
-      t("Inicio propuesto", "Proposed start"),
-      t("Fin propuesto", "Proposed end"),
+      t("Fecha de inicio del proyecto", "Project start date"),
+      t("Fecha de finalización del proyecto", "Project end date"),
       t("Último envío (hora Galápagos)", "Latest submission (Galapagos time)"),
+      t(
+        "Credencial de residencia permanente / RUC",
+        "Permanent residence card / RUC",
+      ),
     ],
     ...report.applications.map((a) => {
       const c = a.concept;
@@ -138,6 +142,13 @@ export function reportTables(report: ReportExport) {
         String(c.start_date || ""),
         String(c.end_date || ""),
         date(a.submitted_at),
+        String(
+          c.applicant_type === "individual"
+            ? c.residence_number || ""
+            : c.applicant_type === "organization"
+              ? c.ruc || ""
+              : "",
+        ),
       ];
     }),
   ];

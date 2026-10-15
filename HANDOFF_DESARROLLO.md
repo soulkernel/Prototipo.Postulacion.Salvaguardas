@@ -426,3 +426,12 @@ QA local: 35 pruebas SQL/PGlite +65 TypeScript (100), lint/tsc/build correctos. 
 - Migración034 aplicada en Supabase por SQL Editor con BEGIN/COMMIT: installed=true, 13 expedientes conservados. No repetir migración. Revocación de funciones privadas mantiene permisos previos.
 - Pendiente con Gabriela Ayala: confirmar estructura/nivel de detalle del presupuesto anual GLF/Otros y etapa en que se exige (nota conceptual o propuesta completa). Se mantiene comportamiento presupuestario actual.
 - QA local: 42 pruebas SQL +78 TS =120 aprobadas; lint y tsc correctos; build de producción correcto. Verificación del despliegue pendiente al escribir este bloque.
+
+
+## v0.7.1 — Compatibilidad entre módulos (14/10/2026)
+- Auditoría de contrato de datos y flujo externo→interno. Registro condicional de credencial/RUC compatible con versiones enviadas; se agrega una columna textual al final de Excel/CSV de reportes y Excel de respaldos. Solo se exporta la identificación aplicable de la versión congelada, no la del borrador posterior. Columnas previas mantienen posiciones y fórmulas.
+- Fechas de reportes/respaldos denominadas inicio/finalización del proyecto, coherentes con el formulario. Sin nuevos controles de elegibilidad ni cambios en presupuesto.
+- Ficha de revisión usa el título de la versión enviada, no el borrador activo de fase2. Detalle muestra la revisión enviada y conserva expected_revision operativo para concurrencia. Cabeceras de ambas pantallas con diseño compartido.
+- Nueva prueba aislada recorre persona natural y organización: borradorv2, preparación de documentos, registro de dos PDF, envío, lectura interna, aislamiento de otro postulante, revisión de sostenibilidad, invitación, edición de propuesta completa, conservación de versión1 y presentación de fase2. No opera sobre datos remotos ni crea invitaciones reales.
+- Sin migración, cambios de roles/MFA, borrados ni decisiones remotas. Pendiente Gabriela Ayala se mantiene.
+- Validación local: 43 pruebas SQL +80 TypeScript =123 aprobadas. Lint, tsc y build producción correctos. No cambios de esquema. Publicación y recorrido visual en curso.

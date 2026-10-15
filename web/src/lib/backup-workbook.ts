@@ -84,8 +84,8 @@ export function summaryWorkbook(
     t("Islas de intervención", "Project islands"),
     t("Ubicación y ámbito", "Location and scope"),
     t("Organizaciones asociadas", "Partner organizations"),
-    t("Inicio propuesto", "Proposed start"),
-    t("Finalización propuesta", "Proposed end"),
+    t("Fecha de inicio del proyecto", "Project start date"),
+    t("Fecha de finalización del proyecto", "Project end date"),
     t(
       "Duración propuesta (días transcurridos)",
       "Proposed duration (elapsed days)",
@@ -121,6 +121,10 @@ export function summaryWorkbook(
       "Residual environmental risk (maximum)",
     ),
     t("Riesgo social residual (máximo)", "Residual social risk (maximum)"),
+    t(
+      "Credencial de residencia permanente / RUC",
+      "Permanent residence card / RUC",
+    ),
   ];
   const main: Cell[][] = [headers];
   const results: Cell[][] = [
@@ -292,6 +296,13 @@ export function summaryWorkbook(
       riskSummary("social", false),
       riskSummary("environmental", true),
       riskSummary("social", true),
+      value(
+        c.applicant_type === "individual"
+          ? c.residence_number
+          : c.applicant_type === "organization"
+            ? c.ruc
+            : undefined,
+      ),
     ]);
     const objectives = list(obj(c.strategic_alignment).objectives);
     for (const r of list(c.project_results))

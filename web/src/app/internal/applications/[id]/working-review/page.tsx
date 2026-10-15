@@ -25,7 +25,7 @@ export default async function WorkingReviewPage({
     es = locale === "es";
   const { data: v, error } = await viewer.db
     .from("application_versions")
-    .select("id,stage,revision")
+    .select("id,stage,revision,payload")
     .eq("application_id", id)
     .order("revision", { ascending: false })
     .limit(1)
@@ -82,7 +82,9 @@ export default async function WorkingReviewPage({
       <Link href={"/internal/applications/" + id}>
         ← {es ? "Volver al expediente" : "Back to application"}
       </Link>
-      <h1>{a.payload.concept.title}</h1>
+      <header className="module-heading">
+        <h1>{v.payload.concept.title}</h1>
+      </header>
       <p>
         {a.reference_code} · {es ? "Versión presentada" : "Submitted version"}{" "}
         {v.revision} · {es ? "Fase" : "Phase"} {v.stage}
