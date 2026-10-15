@@ -1227,3 +1227,29 @@ input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="
   font-weight: 400;
   margin: 0;
 }
+
+.applicant-identification-row {
+  display: grid;
+  gap: 20px 24px;
+  align-items: start;
+}
+.individual-identification-row {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.live-form .applicant-identification-row > label {
+  margin: 0;
+  display: grid;
+  align-content: start;
+}
+.live-form .applicant-identification-row input {
+  width: 20ch;
+  max-width: 100%;
+}
+.live-form .applicant-identification-row small {
+  margin-top: 0;
+}
+@media (max-width: 760px) {
+  .individual-identification-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

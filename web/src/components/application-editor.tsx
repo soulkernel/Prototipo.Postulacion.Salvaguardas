@@ -1155,136 +1155,148 @@ export function ApplicationEditor({
                   </label>
                 </div>
               )}
-              {step === 0 &&
-                payload.concept.applicant_type === "individual" && (
-                  <label
-                    className="applicant-identification editor-field"
-                    data-validation-field="identity_number"
-                  >
-                    <span>
-                      {es
-                        ? "Número de cédula de identidad"
-                        : "Identity card number"}
-                      <RequiredMark locale={locale} />
-                    </span>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      autoComplete="off"
-                      spellCheck={false}
-                      aria-required="true"
-                      aria-invalid={identityInvalid}
-                      aria-describedby="identity-number-help"
-                      maxLength={10}
-                      pattern="[0-9]{10}"
-                      placeholder={es ? "10 dígitos" : "10 digits"}
-                      value={payload.concept.identity_number || ""}
-                      onFocus={() => setIdentityFocused(true)}
-                      onBlur={() => {
-                        setIdentityFocused(false);
-                        setIdentityTouched(true);
-                      }}
-                      onChange={(e) =>
-                        updateConcept("identity_number", e.target.value)
-                      }
-                    />
-                    <small
-                      id="identity-number-help"
-                      className={identityInvalid ? "field-warning" : undefined}
-                      role={identityInvalid ? "alert" : undefined}
-                      data-field-message={identityInvalid ? "error" : undefined}
-                    >
-                      {es
-                        ? "Ingrese los 10 dígitos de su cédula, sin espacios ni guiones."
-                        : "Enter the 10 digits of your identity card number, without spaces or hyphens."}
-                    </small>
-                  </label>
-                )}
-              {step === 0 &&
-                ["individual", "organization"].includes(
-                  payload.concept.applicant_type,
-                ) && (
-                  <label className="applicant-identification">
-                    {payload.concept.applicant_type === "individual"
-                      ? es
-                        ? "Número de credencial de residencia permanente"
-                        : "Permanent residence card number"
-                      : es
-                        ? "RUC de la organización"
-                        : "Organization RUC"}
-                    <RequiredMark locale={locale} />
-                    <input
-                      aria-required="true"
-                      data-validation-field={
-                        payload.concept.applicant_type === "individual"
-                          ? "residence_number"
-                          : "ruc"
-                      }
-                      maxLength={
-                        payload.concept.applicant_type === "individual"
-                          ? 50
-                          : 13
-                      }
-                      inputMode={
-                        payload.concept.applicant_type === "organization"
-                          ? "numeric"
-                          : "text"
-                      }
-                      value={
-                        (payload.concept.applicant_type === "individual"
-                          ? payload.concept.residence_number
-                          : payload.concept.ruc) || ""
-                      }
-                      aria-invalid={
-                        identification ===
+              {step === 0 && (
+                <div
+                  className={`applicant-identification-row ${payload.concept.applicant_type === "individual" ? "individual-identification-row" : ""}`}
+                >
+                  {step === 0 &&
+                    payload.concept.applicant_type === "individual" && (
+                      <label
+                        className="applicant-identification editor-field"
+                        data-validation-field="identity_number"
+                      >
+                        <span>
+                          {es
+                            ? "Número de cédula de identidad"
+                            : "Identity card number"}
+                          <RequiredMark locale={locale} />
+                        </span>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          autoComplete="off"
+                          spellCheck={false}
+                          aria-required="true"
+                          aria-invalid={identityInvalid}
+                          aria-describedby="identity-number-help"
+                          maxLength={10}
+                          pattern="[0-9]{10}"
+                          placeholder={es ? "10 dígitos" : "10 digits"}
+                          value={payload.concept.identity_number || ""}
+                          onFocus={() => setIdentityFocused(true)}
+                          onBlur={() => {
+                            setIdentityFocused(false);
+                            setIdentityTouched(true);
+                          }}
+                          onChange={(e) =>
+                            updateConcept("identity_number", e.target.value)
+                          }
+                        />
+                        <small
+                          id="identity-number-help"
+                          className={
+                            identityInvalid ? "field-warning" : undefined
+                          }
+                          role={identityInvalid ? "alert" : undefined}
+                          data-field-message={
+                            identityInvalid ? "error" : undefined
+                          }
+                        >
+                          {es
+                            ? "Ingrese los 10 dígitos de su cédula, sin espacios ni guiones."
+                            : "Enter the 10 digits of your identity card number, without spaces or hyphens."}
+                        </small>
+                      </label>
+                    )}
+                  {step === 0 &&
+                    ["individual", "organization"].includes(
+                      payload.concept.applicant_type,
+                    ) && (
+                      <label className="applicant-identification editor-field">
+                        <span>
+                          {payload.concept.applicant_type === "individual"
+                            ? es
+                              ? "Número de credencial de residencia permanente"
+                              : "Permanent residence card number"
+                            : es
+                              ? "RUC de la organización"
+                              : "Organization RUC"}
+                          <RequiredMark locale={locale} />
+                        </span>
+                        <input
+                          aria-required="true"
+                          data-validation-field={
+                            payload.concept.applicant_type === "individual"
+                              ? "residence_number"
+                              : "ruc"
+                          }
+                          maxLength={
+                            payload.concept.applicant_type === "individual"
+                              ? 50
+                              : 13
+                          }
+                          inputMode={
+                            payload.concept.applicant_type === "organization"
+                              ? "numeric"
+                              : "text"
+                          }
+                          value={
+                            (payload.concept.applicant_type === "individual"
+                              ? payload.concept.residence_number
+                              : payload.concept.ruc) || ""
+                          }
+                          aria-invalid={
+                            identification ===
+                              (payload.concept.applicant_type === "individual"
+                                ? "residence_number"
+                                : "ruc") &&
+                            (showCompletion ||
+                              checkedStep === step ||
+                              !!(payload.concept.applicant_type === "individual"
+                                ? payload.concept.residence_number
+                                : payload.concept.ruc))
+                          }
+                          onChange={(e) =>
+                            updateConcept(
+                              payload.concept.applicant_type === "individual"
+                                ? "residence_number"
+                                : "ruc",
+                              e.target.value,
+                            )
+                          }
+                        />
+                        <small>
+                          {payload.concept.applicant_type === "individual"
+                            ? es
+                              ? "La credencial de residencia permanente que se presente debe estar vigente."
+                              : "The permanent residence card presented must be current."
+                            : es
+                              ? "La organización debe tener domicilio tributario en la provincia de Galápagos. Si no cumple este requisito, su postulación podría ser descalificada."
+                              : "The organization must have its tax domicile in Galápagos province. Failure to meet this requirement could disqualify the application."}
+                        </small>
+                        {identification ===
                           (payload.concept.applicant_type === "individual"
                             ? "residence_number"
                             : "ruc") &&
-                        (showCompletion ||
-                          checkedStep === step ||
-                          !!(payload.concept.applicant_type === "individual"
-                            ? payload.concept.residence_number
-                            : payload.concept.ruc))
-                      }
-                      onChange={(e) =>
-                        updateConcept(
-                          payload.concept.applicant_type === "individual"
-                            ? "residence_number"
-                            : "ruc",
-                          e.target.value,
-                        )
-                      }
-                    />
-                    <small>
-                      {payload.concept.applicant_type === "individual"
-                        ? es
-                          ? "La credencial de residencia permanente que se presente debe estar vigente."
-                          : "The permanent residence card presented must be current."
-                        : es
-                          ? "La organización debe tener domicilio tributario en la provincia de Galápagos. Si no cumple este requisito, su postulación podría ser descalificada."
-                          : "The organization must have its tax domicile in Galápagos province. Failure to meet this requirement could disqualify the application."}
-                    </small>
-                    {identification ===
-                      (payload.concept.applicant_type === "individual"
-                        ? "residence_number"
-                        : "ruc") &&
-                      (showCompletion ||
-                        checkedStep === step ||
-                        !!(payload.concept.applicant_type === "individual"
-                          ? payload.concept.residence_number
-                          : payload.concept.ruc)) && (
-                        <span className="error" role="alert">
-                          {payload.concept.applicant_type === "individual"
-                            ? es
-                              ? "Ingrese el número de credencial de residencia permanente."
-                              : "Enter the permanent residence card number."
-                            : es
-                              ? "Ingrese un RUC de 13 dígitos."
-                              : "Enter a 13-digit RUC."}
-                        </span>
-                      )}
-                  </label>
-                )}
+                          (showCompletion ||
+                            checkedStep === step ||
+                            !!(payload.concept.applicant_type === "individual"
+                              ? payload.concept.residence_number
+                              : payload.concept.ruc)) && (
+                            <span className="error" role="alert">
+                              {payload.concept.applicant_type === "individual"
+                                ? es
+                                  ? "Ingrese el número de credencial de residencia permanente."
+                                  : "Enter the permanent residence card number."
+                                : es
+                                  ? "Ingrese un RUC de 13 dígitos."
+                                  : "Enter a 13-digit RUC."}
+                            </span>
+                          )}
+                      </label>
+                    )}
+                </div>
+              )}
               <div
                 className={step === 0 ? "live-grid form-columns" : "live-form"}
               >
