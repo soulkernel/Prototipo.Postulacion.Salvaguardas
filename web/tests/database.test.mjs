@@ -2529,7 +2529,7 @@ test("structured attachment requirements survive publication and frozen rules wi
   assert.deepEqual(app.rules_snapshot.required_attachments, [attachment.id]);
 });
 
-test("v2 applicant dossiers flow through signing, internal review and phase two without GLF or specific-objective alignment", async () => {
+test("v2 dossiers preserve unified and legacy summaries across signing, review, phase two and immutable versions", async () => {
   for (const type of ["individual", "organization"]) {
     const owner = "other";
     const id = await rpc("create_application", { call_id: call }, owner);
@@ -2538,6 +2538,18 @@ test("v2 applicant dossiers flow through signing, internal review and phase two 
     p.concept.residence_number = type === "individual" ? "RP-AUDIT-001" : "";
     p.concept.identity_number = type === "individual" ? "0123456789" : "";
     p.concept.ruc = type === "organization" ? "2090000000001" : "";
+    p.concept.summary_parts = {
+      context: type === "individual" ? "Contexto previamente guardado." : "",
+      problem: "",
+      threats: "",
+      rationale: "",
+      solution: type === "individual" ? "Solución previamente guardada." : "",
+      results: "",
+    };
+    p.concept.summary =
+      type === "individual"
+        ? "Contexto previamente guardado.\n\nSolución previamente guardada."
+        : "Resumen integrado en una sola caja con contexto, problema, solución y resultados.";
     const general = crypto.randomUUID(),
       specific = crypto.randomUUID();
     p.concept.strategic_alignment = {
@@ -2636,6 +2648,7 @@ test("v2 applicant dossiers flow through signing, internal review and phase two 
       p.concept[type === "individual" ? "residence_number" : "ruc"],
     );
     assert.equal(version.payload.attachments.length, 2);
+    assert.equal(version.payload.concept.summary, p.concept.summary);
     assert.equal(
       version.payload.concept.identity_number,
       p.concept.identity_number,
@@ -2684,10 +2697,46 @@ test("v2 applicant dossiers flow through signing, internal review and phase two 
       },
       "committee",
     );
+    const inherited = (
+      await as(owner, () =>
+        db.query(
+          "select reference_code,stage,status,payload,phase2_deadline from public.applications where id=$1",
+          [id],
+        ),
+      )
+    ).rows[0];
+    assert.equal(inherited.stage, 2);
+    assert.equal(inherited.status, "selected_for_phase2");
+    assert.ok(inherited.phase2_deadline);
+    assert.equal(inherited.payload.concept.summary, p.concept.summary);
+    assert.deepEqual(
+      inherited.payload.concept.summary_parts,
+      p.concept.summary_parts,
+    );
+    assert.deepEqual(inherited.payload.activities, version.payload.activities);
+    assert.equal(inherited.payload.consent, false);
+    assert.equal(inherited.payload.truthful, false);
+    await assert.rejects(
+      rpc(
+        "submit_application",
+        { application_id: id, expected_revision: 3 },
+        owner,
+      ),
+      /GLF_DECLARATIONS_REQUIRED|GLF_REQUIRED/,
+    );
     const phase2 = structuredClone(fullPayload);
     phase2.concept = {
       ...p.concept,
       title: "Proyecto completo en preparación",
+      summary: "Resumen actualizado únicamente en la propuesta completa.",
+      summary_parts: {
+        context: "",
+        problem: "",
+        threats: "",
+        rationale: "",
+        solution: "",
+        results: "",
+      },
     };
     phase2.phase2.proposal = "Detalle de la propuesta completa";
     phase2.activities = phase2.activities.map((a, i) => ({
@@ -2713,7 +2762,24 @@ test("v2 applicant dossiers flow through signing, internal review and phase two 
       )
     ).rows[0].payload;
     assert.equal(frozen.concept.title, p.concept.title);
+    assert.equal(frozen.concept.summary, p.concept.summary);
+    assert.deepEqual(frozen.concept.summary_parts, p.concept.summary_parts);
     assert.deepEqual(frozen.activities[0].objective_ids, [specific]);
+    const prepared2 = await rpc(
+      "prepare_application_documents",
+      { app_id: id, expected_revision: 4 },
+      owner,
+    );
+    const preparedState = (
+      await as(owner, () =>
+        db.query(
+          "select stage,payload from public.prepared_documents where id=$1",
+          [prepared2],
+        ),
+      )
+    ).rows[0];
+    assert.equal(preparedState.stage, 2);
+    assert.equal(preparedState.payload.concept.summary, phase2.concept.summary);
     assert.equal(
       await rpc(
         "submit_application",
@@ -2731,6 +2797,17 @@ test("v2 applicant dossiers flow through signing, internal review and phase two 
       )
     ).rows[0];
     assert.equal(latest.stage, 2);
+    assert.equal(latest.payload.concept.summary, phase2.concept.summary);
+    const finalState = (
+      await as(owner, () =>
+        db.query(
+          "select reference_code,status from public.applications where id=$1",
+          [id],
+        ),
+      )
+    ).rows[0];
+    assert.equal(finalState.reference_code, inherited.reference_code);
+    assert.equal(finalState.status, "phase2_submitted");
     assert.equal(
       latest.payload.concept.strategic_alignment.objectives[1].id,
       specific,

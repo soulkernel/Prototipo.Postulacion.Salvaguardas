@@ -1028,20 +1028,31 @@ export function ApplicationEditor({
               <>
                 Su avance se guarda automáticamente después de dejar de
                 escribir. Puede salir y postergar la consignación de los datos
-                de su nota conceptual, y continuar después desde este o
-                cualquier dispositivo, accediendo desde la opción del menú:{" "}
+                de{" "}
+                {application.stage === 1
+                  ? "su nota conceptual"
+                  : "su proyecto completo"}
+                , y continuar después desde este o cualquier dispositivo,
+                accediendo desde la opción del menú:{" "}
                 <strong>Mis postulaciones</strong> →{" "}
-                <strong>Continuar borrador</strong>. Solo se enviará la nota
-                conceptual final, cuando pulse Enviar al GLF.
+                <strong>Continuar borrador</strong>. Solo se enviará{" "}
+                {application.stage === 1
+                  ? "la nota conceptual final"
+                  : "el proyecto completo"}
+                , cuando pulse Enviar al GLF.
               </>
             ) : (
               <>
                 Your progress is saved automatically after you stop typing. You
-                can leave and postpone entering your concept note information,
-                then continue later from this or any other device using the menu
-                option: <strong>My applications</strong> →{" "}
-                <strong>Continue draft</strong>. Your final concept note will
-                only be submitted when you select Submit to GLF.
+                can leave and postpone entering your{" "}
+                {application.stage === 1 ? "concept note" : "full proposal"}{" "}
+                information, then continue later from this or any other device
+                using the menu option: <strong>My applications</strong> →{" "}
+                <strong>Continue draft</strong>. Your{" "}
+                {application.stage === 1
+                  ? "final concept note"
+                  : "full proposal"}{" "}
+                will only be submitted when you select Submit to GLF.
               </>
             )}
           </p>
@@ -2365,12 +2376,22 @@ export function ApplicationEditor({
       {step === 3 && editable && (
         <section className="live-card">
           <h2>
-            {es ? "Preparar, firmar y adjuntar" : "Prepare, sign and attach"}
+            {application.stage === 1
+              ? es
+                ? "Preparar, firmar y adjuntar"
+                : "Prepare, sign and attach"
+              : es
+                ? "Documentos del proyecto completo"
+                : "Full proposal documents"}
           </h2>
           <p>
-            {es
-              ? "Guarde todos los campos y declaraciones. Prepare los documentos, descargue la Nota Conceptual y la evaluación A&S por separado, firme electrónicamente ambos documentos fuera del portal y adjunte cada PDF firmado. Si modifica el formulario, deberá preparar y firmar nuevamente. La validez de la firma será revisada por GLF."
-              : "Save all fields and declarations. Prepare and download the Concept Note and E&S screening separately, sign both documents electronically outside this portal and attach each signed PDF. After editing, prepare and sign again. GLF will review signature validity."}
+            {application.stage === 1
+              ? es
+                ? "Guarde todos los campos y declaraciones. Prepare los documentos, descargue la Nota Conceptual y la evaluación A&S por separado, firme electrónicamente ambos documentos fuera del portal y adjunte cada PDF firmado. Si modifica el formulario, deberá preparar y firmar nuevamente. La validez de la firma será revisada por GLF."
+                : "Save all fields and declarations. Prepare and download the Concept Note and E&S screening separately, sign both documents electronically outside this portal and attach each signed PDF. After editing, prepare and sign again. GLF will review signature validity."
+              : es
+                ? "Revise la información de la nota conceptual y complete los apartados del proyecto y su plan de gestión ambiental y social. Guarde los cambios para preparar y descargar la propuesta completa y la evaluación A&S. Adjunte los documentos exigidos por la convocatoria antes de enviar al GLF."
+                : "Review the concept note information and complete the full proposal sections and environmental and social management plan. Save your changes to prepare and download the full proposal and E&S assessment. Attach the documents required by the call before submitting to GLF."}
           </p>
           {showCompletion && completion.length > 0 && (
             <div className="completion-summary" role="alert" tabIndex={-1}>
@@ -2459,9 +2480,13 @@ export function ApplicationEditor({
                 busy={busy && operation === "prepare"}
                 pendingLabel={es ? "Procesando…" : "Processing…"}
               >
-                {es
-                  ? "Preparar documentos para firma"
-                  : "Prepare documents for signing"}
+                {application.stage === 1
+                  ? es
+                    ? "Preparar documentos para firma"
+                    : "Prepare documents for signing"
+                  : es
+                    ? "Preparar documentos"
+                    : "Prepare documents"}
               </ActionLabel>
             </button>
             {prepared && prepared.revision === revision && !dirty && (
@@ -2470,7 +2495,13 @@ export function ApplicationEditor({
                   href={`/documents/${prepared.id}/concept?prepared=1&lang=${locale}`}
                   locale={locale}
                 >
-                  {es ? "Descargar nota conceptual" : "Download concept note"}
+                  {application.stage === 1
+                    ? es
+                      ? "Descargar nota conceptual"
+                      : "Download concept note"
+                    : es
+                      ? "Descargar propuesta completa"
+                      : "Download full proposal"}
                 </DocumentDownload>
                 <DocumentDownload
                   href={`/documents/${prepared.id}/matrix?prepared=1&lang=${locale}`}

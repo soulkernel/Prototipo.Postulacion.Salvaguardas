@@ -31,10 +31,20 @@ export async function GET(
   if (!version) return new NextResponse("Not found", { status: 404 });
   const { data: app } = await viewer.db
     .from("applications")
-    .select("reference_code,rules_snapshot")
+    .select("reference_code,rules_snapshot,call_id")
     .eq("id", version.application_id)
     .single();
   if (!app) return new NextResponse("Not found", { status: 404 });
+  let phase2Fields = [];
+  if (version.stage === 2) {
+    const { data: call, error } = await viewer.db
+      .from("calls")
+      .select("phase2_schema")
+      .eq("id", app.call_id)
+      .single();
+    if (error || !call) return new NextResponse("Unavailable", { status: 503 });
+    phase2Fields = call.phase2_schema || [];
+  }
   const requested = request.nextUrl.searchParams.get("lang");
   const locale: Locale =
     requested === "en" || requested === "es" ? requested : await getLocale();
@@ -51,6 +61,7 @@ export async function GET(
   const result = await applicationPdf({
     payload: version.payload as Payload,
     rules: version.rules_snapshot ?? app.rules_snapshot,
+    phase2Fields,
     stage: version.stage,
     reference: app.reference_code,
     revision: version.revision,
@@ -62,7 +73,7 @@ export async function GET(
   return new NextResponse(Buffer.from(result.bytes), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="${documentFilename(app.reference_code, kind as "concept" | "matrix", version.revision, prepared ? version.created_at : version.submitted_at, locale)}"`,
+      "Content-Disposition": `attachment; filename="${documentFilename(app.reference_code, kind as "concept" | "matrix", version.revision, prepared ? version.created_at : version.submitted_at, locale, version.stage)}"`,
       "Cache-Control": "private, no-store",
       "X-Content-Type-Options": "nosniff",
       "Referrer-Policy": "no-referrer",

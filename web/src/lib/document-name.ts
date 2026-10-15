@@ -24,13 +24,18 @@ export function documentFilename(
   revision: number,
   generatedAt: string,
   locale: Locale,
+  stage = 1,
 ) {
   const safeReference = reference.replace(/[^a-zA-Z0-9_-]/g, "-").slice(0, 100);
   const label =
     kind === "concept"
-      ? locale === "es"
-        ? "Nota-conceptual"
-        : "Concept-note"
+      ? stage === 2
+        ? locale === "es"
+          ? "Propuesta-completa"
+          : "Full-proposal"
+        : locale === "es"
+          ? "Nota-conceptual"
+          : "Concept-note"
       : locale === "es"
         ? "Evaluacion-AS"
         : "ES-assessment";

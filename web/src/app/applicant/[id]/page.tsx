@@ -23,11 +23,11 @@ export default async function ApplicationPage({
   const locale = await getLocale();
   const query = await searchParams;
   const [
-    { data: call },
-    { data: catalog },
-    { data: versions },
-    { data: documents },
-    { data: prepared },
+    { data: call, error: callError },
+    { data: catalog, error: catalogError },
+    { data: versions, error: versionError },
+    { data: documents, error: documentError },
+    { data: prepared, error: preparedError },
   ] = await Promise.all([
     viewer.db.from("calls").select("*").eq("id", application.call_id).single(),
     viewer.db
@@ -54,7 +54,15 @@ export default async function ApplicationPage({
       .limit(1)
       .maybeSingle(),
   ]);
-  if (!call) throw new Error("Call not available");
+  if (
+    callError ||
+    catalogError ||
+    versionError ||
+    documentError ||
+    preparedError ||
+    !call
+  )
+    throw new Error("Cannot load the complete application");
   const deadline =
     application.stage === 1 ? call.closes_at : application.phase2_deadline;
   const editable = Boolean(

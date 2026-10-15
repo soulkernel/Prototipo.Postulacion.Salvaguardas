@@ -20,6 +20,7 @@ export async function applicationPdf({
   downloadUrl,
   stage,
   rules,
+  phase2Fields = [],
 }: {
   payload: Payload;
   reference: string;
@@ -30,6 +31,7 @@ export async function applicationPdf({
   downloadUrl: string;
   stage: number;
   rules?: unknown;
+  phase2Fields?: { id: string; label_es: string; label_en: string }[];
 }) {
   const es = locale === "es";
   payload = synchronizeRisks(payload);
@@ -415,8 +417,13 @@ export async function applicationPdf({
         es ? "APARTADOS DE PROYECTO COMPLETO" : "FULL PROPOSAL SECTIONS",
         true,
       );
-      for (const [key, value] of Object.entries(payload.phase2))
-        field(key, value);
+      for (const [key, value] of Object.entries(payload.phase2)) {
+        const definition = phase2Fields.find((f) => f.id === key);
+        field(
+          definition ? (es ? definition.label_es : definition.label_en) : key,
+          value,
+        );
+      }
     }
   } else {
     const text = (value: string) =>

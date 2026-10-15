@@ -102,6 +102,10 @@ test("concept and matrix PDFs embed fonts, paginate and contain a QR image", asy
   });
   activity.risks = [risk];
   payload.activities = [activity];
+  payload.phase2 = {
+    detailed_proposal:
+      "Contenido de la propuesta completa para verificar su integración.",
+  };
   await mkdir(".test-artifacts", { recursive: true });
   for (const stage of [1, 2])
     for (const locale of ["es", "en"] as const)
@@ -114,6 +118,13 @@ test("concept and matrix PDFs embed fonts, paginate and contain a QR image", asy
           submittedAt: "2026-10-06T12:00:00Z",
           kind,
           locale,
+          phase2Fields: [
+            {
+              id: "detailed_proposal",
+              label_es: "Descripción detallada del proyecto",
+              label_en: "Detailed project description",
+            },
+          ],
           downloadUrl:
             "https://example.test/documents/test/" + kind + "?lang=" + locale,
         });
@@ -159,6 +170,18 @@ test("document filenames use the immutable generation time in Galapagos and safe
     documentFilename("GLF-001", "concept", 7, "2026-10-11T03:18:15.747Z", "es"),
     "GLF-001_Nota-conceptual_v7_2026-10-10_211815_Galapagos_es.pdf",
   );
+  for (const locale of ["es", "en"] as const)
+    assert.match(
+      documentFilename(
+        "GLF-001",
+        "concept",
+        8,
+        "2026-10-11T03:18:15.747Z",
+        locale,
+        2,
+      ),
+      locale === "es" ? /Propuesta-completa_v8/ : /Full-proposal_v8/,
+    );
   assert.ok(
     !documentFilename(
       'BAD/REF"',
