@@ -1184,9 +1184,11 @@ export function ApplicationEditor({
                           placeholder={es ? "10 dígitos" : "10 digits"}
                           value={payload.concept.identity_number || ""}
                           onFocus={() => setIdentityFocused(true)}
-                          onBlur={() => {
+                          onBlur={(event) => {
                             setIdentityFocused(false);
-                            setIdentityTouched(true);
+                            setIdentityTouched(
+                              Boolean(event.currentTarget.value.trim()),
+                            );
                           }}
                           onChange={(e) =>
                             updateConcept("identity_number", e.target.value)
@@ -1203,8 +1205,12 @@ export function ApplicationEditor({
                           }
                         >
                           {es
-                            ? "Ingrese los 10 dígitos de su cédula, sin espacios ni guiones."
-                            : "Enter the 10 digits of your identity card number, without spaces or hyphens."}
+                            ? identityInvalid
+                              ? "Ingrese los 10 dígitos de su cédula, sin espacios ni guiones."
+                              : "10 dígitos, sin espacios ni guiones."
+                            : identityInvalid
+                              ? "Enter the 10 digits of your identity card number, without spaces or hyphens."
+                              : "10 digits, without spaces or hyphens."}
                         </small>
                       </label>
                     )}
