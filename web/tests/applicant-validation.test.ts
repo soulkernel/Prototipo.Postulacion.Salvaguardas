@@ -27,6 +27,42 @@ const rules = {
   max_admin_percent: 10,
   summary_word_limit: 500,
 } as Rules;
+test("concept estimates ignore dormant annual lines while full projects reconcile them", () => {
+  const p = emptyPayload();
+  Object.assign(p.concept, {
+    category_id: "large",
+    requested_amount: 320000,
+    cofinance_amount: 80000,
+    admin_cost: 15000,
+    start_date: "2027-01-02",
+    end_date: "2028-12-30",
+  });
+  p.budget = {
+    version: "glf-annual-v1",
+    currency: "USD",
+    years: 3,
+    lines: [
+      {
+        id: crypto.randomUUID(),
+        year: 1,
+        category: "personnel",
+        description: "",
+        glf: 0,
+        other: 0,
+        remuneration: "pending",
+      },
+    ],
+  };
+  for (const key of ["budget_totals", "budget_description", "budget_year"]) {
+    assert.ok(!validateComplete(p, rules, 1).includes(key));
+    assert.ok(!stepIssues(p, rules, 1, 0).invalid.includes(key));
+    assert.ok(validateComplete(p, rules, 2).includes(key));
+    assert.ok(stepIssues(p, rules, 2, 0).invalid.includes(key));
+  }
+  assert.equal(p.concept.requested_amount, 320000);
+  assert.equal(p.concept.cofinance_amount, 80000);
+  assert.equal(p.concept.admin_cost, 15000);
+});
 test("calendar duration validates inclusive limits for each category, leap years and month ends", () => {
   assert.equal(maxProjectEnd("2024-02-29", 12), "2025-02-27");
   assert.equal(maxProjectEnd("2026-01-31", 1), "2026-02-27");

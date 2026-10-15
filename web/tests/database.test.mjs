@@ -2152,14 +2152,20 @@ test("annual detail persists once, uses both sources, validates totals and prese
   ]);
   const bad = structuredClone(p);
   bad.budget.lines[0].glf = 1000001;
+  await db.query("select private.validate_payload($1,$2,true,1)", [
+    JSON.stringify(bad),
+    JSON.stringify(rules),
+  ]);
+  bad.activities = structuredClone(fullPayload.activities);
   await assert.rejects(
-    db.query("select private.validate_payload($1,$2,true,1)", [
+    db.query("select private.validate_payload($1,$2,true,2)", [
       JSON.stringify(bad),
       JSON.stringify(rules),
     ]),
     /GLF_BUDGET_TOTALS/,
   );
   bad.budget.lines[0].glf = 1.5;
+  bad.activities = structuredClone(p.activities);
   await assert.rejects(
     rpc(
       "save_application",

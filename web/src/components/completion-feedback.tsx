@@ -28,11 +28,16 @@ export function CompletionFeedback({
       const oldInvalid = control?.getAttribute("aria-invalid"),
         oldDescription = control?.getAttribute("aria-describedby");
       container.classList.add("validation-pending");
-      const note = document.createElement("small");
-      note.className = "validation-field-message";
-      note.id = "validation-" + issue.id;
-      note.textContent = issue.text;
-      container.appendChild(note);
+      const existing = container.querySelector<HTMLElement>(
+        '[data-field-message="error"]',
+      );
+      const note = existing || document.createElement("small");
+      if (!existing) {
+        note.className = "validation-field-message";
+        note.id = "validation-" + issue.id;
+        note.textContent = issue.text;
+        container.appendChild(note);
+      }
       control?.setAttribute("aria-invalid", "true");
       control?.setAttribute(
         "aria-describedby",
@@ -40,7 +45,7 @@ export function CompletionFeedback({
       );
       cleanup.push(() => {
         container.classList.remove("validation-pending");
-        note.remove();
+        if (!existing) note.remove();
         if (control) {
           if (oldInvalid === null || oldInvalid === undefined)
             control.removeAttribute("aria-invalid");

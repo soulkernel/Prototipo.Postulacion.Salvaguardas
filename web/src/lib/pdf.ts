@@ -691,7 +691,7 @@ export async function applicationPdf({
   const signer =
     payload.concept.contact_name.trim() || "________________________________";
   const signerLines = lines(signer, font, 11);
-  if (kind === "concept" && payload.budget?.lines.length) {
+  if (kind === "concept" && stage === 2 && payload.budget?.lines.length) {
     draw(es ? "PRESUPUESTO ANUAL" : "ANNUAL BUDGET", true);
     draw(budgetText(payload.budget, locale));
   }

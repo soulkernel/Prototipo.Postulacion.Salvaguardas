@@ -316,9 +316,9 @@ export const manualChapters: ManualChapter[] = [
       ],
       [
         "Gastos administrativos (USD)",
-        "Son parte del presupuesto solicitado, no un aporte adicional. No pueden superar el 10% del monto solicitado al GLF.",
+        "Son parte del presupuesto solicitado, no un aporte adicional. No pueden superar el límite administrativo indicado junto al campo.",
         "Administrative expenses (USD)",
-        "These are part of the requested budget, not an additional contribution. They cannot exceed 10% of the amount requested from GLF.",
+        "These are part of the requested budget, not an additional contribution. They cannot exceed the administrative limit shown beside the field.",
       ],
       [
         "Costo total estimado",
@@ -347,60 +347,55 @@ export const manualChapters: ManualChapter[] = [
   },
   {
     id: "presupuesto",
-    title: ["Presupuesto anual GLF y Otros", "Annual GLF and Other budget"],
+    title: [
+      "Estimación de costos de la nota conceptual",
+      "Concept note cost estimates",
+    ],
     intro: [
-      "Organice los importes en dólares estadounidenses por año de ejecución, categoría y fuente de financiamiento.",
-      "Organize amounts in US dollars by implementation year, category and funding source.",
+      "En esta etapa ingrese directamente los montos estimados. No se solicita un presupuesto anual ni un desglose por partidas.",
+      "At this stage, enter estimated amounts directly. An annual or line-item budget is not requested.",
     ],
     steps: [
       [
-        "Pulse Preparar presupuesto detallado. Los valores anteriores se conservan; no se reparten automáticamente.",
-        "Select Prepare detailed budget. Existing values are preserved and are not allocated automatically.",
+        "Ingrese el monto solicitado al GLF, el cofinanciamiento y los gastos administrativos.",
+        "Enter requested GLF funding, cofinancing and administrative expenses.",
       ],
       [
-        "Añada partidas, seleccione el año y la categoría, describa el gasto y consigne los aportes GLF y Otros con hasta dos decimales.",
-        "Add lines, select the year and category, describe the expense and enter GLF and Other amounts with up to two decimals.",
+        "Revise los límites de la categoría y el costo total estimado, que se calcula automáticamente.",
+        "Check category limits and the estimated total cost, which is calculated automatically.",
       ],
       [
-        "Indique si cada partida contiene remuneraciones, honorarios o salarios. Divida las partidas mixtas. Use Pendiente si aún no puede clasificarlas.",
-        "Identify lines containing remuneration, fees or salaries. Split mixed lines. Use Pending when you cannot yet classify a line.",
-      ],
-      [
-        "Revise los subtotales por año, categoría y fuente. Las sumas actualizan los importes generales; el detalle se incluye en la nota conceptual PDF.",
-        "Check subtotals by year, category and source. Totals update summary amounts; the detail is included in the concept note PDF.",
+        "Si su nota conceptual es preseleccionada, el GLF le solicitará el proyecto completo con su presupuesto detallado.",
+        "If your concept note is shortlisted, GLF will request the full project with its detailed budget.",
       ],
     ],
     rows: [
       [
-        "GLF / Otros",
-        "Aportes monetarios equivalentes por fuente; indique USD con hasta dos decimales.",
-        "GLF / Other",
-        "Funding-source amounts in USD with up to two decimals.",
+        "Montos estimados",
+        "Puede editarlos directamente y corregirlos antes del envío.",
+        "Estimated amounts",
+        "Edit amounts directly and correct them before submission.",
       ],
       [
-        "Años",
-        "El presupuesto se adapta a la duración propuesta. Si reduce la duración, revise las partidas de años posteriores.",
-        "Years",
-        "The budget follows the proposed duration. Review later-year lines when reducing duration.",
-      ],
-      [
-        "Remuneraciones",
-        "El cálculo incorpora GLF y Otros y los compara con el 30% del monto solicitado al GLF. Las partidas pendientes no equivalen a cero remuneraciones.",
-        "Remuneration",
-        "The calculation includes GLF and Other and compares them with 30% of GLF funding. Pending lines do not mean zero remuneration.",
+        "Costo total",
+        "Monto solicitado al GLF más cofinanciamiento; los gastos administrativos ya forman parte de estos costos.",
+        "Total cost",
+        "Requested GLF funding plus cofinancing; administrative expenses are already included in these costs.",
       ],
     ],
     tip: [
-      "No vuelva a ingresar los importes generales cuando ya utiliza el detalle: se obtienen de sus partidas.",
-      "Do not re-enter summary amounts when using the detail: they are calculated from its lines.",
+      "Los mensajes en rojo señalan valores que debe corregir antes de continuar.",
+      "Red messages identify amounts to correct before continuing.",
     ],
     screen: [
       [
-        "Partida 1 · Año 1 · Personal/Salarios",
-        "Line 1 · Year 1 · Personnel/Salaries",
+        "Monto solicitado al GLF · Cofinanciamiento",
+        "Requested GLF funding · Cofinancing",
       ],
-      ["GLF (USD) · Otros (USD)", "GLF (USD) · Other (USD)"],
-      ["Subtotales por año y categoría", "Subtotals by year and category"],
+      [
+        "Gastos administrativos · Costo total estimado",
+        "Administrative expenses · Estimated total cost",
+      ],
     ],
   },
   {

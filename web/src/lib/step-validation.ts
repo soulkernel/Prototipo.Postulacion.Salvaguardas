@@ -47,7 +47,8 @@ export function stepIssues(
       const identification = identificationIssue(payload.concept);
       if (identification) invalid.push(identification);
       invalid.push(...Object.keys(projectDateErrors(payload.concept, rules)));
-      invalid.push(...budgetIssues(payload.budget, payload.concept));
+      if (stage === 2)
+        invalid.push(...budgetIssues(payload.budget, payload.concept));
       missing.push(...partnerIssues(payload.concept));
       missing.push(...geographyIssues(payload.concept));
       if (

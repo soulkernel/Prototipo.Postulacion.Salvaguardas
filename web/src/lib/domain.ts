@@ -410,7 +410,7 @@ export function validateComplete(
   const identification = identificationIssue(c);
   if (identification) missing.push(identification);
   missing.push(...Object.keys(projectDateErrors(c, rules)));
-  missing.push(...budgetIssues(payload.budget, c));
+  if (stage === 2) missing.push(...budgetIssues(payload.budget, c));
   if (
     rules.themes?.length &&
     !rules.themes.some((t) => t.id === c.project_type)

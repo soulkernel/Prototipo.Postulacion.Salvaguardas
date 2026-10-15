@@ -169,14 +169,16 @@ export default async function ReviewPage({
               : "Administrative review and evaluation"}
           </Link>
         )}
-      {a.payload.budget?.lines.length && (
-        <section className="live-card">
-          <h2>{es ? "Presupuesto anual" : "Annual budget"}</h2>
-          <p className="preserve-text">
-            {budgetText(a.payload.budget, locale)}
-          </p>
-        </section>
-      )}
+      {a.stage === 2 &&
+        a.payload.budget &&
+        a.payload.budget.lines.length > 0 && (
+          <section className="live-card">
+            <h2>{es ? "Presupuesto anual" : "Annual budget"}</h2>
+            <p className="preserve-text">
+              {budgetText(a.payload.budget, locale)}
+            </p>
+          </section>
+        )}
       {feedback.error && (
         <p role="alert" className="auth-error">
           {es

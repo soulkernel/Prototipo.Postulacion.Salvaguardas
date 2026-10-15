@@ -1354,10 +1354,12 @@ export function ApplicationEditor({
                     <label
                       key={field.key}
                       data-validation-field={field.key}
-                      className={field.type === "textarea" ? "full-width" : ""}
+                      className={`editor-field ${field.type === "textarea" ? "full-width" : ""}`}
                     >
-                      {es ? field.es : field.en}
-                      <RequiredMark locale={locale} />
+                      <span>
+                        {es ? field.es : field.en}
+                        <RequiredMark locale={locale} />
+                      </span>
                       {field.key === "project_type" && rules.themes?.length ? (
                         <select
                           value={payload.concept.project_type}
@@ -1399,7 +1401,15 @@ export function ApplicationEditor({
                       ) : (
                         <input
                           aria-required="true"
+                          aria-describedby={
+                            financialHelp(field.key)
+                              ? `field-message-${field.key}`
+                              : financial[field.key]
+                                ? `field-error-${field.key}`
+                                : undefined
+                          }
                           readOnly={
+                            application.stage === 2 &&
                             !!payload.budget?.lines.length &&
                             [
                               "requested_amount",
@@ -1451,17 +1461,38 @@ export function ApplicationEditor({
                         />
                       )}{" "}
                       {financialHelp(field.key) && (
-                        <small>{financialHelp(field.key)}</small>
-                      )}
-                      {currentIssues.missing.includes(field.key) && (
-                        <small className="error">
-                          {es
-                            ? "Complete este campo obligatorio."
-                            : "Complete this required field."}
+                        <small
+                          id={`field-message-${field.key}`}
+                          data-field-message={
+                            financial[field.key] ? "error" : undefined
+                          }
+                          className={
+                            financial[field.key] ? "field-warning" : undefined
+                          }
+                          role={financial[field.key] ? "alert" : undefined}
+                        >
+                          {financialHelp(field.key)}
                         </small>
                       )}
-                      {financial[field.key] && (
-                        <span className="error" role="alert">
+                      {currentIssues.missing.includes(field.key) &&
+                        !financial[field.key] && (
+                          <small
+                            className="field-warning"
+                            data-field-message="error"
+                            id={`field-required-${field.key}`}
+                          >
+                            {es
+                              ? "Complete este campo obligatorio."
+                              : "Complete this required field."}
+                          </small>
+                        )}
+                      {financial[field.key] && !financialHelp(field.key) && (
+                        <small
+                          className="field-warning"
+                          role="alert"
+                          data-field-message="error"
+                          id={`field-error-${field.key}`}
+                        >
                           {field.key === "end_date" ||
                           field.key === "start_date"
                             ? financial[field.key] === "CATEGORY_DURATION"
@@ -1477,7 +1508,7 @@ export function ApplicationEditor({
                                   : "The requested amount is outside the selected category. ") +
                                 financialHelp(field.key)
                               : message(financial[field.key]!, es)}
-                        </span>
+                        </small>
                       )}
                     </label>
                   ),
@@ -1504,7 +1535,7 @@ export function ApplicationEditor({
                   </small>
                 </div>
               )}
-              {step === 0 && (
+              {step === 0 && application.stage === 2 && (
                 <BudgetFields
                   value={payload.budget}
                   years={budgetYears(
