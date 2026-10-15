@@ -16,3 +16,5 @@ En formularios externos e internos, usar el mismo icono Trash2 de lucide-react p
 
 ## Presentación comprensible de expedientes
 El resumen web externo e interno y el PDF deben usar la misma estructura conceptSections. Incluir introducciones breves y relaciones en lenguaje natural, conservando el contenido del postulante sin inventar indicadores, metas o requisitos. Presentar datos relacionados en tablas y textos narrativos en párrafos/listas. No reproducir espacios de extracción ni inferir celdas de tablas ambiguas. Mantener compatibles los expedientes históricos y sus versiones firmadas.
+
+Las tablas de presentación corresponden exclusivamente a Revisar y enviar, la consulta interna y los PDF. No convertir las cajas de captura de Nota conceptual en tablas editables. Conservar las fichas y controles acordados; el texto de tablas importadas debe verse legible al consultar o editar, sin Markdown visible, y las modificaciones deben reflejarse en las salidas.

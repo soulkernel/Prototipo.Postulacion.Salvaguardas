@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   conceptSections,
   narrativeBlocks,
+  narrativeTextForEditing,
 } from "../src/lib/concept-presentation";
 import { emptyPayload } from "../src/lib/domain";
 
@@ -110,4 +111,58 @@ test("country names and order are shared by server and browser for every support
       ),
     );
   }
+});
+
+test("plain text editing preserves table relationships and reflects the latest edits in the outputs", () => {
+  for (const [headers, cells] of [
+    [
+      [
+        "Estrategia",
+        "Actividad",
+        "Indicadores de avance",
+        "Indicadores de éxito",
+      ],
+      ["Vigilancia", "Observación", "Reportes", "Detección"],
+    ],
+    [
+      ["Componente", "Descripción"],
+      ["Replicabilidad", "Metodología reutilizable"],
+    ],
+    [
+      ["Objetivo específico", "Resultados previstos"],
+      ["OE1", "Resultados originales"],
+    ],
+  ]) {
+    const source = `| ${headers.join(" | ")} |\n| ${headers.map(() => "---").join(" | ")} |\n| ${cells.join(" | ")} |`;
+    const text = narrativeTextForEditing(source);
+    assert.ok(!text.includes("|") && !text.includes("<br>"));
+    assert.deepEqual(narrativeBlocks(text), narrativeBlocks(source));
+    const last = cells[cells.length - 1];
+    const edited = text.replace(last, "Contenido actualizado");
+    const blocks = narrativeBlocks(edited);
+    assert.equal(
+      blocks[0].type === "table" && blocks[0].rows[0].at(-1),
+      "Contenido actualizado",
+    );
+    assert.equal(
+      narrativeTextForEditing(edited),
+      edited,
+      "Do not rewrite text or move the cursor while typing",
+    );
+  }
+});
+
+test("readable editing keeps multiline cells, subsequent prose and unstructured narratives intact", () => {
+  const source =
+    "| Componente | Descripción |\n| --- | --- |\n| Continuidad | • Capacitación<br>• Materiales |\n| Replicabilidad | Otras islas |\n\nExplicación adicional.";
+  assert.deepEqual(
+    narrativeBlocks(narrativeTextForEditing(source)),
+    narrativeBlocks(source),
+  );
+  const incomplete =
+    "Componente: Continuidad\nTexto sin una descripción identificada.";
+  assert.equal(narrativeBlocks(incomplete)[0].type, "paragraph");
+  const normal =
+    "Las comunidades mantendrán los materiales.\n\nSe evaluarán nuevas oportunidades.";
+  assert.equal(narrativeTextForEditing(normal), normal);
 });

@@ -1,4 +1,4 @@
-import { conceptSections } from "./concept-presentation";
+import { conceptSections, narrativeBlocks } from "./concept-presentation";
 import { budgetText } from "./budget";
 import { submissionNotice } from "./grant-rules";
 import { riskNarrative } from "./document-language";
@@ -9,7 +9,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { strategicText } from "./strategic-alignment";
 import { riskLabel, synchronizeRisks } from "./potential-risks";
-import { riskScore, type Payload, type Locale } from "./domain";
+import { riskScore, riskLevel, type Payload, type Locale } from "./domain";
 export async function applicationPdf({
   payload,
   reference,
@@ -228,12 +228,22 @@ export async function applicationPdf({
     function header() {
       paint(head, 0, headCount, true);
     }
-    if (y < 72 + headHeight + 44) newPage();
+    const firstRowLines = rows.length
+      ? Math.max(...cells(rows[0], false).map((c) => c.length))
+      : 1;
+    const firstRowHeight =
+      (firstRowLines <= 8 ? firstRowLines : 2) * lineHeight + 16;
+    if (y < 72 + headHeight + firstRowHeight) newPage();
     header();
     for (const row of rows) {
       const parts = cells(row, false);
       const total = Math.max(...parts.map((c) => c.length));
       let offset = 0;
+      // Keep short rows intact; long descriptions can still span pages.
+      if (total <= 8 && Math.floor((y - 72 - 16) / lineHeight) < total) {
+        newPage();
+        header();
+      }
       while (offset < total) {
         let count = Math.floor((y - 72 - 16) / lineHeight);
         if (count < 1) {
@@ -409,23 +419,191 @@ export async function applicationPdf({
         field(key, value);
     }
   } else {
-    let sum = 0;
+    const text = (value: string) =>
+      narrativeBlocks(value).forEach((b) => {
+        if (b.type === "paragraph") draw(b.text);
+        else
+          table(
+            b.headers,
+            b.rows,
+            b.headers.map(() => width / b.headers.length),
+          );
+      });
+    const level = (score: number | null) =>
+      ({
+        incomplete: es ? "Sin completar" : "Incomplete",
+        low: es ? "Bajo" : "Low",
+        medium: es ? "Medio" : "Medium",
+        high: es ? "Alto" : "High",
+        very_high: es ? "Muy alto" : "Very high",
+      })[riskLevel(score)];
+    function scores(
+      probability: number | null,
+      severity: number | null,
+      residual = false,
+    ) {
+      const score = riskScore(probability, severity);
+      table(
+        es
+          ? [
+              "Probabilidad (1-5)",
+              "Gravedad (1-5)",
+              residual ? "Puntaje residual" : "Puntaje inicial",
+              "Nivel de riesgo",
+            ]
+          : [
+              "Probability (1-5)",
+              "Severity (1-5)",
+              residual ? "Residual score" : "Initial score",
+              "Risk level",
+            ],
+        [
+          [
+            String(probability ?? "—"),
+            String(severity ?? "—"),
+            score === null ? "—" : `${score}/25`,
+            level(score),
+          ],
+        ],
+        [123, 122, 123, 123],
+      );
+      text(riskNarrative(probability, severity, locale));
+    }
+    draw(
+      es ? "Cómo leer esta evaluación" : "How to read this assessment",
+      true,
+    );
+    text(
+      es
+        ? "Los riesgos se presentan por actividad, con la descripción y la calificación consignadas por el proponente. El puntaje inicial resulta de multiplicar la probabilidad por la gravedad; cada una se valora de 1 a 5. Las tablas facilitan comparar las evaluaciones y no sustituyen la revisión del GLF."
+        : "Risks are presented by activity, with the description and ratings provided by the applicant. The initial score is probability multiplied by severity, each rated from 1 to 5. The tables help compare assessments and do not replace GLF review.",
+    );
+    if (stage === 1)
+      text(
+        es
+          ? "Esta evaluación corresponde a la nota conceptual. Las medidas de mitigación, sus responsables, costos y la valoración residual se desarrollan en el proyecto completo."
+          : "This assessment belongs to the concept note. Mitigation measures, responsible persons, costs and residual ratings are developed in the full proposal.",
+      );
+    const evaluations = payload.activities.flatMap((a) => a.risks);
+    const totals = (
+      dimension: "environmental" | "social" | undefined,
+      residual = false,
+    ) => {
+      const risks = dimension
+        ? evaluations.filter((r) => r.dimension === dimension)
+        : evaluations;
+      const scores = risks.map((r) =>
+        residual
+          ? riskScore(r.residual_probability, r.residual_severity)
+          : riskScore(r.probability, r.severity),
+      );
+      const missing = scores.filter((s) => s === null).length;
+      const sum = scores.reduce<number>((total, s) => total + (s ?? 0), 0);
+      return !risks.length
+        ? "—"
+        : missing === risks.length
+          ? es
+            ? "Sin calificar"
+            : "Not rated"
+          : String(sum) +
+            (missing
+              ? es
+                ? ` (parcial: ${missing} sin calificar)`
+                : ` (partial: ${missing} not rated)`
+              : "");
+    };
+    draw(
+      es
+        ? "Resumen de evaluaciones por actividad"
+        : "Summary of activity-level assessments",
+      true,
+    );
+    text(
+      es
+        ? "Se cuentan las evaluaciones realizadas para cada actividad. Un mismo riesgo puede aparecer en varias actividades con calificaciones distintas; por eso estos valores no representan un conteo de riesgos únicos."
+        : "Assessments are counted for each activity. The same risk may appear in several activities with different ratings, so these values are not a count of unique risks.",
+    );
+    table(
+      es
+        ? [
+            "Dimensión",
+            "Evaluaciones",
+            "Suma de puntajes iniciales",
+            ...(stage === 2 ? ["Suma de puntajes residuales"] : []),
+          ]
+        : [
+            "Dimension",
+            "Assessments",
+            "Sum of initial scores",
+            ...(stage === 2 ? ["Sum of residual scores"] : []),
+          ],
+      (["environmental", "social"] as const)
+        .map((d) => [
+          d === "environmental"
+            ? es
+              ? "Ambiental"
+              : "Environmental"
+            : es
+              ? "Social"
+              : "Social",
+          String(evaluations.filter((r) => r.dimension === d).length),
+          totals(d),
+          ...(stage === 2 ? [totals(d, true)] : []),
+        ])
+        .concat([
+          [
+            es ? "Total" : "Total",
+            String(evaluations.length),
+            totals(undefined),
+            ...(stage === 2 ? [totals(undefined, true)] : []),
+          ],
+        ]),
+      stage === 2 ? [110, 91, 145, 145] : [135, 115, 241],
+    );
     payload.activities.forEach((a, ai) => {
-      if (y < (a.risks.length ? 360 : 180)) newPage();
+      if (y < 145) newPage();
       draw((es ? "ACTIVIDAD " : "ACTIVITY ") + (ai + 1) + ": " + a.title, true);
-      if (!a.risks.length)
-        field(
-          es
-            ? "Sin riesgos identificados: justificación"
-            : "No identified risks: explanation",
-          a.no_risks_reason,
+      text(
+        es
+          ? "A continuación se identifican los riesgos asociados a esta actividad y se explica su valoración."
+          : "The following entries identify the risks associated with this activity and explain their ratings.",
+      );
+      if (a.description.trim()) text(a.description);
+      if (a.objective_ids?.length) {
+        const objectives =
+          payload.concept.strategic_alignment?.objectives.filter(
+            (o) => o.kind === "specific",
+          ) || [];
+        const related = a.objective_ids.map((id) => {
+          const index = objectives.findIndex((o) => o.id === id);
+          return index < 0
+            ? es
+              ? "Referencia de objetivo pendiente de revisar"
+              : "Objective reference pending review"
+            : `${es ? "Objetivo específico" : "Specific objective"} ${index + 1}: ${objectives[index].text}`;
+        });
+        text(
+          (es
+            ? "Esta actividad contribuye a: "
+            : "This activity contributes to: ") + related.join("; "),
         );
+      }
+      if (!a.risks.length) {
+        table(
+          es
+            ? ["Aspecto", "Explicación del proponente"]
+            : ["Item", "Applicant explanation"],
+          [
+            [
+              es ? "Ausencia de riesgos identificados" : "No identified risks",
+              a.no_risks_reason || "—",
+            ],
+          ],
+          [150, 341],
+        );
+      }
       a.risks.forEach((r, ri) => {
-        const estimatedHeight =
-          190 +
-          lines(r.description || "—", font, 11).length * 15 +
-          lines(r.name || "—", font, 11).length * 15;
-        if (y < 72 + Math.min(estimatedHeight, 440)) newPage();
+        if (y < 150) newPage();
         draw(
           (es ? "Riesgo " : "Risk ") +
             (ai + 1) +
@@ -441,101 +619,100 @@ export async function applicationPdf({
               : ""),
           true,
         );
-        field(
+        text(
           es
-            ? "Riesgo identificado durante esta actividad"
-            : "Risk identified during this activity",
-          es
-            ? `Se identifica el siguiente riesgo ${r.dimension === "environmental" ? "ambiental" : "social"}: ${r.name}`
-            : `The following ${r.dimension === "environmental" ? "environmental" : "social"} risk is identified: ${r.name}`,
+            ? `Se identifica el siguiente riesgo ${r.dimension === "environmental" ? "ambiental" : "social"} durante la actividad «${a.title}».`
+            : `The following ${r.dimension === "environmental" ? "environmental" : "social"} risk is identified during «${a.title}».`,
         );
-        field(
+        table(
           es
-            ? "Descripción del riesgo presentada por el aplicante"
-            : "Risk description provided by the applicant",
-          r.description,
+            ? ["Aspecto", "Información presentada"]
+            : ["Item", "Submitted information"],
+          [
+            [es ? "Riesgo identificado" : "Identified risk", r.name || "—"],
+            [
+              es ? "Descripción del riesgo" : "Risk description",
+              r.description || "—",
+            ],
+            ...(r.performance_standard
+              ? [
+                  [
+                    es
+                      ? "Norma de desempeño asociada"
+                      : "Associated performance standard",
+                    r.performance_standard,
+                  ],
+                ]
+              : []),
+          ],
+          [150, 341],
         );
-        if (r.performance_standard)
-          field(
-            es
-              ? "Norma de desempeño asociada"
-              : "Associated performance standard",
-            r.performance_standard,
-          );
-        const score = riskScore(r.probability, r.severity);
-        sum += score || 0;
-
-        field(
-          es
-            ? "Puntaje del riesgo (probabilidad × gravedad)"
-            : "Risk score (probability × severity)",
-          riskNarrative(r.probability, r.severity, locale),
-        );
+        scores(r.probability, r.severity);
         if (stage === 2) {
-          for (const m of r.measures) {
-            field(
-              es
-                ? "Para atender este riesgo se propone la siguiente medida"
-                : "The following measure is proposed to address this risk",
-              m.text ||
-                (es ? m.label_es : m.label_en) ||
-                m.label_es ||
-                m.label_en ||
-                m.catalog_id,
-            );
-            if (m.normative_reference)
-              field(
-                es
-                  ? "La medida se vincula con la siguiente referencia normativa"
-                  : "The measure is linked to the following normative reference",
-                m.normative_reference,
-              );
-            else
-              draw(
-                es
-                  ? "Propuesta del aplicante; requiere validación GLF."
-                  : "Applicant proposal; requires GLF validation.",
-              );
-          }
-          field(
+          draw(
             es
-              ? "Probabilidad × gravedad residual"
-              : "Residual probability × severity",
-            riskNarrative(r.residual_probability, r.residual_severity, locale),
+              ? "Medidas y valoración después de su aplicación"
+              : "Measures and assessment after implementation",
+            true,
           );
-          field(es ? "Ubicación" : "Location", r.location);
-          field(es ? "Costo estimado (USD)" : "Estimated cost (USD)", r.cost);
-          field(
+          text(
             es
-              ? "La implementación de la medida estará a cargo de"
-              : "Implementation of the measure will be assigned to",
-            r.responsible,
+              ? "Las siguientes medidas describen cómo se propone atender el riesgo. La valoración residual expresa el riesgo que se prevé que permanezca después de aplicarlas."
+              : "The following measures describe how the applicant proposes to address the risk. The residual assessment describes the risk expected to remain after implementation.",
           );
-          field(
+          table(
             es
-              ? "Inicio / fin / duración (trimestres)"
-              : "Start / end / duration (quarters)",
-            r.start_quarter +
-              " / " +
-              r.end_quarter +
-              " / " +
-              (r.end_quarter && r.start_quarter
-                ? r.end_quarter - r.start_quarter + 1
-                : "—"),
+              ? ["Medida propuesta", "Referencia normativa"]
+              : ["Proposed measure", "Normative reference"],
+            r.measures.length
+              ? r.measures.map((m) => [
+                  m.text ||
+                    (es ? m.label_es : m.label_en) ||
+                    m.label_es ||
+                    m.label_en ||
+                    m.catalog_id ||
+                    "—",
+                  m.normative_reference ||
+                    (es
+                      ? "Propuesta del aplicante; requiere validación GLF."
+                      : "Applicant proposal; requires GLF validation."),
+                ])
+              : [[es ? "No consignada" : "Not provided", "—"]],
+            [260, 231],
+          );
+          scores(r.residual_probability, r.residual_severity, true);
+          table(
+            es
+              ? ["Implementación", "Información prevista"]
+              : ["Implementation", "Planned information"],
+            [
+              [es ? "Ubicación" : "Location", r.location || "—"],
+              [
+                es ? "Costo estimado (USD)" : "Estimated cost (USD)",
+                r.cost === null ? "—" : String(r.cost),
+              ],
+              [
+                es
+                  ? "Responsable de implementar la medida"
+                  : "Person responsible for implementation",
+                r.responsible || "—",
+              ],
+              [
+                es
+                  ? "Trimestre de inicio / fin / duración"
+                  : "Start quarter / end quarter / duration",
+                `${r.start_quarter ?? "—"} / ${r.end_quarter ?? "—"} / ${r.end_quarter && r.start_quarter ? r.end_quarter - r.start_quarter + 1 : "—"}`,
+              ],
+            ],
+            [150, 341],
           );
         }
       });
     });
-    field(
+    text(
       es
-        ? "La suma de los puntajes individuales es"
-        : "The sum of individual scores is",
-      sum,
-    );
-    draw(
-      es
-        ? "La suma no determina una categoría global. La valoración institucional corresponde al equipo de Sostenibilidad GLF."
-        : "The sum does not determine an overall category. Institutional assessment belongs to GLF Sustainability.",
+        ? "Las sumas de puntajes no determinan una categoría global. La valoración institucional corresponde al equipo de Sostenibilidad GLF."
+        : "Score totals do not determine an overall category. Institutional assessment belongs to GLF Sustainability.",
     );
   }
   // Reserve the complete signature block so it never splits across pages.

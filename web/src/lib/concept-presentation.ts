@@ -17,6 +17,52 @@ export type ConceptSection = {
 };
 
 const bullet = /^(?:[-*•]\s+|\d+[.)]\s+)/;
+const labelledLayouts = [
+  ["Estrategia", "Actividad", "Indicadores de avance", "Indicadores de éxito"],
+  ["Strategy", "Activity", "Progress indicators", "Success indicators"],
+  ["Componente", "Descripción"],
+  ["Component", "Description"],
+  ["Objetivo específico", "Resultados previstos"],
+  ["Specific objective", "Expected results"],
+];
+const labelKey = (s: string) =>
+  s.normalize("NFD").replace(/\p{M}/gu, "").trim().toLowerCase();
+function labelledRow(group: string[], headers: string[]): string[] | null {
+  const row: string[] = [];
+  for (const line of group) {
+    const colon = line.indexOf(":");
+    const label = colon >= 0 ? labelKey(line.slice(0, colon)) : "";
+    if (
+      row.length < headers.length &&
+      label === labelKey(headers[row.length])
+    ) {
+      row.push(line.slice(colon + 1).trim());
+    } else if (headers.some((h) => label === labelKey(h)) || !row.length) {
+      return null;
+    } else {
+      row[row.length - 1] += "\n" + line;
+    }
+  }
+  return row.length === headers.length ? row : null;
+}
+
+/** Existing imported tables appear as readable text in the original text fields.
+ * No change is persisted until the applicant edits; plain text is left untouched.
+ */
+export function narrativeTextForEditing(value: string): string {
+  if (!/^\s*\|.+\|\s*\n\s*\|[\s:|\-]+\|/m.test(value)) return value;
+  return narrativeBlocks(value)
+    .map((b) =>
+      b.type === "paragraph"
+        ? b.text
+        : b.rows
+            .map((row) =>
+              row.map((cell, i) => `${b.headers[i]}: ${cell}`).join("\n"),
+            )
+            .join("\n\n"),
+    )
+    .join("\n\n");
+}
 /** Reflow extracted lines without rewriting facts, removing captions or merging lists. */
 export function narrativeBlocks(value: string): ContentBlock[] {
   const lines = value.replace(/\r\n?/g, "\n").split("\n");
@@ -41,6 +87,35 @@ export function narrativeBlocks(value: string): ContentBlock[] {
       );
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
+    // Explicit labels preserve table relationships after editing in a normal
+    // textarea. Never infer relationships from unlabelled prose.
+    const layout = labelledLayouts.find(
+      (h) =>
+        labelKey(line.split(":")[0]) === labelKey(h[0]) && line.includes(":"),
+    );
+    if (layout) {
+      let end = i;
+      const rows: string[][] = [];
+      while (end < lines.length) {
+        const start = end;
+        const group: string[] = [];
+        while (end < lines.length && lines[end].trim())
+          group.push(lines[end++].trim());
+        const row = labelledRow(group, layout);
+        if (!row) {
+          end = start;
+          break;
+        }
+        rows.push(row);
+        while (end < lines.length && !lines[end].trim()) end++;
+      }
+      if (rows.length) {
+        flush();
+        blocks.push({ type: "table", headers: layout, rows });
+        i = end - 1;
+        continue;
+      }
+    }
     // Only explicit, rectangular tables are interpreted. Ambiguous pasted text stays prose.
     if (line.startsWith("|") && lines[i + 1]?.trim().startsWith("|")) {
       const headers = cells(line),

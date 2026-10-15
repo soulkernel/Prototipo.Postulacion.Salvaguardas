@@ -1,5 +1,5 @@
 "use client";
-import { NarrativeEditor } from "./narrative-editor";
+import { narrativeTextForEditing } from "@/lib/concept-presentation";
 import { ConceptReview } from "./concept-review";
 import { RemoveButton } from "./remove-button";
 import { RequiredAttachmentUploads } from "./required-attachment-uploads";
@@ -1396,9 +1396,6 @@ export function ApplicationEditor({
                       objectives={
                         payload.concept.strategic_alignment?.objectives || []
                       }
-                      onLegacyChange={(value) =>
-                        updateConcept("results", value)
-                      }
                       onChange={(value) =>
                         setPayload((p) => {
                           const concept = {
@@ -1433,17 +1430,6 @@ export function ApplicationEditor({
                           },
                         }))
                       }
-                    />
-                  ) : field.key === "monitoring" ||
-                    field.key === "sustainability" ? (
-                    <NarrativeEditor
-                      key={field.key}
-                      fieldKey={field.key}
-                      label={es ? field.es : field.en}
-                      value={String(payload.concept[field.key] ?? "")}
-                      locale={locale}
-                      invalid={fieldIssue(field.key)}
-                      onChange={(value) => updateConcept(field.key, value)}
                     />
                   ) : field.key === "alignment" ? null : field.key ===
                     "phone" ? (
@@ -1496,7 +1482,9 @@ export function ApplicationEditor({
                           aria-invalid={fieldIssue(field.key)}
                           rows={4}
                           maxLength={12000}
-                          value={String(payload.concept[field.key] ?? "")}
+                          value={narrativeTextForEditing(
+                            String(payload.concept[field.key] ?? ""),
+                          )}
                           onChange={(e) =>
                             updateConcept(field.key, e.target.value)
                           }
