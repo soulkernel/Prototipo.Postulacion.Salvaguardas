@@ -1,0 +1,10 @@
+**/node_modules/
+**/.next/
+**/.vercel/
+**/.env
+**/.env.*
+!**/.env.example
+desktop.ini
+Thumbs.db
+**/.test-artifacts/
+**/__pycache__/
