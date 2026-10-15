@@ -39,20 +39,24 @@ export function CompletionFeedback({
         container.appendChild(note);
       }
       control?.setAttribute("aria-invalid", "true");
-      control?.setAttribute(
-        "aria-describedby",
-        [oldDescription, note.id].filter(Boolean).join(" "),
-      );
+      const description = [oldDescription, note.id].filter(Boolean).join(" ");
+      control?.setAttribute("aria-describedby", description);
       cleanup.push(() => {
         container.classList.remove("validation-pending");
         if (!existing) note.remove();
         if (control) {
-          if (oldInvalid === null || oldInvalid === undefined)
-            control.removeAttribute("aria-invalid");
-          else control.setAttribute("aria-invalid", oldInvalid);
-          if (oldDescription === null || oldDescription === undefined)
-            control.removeAttribute("aria-describedby");
-          else control.setAttribute("aria-describedby", oldDescription);
+          // Do not overwrite attributes React has already refreshed, for example
+          // when a financial field regains focus and hides its warning.
+          if (control.getAttribute("aria-invalid") === "true") {
+            if (oldInvalid === null || oldInvalid === undefined)
+              control.removeAttribute("aria-invalid");
+            else control.setAttribute("aria-invalid", oldInvalid);
+          }
+          if (control.getAttribute("aria-describedby") === description) {
+            if (oldDescription === null || oldDescription === undefined)
+              control.removeAttribute("aria-describedby");
+            else control.setAttribute("aria-describedby", oldDescription);
+          }
         }
       });
     }
