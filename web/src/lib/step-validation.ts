@@ -1,4 +1,7 @@
-import { identificationIssue, projectDateErrors } from "./applicant-validation";
+import {
+  identificationIssues,
+  projectDateErrors,
+} from "./applicant-validation";
 import { budgetIssues } from "./budget";
 import { z } from "zod";
 import { normalizePhone } from "./phone";
@@ -44,8 +47,7 @@ export function stepIssues(
         missing.push(key);
     }
     if (step === 0) {
-      const identification = identificationIssue(payload.concept);
-      if (identification) invalid.push(identification);
+      invalid.push(...identificationIssues(payload.concept));
       invalid.push(...Object.keys(projectDateErrors(payload.concept, rules)));
       if (stage === 2)
         invalid.push(...budgetIssues(payload.budget, payload.concept));

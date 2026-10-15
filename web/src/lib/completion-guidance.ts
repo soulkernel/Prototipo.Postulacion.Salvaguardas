@@ -77,6 +77,9 @@ export function completionGuidance(
       (x) => x.key === key,
     );
     const names: Record<string, string> = {
+      identity_number: es
+        ? "Cédula de identidad (10 dígitos)"
+        : "Identity card number (10 digits)",
       residence_number: es
         ? "Número de credencial de residencia permanente"
         : "Permanent residence card number",
@@ -100,7 +103,13 @@ export function completionGuidance(
     };
     const step =
       identityFields.some((x) => x.key === key) ||
-      ["applicant_type", "category_id", "residence_number", "ruc"].includes(key)
+      [
+        "applicant_type",
+        "category_id",
+        "residence_number",
+        "identity_number",
+        "ruc",
+      ].includes(key)
         ? 0
         : key === "activities" ||
             key.startsWith("no_risks_reason") ||

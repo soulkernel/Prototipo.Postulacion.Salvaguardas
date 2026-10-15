@@ -130,6 +130,25 @@ test("concept and matrix PDFs embed fonts, paginate and contain a QR image", asy
           result.bytes,
         );
       }
+  const individual = structuredClone(payload);
+  individual.concept.applicant_type = "individual";
+  individual.concept.identity_number = "0123456789";
+  individual.concept.residence_number = "RP-TEST-001";
+  const individualPdf = await applicationPdf({
+    payload: individual,
+    stage: 1,
+    reference: "GLF-INDIVIDUAL-001",
+    revision: 1,
+    submittedAt: "2026-10-14T20:00:00Z",
+    kind: "concept",
+    locale: "es",
+    downloadUrl: "https://example.test/individual",
+  });
+  assert.ok(individualPdf.pages > 0);
+  await writeFile(
+    ".test-artifacts/concept-individual-identity.pdf",
+    individualPdf.bytes,
+  );
 });
 
 test("document filenames use the immutable generation time in Galapagos and safe reference", async () => {

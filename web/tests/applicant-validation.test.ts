@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { emptyPayload, type Rules, validateComplete } from "../src/lib/domain";
 import {
   identificationIssue,
+  identificationIssues,
   maxProjectEnd,
   projectDateErrors,
 } from "../src/lib/applicant-validation";
@@ -167,9 +168,26 @@ test("calendar duration validates inclusive limits for each category, leap years
 test("identification is conditional and incomplete drafts remain schema-compatible", () => {
   const c = emptyPayload().concept;
   c.applicant_type = "individual";
+  assert.deepEqual(identificationIssues(c), [
+    "residence_number",
+    "identity_number",
+  ]);
   assert.equal(identificationIssue(c), "residence_number");
   c.residence_number = "RP-123456";
+  assert.equal(identificationIssue(c), "identity_number");
+  assert.deepEqual(identificationIssues(c), ["identity_number"]);
+  c.identity_number = "0123456789";
   assert.equal(identificationIssue(c), undefined);
+  for (const invalid of ["", "123456789", "01234ABCDE", "01234 6789"]) {
+    c.identity_number = invalid;
+    assert.equal(identificationIssue(c), "identity_number");
+  }
+  c.identity_number = "0123456789";
+  assert.ok(
+    !validateComplete({ ...emptyPayload(), concept: c }, rules, 1).includes(
+      "identity_number",
+    ),
+  );
   c.applicant_type = "organization";
   assert.equal(identificationIssue(c), "ruc");
   c.ruc = "2090000000001";

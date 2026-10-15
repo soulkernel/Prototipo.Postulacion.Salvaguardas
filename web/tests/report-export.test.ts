@@ -58,18 +58,24 @@ test("internal exports preserve conditional identification as text and distingui
   Object.assign(report.applications[0].concept, {
     applicant_type: "individual",
     residence_number: "RP-00123",
+    identity_number: "0123456789",
     ruc: "2099999999999",
   });
   Object.assign(report.applications[1].concept, {
     applicant_type: "organization",
     ruc: "2090000000001",
     residence_number: "INACTIVE",
+    identity_number: "9999999999",
   });
   const rows = reportTables(report).detail;
   const column = rows[0].indexOf("Credencial de residencia permanente / RUC");
   assert.equal(rows[1][column], "RP-00123");
   assert.equal(rows[2][column], "2090000000001");
   assert.equal(rows[3][column], "");
+  const identityColumn = rows[0].indexOf("Cédula de identidad");
+  assert.equal(rows[1][identityColumn], "0123456789");
+  assert.equal(rows[2][identityColumn], "");
+  assert.equal(rows[3][identityColumn], "");
   assert.ok(rows[0].includes("Fecha de inicio del proyecto"));
   for (const row of rows) assert.equal(row.length, rows[0].length);
   const csv = reportCsv(report);
@@ -79,6 +85,7 @@ test("internal exports preserve conditional identification as text and distingui
     unzipSync(reportWorkbook(report))["xl/worksheets/sheet2.xml"],
   );
   assert.match(sheet, /t="inlineStr"><is><t[^>]*>2090000000001/);
+  assert.match(sheet, /t="inlineStr"><is><t[^>]*>0123456789/);
 });
 test("closing workbook keeps three applications, numeric amounts, safe text and separate summary/theme sheets", () => {
   const files = unzipSync(reportWorkbook(fixture));

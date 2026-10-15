@@ -1,18 +1,28 @@
 import type { Concept, Rules } from "./domain";
 
 export function identificationIssue(c: Concept): string | undefined {
+  return identificationIssues(c)[0];
+}
+export function identificationIssues(c: Concept): string[] {
+  const issues: string[] = [];
   if (
     c.applicant_type === "individual" &&
     !/^[\p{L}\p{N}][\p{L}\p{N} -]{0,49}$/u.test(
       c.residence_number?.trim() || "",
     )
   )
-    return "residence_number";
+    issues.push("residence_number");
+  if (
+    c.applicant_type === "individual" &&
+    !/^\d{10}$/.test(c.identity_number || "")
+  )
+    issues.push("identity_number");
   if (
     c.applicant_type === "organization" &&
     !/^\d{13}$/.test(c.ruc?.trim() || "")
   )
-    return "ruc";
+    issues.push("ruc");
+  return issues;
 }
 export function maxProjectEnd(
   start: string,

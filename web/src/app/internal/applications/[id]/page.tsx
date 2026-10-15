@@ -250,6 +250,17 @@ export default async function ReviewPage({
           </summary>
           <dl className="summary-list">
             {a.payload.concept.applicant_type === "individual" &&
+              a.payload.concept.identity_number && (
+                <div>
+                  <dt>
+                    {es
+                      ? "Número de cédula de identidad"
+                      : "Identity card number"}
+                  </dt>
+                  <dd>{a.payload.concept.identity_number}</dd>
+                </div>
+              )}
+            {a.payload.concept.applicant_type === "individual" &&
               a.payload.concept.residence_number && (
                 <div>
                   <dt>

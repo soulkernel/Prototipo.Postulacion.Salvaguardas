@@ -125,6 +125,7 @@ export function summaryWorkbook(
       "Credencial de residencia permanente / RUC",
       "Permanent residence card / RUC",
     ),
+    t("Cédula de identidad", "Identity card number"),
   ];
   const main: Cell[][] = [headers];
   const results: Cell[][] = [
@@ -303,6 +304,7 @@ export function summaryWorkbook(
             ? c.ruc
             : undefined,
       ),
+      value(c.applicant_type === "individual" ? c.identity_number : undefined),
     ]);
     const objectives = list(obj(c.strategic_alignment).objectives);
     for (const r of list(c.project_results))

@@ -335,6 +335,14 @@ export async function applicationPdf({
     draw(es ? "1. DATOS GENERALES" : "1. PROJECT DETAILS", true);
     if (
       payload.concept.applicant_type === "individual" &&
+      payload.concept.identity_number
+    )
+      field(
+        es ? "Número de cédula de identidad" : "Identity card number",
+        payload.concept.identity_number,
+      );
+    if (
+      payload.concept.applicant_type === "individual" &&
       payload.concept.residence_number
     )
       field(

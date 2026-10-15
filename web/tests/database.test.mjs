@@ -1316,6 +1316,13 @@ test("applicant identification and v2 general-only alignment are enforced by dat
   p.concept.applicant_type = "individual";
   await assert.rejects(validate(p), /GLF_RESIDENCE_REQUIRED/);
   p.concept.residence_number = "RP-123456";
+  await assert.rejects(validate(p), /GLF_IDENTITY_NUMBER_REQUIRED/);
+  await validate(p, false);
+  for (const value of ["012345678", "01234ABCDE", "01234 6789"]) {
+    p.concept.identity_number = value;
+    await assert.rejects(validate(p), /GLF_IDENTITY_NUMBER_REQUIRED/);
+  }
+  p.concept.identity_number = "0123456789";
   await validate(p);
   p.concept.strategic_alignment = {
     version: "pg2030-ods-general-v2",
@@ -2529,6 +2536,7 @@ test("v2 applicant dossiers flow through signing, internal review and phase two 
     const p = structuredClone(payload);
     p.concept.applicant_type = type;
     p.concept.residence_number = type === "individual" ? "RP-AUDIT-001" : "";
+    p.concept.identity_number = type === "individual" ? "0123456789" : "";
     p.concept.ruc = type === "organization" ? "2090000000001" : "";
     const general = crypto.randomUUID(),
       specific = crypto.randomUUID();
@@ -2628,6 +2636,10 @@ test("v2 applicant dossiers flow through signing, internal review and phase two 
       p.concept[type === "individual" ? "residence_number" : "ruc"],
     );
     assert.equal(version.payload.attachments.length, 2);
+    assert.equal(
+      version.payload.concept.identity_number,
+      p.concept.identity_number,
+    );
     assert.equal(
       (
         await as("applicant", () =>

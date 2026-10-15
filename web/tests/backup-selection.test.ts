@@ -167,7 +167,7 @@ test("expanded workbook separates proposed dates, numeric amounts, results and s
     main = strFromU8(files["xl/worksheets/sheet1.xml"]),
     results = strFromU8(files["xl/worksheets/sheet2.xml"]),
     risks = strFromU8(files["xl/worksheets/sheet3.xml"]);
-  assert.ok(main.includes('ref="A1:AK2"'));
+  assert.ok(main.includes('ref="A1:AL2"'));
   assert.ok(main.includes('r="T2" s="0"><v>31</v>'));
   assert.ok(main.includes('r="V2" s="3"><v>100</v>'));
   assert.ok(main.includes('r="Z2" s="4"><v>0</v>'));

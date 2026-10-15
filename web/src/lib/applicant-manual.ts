@@ -237,6 +237,12 @@ export const manualChapters: ManualChapter[] = [
         "Select the applicant's actual status and grant category. They must be compatible with the call.",
       ],
       [
+        "Número de cédula de identidad",
+        "Obligatorio para personas naturales. Ingrese 10 dígitos, sin espacios ni guiones, conservando los ceros iniciales. Se solicita además del número de credencial de residencia permanente. El control de formato no verifica su identidad ante el Registro Civil.",
+        "Identity card number",
+        "Required for individuals. Enter 10 digits without spaces or hyphens, retaining leading zeros. This is requested in addition to the permanent residence card number. Format validation does not verify your identity with the Civil Registry.",
+      ],
+      [
         "Credencial de residencia permanente / RUC",
         "Persona natural: ingrese su número de credencial. La credencial de residencia permanente que se presente debe estar vigente. Organización: ingrese el RUC de 13 dígitos. La organización debe tener domicilio tributario en la provincia de Galápagos; si no cumple, su postulación podría ser descalificada. El GLF revisará los documentos.",
         "Permanent residence card / RUC",

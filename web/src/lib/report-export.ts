@@ -113,6 +113,7 @@ export function reportTables(report: ReportExport) {
         "Credencial de residencia permanente / RUC",
         "Permanent residence card / RUC",
       ),
+      t("Cédula de identidad", "Identity card number"),
     ],
     ...report.applications.map((a) => {
       const c = a.concept;
@@ -148,6 +149,9 @@ export function reportTables(report: ReportExport) {
             : c.applicant_type === "organization"
               ? c.ruc || ""
               : "",
+        ),
+        String(
+          c.applicant_type === "individual" ? c.identity_number || "" : "",
         ),
       ];
     }),

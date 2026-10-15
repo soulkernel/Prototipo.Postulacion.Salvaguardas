@@ -45,6 +45,7 @@ import { PotentialRiskFields } from "./potential-risk-fields";
 import { riskLabel } from "@/lib/potential-risks";
 import {
   identificationIssue,
+  identificationIssues,
   projectDateErrors,
   maxProjectEnd,
 } from "@/lib/applicant-validation";
@@ -196,6 +197,10 @@ function message(code: string, es: boolean) {
     return es
       ? "Ingrese el RUC de 13 dígitos de la organización."
       : "Enter the organization 13-digit RUC.";
+  if (code.includes("IDENTITY_NUMBER"))
+    return es
+      ? "Ingrese los 10 dígitos de su cédula de identidad, sin espacios ni guiones."
+      : "Enter the 10 digits of your identity card number, without spaces or hyphens.";
   if (code.includes("RESIDENCE_REQUIRED"))
     return es
       ? "Ingrese el número de credencial de residencia permanente."
@@ -315,6 +320,8 @@ export function ApplicationEditor({
     Partial<Record<MoneyField, boolean>>
   >({});
   const [moneyFocused, setMoneyFocused] = useState<MoneyField | null>(null);
+  const [identityTouched, setIdentityTouched] = useState(false);
+  const [identityFocused, setIdentityFocused] = useState(false);
   const [documents, setDocuments] = useState(initialDocuments);
   const [prepared, setPrepared] = useState<{
     id: string;
@@ -727,6 +734,10 @@ export function ApplicationEditor({
       return es
         ? "RUC de la organización: ingrese 13 dígitos"
         : "Organization RUC: enter 13 digits";
+    if (key === "identity_number")
+      return es
+        ? "Cédula de identidad: ingrese 10 dígitos"
+        : "Identity card number: enter 10 digits";
     if (key === "residence_number")
       return es
         ? "Número de credencial de residencia permanente"
@@ -792,6 +803,10 @@ export function ApplicationEditor({
     ...projectDateErrors(payload.concept, rules),
   };
   const identification = identificationIssue(payload.concept);
+  const identityInvalid =
+    identificationIssues(payload.concept).includes("identity_number") &&
+    !identityFocused &&
+    (identityTouched || showCompletion || checkedStep === 0);
   const selectedCategory = rules.categories.find(
     (c) => c.id === payload.concept.category_id,
   );
@@ -990,7 +1005,11 @@ export function ApplicationEditor({
         </section>
       )}
       <CompletionFeedback
-        issues={completion.filter((issue) => issue.id !== moneyFocused)}
+        issues={completion.filter(
+          (issue) =>
+            issue.id !== moneyFocused &&
+            !(identityFocused && issue.id === "identity_number"),
+        )}
         step={step}
         focusIssue={focusIssue}
         locale={locale}
@@ -1137,6 +1156,51 @@ export function ApplicationEditor({
                 </div>
               )}
               {step === 0 &&
+                payload.concept.applicant_type === "individual" && (
+                  <label
+                    className="applicant-identification editor-field"
+                    data-validation-field="identity_number"
+                  >
+                    <span>
+                      {es
+                        ? "Número de cédula de identidad"
+                        : "Identity card number"}
+                      <RequiredMark locale={locale} />
+                    </span>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="off"
+                      spellCheck={false}
+                      aria-required="true"
+                      aria-invalid={identityInvalid}
+                      aria-describedby="identity-number-help"
+                      maxLength={10}
+                      pattern="[0-9]{10}"
+                      placeholder={es ? "10 dígitos" : "10 digits"}
+                      value={payload.concept.identity_number || ""}
+                      onFocus={() => setIdentityFocused(true)}
+                      onBlur={() => {
+                        setIdentityFocused(false);
+                        setIdentityTouched(true);
+                      }}
+                      onChange={(e) =>
+                        updateConcept("identity_number", e.target.value)
+                      }
+                    />
+                    <small
+                      id="identity-number-help"
+                      className={identityInvalid ? "field-warning" : undefined}
+                      role={identityInvalid ? "alert" : undefined}
+                      data-field-message={identityInvalid ? "error" : undefined}
+                    >
+                      {es
+                        ? "Ingrese los 10 dígitos de su cédula, sin espacios ni guiones."
+                        : "Enter the 10 digits of your identity card number, without spaces or hyphens."}
+                    </small>
+                  </label>
+                )}
+              {step === 0 &&
                 ["individual", "organization"].includes(
                   payload.concept.applicant_type,
                 ) && (
@@ -1172,7 +1236,10 @@ export function ApplicationEditor({
                           : payload.concept.ruc) || ""
                       }
                       aria-invalid={
-                        !!identification &&
+                        identification ===
+                          (payload.concept.applicant_type === "individual"
+                            ? "residence_number"
+                            : "ruc") &&
                         (showCompletion ||
                           checkedStep === step ||
                           !!(payload.concept.applicant_type === "individual"
@@ -1197,7 +1264,10 @@ export function ApplicationEditor({
                           ? "La organización debe tener domicilio tributario en la provincia de Galápagos. Si no cumple este requisito, su postulación podría ser descalificada."
                           : "The organization must have its tax domicile in Galápagos province. Failure to meet this requirement could disqualify the application."}
                     </small>
-                    {identification &&
+                    {identification ===
+                      (payload.concept.applicant_type === "individual"
+                        ? "residence_number"
+                        : "ruc") &&
                       (showCompletion ||
                         checkedStep === step ||
                         !!(payload.concept.applicant_type === "individual"
