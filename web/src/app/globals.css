@@ -2959,3 +2959,28 @@ select {
 .button.remove-icon-button:focus-visible { outline: 2px solid #a32626; outline-offset: 3px; }
 .button.remove-icon-button:disabled { opacity: .45; cursor: not-allowed; }
 .alignment-chips .button.remove-icon-compact { width: 32px; height: 32px; min-width: 32px; min-height: 32px; }
+
+/* The same sections and tables are used for applicant and internal review. */
+.concept-review { width: 100%; min-width: 0; }
+.concept-review-section { margin: 0 0 24px; padding: 18px; border: 1px solid #dbe4ed; border-radius: 10px; background: #fff; }
+.concept-review-section h3 { margin: 0 0 10px; padding: 0 0 10px; border-bottom: 2px solid #e3efed; font-size: 16px; color: var(--navy); }
+.concept-review-introduction { margin: 0 0 16px; color: #526579; font-size: 13px; line-height: 1.65; }
+.concept-review-paragraph { margin: 0 0 12px; line-height: 1.7; white-space: normal; overflow-wrap: anywhere; }
+.concept-review-paragraph:last-child { margin-bottom: 0; }
+.concept-table-scroll { width: 100%; max-width: 100%; overflow-x: auto; margin: 12px 0; }
+.concept-review-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 13px; line-height: 1.6; }
+.concept-review-table th, .concept-review-table td { padding: 12px; border: 1px solid #dbe4ed; vertical-align: top; text-align: left; white-space: pre-line; overflow-wrap: anywhere; }
+.concept-review-table th { background: #f0f5f8; color: var(--navy); font-weight: 600; }
+.concept-columns-2 th:first-child { width: 30%; }
+.concept-review-table tbody tr:nth-child(even) { background: #fafcfd; }
+.concept-table-scroll:focus-visible { outline: 2px solid #087e84; outline-offset: 3px; }
+@media (max-width: 640px) {
+ .concept-review-section { padding: 12px; }
+ .concept-columns-3, .concept-columns-4, .concept-columns-5, .concept-columns-6 { min-width: 680px; }
+ .concept-review-table th, .concept-review-table td { padding: 9px; }
+}
+
+.narrative-edit-table { min-width: 740px; }
+.narrative-edit-table th:last-child { width: 68px; }
+.narrative-edit-table textarea { min-height: 140px; width: 100%; }
+.narrative-edit-table td { padding: 8px; }

@@ -1,4 +1,5 @@
 "use client";
+import { NarrativeEditor } from "./narrative-editor";
 import { RemoveButton } from "./remove-button";
 import { LimitedTextarea } from "./limited-textarea";
 import {
@@ -12,12 +13,14 @@ export function ProjectResultFields({
   objectives,
   es,
   onChange,
+  onLegacyChange,
 }: {
   value?: ProjectResult[];
   legacy: string;
   objectives: { id: string; kind: string; text: string }[];
   es: boolean;
   onChange: (value: ProjectResult[]) => void;
+  onLegacyChange?: (value: string) => void;
 }) {
   const specific = objectives.filter((o) => o.kind === "specific");
   const update = (index: number, patch: Partial<ProjectResult>) =>
@@ -38,12 +41,26 @@ export function ProjectResultFields({
       </p>
       {value === undefined ? (
         <>
-          <details>
-            <summary>
-              {es ? "Consultar texto existente" : "View existing text"}
-            </summary>
-            <p style={{ whiteSpace: "pre-wrap" }}>{legacy || "—"}</p>
-          </details>
+          {onLegacyChange ? (
+            <NarrativeEditor
+              fieldKey="results"
+              label={
+                es
+                  ? "Resultados e indicadores existentes"
+                  : "Existing results and indicators"
+              }
+              value={legacy}
+              locale={es ? "es" : "en"}
+              onChange={onLegacyChange}
+            />
+          ) : (
+            <details>
+              <summary>
+                {es ? "Consultar texto existente" : "View existing text"}
+              </summary>
+              <p>{legacy || "—"}</p>
+            </details>
+          )}
           <button type="button" onClick={() => onChange([newProjectResult()])}>
             {es ? "Organizar resultados" : "Organise results"}
           </button>

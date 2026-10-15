@@ -13,3 +13,6 @@ Todo botón que inicia una operación asíncrona debe mostrar inmediatamente ind
 
 ## Controles de eliminación
 En formularios externos e internos, usar el mismo icono Trash2 de lucide-react para quitar o eliminar elementos. Usar RemoveButton para controles locales y para abrir confirmaciones, con aria-label específico y título ES/EN; no mostrar el texto «Quitar» en el control. Las confirmaciones de eliminación definitiva conservan texto explícito junto a la papelera, advertencias, permisos y estados pendientes. No confundir desarchivar, cerrar o desmarcar con eliminar.
+
+## Presentación comprensible de expedientes
+El resumen web externo e interno y el PDF deben usar la misma estructura conceptSections. Incluir introducciones breves y relaciones en lenguaje natural, conservando el contenido del postulante sin inventar indicadores, metas o requisitos. Presentar datos relacionados en tablas y textos narrativos en párrafos/listas. No reproducir espacios de extracción ni inferir celdas de tablas ambiguas. Mantener compatibles los expedientes históricos y sus versiones firmadas.

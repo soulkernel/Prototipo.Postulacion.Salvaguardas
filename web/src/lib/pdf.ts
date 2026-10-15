@@ -1,16 +1,12 @@
-import { alignmentVersion } from "./strategic-alignment";
-import { callThemeLabel } from "./call-themes";
+import { conceptSections } from "./concept-presentation";
 import { budgetText } from "./budget";
 import { submissionNotice } from "./grant-rules";
-import { alignmentNarrative, riskNarrative } from "./document-language";
-import { resultUnits } from "@/lib/project-results";
+import { riskNarrative } from "./document-language";
 import { PDFDocument, rgb, type PDFFont } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import QRCode from "qrcode";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { identityFields, narrativeFields } from "./fields";
-import { hasSummaryParts, summarySections } from "./summary";
 import { strategicText } from "./strategic-alignment";
 import { riskLabel, synchronizeRisks } from "./potential-risks";
 import { riskScore, type Payload, type Locale } from "./domain";
@@ -139,7 +135,7 @@ export async function applicationPdf({
           current
         ) {
           const space = current.lastIndexOf(" ");
-          if (space > current.length / 2) {
+          if (space > 0) {
             result.push(current.slice(0, space));
             current = current.slice(space + 1) + char;
           } else {
@@ -332,206 +328,53 @@ export async function applicationPdf({
         ? `Se solicita al GLF un financiamiento de ${payload.concept.requested_amount === null ? "monto no consignado" : money(payload.concept.requested_amount)} y se prevé un cofinanciamiento de ${payload.concept.cofinance_amount === null ? "monto no consignado" : money(payload.concept.cofinance_amount)}.`
         : `The applicant requests ${payload.concept.requested_amount === null ? "an unspecified amount" : money(payload.concept.requested_amount)} from GLF and plans cofinancing of ${payload.concept.cofinance_amount === null ? "an unspecified amount" : money(payload.concept.cofinance_amount)}.`,
     );
-    draw(es ? "1. DATOS GENERALES" : "1. PROJECT DETAILS", true);
-    if (
-      payload.concept.applicant_type === "individual" &&
-      payload.concept.identity_number
-    )
-      field(
-        es ? "Número de cédula de identidad" : "Identity card number",
-        payload.concept.identity_number,
-      );
-    if (
-      payload.concept.applicant_type === "individual" &&
-      payload.concept.residence_number
-    )
-      field(
-        es
-          ? "Número de credencial de residencia permanente"
-          : "Permanent residence card number",
-        payload.concept.residence_number,
-      );
-    if (
-      payload.concept.applicant_type === "organization" &&
-      payload.concept.ruc
-    )
-      field(
-        es ? "RUC de la organización" : "Organization RUC",
-        payload.concept.ruc,
-      );
-    for (const fieldSpec of [...identityFields, ...narrativeFields]) {
-      if (fieldSpec.key === "title") continue;
-      if (
-        fieldSpec.key === "alignment" &&
-        payload.concept.strategic_alignment?.objectives.length
-      ) {
-        draw(es ? "ALINEACIÓN ESTRATÉGICA" : "STRATEGIC ALIGNMENT", true);
-        let i = 0;
-        for (const objective of payload.concept.strategic_alignment
-          .objectives) {
-          if (
-            payload.concept.strategic_alignment.version === alignmentVersion &&
-            objective.kind !== "general"
-          )
-            continue;
-          const narrative = alignmentNarrative(objective, locale);
-          draw(
-            objective.kind === "general"
-              ? es
-                ? "Objetivo general"
-                : "General objective"
-              : (es ? "Objetivo específico " : "Specific objective ") + ++i,
-            true,
-          );
-          for (const paragraph of narrative) draw(paragraph);
+    for (const section of conceptSections(payload.concept, locale, rules)) {
+      // Keep the section explanation with the start of its content. Reserve
+      // only a few table lines, rather than moving an entire long table.
+      const first = section.blocks[0];
+      const lead =
+        first?.type === "table"
+          ? Math.max(
+              ...first.headers.map(
+                (h, i) =>
+                  lines(
+                    h,
+                    bold,
+                    10,
+                    (first.headers.length === 2
+                      ? [150, 341][i]
+                      : width / first.headers.length) - 16,
+                  ).length,
+              ),
+            ) *
+              14 +
+            16 +
+            44
+          : 30;
+      const sectionStart =
+        lines(section.title, bold, 12).length * 15 +
+        12 +
+        lines(section.introduction, font, 11).length * 15 +
+        9 +
+        lead;
+      if (y < 72 + sectionStart) newPage();
+      draw(section.title, true);
+      draw(section.introduction);
+      for (const block of section.blocks) {
+        if (block.type === "paragraph") draw(block.text);
+        else {
+          const widths =
+            block.headers.length === 2
+              ? [150, 341]
+              : block.headers.length === 3
+                ? [160, 190, 141]
+                : block.headers.length === 4
+                  ? [106, 133, 119, 133]
+                  : block.headers.map(() => width / block.headers.length);
+          table(block.headers, block.rows, widths);
         }
-        continue;
       }
-      if (fieldSpec.key === "summary")
-        draw(
-          es ? "2. DESCRIPCIÓN DEL PROYECTO" : "2. PROJECT DESCRIPTION",
-          true,
-        );
-      if (
-        fieldSpec.key === "objectives" &&
-        payload.concept.strategic_alignment?.objectives.length
-      ) {
-        draw(es ? "OBJETIVOS" : "OBJECTIVES", true);
-        let specific = 0;
-        for (const objective of payload.concept.strategic_alignment
-          .objectives) {
-          field(
-            objective.kind === "general"
-              ? es
-                ? "Objetivo general"
-                : "General objective"
-              : (es ? "Objetivo específico " : "Specific objective ") +
-                  ++specific,
-            objective.text,
-          );
-        }
-        continue;
-      }
-      if (
-        fieldSpec.key === "results" &&
-        payload.concept.project_results?.length
-      ) {
-        draw(es ? "RESULTADOS E INDICADORES" : "RESULTS AND INDICATORS", true);
-        draw(
-          es
-            ? "Cada resultado se vincula con un objetivo específico y se expresa mediante un indicador y una meta preliminar."
-            : "Each result is linked to a specific objective and described by an indicator and a preliminary target.",
-        );
-        payload.concept.project_results.forEach((r, i) => {
-          draw((es ? "Resultado " : "Result ") + (i + 1), true, false);
-          const objective =
-            payload.concept.strategic_alignment?.objectives.find(
-              (o) => o.id === r.objective_id,
-            )?.text || r.objective_id;
-          table(
-            es
-              ? ["Resultado esperado", "Indicador", "Meta preliminar"]
-              : ["Expected result", "Indicator", "Preliminary target"],
-            [
-              [
-                r.result,
-                r.indicator,
-                String(r.target ?? "—") +
-                  " " +
-                  (r.unit === "other"
-                    ? r.other_unit
-                    : resultUnits.find((u) => u[0] === r.unit)?.[es ? 1 : 2] ||
-                      r.unit),
-              ],
-            ],
-            [196, 185, 110],
-          );
-          table(
-            es
-              ? ["Relación y verificación", "Descripción"]
-              : ["Alignment and verification", "Description"],
-            [
-              [
-                es
-                  ? "Objetivo específico al que contribuye"
-                  : "Specific objective supported",
-                objective,
-              ],
-              [es ? "Evidencia prevista" : "Planned evidence", r.evidence],
-            ],
-            [150, 341],
-          );
-        });
-        continue;
-      }
-      if (
-        fieldSpec.key === "summary" &&
-        payload.concept.summary_parts &&
-        hasSummaryParts(payload.concept.summary_parts)
-      ) {
-        draw(es ? "RESUMEN DEL PROYECTO" : "PROJECT SUMMARY", true);
-        for (const section of summarySections)
-          field(
-            es ? section.es : section.en,
-            payload.concept.summary_parts[section.key],
-          );
-        continue;
-      }
-      if (
-        fieldSpec.key === "beneficiaries" ||
-        fieldSpec.key === "sustainability" ||
-        fieldSpec.key === "results"
-      ) {
-        draw(es ? fieldSpec.es : fieldSpec.en, true);
-        draw(
-          fieldSpec.key === "beneficiaries"
-            ? es
-              ? "Esta sección describe a quién beneficia el proyecto y su contribución a los medios de vida."
-              : "This section describes who benefits from the project and its contribution to livelihoods."
-            : fieldSpec.key === "sustainability"
-              ? es
-                ? "Esta sección describe la continuidad de los beneficios y las posibilidades de replicar la iniciativa."
-                : "This section describes the continuity of benefits and opportunities to replicate the initiative."
-              : es
-                ? "Resultados e indicadores consignados por el postulante."
-                : "Results and indicators provided by the applicant.",
-        );
-        table(
-          es
-            ? ["Apartado", "Información presentada"]
-            : ["Section", "Submitted information"],
-          [
-            [
-              es ? fieldSpec.es : fieldSpec.en,
-              String(payload.concept[fieldSpec.key] || "—"),
-            ],
-          ],
-          [140, 351],
-        );
-        continue;
-      }
-      field(
-        es ? fieldSpec.es : fieldSpec.en,
-        fieldSpec.key === "project_type"
-          ? callThemeLabel(payload.concept.project_type, rules, locale)
-          : fieldSpec.key === "partners" &&
-              payload.concept.associated_organizations
-            ? payload.concept.associated_organizations
-                .map((name, i) => `${i + 1}. ${name}`)
-                .join("\n")
-            : Array.isArray(payload.concept[fieldSpec.key])
-              ? (payload.concept[fieldSpec.key] as string[]).join(", ")
-              : payload.concept[fieldSpec.key],
-      );
     }
-    field(
-      es ? "Tipo de solicitante" : "Applicant type",
-      payload.concept.applicant_type,
-    );
-    field(
-      es ? "Categoría elegida" : "Selected category",
-      payload.concept.category_id,
-    );
     draw(es ? "3. ACTIVIDADES" : "3. ACTIVITIES", true);
     payload.activities.forEach((a, i) => {
       field(i + 1 + ". " + a.title, a.description);
@@ -704,7 +547,7 @@ export async function applicationPdf({
     draw(budgetText(payload.budget, locale));
   }
   const signatureHeight = 180 + signerLines.length * 15;
-  if (y < signatureHeight + 310) newPage();
+  if (y < signatureHeight + 80) newPage();
   const signatureTop = y - 8;
   const signatureBottom = signatureTop - signatureHeight;
   page.drawRectangle({

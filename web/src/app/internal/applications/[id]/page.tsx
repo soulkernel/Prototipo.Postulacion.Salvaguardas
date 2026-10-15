@@ -1,8 +1,7 @@
-import { callThemeLabel } from "@/lib/call-themes";
+import { ConceptReview } from "@/components/concept-review";
 import { attachmentLabel } from "@/lib/attachment-requirements";
 import { DocumentDownload } from "@/components/document-download";
 import { budgetText } from "@/lib/budget";
-import { resultText } from "@/lib/project-results";
 import { SubmitButton } from "@/components/submit-button";
 import { getRequestTime } from "@/lib/data";
 import Link from "@/components/feedback-link";
@@ -11,7 +10,7 @@ import { getLocale } from "@/lib/locale";
 import { Shell } from "@/components/shell";
 import { UploadForm } from "@/components/upload-form";
 import { ReceiptDownload } from "@/components/receipt-download";
-import { identityFields, narrativeFields, statusLabel } from "@/lib/fields";
+import { statusLabel } from "@/lib/fields";
 import { safeReturnPath, riskScore, riskLevel } from "@/lib/domain";
 import { strategicText } from "@/lib/strategic-alignment";
 import type { Call } from "@/lib/domain";
@@ -248,53 +247,11 @@ export default async function ReviewPage({
           <summary>
             {es ? "Nota Conceptual completa" : "Complete Concept Note"}
           </summary>
-          <dl className="summary-list">
-            {a.payload.concept.applicant_type === "individual" &&
-              a.payload.concept.identity_number && (
-                <div>
-                  <dt>
-                    {es
-                      ? "Número de cédula de identidad"
-                      : "Identity card number"}
-                  </dt>
-                  <dd>{a.payload.concept.identity_number}</dd>
-                </div>
-              )}
-            {a.payload.concept.applicant_type === "individual" &&
-              a.payload.concept.residence_number && (
-                <div>
-                  <dt>
-                    {es
-                      ? "Número de credencial de residencia permanente"
-                      : "Permanent residence card number"}
-                  </dt>
-                  <dd>{a.payload.concept.residence_number}</dd>
-                </div>
-              )}
-            {a.payload.concept.applicant_type === "organization" &&
-              a.payload.concept.ruc && (
-                <div>
-                  <dt>{es ? "RUC de la organización" : "Organization RUC"}</dt>
-                  <dd>{a.payload.concept.ruc}</dd>
-                </div>
-              )}
-            {[...identityFields, ...narrativeFields].map((f) => (
-              <div key={f.key}>
-                <dt>{es ? f.es : f.en}</dt>
-                <dd>
-                  {f.key === "project_type"
-                    ? callThemeLabel(
-                        a.payload.concept.project_type,
-                        a.rules_snapshot,
-                        locale,
-                      )
-                    : f.key === "results"
-                      ? resultText(a.payload.concept, locale)
-                      : String(a.payload.concept[f.key] ?? "—")}
-                </dd>
-              </div>
-            ))}
-          </dl>
+          <ConceptReview
+            concept={a.payload.concept}
+            locale={locale}
+            rules={a.rules_snapshot}
+          />
         </details>
       </section>
       {submittedStage === 2 && (

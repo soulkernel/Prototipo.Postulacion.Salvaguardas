@@ -1,10 +1,11 @@
 "use client";
+import { NarrativeEditor } from "./narrative-editor";
+import { ConceptReview } from "./concept-review";
 import { RemoveButton } from "./remove-button";
 import { RequiredAttachmentUploads } from "./required-attachment-uploads";
 import { attachmentLabel } from "@/lib/attachment-requirements";
 import { FileDropField } from "./file-drop-field";
 import { LimitedTextarea } from "./limited-textarea";
-import { callThemeLabel } from "@/lib/call-themes";
 import { DeadlineCountdown } from "./deadline-countdown";
 import { DocumentDownload } from "./document-download";
 import { useEffect, useState, useRef } from "react";
@@ -1395,6 +1396,9 @@ export function ApplicationEditor({
                       objectives={
                         payload.concept.strategic_alignment?.objectives || []
                       }
+                      onLegacyChange={(value) =>
+                        updateConcept("results", value)
+                      }
                       onChange={(value) =>
                         setPayload((p) => {
                           const concept = {
@@ -1429,6 +1433,17 @@ export function ApplicationEditor({
                           },
                         }))
                       }
+                    />
+                  ) : field.key === "monitoring" ||
+                    field.key === "sustainability" ? (
+                    <NarrativeEditor
+                      key={field.key}
+                      fieldKey={field.key}
+                      label={es ? field.es : field.en}
+                      value={String(payload.concept[field.key] ?? "")}
+                      locale={locale}
+                      invalid={fieldIssue(field.key)}
+                      onChange={(value) => updateConcept(field.key, value)}
                     />
                   ) : field.key === "alignment" ? null : field.key ===
                     "phone" ? (
@@ -2302,24 +2317,11 @@ export function ApplicationEditor({
           {step === 3 && (
             <div className="live-form">
               <h2>{es ? "Revisión del expediente" : "Application review"}</h2>
-              <dl className="summary-list">
-                {[...identityFields, ...narrativeFields].map((f) => (
-                  <div key={f.key}>
-                    <dt>{es ? f.es : f.en}</dt>
-                    <dd>
-                      {f.key === "project_type"
-                        ? callThemeLabel(
-                            payload.concept.project_type,
-                            rules,
-                            locale,
-                          )
-                        : f.key === "results"
-                          ? resultText(payload.concept, locale)
-                          : String(payload.concept[f.key] ?? "—") || "—"}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
+              <ConceptReview
+                concept={payload.concept}
+                locale={locale}
+                rules={rules}
+              />
               <p>
                 {payload.activities.length} {es ? "actividades" : "activities"}{" "}
                 · {payload.activities.flatMap((a) => a.risks).length}{" "}
