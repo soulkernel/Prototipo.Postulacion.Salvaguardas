@@ -71,8 +71,8 @@ export function ApplicantManual({ locale }: { locale: Locale }) {
           </div>
           <div className="manual-meta">
             {es
-              ? "Usuario externo · Actualizado: 11 de octubre de 2026"
-              : "External applicant · Updated: 11 October 2026"}{" "}
+              ? "Usuario externo · Actualizado: 14 de octubre de 2026"
+              : "External applicant · Updated: 14 October 2026"}{" "}
             · v{version}
           </div>
         </div>
