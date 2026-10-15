@@ -2983,6 +2983,11 @@ select {
 .unified-summary {
   width: 100%;
 }
+.unified-summary .field-help {
+  color: #546c80;
+  font-size: 13px;
+  margin: 6px 0 12px;
+}
 .unified-summary textarea {
   display: block;
   width: 100%;
@@ -2993,6 +2998,9 @@ select {
   display: flex;
   justify-content: flex-end;
   margin-top: 6px;
+}
+.summary-counter-row small {
+  font-size: 13px;
 }
 .unified-summary .danger-text {
   font-size: 13px;
