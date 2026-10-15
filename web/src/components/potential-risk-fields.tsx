@@ -159,7 +159,9 @@ export function PotentialRiskFields({
               return (
                 <div key={r.id} className="potential-risk-row">
                   <label htmlFor={"potential-" + r.id}>
-                    {riskLabel(rows, r.id, es ? "es" : "en")} *
+                    <span className="field-label">
+                      {riskLabel(rows, r.id, es ? "es" : "en")} *
+                    </span>
                     <LimitedTextarea
                       locale={locale}
                       id={"potential-" + r.id}
@@ -225,9 +227,11 @@ export function PotentialRiskFields({
           </button>
           {!rows.some((r) => r.dimension === dimension) && (
             <label>
-              {es
-                ? "Justificación de ausencia de riesgos *"
-                : "Explanation of no identified risks *"}
+              <span className="field-label">
+                {es
+                  ? "Justificación de ausencia de riesgos *"
+                  : "Explanation of no identified risks *"}
+              </span>
               <LimitedTextarea
                 locale={locale}
                 rows={2}

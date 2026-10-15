@@ -442,8 +442,10 @@ export function ApplicationEditor({
     onChange: (n: number | null) => void,
   ) => (
     <label>
-      {label}
-      <RequiredMark locale={locale} />
+      <span className="field-label">
+        {label}
+        <RequiredMark locale={locale} />
+      </span>
       <select
         aria-required="true"
         data-validation-field={
@@ -484,8 +486,10 @@ export function ApplicationEditor({
     onChange: (n: number | null) => void,
   ) => (
     <label>
-      {label}
-      <RequiredMark locale={locale} />
+      <span className="field-label">
+        {label}
+        <RequiredMark locale={locale} />
+      </span>
       <select
         aria-required="true"
         data-validation-field={
@@ -1106,8 +1110,10 @@ export function ApplicationEditor({
               {step === 0 && (
                 <div className="live-grid">
                   <label>
-                    {es ? "Tipo de solicitante" : "Applicant type"}
-                    <RequiredMark locale={locale} />
+                    <span className="field-label">
+                      {es ? "Tipo de solicitante" : "Applicant type"}
+                      <RequiredMark locale={locale} />
+                    </span>
                     <select
                       aria-required="true"
                       data-validation-field="applicant_type"
@@ -1133,8 +1139,10 @@ export function ApplicationEditor({
                     </select>
                   </label>
                   <label>
-                    {es ? "Categoría de subvención" : "Grant category"}
-                    <RequiredMark locale={locale} />
+                    <span className="field-label">
+                      {es ? "Categoría de subvención" : "Grant category"}
+                      <RequiredMark locale={locale} />
+                    </span>
                     <select
                       aria-required="true"
                       data-validation-field="category_id"
@@ -1705,12 +1713,14 @@ export function ApplicationEditor({
                   </p>
                   {call.phase2_schema.map((f) => (
                     <label key={f.id} data-validation-field={"phase2:" + f.id}>
-                      {es ? f.label_es : f.label_en}
-                      {f.required ? (
-                        <RequiredMark locale={locale} />
-                      ) : (
-                        <small> ({es ? "Opcional" : "Optional"})</small>
-                      )}
+                      <span className="field-label">
+                        {es ? f.label_es : f.label_en}
+                        {f.required ? (
+                          <RequiredMark locale={locale} />
+                        ) : (
+                          <small> ({es ? "Opcional" : "Optional"})</small>
+                        )}
+                      </span>
                       <LimitedTextarea
                         locale={locale}
                         aria-required={f.required}
@@ -1801,10 +1811,12 @@ export function ApplicationEditor({
                   </button>
                   {activity.risks.length === 0 && (
                     <label>
-                      {es
-                        ? "Justificación si no identifica riesgos"
-                        : "Explanation if no risks are identified"}
-                      <RequiredMark locale={locale} />
+                      <span className="field-label">
+                        {es
+                          ? "Justificación si no identifica riesgos"
+                          : "Explanation if no risks are identified"}
+                        <RequiredMark locale={locale} />
+                      </span>
                       <LimitedTextarea
                         locale={locale}
                         aria-required="true"
@@ -1864,10 +1876,12 @@ export function ApplicationEditor({
                         <div className="live-grid form-columns">
                           {payload.concept.risk_register && (
                             <label className="full-width">
-                              {es
-                                ? "Seleccione un riesgo registrado"
-                                : "Select a registered risk"}
-                              <RequiredMark locale={locale} />
+                              <span className="field-label">
+                                {es
+                                  ? "Seleccione un riesgo registrado"
+                                  : "Select a registered risk"}
+                                <RequiredMark locale={locale} />
+                              </span>
                               <select
                                 data-validation-field="source_id"
                                 aria-required="true"
@@ -1932,8 +1946,10 @@ export function ApplicationEditor({
                             </label>
                           )}
                           <label>
-                            {es ? "Dimensión" : "Dimension"}
-                            <RequiredMark locale={locale} />
+                            <span className="field-label">
+                              {es ? "Dimensión" : "Dimension"}
+                              <RequiredMark locale={locale} />
+                            </span>
                             <select
                               data-validation-field="dimension"
                               aria-required="true"
@@ -1953,8 +1969,10 @@ export function ApplicationEditor({
                             </select>
                           </label>
                           <label>
-                            {es ? "Riesgo o impacto" : "Risk or impact"}
-                            <RequiredMark locale={locale} />
+                            <span className="field-label">
+                              {es ? "Riesgo o impacto" : "Risk or impact"}
+                              <RequiredMark locale={locale} />
+                            </span>
                             <input
                               data-validation-field="name"
                               aria-required="true"
@@ -1966,10 +1984,12 @@ export function ApplicationEditor({
                             />
                           </label>
                           <label className="full-width">
-                            {es
-                              ? "Descripción concisa del riesgo"
-                              : "Concise risk description"}
-                            <RequiredMark locale={locale} />
+                            <span className="field-label">
+                              {es
+                                ? "Descripción concisa del riesgo"
+                                : "Concise risk description"}
+                              <RequiredMark locale={locale} />
+                            </span>
                             <LimitedTextarea
                               locale={locale}
                               data-validation-field="description"
@@ -2041,10 +2061,12 @@ export function ApplicationEditor({
                                     </p>
                                   ) : (
                                     <label>
-                                      {es
-                                        ? "Medida propuesta"
-                                        : "Proposed measure"}
-                                      <RequiredMark locale={locale} />
+                                      <span className="field-label">
+                                        {es
+                                          ? "Medida propuesta"
+                                          : "Proposed measure"}
+                                        <RequiredMark locale={locale} />
+                                      </span>
                                       <LimitedTextarea
                                         locale={locale}
                                         aria-required="true"
@@ -2157,8 +2179,10 @@ export function ApplicationEditor({
                                   updateRisk(ai, ri, { residual_severity: n }),
                               )}
                               <label>
-                                {es ? "Ubicación" : "Location"}
-                                <RequiredMark locale={locale} />
+                                <span className="field-label">
+                                  {es ? "Ubicación" : "Location"}
+                                  <RequiredMark locale={locale} />
+                                </span>
                                 <input
                                   data-validation-field="location"
                                   aria-required="true"
@@ -2171,10 +2195,12 @@ export function ApplicationEditor({
                                 />
                               </label>
                               <label>
-                                {es
-                                  ? "Costo estimado (USD)"
-                                  : "Estimated cost (USD)"}
-                                <RequiredMark locale={locale} />
+                                <span className="field-label">
+                                  {es
+                                    ? "Costo estimado (USD)"
+                                    : "Estimated cost (USD)"}
+                                  <RequiredMark locale={locale} />
+                                </span>
                                 <input
                                   data-validation-field="cost"
                                   aria-required="true"
@@ -2193,10 +2219,12 @@ export function ApplicationEditor({
                                 />
                               </label>
                               <label className="full-width">
-                                {es
-                                  ? "Responsable de la medida"
-                                  : "Person responsible for the measure"}
-                                <RequiredMark locale={locale} />
+                                <span className="field-label">
+                                  {es
+                                    ? "Responsable de la medida"
+                                    : "Person responsible for the measure"}
+                                  <RequiredMark locale={locale} />
+                                </span>
                                 <input
                                   data-validation-field="responsible"
                                   aria-required="true"
@@ -2330,10 +2358,12 @@ export function ApplicationEditor({
                     setPayload((p) => ({ ...p, truthful: e.target.checked }))
                   }
                 />
-                {es
-                  ? "Confirmo que la información refleja la propuesta que presento."
-                  : "I confirm that this information reflects the proposal I am submitting."}
-                <RequiredMark locale={locale} />
+                <span className="field-label">
+                  {es
+                    ? "Confirmo que la información refleja la propuesta que presento."
+                    : "I confirm that this information reflects the proposal I am submitting."}
+                  <RequiredMark locale={locale} />
+                </span>
               </label>
               <label className="check-row">
                 <input
@@ -2345,10 +2375,12 @@ export function ApplicationEditor({
                     setPayload((p) => ({ ...p, consent: e.target.checked }))
                   }
                 />
-                {es
-                  ? "He leído y acepto el aviso de privacidad de esta convocatoria."
-                  : "I have read and accept this call's privacy notice."}
-                <RequiredMark locale={locale} />
+                <span className="field-label">
+                  {es
+                    ? "He leído y acepto el aviso de privacidad de esta convocatoria."
+                    : "I have read and accept this call's privacy notice."}
+                  <RequiredMark locale={locale} />
+                </span>
               </label>
             </div>
           )}
@@ -2582,8 +2614,10 @@ export function ApplicationEditor({
               className="live-form"
             >
               <label>
-                {es ? "Tipo de anexo" : "Attachment type"}
-                <RequiredMark locale={locale} />
+                <span className="field-label">
+                  {es ? "Tipo de anexo" : "Attachment type"}
+                  <RequiredMark locale={locale} />
+                </span>
                 <select name="kind">
                   {[...new Set(["concept_signed", "other"])].map((k) => (
                     <option value={k} key={k}>
@@ -2601,8 +2635,10 @@ export function ApplicationEditor({
                 </select>
               </label>
               <label>
-                {es ? "Archivo (máximo 4 MB)" : "File (maximum 4 MB)"}
-                <RequiredMark locale={locale} />
+                <span className="field-label">
+                  {es ? "Archivo (máximo 4 MB)" : "File (maximum 4 MB)"}
+                  <RequiredMark locale={locale} />
+                </span>
                 <FileDropField
                   locale={locale}
                   accept=".pdf,.png,.jpg,.jpeg,.docx,.xlsx"

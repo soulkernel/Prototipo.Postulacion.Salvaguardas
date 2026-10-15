@@ -732,7 +732,10 @@ a {
 .required-mark {
   color: #9f2424;
   font-weight: 700;
+  white-space: nowrap;
 }
+.field-label { display: block; }
+.live-form .field-label > small { display: inline; }
 .auth-card .remember-choice,
 .live-form .remember-choice {
   display: flex;

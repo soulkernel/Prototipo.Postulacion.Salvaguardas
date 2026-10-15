@@ -60,9 +60,11 @@ export function CallAttachmentEditor({
             </header>
             <div className="live-grid">
               <label>
-                {es
-                  ? "Nombre del documento en español *"
-                  : "Document name in Spanish *"}
+                <span className="field-label">
+                  {es
+                    ? "Nombre del documento en español *"
+                    : "Document name in Spanish *"}
+                </span>
                 <input
                   value={r.label_es}
                   maxLength={200}
@@ -73,9 +75,11 @@ export function CallAttachmentEditor({
                 />
               </label>
               <label>
-                {es
-                  ? "Nombre del documento en inglés *"
-                  : "Document name in English *"}
+                <span className="field-label">
+                  {es
+                    ? "Nombre del documento en inglés *"
+                    : "Document name in English *"}
+                </span>
                 <input
                   value={r.label_en}
                   maxLength={200}

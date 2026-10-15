@@ -134,7 +134,9 @@ export function StaffInvitations({
         >
           <fieldset disabled={!!busy} className="live-fieldset live-grid">
             <label>
-              {es ? "Nombre completo *" : "Full name *"}
+              <span className="field-label">
+                {es ? "Nombre completo *" : "Full name *"}
+              </span>
               <input
                 name="full_name"
                 required
@@ -145,7 +147,9 @@ export function StaffInvitations({
               />
             </label>
             <label>
-              {es ? "Correo del destinatario *" : "Recipient email *"}
+              <span className="field-label">
+                {es ? "Correo del destinatario *" : "Recipient email *"}
+              </span>
               <input
                 name="email"
                 type="email"
@@ -162,7 +166,9 @@ export function StaffInvitations({
               </small>
             </label>
             <label>
-              {es ? "Funciones del usuario *" : "User responsibilities *"}
+              <span className="field-label">
+                {es ? "Funciones del usuario *" : "User responsibilities *"}
+              </span>
               <select
                 name="role"
                 value={selectedRole}

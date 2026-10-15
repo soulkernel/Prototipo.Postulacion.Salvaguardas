@@ -5,8 +5,7 @@ export function RequiredMark({ locale }: { locale: Locale }) {
       className="required-mark"
       aria-label={locale === "es" ? "Obligatorio" : "Required"}
     >
-      {" "}
-      *
+      {"\u00a0*"}
     </span>
   );
 }

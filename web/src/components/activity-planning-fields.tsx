@@ -49,8 +49,10 @@ export function ActivityPlanningFields({
           </h3>
           <div className="live-form">
             <label>
-              {es ? "Nombre de la actividad" : "Activity name"}
-              <RequiredMark locale={locale} />
+              <span className="field-label">
+                {es ? "Nombre de la actividad" : "Activity name"}
+                <RequiredMark locale={locale} />
+              </span>
               <input
                 data-validation-field="title"
                 value={activity.title}
@@ -61,10 +63,12 @@ export function ActivityPlanningFields({
               />
             </label>
             <label>
-              {es
-                ? "Descripción breve de la actividad"
-                : "Brief activity description"}
-              <RequiredMark locale={locale} />
+              <span className="field-label">
+                {es
+                  ? "Descripción breve de la actividad"
+                  : "Brief activity description"}
+                <RequiredMark locale={locale} />
+              </span>
               <LimitedTextarea
                 locale={locale}
                 data-validation-field="description"

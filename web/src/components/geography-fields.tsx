@@ -15,17 +15,19 @@ export function GeographyFields({
 }) {
   const es = locale === "es";
   const label = (text: string) => (
-    <>
+    <span className="field-label">
       {text}
       <RequiredMark locale={locale} />
-    </>
+    </span>
   );
   if (mode === "address") {
     const options = cities[c.province] || [];
     const custom = Boolean(c.city && !options.includes(c.city));
     return (
       <section role="group" className="activity-card full-width">
-        <h3 className="section-card-title">{es ? "Domicilio del proponente" : "Applicant address"}</h3>
+        <h3 className="section-card-title">
+          {es ? "Domicilio del proponente" : "Applicant address"}
+        </h3>
         <div className="live-grid">
           <label>
             {label(es ? "Provincia" : "Province")}
@@ -109,7 +111,8 @@ export function GeographyFields({
     });
   };
   return (
-    <section role="group"
+    <section
+      role="group"
       className="activity-card full-width"
       data-validation-field="project_islands"
     >

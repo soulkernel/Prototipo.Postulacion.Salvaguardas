@@ -157,7 +157,7 @@ function AccountControls({
                   : "Applications and account history will be preserved."}
           </p>
           <label>
-            {es ? "Motivo *" : "Reason *"}
+            <span className="field-label">{es ? "Motivo *" : "Reason *"}</span>
             <textarea
               name="reason"
               required
@@ -352,7 +352,9 @@ export function AcademicAccountForm({ es }: { es: boolean }) {
       {!state.ok ? (
         <form action={action} className="live-form">
           <label>
-            {es ? "Nombre completo *" : "Full name *"}
+            <span className="field-label">
+              {es ? "Nombre completo *" : "Full name *"}
+            </span>
             <input
               name="full_name"
               required
@@ -362,7 +364,9 @@ export function AcademicAccountForm({ es }: { es: boolean }) {
             />
           </label>
           <label>
-            {es ? "Correo electrónico *" : "Email *"}
+            <span className="field-label">
+              {es ? "Correo electrónico *" : "Email *"}
+            </span>
             <input
               name="email"
               type="email"

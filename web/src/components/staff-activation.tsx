@@ -132,7 +132,9 @@ export function StaffActivation({
           <form onSubmit={submit}>
             <input type="hidden" name="id" value={resolvedId} />
             <label>
-              {es ? "Nueva contraseña *" : "New password *"}
+              <span className="field-label">
+                {es ? "Nueva contraseña *" : "New password *"}
+              </span>
               <PasswordInput
                 locale={locale}
 
@@ -145,7 +147,9 @@ export function StaffActivation({
               />
             </label>
             <label>
-              {es ? "Repita la contraseña *" : "Repeat password *"}
+              <span className="field-label">
+                {es ? "Repita la contraseña *" : "Repeat password *"}
+              </span>
               <PasswordInput
                 locale={locale}
 

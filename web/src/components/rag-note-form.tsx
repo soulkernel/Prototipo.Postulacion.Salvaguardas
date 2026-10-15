@@ -158,7 +158,9 @@ export function RagNoteForm({
         })}
       />
       <label>
-        {es ? "Observación del técnico *" : "Reviewer observation *"}
+        <span className="field-label">
+          {es ? "Observación del técnico *" : "Reviewer observation *"}
+        </span>
         <textarea
           name="observation"
           value={observation}

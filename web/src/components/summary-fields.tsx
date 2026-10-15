@@ -52,8 +52,10 @@ export function SummaryFields({
       <div className="live-grid">
         {summarySections.map((s) => (
           <label key={s.key} data-validation-field={"summary:" + s.key}>
-            {es ? s.es : s.en}
-            <RequiredMark locale={locale} />
+            <span className="field-label">
+              {es ? s.es : s.en}
+              <RequiredMark locale={locale} />
+            </span>
             <small>{s.help[es ? 0 : 1]}</small>
             <textarea
               aria-required="true"

@@ -58,7 +58,8 @@ export function ProjectResultFields({
             </details>
           )}
           {value.map((r, i) => (
-            <section role="group"
+            <section
+              role="group"
               className="activity-card"
               key={r.id}
               data-validation-result={i + 1}
@@ -67,7 +68,9 @@ export function ProjectResultFields({
                 {es ? "Resultado" : "Result"} {i + 1}
               </h3>
               <label>
-                {es ? "Resultado esperado" : "Expected result"} *
+                <span className="field-label">
+                  {es ? "Resultado esperado" : "Expected result"} *
+                </span>
                 <LimitedTextarea
                   locale={es ? "es" : "en"}
                   data-validation-field="result"
@@ -82,10 +85,12 @@ export function ProjectResultFields({
                 />
               </label>
               <label>
-                {es
-                  ? "Objetivo específico asociado"
-                  : "Associated specific objective"}{" "}
-                *
+                <span className="field-label">
+                  {es
+                    ? "Objetivo específico asociado"
+                    : "Associated specific objective"}{" "}
+                  *
+                </span>
                 <select
                   data-validation-field="objective_id"
                   value={r.objective_id}
@@ -114,7 +119,9 @@ export function ProjectResultFields({
                 </select>
               </label>
               <label>
-                {es ? "Indicador" : "Indicator"} *
+                <span className="field-label">
+                  {es ? "Indicador" : "Indicator"} *
+                </span>
                 <input
                   data-validation-field="indicator"
                   maxLength={1000}
@@ -129,7 +136,9 @@ export function ProjectResultFields({
               </label>
               <div className="form-grid">
                 <label>
-                  {es ? "Meta preliminar" : "Preliminary target"} *
+                  <span className="field-label">
+                    {es ? "Meta preliminar" : "Preliminary target"} *
+                  </span>
                   <input
                     data-validation-field="target"
                     type="number"
@@ -147,7 +156,9 @@ export function ProjectResultFields({
                   />
                 </label>
                 <label>
-                  {es ? "Unidad de medida" : "Unit of measure"} *
+                  <span className="field-label">
+                    {es ? "Unidad de medida" : "Unit of measure"} *
+                  </span>
                   <select
                     data-validation-field="unit"
                     value={r.unit}
@@ -168,7 +179,9 @@ export function ProjectResultFields({
               </div>
               {r.unit === "other" && (
                 <label>
-                  {es ? "Especifique la unidad" : "Specify the unit"} *
+                  <span className="field-label">
+                    {es ? "Especifique la unidad" : "Specify the unit"} *
+                  </span>
                   <input
                     data-validation-field="other_unit"
                     maxLength={100}
@@ -185,7 +198,9 @@ export function ProjectResultFields({
                 </p>
               )}
               <label>
-                {es ? "Evidencia prevista" : "Expected evidence"} *
+                <span className="field-label">
+                  {es ? "Evidencia prevista" : "Expected evidence"} *
+                </span>
                 <input
                   data-validation-field="evidence"
                   maxLength={1000}

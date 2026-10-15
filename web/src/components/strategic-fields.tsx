@@ -194,7 +194,9 @@ export function StrategicFields({
               }
             >
               <div className="strategic-objective-text">
-                <label htmlFor={`objective-${o.id}`}>{title} *</label>
+                <label htmlFor={`objective-${o.id}`}>
+                  <span className="field-label">{title} *</span>
+                </label>
                 <LimitedTextarea
                   locale={locale}
                   id={`objective-${o.id}`}
@@ -215,9 +217,11 @@ export function StrategicFields({
                       className="alignment-benefit-label"
                       htmlFor={`benefit-${o.id}`}
                     >
-                      {es
-                        ? "Contribución o beneficio esperado *"
-                        : "Expected contribution or benefit *"}
+                      <span className="field-label">
+                        {es
+                          ? "Contribución o beneficio esperado *"
+                          : "Expected contribution or benefit *"}
+                      </span>
                     </label>
                     <LimitedTextarea
                       locale={locale}
