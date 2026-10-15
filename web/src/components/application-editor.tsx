@@ -714,6 +714,14 @@ export function ApplicationEditor({
   const fieldIssue = (key: string) =>
     currentIssues.missing.includes(key) || currentIssues.invalid.includes(key);
   const issueLabel = (key: string) => {
+    if (key === "ruc")
+      return es
+        ? "RUC de la organización: ingrese 13 dígitos"
+        : "Organization RUC: enter 13 digits";
+    if (key === "residence_number")
+      return es
+        ? "Número de credencial de residencia permanente"
+        : "Permanent residence card number";
     if (key.startsWith("budget_"))
       return es
         ? "Presupuesto anual: revise años, partidas y totales"

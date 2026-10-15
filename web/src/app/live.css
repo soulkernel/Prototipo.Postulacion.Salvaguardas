@@ -1210,3 +1210,5 @@ input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="
 .live-title.module-heading > div { width: 100%; }
 
 .live-shell [role="alert"]:not(.error):not(.auth-error)::before { content: "⚠ "; }
+.validation-field-message { color: #a3332b !important; }
+.validation-field-message::before { content: "⚠ "; }
