@@ -10,8 +10,8 @@ import { getLocale } from "@/lib/locale";
 import { Shell } from "@/components/shell";
 import { UploadForm } from "@/components/upload-form";
 import { ReceiptDownload } from "@/components/receipt-download";
-import { statusLabel } from "@/lib/fields";
-import { safeReturnPath, riskScore, riskLevel } from "@/lib/domain";
+import { statusLabel, riskLevelLabel } from "@/lib/fields";
+import { safeReturnPath, riskScore } from "@/lib/domain";
 import { strategicText } from "@/lib/strategic-alignment";
 import type { Call } from "@/lib/domain";
 import {
@@ -290,20 +290,29 @@ export default async function ReviewPage({
             {activity.risks.map((r) => (
               <div className="live-risk" key={r.id}>
                 <h4>
-                  {r.name} · {r.dimension}
+                  {r.name} ·{" "}
+                  {r.dimension === "environmental"
+                    ? es
+                      ? "Riesgo ambiental"
+                      : "Environmental risk"
+                    : es
+                      ? "Riesgo social"
+                      : "Social risk"}
                 </h4>
                 <p>{r.description}</p>
                 <p>
                   {es ? "Riesgo inicial" : "Initial risk"}:{" "}
                   {riskScore(r.probability, r.severity)} (
-                  {riskLevel(riskScore(r.probability, r.severity))})
+                  {riskLevelLabel(riskScore(r.probability, r.severity), locale)}
+                  )
                   {submittedStage === 2 && (
                     <>
                       {" "}
-                      / {es ? "Residual" : "Residual"}:{" "}
+                      / {es ? "Riesgo residual" : "Residual risk"}:{" "}
                       {riskScore(r.residual_probability, r.residual_severity)} (
-                      {riskLevel(
+                      {riskLevelLabel(
                         riskScore(r.residual_probability, r.residual_severity),
+                        locale,
                       )}
                       )
                     </>

@@ -58,6 +58,19 @@ import {
 } from "../src/lib/domain";
 import { csvCell, validateFile } from "../src/lib/files";
 import { normalizePhone } from "../src/lib/phone";
+import { riskLevelLabel } from "../src/lib/fields";
+test("risk presentation translates all score bands without changing thresholds", () => {
+  for (const [score, es, en] of [
+    [null, "Sin completar", "Incomplete"],
+    [4, "Bajo", "Low"],
+    [9, "Medio", "Medium"],
+    [15, "Alto", "High"],
+    [25, "Muy alto", "Very high"],
+  ] as const) {
+    assert.equal(riskLevelLabel(score, "es"), es);
+    assert.equal(riskLevelLabel(score, "en"), en);
+  }
+});
 import { stepIssues } from "../src/lib/step-validation";
 import { geographyIssues } from "../src/lib/geography";
 import { emptySummary, projectSummary } from "../src/lib/summary";

@@ -257,6 +257,26 @@ test("attachment definitions require formats, bilingual names and coherent condi
     ),
     "Certificate",
   );
+  const optional = {
+    required_attachments: [],
+    attachment_requirements: [r as (typeof legacy)[number]],
+  };
+  assert.equal(attachmentLabel(optional, "attachment_1", "es"), "Certificado");
+  assert.equal(
+    attachmentLabel(optional, "concept_signed", "es"),
+    "Nota conceptual firmada electrónicamente",
+  );
+  assert.equal(
+    attachmentLabel(optional, "matrix_signed", "en"),
+    "Electronically signed environmental and social assessment",
+  );
+  assert.equal(attachmentLabel(optional, "other", "es"), "Otro anexo");
+  assert.equal(attachmentLabel(optional, "agreement", "en"), "Agreement");
+  assert.equal(
+    attachmentLabel(optional, "Certificado histórico", "es"),
+    "Certificado histórico",
+  );
+  assert.equal(requiredAttachments(optional).length, 0);
 });
 
 test("required uploads enforce format and embedded signatures, recheck the latest file, and preserve manual notarization review", async () => {

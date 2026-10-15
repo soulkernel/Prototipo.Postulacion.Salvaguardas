@@ -1,4 +1,15 @@
-import type { Concept, Locale } from "./domain";
+import { riskLevel, type Concept, type Locale } from "./domain";
+
+export function riskLevelLabel(score: number | null, locale: Locale) {
+  const labels = {
+    incomplete: ["Sin completar", "Incomplete"],
+    low: ["Bajo", "Low"],
+    medium: ["Medio", "Medium"],
+    high: ["Alto", "High"],
+    very_high: ["Muy alto", "Very high"],
+  };
+  return labels[riskLevel(score)][locale === "es" ? 0 : 1];
+}
 type Field = {
   key: keyof Concept;
   es: string;

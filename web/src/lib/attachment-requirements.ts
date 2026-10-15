@@ -100,18 +100,8 @@ export function requiredAttachments(
     (id) =>
       rules.attachment_requirements?.find((r) => r.id === id) ?? {
         id,
-        label_es:
-          id === "concept_signed"
-            ? "Nota conceptual firmada electrónicamente"
-            : id === "matrix_signed"
-              ? "Evaluación A&S firmada electrónicamente"
-              : id,
-        label_en:
-          id === "concept_signed"
-            ? "Electronically signed concept note"
-            : id === "matrix_signed"
-              ? "Electronically signed E&S assessment"
-              : id,
+        label_es: attachmentLabel(rules, id, "es"),
+        label_en: attachmentLabel(rules, id, "en"),
         formats: ["concept_signed", "matrix_signed"].includes(id)
           ? ["pdf"]
           : [...attachmentFormats],
@@ -128,8 +118,24 @@ export function attachmentLabel(
   id: string,
   locale: "es" | "en",
 ) {
-  const r = requiredAttachments(rules).find((r) => r.id === id);
-  return r?.[locale === "es" ? "label_es" : "label_en"] ?? id;
+  const r = rules.attachment_requirements?.find((r) => r.id === id);
+  const builtIn: Record<string, [string, string]> = {
+    concept_signed: [
+      "Nota conceptual firmada electrónicamente",
+      "Electronically signed concept note",
+    ],
+    matrix_signed: [
+      "Evaluación ambiental y social firmada electrónicamente",
+      "Electronically signed environmental and social assessment",
+    ],
+    other: ["Otro anexo", "Other attachment"],
+    agreement: ["Convenio", "Agreement"],
+  };
+  return (
+    r?.[locale === "es" ? "label_es" : "label_en"] ??
+    builtIn[id]?.[locale === "es" ? 0 : 1] ??
+    id
+  );
 }
 export function attachmentAccept(r: AttachmentRequirement) {
   return r.formats
