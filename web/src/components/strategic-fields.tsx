@@ -211,36 +211,6 @@ export function StrategicFields({
                   }
                   onChange={(e) => update(o.id, { text: e.target.value })}
                 />
-                {o.kind === "general" && (
-                  <>
-                    <label
-                      className="alignment-benefit-label"
-                      htmlFor={`benefit-${o.id}`}
-                    >
-                      <span className="field-label">
-                        {es
-                          ? "Contribución o beneficio esperado *"
-                          : "Expected contribution or benefit *"}
-                      </span>
-                    </label>
-                    <LimitedTextarea
-                      locale={locale}
-                      id={`benefit-${o.id}`}
-                      aria-required="true"
-                      rows={2}
-                      maxLength={600}
-                      value={o.contribution}
-                      placeholder={
-                        es
-                          ? "¿Qué resultado aportará a las referencias elegidas?"
-                          : "What result will contribute to the selected references?"
-                      }
-                      onChange={(e) =>
-                        update(o.id, { contribution: e.target.value })
-                      }
-                    />
-                  </>
-                )}
               </div>
               {o.kind === "general" && (
                 <div className="strategic-objective-selectors">
@@ -259,6 +229,33 @@ export function StrategicFields({
                       ? "Los ODS relacionados se muestran primero. Usted confirma cuáles corresponden."
                       : "Related SDGs are shown first. You confirm which apply."}
                   </small>
+                </div>
+              )}
+              {o.kind === "general" && (
+                <div className="strategic-objective-text">
+                  <label htmlFor={`benefit-${o.id}`}>
+                    <span className="field-label">
+                      {es
+                        ? "Contribución o beneficio esperado *"
+                        : "Expected contribution or benefit *"}
+                    </span>
+                  </label>
+                  <LimitedTextarea
+                    locale={locale}
+                    id={`benefit-${o.id}`}
+                    aria-required="true"
+                    rows={3}
+                    maxLength={600}
+                    value={o.contribution}
+                    placeholder={
+                      es
+                        ? "¿Qué resultado aportará a las referencias elegidas?"
+                        : "What result will contribute to the selected references?"
+                    }
+                    onChange={(e) =>
+                      update(o.id, { contribution: e.target.value })
+                    }
+                  />
                 </div>
               )}
             </div>
