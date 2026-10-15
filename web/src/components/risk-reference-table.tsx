@@ -17,8 +17,8 @@ export function RiskReferenceTable({
       <table>
         <caption>
           {es
-            ? "Matriz de identificación y evaluación inicial"
-            : "Initial risk identification and assessment"}
+            ? "Normas de desempeño y evaluación de riesgos"
+            : "Performance standards and risk assessment"}
         </caption>
         <thead>
           <tr>

@@ -1756,18 +1756,20 @@ export function ApplicationEditor({
                   : "Identify and assess risks for each activity. Mitigation and the ESMP are completed in Phase 2. If you identify no risks, explain why."}
               </p>
               <RiskOverview payload={payload} locale={locale} />
-              <RiskReferenceTable
-                payload={payload}
-                locale={locale}
-                references={[
-                  ...new Set(
-                    catalog.map((c) => c.normative_reference).filter(Boolean),
-                  ),
-                ]}
-                onChange={(ai, ri, performance_standard) =>
-                  updateRisk(ai, ri, { performance_standard })
-                }
-              />
+              {application.stage === 2 && (
+                <RiskReferenceTable
+                  payload={payload}
+                  locale={locale}
+                  references={[
+                    ...new Set(
+                      catalog.map((c) => c.normative_reference).filter(Boolean),
+                    ),
+                  ]}
+                  onChange={(ai, ri, performance_standard) =>
+                    updateRisk(ai, ri, { performance_standard })
+                  }
+                />
+              )}
               {payload.activities.map((activity, ai) => (
                 <section
                   className="activity-card"
