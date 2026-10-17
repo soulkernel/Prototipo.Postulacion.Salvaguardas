@@ -55,6 +55,43 @@ export const cities: Record<string, string[]> = {
   Tungurahua: ["Ambato"],
   "Zamora Chinchipe": ["Zamora"],
 };
+type ApplicantAddress = {
+  applicant_type?: string;
+  province?: string;
+  city?: string;
+};
+export const organizationProvince = "Galápagos";
+export function organizationProvinceIssue(c: ApplicantAddress) {
+  return (
+    c.applicant_type === "organization" && c.province !== organizationProvince
+  );
+}
+// The catalogue is intentionally partial: preserve the existing free-text option
+// for localities not listed, but reject a known city in another province.
+export function cityMatchesProvince(city: string, province: string) {
+  const value = city.trim();
+  if (!value) return false;
+  if (cities[province]?.includes(value)) return true;
+  return !Object.values(cities).some((options) => options.includes(value));
+}
+export function provinceAddressPatch(c: ApplicantAddress, province: string) {
+  const city = c.city || "";
+  const compatible =
+    cities[province]?.includes(city.trim()) ||
+    (c.province === province && cityMatchesProvince(city, province));
+  return { province, city: compatible ? city : "" };
+}
+export function applicantTypeAddressPatch(
+  c: ApplicantAddress,
+  applicantType: string,
+) {
+  return {
+    applicant_type: applicantType,
+    ...(applicantType === "organization"
+      ? provinceAddressPatch(c, organizationProvince)
+      : {}),
+  };
+}
 export const islands = [
   "Todo Galápagos",
   "San Cristóbal",
@@ -65,14 +102,21 @@ export const islands = [
   "Otras islas",
 ];
 export function geographyIssues(c: {
+  applicant_type?: string;
   province?: string;
   city?: string;
   project_islands?: string[];
   other_islands?: string;
 }) {
   const errors: string[] = [];
-  if (!c.province || !provinces.includes(c.province)) errors.push("province");
-  if (!c.city?.trim()) errors.push("city");
+  if (
+    !c.province ||
+    !provinces.includes(c.province) ||
+    organizationProvinceIssue(c)
+  )
+    errors.push("province");
+  if (!c.city?.trim() || !cityMatchesProvince(c.city, c.province || ""))
+    errors.push("city");
   if (
     !c.project_islands?.length ||
     c.project_islands.some((i) => !islands.includes(i)) ||

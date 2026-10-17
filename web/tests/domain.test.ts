@@ -58,6 +58,162 @@ import {
 } from "../src/lib/domain";
 import { csvCell, validateFile } from "../src/lib/files";
 import { normalizePhone } from "../src/lib/phone";
+import {
+  grantCategoryAllowed,
+  individualGrantIssue,
+  validateComplete,
+} from "../src/lib/domain";
+import { stepIssues } from "../src/lib/step-validation";
+import { financialFeedback } from "../src/lib/financial-feedback";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { GrantCategorySelect } from "../src/components/grant-category-select";
+
+test("M01 individual small-only rule preserves selections and amounts across type changes and reopened drafts", () => {
+  const rules: Rules = {
+    categories: [
+      {
+        id: "small",
+        label_es: "Pequeña",
+        label_en: "Small",
+        min_amount: 0,
+        max_amount: 100000,
+        max_months: 12,
+        cofinance_percent: 0,
+      },
+      {
+        id: "medium",
+        label_es: "Mediana",
+        label_en: "Medium",
+        min_amount: 100000.01,
+        max_amount: 250000,
+        max_months: 24,
+        cofinance_percent: 10,
+      },
+      {
+        id: "large",
+        label_es: "Grande",
+        label_en: "Large",
+        min_amount: 250000.01,
+        max_amount: null,
+        max_months: 36,
+        cofinance_percent: 25,
+      },
+    ],
+    applicant_types: ["individual", "organization"],
+    summary_word_limit: 500,
+    max_admin_percent: 10,
+    required_attachments: [],
+    privacy_es: "",
+    privacy_en: "",
+  };
+  for (const [category, amount] of [
+    ["small", 100000],
+    ["medium", 150000],
+    ["large", 350000],
+  ] as const) {
+    const p = emptyPayload();
+    Object.assign(p.concept, {
+      applicant_type: "organization",
+      category_id: category,
+      requested_amount: amount,
+      cofinance_amount: amount * 0.25,
+      admin_cost: 0,
+    });
+    assert.equal(
+      grantCategoryAllowed(p.concept.applicant_type, category),
+      true,
+    );
+    assert.equal(individualGrantIssue(p.concept), null);
+    const original = structuredClone(p);
+    p.concept.applicant_type = "individual";
+    const expected = category === "small" ? null : "category_id";
+    assert.equal(individualGrantIssue(p.concept), expected);
+    assert.equal(
+      stepIssues(p, rules, 1, 0).invalid.includes("category_id"),
+      category !== "small",
+    );
+    assert.equal(
+      validateComplete(p, rules, 1).includes("category_id"),
+      category !== "small",
+    );
+    const markup = renderToStaticMarkup(
+      createElement(GrantCategorySelect, {
+        applicantType: p.concept.applicant_type,
+        value: category,
+        rules,
+        locale: "es",
+        onChange: () => {},
+      }),
+    );
+    for (const id of ["small", "medium", "large"]) {
+      const option =
+        markup.match(new RegExp(`<option[^>]*value="${id}"[^>]*>`))?.[0] ?? "";
+      assert.ok(option);
+      assert.equal(option.includes('disabled=""'), id !== "small");
+      assert.equal(option.includes('selected=""'), id === category);
+    }
+    const reopened = JSON.parse(JSON.stringify(p));
+    assert.equal(individualGrantIssue(reopened.concept), expected);
+    assert.equal(reopened.concept.category_id, category);
+    assert.equal(reopened.concept.requested_amount, amount);
+    p.concept.applicant_type = "organization";
+    assert.equal(individualGrantIssue(p.concept), null);
+    assert.deepEqual(p, original);
+    assert.doesNotMatch(
+      renderToStaticMarkup(
+        createElement(GrantCategorySelect, {
+          applicantType: "organization",
+          value: category,
+          rules,
+          locale: "en",
+          onChange: () => {},
+        }),
+      ),
+      /disabled=/,
+    );
+  }
+  const p = emptyPayload();
+  Object.assign(p.concept, {
+    applicant_type: "individual",
+    category_id: "small",
+    requested_amount: 100000.01,
+  });
+  const permissive = {
+    ...rules,
+    categories: [{ ...rules.categories[0], max_amount: 250000 }],
+  };
+  assert.equal(
+    financialErrors(p.concept, permissive).requested_amount,
+    "INDIVIDUAL_SMALL_ONLY",
+  );
+  assert.match(
+    financialFeedback(p.concept, permissive, "en", {}, null, true)
+      .requested_amount.text,
+    /100,000/,
+  );
+  const restricted = {
+    ...rules,
+    categories: [{ ...rules.categories[0], max_amount: 50000 }],
+  };
+  p.concept.requested_amount = 50001;
+  assert.equal(
+    financialErrors(p.concept, restricted).requested_amount,
+    "CATEGORY_AMOUNT",
+  );
+  assert.equal(
+    renderToStaticMarkup(
+      createElement(GrantCategorySelect, {
+        applicantType: "individual",
+        value: "",
+        rules: { ...rules, categories: [rules.categories[1]] },
+        locale: "es",
+        onChange: () => {},
+      }),
+    ).includes('value="small"'),
+    false,
+  );
+});
 import { riskLevelLabel } from "../src/lib/fields";
 test("risk presentation translates all score bands without changing thresholds", () => {
   for (const [score, es, en] of [
@@ -71,8 +227,140 @@ test("risk presentation translates all score bands without changing thresholds",
     assert.equal(riskLevelLabel(score, "en"), en);
   }
 });
-import { stepIssues } from "../src/lib/step-validation";
 import { geographyIssues } from "../src/lib/geography";
+import {
+  applicantTypeAddressPatch,
+  provinceAddressPatch,
+  organizationProvinceIssue,
+  provinces,
+  cities,
+} from "../src/lib/geography";
+import { GeographyFields } from "../src/components/geography-fields";
+test("M03 restricts organization province, preserves compatible locality and never rewrites prior input", () => {
+  const base = {
+    ...emptyPayload().concept,
+    applicant_type: "individual",
+    province: "Pichincha",
+    city: "Quito",
+    title: "Título conservado",
+    applicant_name: "Nombre conservado",
+    contact_name: "Contacto conservado",
+  };
+  const original = structuredClone(base);
+  const org = { ...base, ...applicantTypeAddressPatch(base, "organization") };
+  assert.equal(org.province, "Galápagos");
+  assert.equal(org.city, "");
+  assert.deepEqual(base, original);
+  for (const field of [
+    "title",
+    "applicant_name",
+    "contact_name",
+    "address",
+    "email",
+    "ruc",
+  ] as const)
+    assert.equal(org[field], base[field]);
+  const compatible = {
+    ...base,
+    province: "Galápagos",
+    city: "Puerto Villamil",
+  };
+  assert.equal(
+    applicantTypeAddressPatch(compatible, "organization").city,
+    "Puerto Villamil",
+  );
+  assert.equal(
+    applicantTypeAddressPatch(
+      { ...compatible, city: "Localidad rural de Galápagos" },
+      "organization",
+    ).city,
+    "Localidad rural de Galápagos",
+  );
+  const back = {
+    ...org,
+    city: "Puerto Ayora",
+    ...applicantTypeAddressPatch(
+      { ...org, city: "Puerto Ayora" },
+      "individual",
+    ),
+  };
+  assert.equal(back.province, "Galápagos");
+  assert.equal(back.city, "Puerto Ayora");
+  for (const province of provinces) {
+    const c = {
+      ...base,
+      province,
+      city: cities[province][0],
+      project_islands: ["Santa Cruz"],
+    };
+    assert.equal(geographyIssues(c).includes("province"), false);
+    assert.equal(geographyIssues(c).includes("city"), false);
+  }
+  assert.equal(
+    geographyIssues({ ...org, province: "Guayas", city: "Guayaquil" }).includes(
+      "province",
+    ),
+    true,
+  );
+  assert.equal(
+    geographyIssues({ ...org, city: "Quito" }).includes("city"),
+    true,
+  );
+  assert.equal(
+    geographyIssues({ ...org, city: "Puerto Ayora" }).includes("city"),
+    false,
+  );
+  assert.equal(provinceAddressPatch(base, "Guayas").city, "");
+  assert.equal(
+    provinceAddressPatch({ ...base, city: "Guayaquil" }, "Guayas").city,
+    "Guayaquil",
+  );
+  const markup = renderToStaticMarkup(
+    createElement(GeographyFields, {
+      concept: org,
+      locale: "es",
+      mode: "address",
+      onChange: () => {},
+    }),
+  );
+  const provinceSelect =
+    markup.match(
+      /<select[^>]*data-validation-field="province"[\s\S]*?<\/select>/,
+    )?.[0] || "";
+  assert.match(provinceSelect, /disabled=""/);
+  assert.match(provinceSelect, /selected="">Galápagos/);
+  assert.doesNotMatch(provinceSelect, /Pichincha|Guayas/);
+  const citySelect =
+    markup.match(
+      /<select[^>]*data-validation-field="city"[\s\S]*?<\/select>/,
+    )?.[0] || "";
+  assert.doesNotMatch(citySelect, /disabled=""/);
+  assert.match(citySelect, /Puerto Ayora/);
+  assert.doesNotMatch(citySelect, />Quito</);
+  const legacy = { ...base, applicant_type: "organization" };
+  const before = structuredClone(legacy);
+  assert.match(
+    renderToStaticMarkup(
+      createElement(GeographyFields, {
+        concept: legacy,
+        locale: "es",
+        mode: "address",
+        onChange: () => {},
+      }),
+    ),
+    /valor anterior, requiere corrección/,
+  );
+  assert.deepEqual(legacy, before);
+  assert.equal(organizationProvinceIssue(legacy), true);
+  const defaults = applicantDefaults(legacy, "fallback@example.test", [
+    "organization",
+    "individual",
+  ]);
+  assert.equal(defaults.province, "Galápagos");
+  assert.equal(defaults.city, "");
+  assert.equal(defaults.applicant_name, legacy.applicant_name);
+  assert.deepEqual(legacy, before);
+});
 import { emptySummary, projectSummary } from "../src/lib/summary";
 import {
   sessionCookieOptions,

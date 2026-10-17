@@ -1,7 +1,7 @@
 "use client";
 import { narrativeTextForEditing } from "@/lib/concept-presentation";
 import { ConceptReview } from "./concept-review";
-import { RemoveButton } from "./remove-button";
+import { ConfirmRemoveButton } from "./confirm-remove-button";
 import { RequiredAttachmentUploads } from "./required-attachment-uploads";
 import { attachmentLabel } from "@/lib/attachment-requirements";
 import { FileDropField } from "./file-drop-field";
@@ -22,6 +22,7 @@ import { ActivityPlanningFields } from "./activity-planning-fields";
 import { PartnerFields } from "./partner-fields";
 import { partnerText } from "@/lib/partners";
 import { RequiredMark } from "./required-mark";
+import { GrantCategorySelect } from "./grant-category-select";
 import { CompletionFeedback } from "./completion-feedback";
 import {
   completionGuidance,
@@ -30,6 +31,7 @@ import {
 import { submissionProgress } from "@/lib/submission-progress";
 import { stepIssues } from "@/lib/step-validation";
 import { GeographyFields } from "./geography-fields";
+import { applicantTypeAddressPatch } from "@/lib/geography";
 import { SummaryFields } from "./summary-fields";
 import { StrategicFields } from "./strategic-fields";
 import { ProjectResultFields } from "./project-result-fields";
@@ -112,6 +114,14 @@ const levels = {
   },
 };
 function message(code: string, es: boolean) {
+  if (code.includes("GLF_ORGANIZATION_PROVINCE"))
+    return es
+      ? "Para una organización, la provincia del domicilio debe ser Galápagos. Corrija la provincia y revise la ciudad o localidad antes de guardar."
+      : "For an organization, the address province must be Galápagos. Correct the province and review the city or locality before saving.";
+  if (code.includes("GLF_INDIVIDUAL_SMALL_ONLY"))
+    return es
+      ? "Las personas naturales solo pueden solicitar subvención pequeña, hasta USD 100.000. Revise el tipo de solicitante, la categoría y el monto."
+      : "Individuals may only apply for a small grant, up to USD 100,000. Check the applicant type, category and amount.";
   if (code.includes("ATTACHMENT_FORMAT"))
     return es
       ? "El formato de este anexo no está permitido. Revise los formatos indicados junto al documento y vuelva a cargarlo."
@@ -408,7 +418,15 @@ export function ApplicationEditor({
     };
   }, [dirty, es]);
   const updateConcept = (key: keyof Concept, value: string | number | null) =>
-    setPayload((p) => ({ ...p, concept: { ...p.concept, [key]: value } }));
+    setPayload((p) => ({
+      ...p,
+      concept: {
+        ...p.concept,
+        ...(key === "applicant_type"
+          ? applicantTypeAddressPatch(p.concept, String(value || ""))
+          : { [key]: value }),
+      },
+    }));
   const updateActivity = (
     index: number,
     patch: Partial<Payload["activities"][number]>,
@@ -1112,7 +1130,7 @@ export function ApplicationEditor({
                   : "Save your draft to resume it from your account. Complete all applicable sections before submitting."}
               </p>
               {step === 0 && (
-                <div className="live-grid">
+                <div className="live-grid applicant-category-fields">
                   <label>
                     <span className="field-label">
                       {es ? "Tipo de solicitante" : "Applicant type"}
@@ -1147,23 +1165,13 @@ export function ApplicationEditor({
                       {es ? "Categoría de subvención" : "Grant category"}
                       <RequiredMark locale={locale} />
                     </span>
-                    <select
-                      aria-required="true"
-                      data-validation-field="category_id"
+                    <GrantCategorySelect
+                      applicantType={payload.concept.applicant_type}
                       value={payload.concept.category_id}
-                      onChange={(e) =>
-                        updateConcept("category_id", e.target.value)
-                      }
-                    >
-                      <option value="">{es ? "Seleccione" : "Select"}</option>
-                      {rules.categories.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {es ? c.label_es : c.label_en} · USD{" "}
-                          {c.min_amount.toLocaleString(locale)}–
-                          {c.max_amount?.toLocaleString(locale) || "∞"}
-                        </option>
-                      ))}
-                    </select>
+                      rules={rules}
+                      locale={locale}
+                      onChange={(value) => updateConcept("category_id", value)}
+                    />
                   </label>
                 </div>
               )}
@@ -1375,22 +1383,50 @@ export function ApplicationEditor({
                       }
                       locale={locale}
                       onChange={(value) =>
-                        setPayload((p) => ({
-                          ...p,
-                          activities: p.activities.map((a) => ({
-                            ...a,
-                            objective_ids: a.objective_ids?.filter((id) =>
-                              value.objectives.some(
-                                (o) => o.id === id && o.kind === "specific",
-                              ),
-                            ),
-                          })),
-                          concept: {
+                        setPayload((p) => {
+                          const specificIds = new Set(
+                            value.objectives
+                              .filter((o) => o.kind === "specific")
+                              .map((o) => o.id),
+                          );
+                          const removedIds = new Set(
+                            p.concept.strategic_alignment?.objectives
+                              .filter(
+                                (o) =>
+                                  o.kind === "specific" &&
+                                  !specificIds.has(o.id),
+                              )
+                              .map((o) => o.id),
+                          );
+                          const concept = {
                             ...p.concept,
                             strategic_alignment: value,
+                            project_results: p.concept.project_results?.map(
+                              (r) => ({
+                                ...r,
+                                objective_id: removedIds.has(r.objective_id)
+                                  ? ""
+                                  : r.objective_id,
+                              }),
+                            ),
                             ...strategicText(value, locale),
-                          },
-                        }))
+                          };
+                          return {
+                            ...p,
+                            activities: p.activities.map((a) => ({
+                              ...a,
+                              objective_ids: a.objective_ids?.filter((id) =>
+                                specificIds.has(id),
+                              ),
+                            })),
+                            concept: {
+                              ...concept,
+                              ...(removedIds.size && concept.project_results
+                                ? { results: resultText(concept, locale) }
+                                : {}),
+                            },
+                          };
+                        })
                       }
                     />
                   ) : field.key === "results" ? (
@@ -1866,9 +1902,15 @@ export function ApplicationEditor({
                               </>
                             )}
                           </h4>
-                          <RemoveButton
-                            type="button"
-                            onClick={() =>
+                          <ConfirmRemoveButton
+                            locale={locale}
+                            element={`${es ? "Evaluación de riesgo" : "Risk assessment"} ${ai + 1}.${ri + 1}: ${risk.name || "—"} · ${activity.title}`}
+                            consequence={
+                              es
+                                ? "Se eliminarán la evaluación de este riesgo en esta actividad, sus calificaciones y sus medidas. Se conservarán la actividad, el riesgo potencial registrado y las evaluaciones en otras actividades."
+                                : "This activity's risk assessment, scores and measures will be removed. The activity, registered potential risk and assessments in other activities will be kept."
+                            }
+                            onConfirm={() =>
                               updateActivity(ai, {
                                 risks: activity.risks.filter(
                                   (_, i) => i !== ri,
@@ -2090,10 +2132,11 @@ export function ApplicationEditor({
                                       />
                                     </label>
                                   )}
-                                  <RemoveButton
-                                    type="button"
+                                  <ConfirmRemoveButton
+                                    locale={locale}
+                                    element={`${es ? "Medida" : "Measure"} ${mi + 1}: ${m.catalog_id ? catalog.find((c) => c.id === m.catalog_id)?.[es ? "label_es" : "label_en"] || m.catalog_id : m.text || "—"} · ${risk.name}`}
                                     aria-label={`${es ? "Quitar medida" : "Remove measure"} ${mi + 1} · ${risk.name}`}
-                                    onClick={() =>
+                                    onConfirm={() =>
                                       updateRisk(ai, ri, {
                                         measures: risk.measures.filter(
                                           (_, i) => i !== mi,

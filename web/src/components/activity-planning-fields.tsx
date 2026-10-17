@@ -1,5 +1,5 @@
 "use client";
-import { RemoveButton } from "./remove-button";
+import { ConfirmRemoveButton } from "./confirm-remove-button";
 import { LimitedTextarea } from "./limited-textarea";
 import type { Payload, Locale } from "@/lib/domain";
 import { newActivity } from "@/lib/domain";
@@ -138,10 +138,16 @@ export function ActivityPlanningFields({
                   : "This activity already has associated risks. If you change its content, review its screening too. To remove it, first remove its associated risks in the screening."}
               </p>
             )}
-            <RemoveButton
-              type="button"
+            <ConfirmRemoveButton
+              locale={locale}
+              element={`${es ? "Actividad" : "Activity"} ${i + 1}: ${activity.title || "—"}`}
+              consequence={
+                es
+                  ? "Se eliminarán esta actividad, su descripción y sus vínculos con objetivos. Los objetivos se conservarán."
+                  : "This activity, its description and its objective links will be removed. Objectives will be kept."
+              }
               disabled={activity.risks.length > 0}
-              onClick={() =>
+              onConfirm={() =>
                 onChange(payload.activities.filter((a) => a.id !== activity.id))
               }
               aria-label={`${es ? "Quitar actividad" : "Remove activity"} ${i + 1}`}

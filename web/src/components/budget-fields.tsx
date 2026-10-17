@@ -1,5 +1,5 @@
 "use client";
-import { RemoveButton } from "./remove-button";
+import { ConfirmRemoveButton } from "./confirm-remove-button";
 import { useState, useEffect } from "react";
 import {
   budgetCategories,
@@ -216,9 +216,15 @@ export function BudgetFields({
               ? "Si la partida mezcla conceptos, sepárela para identificar correctamente la remuneración."
               : "Split mixed lines to identify remuneration correctly."}
           </small>
-          <RemoveButton
-            type="button"
-            onClick={() => {
+          <ConfirmRemoveButton
+            locale={es ? "es" : "en"}
+            element={`${es ? "Partida" : "Budget line"} ${i + 1}: ${l.description || "—"}`}
+            consequence={
+              es
+                ? "Se eliminará esta partida y sus importes. Los totales del presupuesto se recalcularán con las partidas restantes."
+                : "This budget line and its amounts will be removed. Budget totals will be recalculated from the remaining lines."
+            }
+            onConfirm={() => {
               const next = Object.fromEntries(
                 Object.entries(invalid).filter(([k]) => !k.startsWith(l.id)),
               );

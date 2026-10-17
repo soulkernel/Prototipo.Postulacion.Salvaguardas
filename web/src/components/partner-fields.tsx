@@ -1,5 +1,5 @@
 "use client";
-import { RemoveButton } from "./remove-button";
+import { ConfirmRemoveButton } from "./confirm-remove-button";
 import type { Concept, Locale } from "@/lib/domain";
 import { partnerOrganizations } from "@/lib/partners";
 export function PartnerFields({
@@ -50,15 +50,16 @@ export function PartnerFields({
               </small>
             )}
           </label>
-          <RemoveButton
-            type="button"
+          <ConfirmRemoveButton
+            locale={locale}
+            element={`${es ? "Organización asociada" : "Partner organization"} ${i + 1}: ${name || "—"}`}
             aria-label={
               (es
                 ? "Quitar organización asociada "
                 : "Remove partner organization ") +
               (i + 1)
             }
-            onClick={() => onChange(names.filter((_, index) => index !== i))}
+            onConfirm={() => onChange(names.filter((_, index) => index !== i))}
           />
         </div>
       ))}

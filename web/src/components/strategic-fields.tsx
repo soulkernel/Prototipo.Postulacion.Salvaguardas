@@ -1,5 +1,5 @@
 "use client";
-import { RemoveButton } from "./remove-button";
+import { ConfirmRemoveButton } from "./confirm-remove-button";
 import { LimitedTextarea } from "./limited-textarea";
 import { Plus } from "lucide-react";
 import {
@@ -163,10 +163,16 @@ export function StrategicFields({
                   <span key={id}>
                     {key === "ods" ? `${es ? "ODS" : "SDG"} ` : ""}
                     {id} · {items.find((i) => String(i.id) === id)?.[locale]}
-                    <RemoveButton
-                      type="button"
+                    <ConfirmRemoveButton
+                      locale={locale}
+                      element={`${title} · ${label}: ${id} · ${items.find((i) => String(i.id) === id)?.[locale] || ""}`}
+                      consequence={
+                        es
+                          ? "Se retirará solo este vínculo de alineación. Se conservarán el objetivo y las demás selecciones."
+                          : "Only this alignment link will be removed. The objective and other selections will be kept."
+                      }
                       aria-label={`${es ? "Quitar" : "Remove"} ${label} ${id} · ${title}`}
-                      onClick={() =>
+                      onConfirm={() =>
                         key === "ods"
                           ? update(o.id, {
                               ods: o.ods.filter((x) => String(x) !== id),
@@ -260,9 +266,15 @@ export function StrategicFields({
               )}
             </div>
             {o.kind === "specific" && (
-              <RemoveButton
-                type="button"
-                onClick={() =>
+              <ConfirmRemoveButton
+                locale={locale}
+                element={`${title}: ${o.text || "—"}`}
+                consequence={
+                  es
+                    ? "Se eliminará este objetivo y se retirarán sus vínculos con actividades y resultados. Las actividades y los resultados se conservarán; revise su asociación con otro objetivo."
+                    : "This objective and its links to activities and results will be removed. Activities and results will be kept; review their links to another objective."
+                }
+                onConfirm={() =>
                   onChange({
                     ...value,
                     objectives: value.objectives.filter((x) => x.id !== o.id),

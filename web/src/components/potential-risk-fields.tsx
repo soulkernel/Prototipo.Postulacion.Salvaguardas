@@ -1,5 +1,5 @@
 "use client";
-import { RemoveButton } from "./remove-button";
+import { ConfirmRemoveButton } from "./confirm-remove-button";
 import { LimitedTextarea } from "./limited-textarea";
 import { Plus } from "lucide-react";
 import type { Payload, Locale } from "@/lib/domain";
@@ -179,8 +179,9 @@ export function PotentialRiskFields({
                       }
                     />
                   </label>
-                  <RemoveButton
-                    type="button"
+                  <ConfirmRemoveButton
+                    locale={locale}
+                    element={`${riskLabel(rows, r.id, locale)}: ${r.name || "—"}`}
                     aria-label={
                       (es ? "Quitar " : "Remove ") +
                       riskLabel(rows, r.id, es ? "es" : "en")
@@ -193,7 +194,7 @@ export function PotentialRiskFields({
                           : "Remove activity associations first"
                         : undefined
                     }
-                    onClick={() => change(rows.filter((x) => x.id !== r.id))}
+                    onConfirm={() => change(rows.filter((x) => x.id !== r.id))}
                   />
                   {used && (
                     <small>

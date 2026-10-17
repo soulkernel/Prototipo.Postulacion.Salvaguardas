@@ -6,7 +6,7 @@ import type { AttachmentRequirement } from "./attachment-requirements";
 import { z } from "zod";
 import { budgetSchema, budgetIssues } from "./budget";
 import { normalizePhone } from "./phone";
-import { geographyIssues } from "./geography";
+import { geographyIssues, applicantTypeAddressPatch } from "./geography";
 import { emptySummary, projectSummary } from "./summary";
 import { strategicSchema, alignmentIssues } from "./strategic-alignment";
 import { potentialRiskIssues } from "./potential-risks";
@@ -203,6 +203,12 @@ export function applicantDefaults(
   )
     delete defaults.applicant_type;
   if (!defaults.email?.trim()) defaults.email = accountEmail;
+  // Only defaults for a newly created application; never rewrite prior records.
+  if (defaults.applicant_type === "organization")
+    Object.assign(
+      defaults,
+      applicantTypeAddressPatch(defaults, "organization"),
+    );
   return defaults;
 }
 export type Category = {
@@ -372,6 +378,23 @@ export function safeReturnPath(value: unknown, fallback = "/applicant") {
 export function words(value: string) {
   return value.trim().split(/\s+/).filter(Boolean).length;
 }
+// M01: retain incompatible drafts; enforce eligibility before completing them.
+export function grantCategoryAllowed(
+  applicantType: string,
+  categoryId: string,
+) {
+  return applicantType !== "individual" || categoryId === "small";
+}
+export function individualGrantIssue(
+  c: Pick<Concept, "applicant_type" | "category_id" | "requested_amount">,
+): "category_id" | "requested_amount" | null {
+  if (c.applicant_type !== "individual") return null;
+  if (c.category_id && !grantCategoryAllowed(c.applicant_type, c.category_id))
+    return "category_id";
+  return c.requested_amount !== null && c.requested_amount > 100000
+    ? "requested_amount"
+    : null;
+}
 export function financialErrors(
   c: Concept,
   rules: Rules,
@@ -403,6 +426,8 @@ export function financialErrors(
         100
   )
     errors.admin_cost = "ADMIN_LIMIT";
+  const eligibility = individualGrantIssue(c);
+  if (eligibility) errors[eligibility] = "INDIVIDUAL_SMALL_ONLY";
   return errors;
 }
 export function validateComplete(

@@ -1237,6 +1237,8 @@ const fullPayload = {
   concept: {
     title: "Proyecto de prueba",
     applicant_type: "organization",
+    province: "Galápagos",
+    city: "Puerto Ayora",
     ruc: "2090000000001",
     applicant_name: "Organización de prueba",
     contact_name: "Persona de prueba",
@@ -2527,6 +2529,357 @@ test("structured attachment requirements survive publication and frozen rules wi
   ).rows[0];
   assert.deepEqual(app.rules_snapshot.attachment_requirements, [attachment]);
   assert.deepEqual(app.rules_snapshot.required_attachments, [attachment.id]);
+});
+
+test("M01 database rejects individual medium/large outside the UI and preserves incompatible drafts on migration", async () => {
+  const mixed = {
+    ...rules,
+    categories: [
+      rules.categories[0],
+      {
+        ...rules.categories[0],
+        id: "medium",
+        min_amount: 100000.01,
+        max_amount: 250000,
+        max_months: 24,
+        cofinance_percent: 10,
+      },
+      {
+        ...rules.categories[0],
+        id: "large",
+        min_amount: 250000.01,
+        max_amount: null,
+        max_months: 36,
+        cofinance_percent: 25,
+      },
+    ],
+  };
+  const validate = (p, r = mixed, stage = 1, complete = true) =>
+    db.query("select private.validate_payload($1::jsonb,$2::jsonb,$3,$4)", [
+      JSON.stringify(p),
+      JSON.stringify(r),
+      complete,
+      stage,
+    ]);
+  for (const [category, amount] of [
+    ["small", 100000],
+    ["medium", 150000],
+    ["large", 350000],
+  ]) {
+    for (const type of ["individual", "organization"]) {
+      const p = structuredClone(fullPayload);
+      Object.assign(p.concept, {
+        applicant_type: type,
+        category_id: category,
+        requested_amount: amount,
+        cofinance_amount: amount * 0.25,
+        identity_number: "0123456789",
+        residence_number: "RP-1234",
+      });
+      for (const stage of [1, 2]) {
+        const current =
+          stage === 1 ? { ...p, activities: payload.activities } : p;
+        if (type === "individual" && category !== "small") {
+          await assert.rejects(
+            validate(current, mixed, stage),
+            /GLF_INDIVIDUAL_SMALL_ONLY/,
+          );
+          await validate(current, mixed, stage, false);
+        } else await validate(current, mixed, stage);
+      }
+    }
+  }
+  const p = structuredClone(payload);
+  Object.assign(p.concept, {
+    applicant_type: "individual",
+    identity_number: "0123456789",
+    residence_number: "RP-1234",
+    requested_amount: 100000.01,
+  });
+  await assert.rejects(
+    validate(p, {
+      ...mixed,
+      categories: [{ ...mixed.categories[0], max_amount: 250000 }],
+    }),
+    /GLF_INDIVIDUAL_SMALL_ONLY/,
+  );
+  p.concept.requested_amount = 60000;
+  await assert.rejects(
+    validate(p, {
+      ...mixed,
+      categories: [{ ...mixed.categories[0], max_amount: 50000 }],
+    }),
+    /GLF_CATEGORY_AMOUNT/,
+  );
+  await assert.rejects(
+    validate(p, { ...mixed, categories: [mixed.categories[1]] }),
+    /GLF_CATEGORY_REQUIRED/,
+  );
+  await assert.rejects(
+    validate(p, { ...mixed, applicant_types: ["organization"] }),
+    /GLF_APPLICANT_TYPE/,
+  );
+
+  const owner = await temporaryAccount();
+  const c = await rpc(
+    "create_call",
+    {
+      details: {
+        code: "M01-LOCAL",
+        title_es: "M01 local",
+        title_en: "M01 local",
+        description_es: "M01 local",
+        description_en: "M01 local",
+        opens_at: "2020-01-01T00:00:00Z",
+        closes_at: "2099-01-01T00:00:00Z",
+        rules: mixed,
+        phase2_schema: [],
+      },
+    },
+    "grants",
+  );
+  await rpc("publish_call", { call_id: c }, "grants");
+  const id = await rpc("create_application", { call_id: c }, owner);
+  Object.assign(p.concept, {
+    category_id: "medium",
+    requested_amount: 150000,
+    cofinance_amount: 15000,
+  });
+  p.activities = p.activities.map((a) => ({
+    ...a,
+    id: crypto.randomUUID(),
+    risks: a.risks.map((r) => ({ ...r, id: crypto.randomUUID() })),
+  }));
+  assert.equal(
+    await rpc(
+      "save_application",
+      { application_id: id, expected_revision: 0, payload: p },
+      owner,
+    ),
+    1,
+  );
+  const reopened = (
+    await as(owner, () =>
+      db.query(
+        "select payload,revision,rules_snapshot from public.applications where id=$1",
+        [id],
+      ),
+    )
+  ).rows[0];
+  assert.deepEqual(reopened.payload, p);
+  await assert.rejects(
+    rpc(
+      "prepare_application_documents",
+      { app_id: id, expected_revision: 1 },
+      owner,
+    ),
+    /GLF_INDIVIDUAL_SMALL_ONLY/,
+  );
+
+  // Simulate metadata prepared before M01, using only the isolated database.
+  // No PDF is signed and no production service is contacted.
+  await db.query(
+    "insert into public.prepared_documents(application_id,revision,stage,payload) values($1,1,1,$2)",
+    [id, p],
+  );
+  for (const kind of ["concept_signed", "matrix_signed"])
+    await db.query(
+      "insert into public.application_documents(application_id,kind,file_name,storage_path,content_type,size_bytes,sha256,uploaded_by) values($1,$2,$3,$4,'application/pdf',100,$5,$6)",
+      [
+        id,
+        kind,
+        kind + ".pdf",
+        id + "/" + kind + ".pdf",
+        "a".repeat(64),
+        owner,
+      ],
+    );
+  await assert.rejects(
+    rpc(
+      "submit_application",
+      { application_id: id, expected_revision: 1 },
+      owner,
+    ),
+    /GLF_INDIVIDUAL_SMALL_ONLY/,
+  );
+  const snapshot = async () => ({
+    apps: (await db.query("select * from public.applications order by id"))
+      .rows,
+    versions: (
+      await db.query("select * from public.application_versions order by id")
+    ).rows,
+    events: (
+      await db.query("select * from public.application_events order by id")
+    ).rows,
+    prepared: (
+      await db.query("select * from public.prepared_documents order by id")
+    ).rows,
+  });
+  const beforeMigration = await snapshot();
+  await db.exec(
+    "drop function private.validate_payload(jsonb,jsonb,boolean,integer); drop function private.validate_payload_before_organization_domicile(jsonb,jsonb,boolean,integer); alter function private.validate_payload_before_individual_small(jsonb,jsonb,boolean,integer) rename to validate_payload;",
+  );
+  await db.exec(
+    await readFile(
+      new URL(
+        "../../supabase/migrations/202610170037_individual_small_grant_only.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  );
+  await db.exec(
+    await readFile(
+      new URL(
+        "../../supabase/migrations/202610170038_organization_galapagos_domicile.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  );
+  assert.deepEqual(await snapshot(), beforeMigration);
+  await assert.rejects(
+    rpc(
+      "prepare_application_documents",
+      { app_id: id, expected_revision: 1 },
+      owner,
+    ),
+    /GLF_INDIVIDUAL_SMALL_ONLY/,
+  );
+  for (const role of ["anon", "authenticated"])
+    assert.equal(
+      (
+        await db.query(
+          "select has_function_privilege($1,'private.validate_payload_before_individual_small(jsonb,jsonb,boolean,integer)','EXECUTE') as allowed",
+          [role],
+        )
+      ).rows[0].allowed,
+      false,
+    );
+  // Switching type back restores the call's organization options, without rewriting amounts.
+  p.concept.applicant_type = "organization";
+  assert.equal(
+    await rpc(
+      "save_application",
+      { application_id: id, expected_revision: 1, payload: p },
+      owner,
+    ),
+    2,
+  );
+  await rpc(
+    "prepare_application_documents",
+    { app_id: id, expected_revision: 2 },
+    owner,
+  );
+});
+
+test("M03 enforces organization province outside the UI and migration preserves incompatible historical drafts", async () => {
+  const validate = (p, stage, complete) =>
+    db.query("select private.validate_payload($1::jsonb,$2::jsonb,$3,$4)", [
+      p,
+      rules,
+      complete,
+      stage,
+    ]);
+  for (const stage of [1, 2]) {
+    for (const complete of [false, true]) {
+      const p = structuredClone(stage === 1 ? payload : fullPayload);
+      for (const province of ["Guayas", "Pichincha", "", undefined]) {
+        p.concept.province = province;
+        await assert.rejects(
+          validate(p, stage, complete),
+          /GLF_ORGANIZATION_PROVINCE/,
+        );
+      }
+      p.concept.province = "Galápagos";
+      await validate(p, stage, complete);
+      p.concept.applicant_type = "individual";
+      p.concept.identity_number = "0123456789";
+      p.concept.residence_number = "RP-1234";
+      for (const province of ["Guayas", "Pichincha", "Azuay"]) {
+        p.concept.province = province;
+        await validate(p, stage, complete);
+      }
+    }
+  }
+  const owner = await temporaryAccount();
+  const id = await rpc("create_application", { call_id: call }, owner);
+  const p = structuredClone(payload);
+  p.activities = p.activities.map((a) => ({
+    ...a,
+    id: crypto.randomUUID(),
+    risks: a.risks.map((r) => ({ ...r, id: crypto.randomUUID() })),
+  }));
+  p.concept.province = "Guayas";
+  p.concept.city = "Guayaquil";
+  await assert.rejects(
+    rpc(
+      "save_application",
+      { application_id: id, expected_revision: 0, payload: p },
+      owner,
+    ),
+    /GLF_ORGANIZATION_PROVINCE/,
+  );
+  // Emulate a pre-M03 draft only in the isolated test database.
+  await db.exec(
+    "drop function private.validate_payload(jsonb,jsonb,boolean,integer); alter function private.validate_payload_before_organization_domicile(jsonb,jsonb,boolean,integer) rename to validate_payload;",
+  );
+  await rpc(
+    "save_application",
+    { application_id: id, expected_revision: 0, payload: p },
+    owner,
+  );
+  const snapshot = async () => ({
+    apps: (await db.query("select * from public.applications order by id"))
+      .rows,
+    versions: (
+      await db.query("select * from public.application_versions order by id")
+    ).rows,
+    events: (
+      await db.query("select * from public.application_events order by id")
+    ).rows,
+  });
+  const before = await snapshot();
+  await db.exec(
+    await readFile(
+      new URL(
+        "../../supabase/migrations/202610170038_organization_galapagos_domicile.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  );
+  assert.deepEqual(await snapshot(), before);
+  const read = () =>
+    as(owner, () =>
+      db.query("select payload from public.applications where id=$1", [id]),
+    );
+  assert.deepEqual((await read()).rows[0].payload, p);
+  await assert.rejects(
+    rpc(
+      "save_application",
+      { application_id: id, expected_revision: 1, payload: p },
+      owner,
+    ),
+    /GLF_ORGANIZATION_PROVINCE/,
+  );
+  Object.assign(p.concept, { province: "Galápagos", city: "Puerto Ayora" });
+  await rpc(
+    "save_application",
+    { application_id: id, expected_revision: 1, payload: p },
+    owner,
+  );
+  assert.deepEqual((await read()).rows[0].payload, p);
+  for (const role of ["anon", "authenticated"])
+    assert.equal(
+      (
+        await db.query(
+          "select has_function_privilege($1,'private.validate_payload_before_organization_domicile(jsonb,jsonb,boolean,integer)','EXECUTE') as allowed",
+          [role],
+        )
+      ).rows[0].allowed,
+      false,
+    );
 });
 
 test("v2 dossiers preserve unified and legacy summaries across signing, review, phase two and immutable versions", async () => {

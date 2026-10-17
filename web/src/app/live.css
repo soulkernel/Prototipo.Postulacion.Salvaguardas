@@ -1230,6 +1230,20 @@ input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="
   font-weight: 400;
   margin: 0;
 }
+.live-form #individual-grant-guidance.field-warning {
+  color: #a3332b;
+  font-weight: 400;
+}
+.live-form #organization-province-help.field-warning {
+  color: #a3332b;
+  font-weight: 400;
+}
+.applicant-category-fields > label {
+  align-self: start;
+}
+.applicant-address-fields > label {
+  align-self: start;
+}
 
 .applicant-identification-row {
   display: grid;

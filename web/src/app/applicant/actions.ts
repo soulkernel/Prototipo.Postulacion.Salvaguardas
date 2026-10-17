@@ -8,13 +8,18 @@ import {
 } from "@/lib/attachment-requirements";
 import { validateRequiredDocuments } from "@/lib/attachment-validation";
 import { requireViewer } from "@/lib/data";
-import { payloadSchema, emptyPayload, applicantDefaults } from "@/lib/domain";
+import {
+  payloadSchema,
+  emptyPayload,
+  applicantDefaults,
+  individualGrantIssue,
+} from "@/lib/domain";
 import { normalizePhone } from "@/lib/phone";
 import { partnerIssues, partnerText } from "@/lib/partners";
 import { activityPlanningIssues } from "@/lib/activity-planning";
 import { resultIssues, resultText } from "@/lib/project-results";
 import { synchronizeRisks } from "@/lib/potential-risks";
-import { geographyIssues } from "@/lib/geography";
+import { geographyIssues, organizationProvinceIssue } from "@/lib/geography";
 import { projectSummary } from "@/lib/summary";
 import { words } from "@/lib/domain";
 import { detectPdfSignature } from "@/lib/pdf-signature";
@@ -36,6 +41,20 @@ async function validStoredPhone(db: SupabaseClient, id: string) {
     typeof data?.payload?.concept?.phone === "string" &&
     Boolean(normalizePhone(data.payload.concept.phone))
   );
+}
+async function storedGrantEligibilityError(db: SupabaseClient, id: string) {
+  const { data, error } = await db
+    .from("applications")
+    .select("payload")
+    .eq("id", id)
+    .maybeSingle();
+  const parsed = payloadSchema.safeParse(data?.payload);
+  if (error || !parsed.success) return "GLF_INVALID_PAYLOAD";
+  if (organizationProvinceIssue(parsed.data.concept))
+    return "GLF_ORGANIZATION_PROVINCE";
+  return individualGrantIssue(parsed.data.concept)
+    ? "GLF_INDIVIDUAL_SMALL_ONLY"
+    : null;
 }
 async function validStoredGeography(db: SupabaseClient, id: string) {
   const { data, error } = await db
@@ -173,6 +192,8 @@ export async function saveDraft(
     !parsed.success
   )
     return { ok: false, error: "GLF_INVALID_PAYLOAD" };
+  if (organizationProvinceIssue(parsed.data.concept))
+    return { ok: false, error: "GLF_ORGANIZATION_PROVINCE" };
   const { data, error } = await db.rpc("save_application", {
     application_id: id,
     expected_revision: revision,
@@ -234,6 +255,8 @@ export async function prepareDocuments(
   const { db } = await requireViewer(["applicant"]);
   if (!z.uuid().safeParse(id).success || !Number.isSafeInteger(revision))
     return { error: "GLF_INVALID_PAYLOAD" };
+  const eligibilityError = await storedGrantEligibilityError(db, id);
+  if (eligibilityError) return { error: eligibilityError };
   if (!(await validStoredPartners(db, id)))
     return { error: "GLF_REQUIRED:partners" };
   if (!(await validStoredActivities(db, id)))
@@ -264,6 +287,8 @@ export async function submitDraft(
   const { db } = await requireViewer(["applicant"]);
   if (!z.uuid().safeParse(id).success || !Number.isSafeInteger(revision))
     return { ok: false, error: "GLF_INVALID_PAYLOAD" };
+  const eligibilityError = await storedGrantEligibilityError(db, id);
+  if (eligibilityError) return { ok: false, error: eligibilityError };
   if (!(await validStoredPartners(db, id)))
     return { ok: false, error: "GLF_REQUIRED:partners" };
   if (!(await validStoredActivities(db, id)))

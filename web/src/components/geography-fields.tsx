@@ -1,5 +1,13 @@
 "use client";
-import { cities, islands, provinces } from "@/lib/geography";
+import {
+  cities,
+  islands,
+  provinces,
+  organizationProvince,
+  organizationProvinceIssue,
+  provinceAddressPatch,
+  cityMatchesProvince,
+} from "@/lib/geography";
 import type { Concept, Locale } from "@/lib/domain";
 import { RequiredMark } from "./required-mark";
 export function GeographyFields({
@@ -21,6 +29,8 @@ export function GeographyFields({
     </span>
   );
   if (mode === "address") {
+    const organization = c.applicant_type === "organization";
+    const incompatibleProvince = organizationProvinceIssue(c);
     const options = cities[c.province] || [];
     const custom = Boolean(c.city && !options.includes(c.city));
     return (
@@ -28,26 +38,64 @@ export function GeographyFields({
         <h3 className="section-card-title">
           {es ? "Domicilio del proponente" : "Applicant address"}
         </h3>
-        <div className="live-grid">
+        <div className="live-grid applicant-address-fields">
           <label>
             {label(es ? "Provincia" : "Province")}
             <select
               data-validation-field="province"
               aria-required="true"
+              disabled={organization && !incompatibleProvince}
+              aria-invalid={incompatibleProvince || undefined}
+              aria-describedby={
+                organization ? "organization-province-help" : undefined
+              }
               value={c.province}
-              onChange={(e) => onChange({ province: e.target.value, city: "" })}
+              onChange={(e) =>
+                onChange(provinceAddressPatch(c, e.target.value))
+              }
             >
-              <option value="">{es ? "Seleccione" : "Select"}</option>
-              {provinces.map((p) => (
+              {(!organization || incompatibleProvince) && (
+                <option value="">{es ? "Seleccione" : "Select"}</option>
+              )}
+              {incompatibleProvince && c.province && (
+                <option value={c.province} disabled>
+                  {c.province} ·{" "}
+                  {es
+                    ? "valor anterior, requiere corrección"
+                    : "previous value, correction required"}
+                </option>
+              )}
+              {(organization ? [organizationProvince] : provinces).map((p) => (
                 <option key={p}>{p}</option>
               ))}
             </select>
+            {organization && (
+              <small
+                id="organization-province-help"
+                className={incompatibleProvince ? "field-warning" : undefined}
+                role={incompatibleProvince ? "alert" : undefined}
+              >
+                {incompatibleProvince
+                  ? es
+                    ? "Este borrador conserva una provincia incompatible. Seleccione Galápagos y revise la ciudad o localidad para poder guardar."
+                    : "This draft retains an incompatible province. Select Galápagos and review the city or locality before saving."
+                  : es
+                    ? "Para organizaciones, la provincia del domicilio es Galápagos."
+                    : "For organizations, the address province is Galápagos."}
+              </small>
+            )}
           </label>
           <label>
             {label(es ? "Ciudad o localidad" : "City or locality")}
             <select
               aria-required="true"
-              disabled={!c.province}
+              data-validation-field={custom ? undefined : "city"}
+              disabled={!c.province || incompatibleProvince}
+              aria-invalid={
+                (Boolean(c.city.trim()) &&
+                  !cityMatchesProvince(c.city, c.province)) ||
+                undefined
+              }
               value={custom ? "__other" : c.city}
               onChange={(e) =>
                 onChange({
@@ -63,6 +111,13 @@ export function GeographyFields({
                 {es ? "Otra ciudad o localidad" : "Other city or locality"}
               </option>
             </select>
+            {c.province && !c.city.trim() && (
+              <small>
+                {es
+                  ? "Seleccione nuevamente la ciudad o localidad de la provincia indicada."
+                  : "Select the city or locality for the indicated province."}
+              </small>
+            )}
           </label>
           {custom && (
             <label>

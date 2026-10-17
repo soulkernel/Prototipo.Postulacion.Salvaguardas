@@ -26,7 +26,18 @@ export function financialFeedback(
   const es = locale === "es";
   const currency = (amount: number) =>
     amount.toLocaleString(locale, { style: "currency", currency: "USD" });
-  const category = rules.categories.find((x) => x.id === c.category_id);
+  const configuredCategory = rules.categories.find(
+    (x) => x.id === c.category_id,
+  );
+  const category =
+    configuredCategory &&
+    c.applicant_type === "individual" &&
+    c.category_id === "small"
+      ? {
+          ...configuredCategory,
+          max_amount: Math.min(configuredCategory.max_amount ?? 100000, 100000),
+        }
+      : configuredCategory;
   const errors = financialErrors(c, rules);
   const requested = c.requested_amount !== null && c.requested_amount > 0;
   const hints = {

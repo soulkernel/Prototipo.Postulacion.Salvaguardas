@@ -1,6 +1,6 @@
 "use client";
 import { narrativeTextForEditing } from "@/lib/concept-presentation";
-import { RemoveButton } from "./remove-button";
+import { ConfirmRemoveButton } from "./confirm-remove-button";
 import { LimitedTextarea } from "./limited-textarea";
 import {
   newProjectResult,
@@ -217,9 +217,15 @@ export function ProjectResultFields({
                   onChange={(e) => update(i, { evidence: e.target.value })}
                 />
               </label>
-              <RemoveButton
-                type="button"
-                onClick={() => onChange(value.filter((_, j) => i !== j))}
+              <ConfirmRemoveButton
+                locale={es ? "es" : "en"}
+                element={`${es ? "Resultado" : "Result"} ${i + 1}: ${r.result || "—"}`}
+                consequence={
+                  es
+                    ? "Se eliminarán este resultado, su indicador, meta, unidad, evidencia prevista y vínculo con el objetivo. El objetivo se conservará. El texto anterior, si existe, seguirá disponible para consulta."
+                    : "This result, its indicator, target, unit, expected evidence and objective link will be removed. The objective will be kept. Previous text, if any, will remain available for reference."
+                }
+                onConfirm={() => onChange(value.filter((_, j) => i !== j))}
                 aria-label={`${es ? "Quitar resultado" : "Remove result"} ${i + 1}`}
               />
             </section>
