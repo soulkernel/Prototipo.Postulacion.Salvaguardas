@@ -522,7 +522,8 @@ test("continue reports missing required fields and financial errors together", (
   assert.ok(both.missing.includes("title"));
   assert.ok(both.missing.includes("contact_name"));
   assert.ok(!both.missing.includes("partners"));
-  assert.deepEqual(both.invalid, ["requested_amount", "admin_cost"]);
+  assert.deepEqual(both.invalid, ["requested_amount"]);
+  assert.ok(stepIssues(p, rules, 2, 0).invalid.includes("admin_cost"));
   p.concept.requested_amount = 100000;
   p.concept.admin_cost = 1000;
   assert.deepEqual(stepIssues(p, rules, 1, 0).invalid, []);

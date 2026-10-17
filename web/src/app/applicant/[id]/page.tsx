@@ -36,7 +36,7 @@ export default async function ApplicationPage({
       .eq("active", true),
     viewer.db
       .from("application_versions")
-      .select("id,revision,stage,submitted_at,payload")
+      .select("*")
       .eq("application_id", id)
       .order("revision", { ascending: false }),
     viewer.db

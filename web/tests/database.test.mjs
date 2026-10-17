@@ -3339,3 +3339,82 @@ test("M07 migration preserves all existing drafts, submitted versions, prepared 
   await assert.rejects(rpc("submit_application",{application_id:id,expected_revision:1},owner),/GLF_CALL_THEMES_REQUIRED/);
   assert.deepEqual(await snapshot(),before);
 });
+
+test("M08 local migration preserves historical data and stage-one RPCs no longer require administrative costs", async () => {
+  // Only this in-memory PostgreSQL fixture is rewound to the pre-M08 schema.
+  await db.exec("drop trigger freeze_concept_layout on public.application_versions; drop function private.freeze_concept_layout(); alter table public.prepared_documents drop column concept_layout_version; alter table public.application_versions drop column concept_layout_version;");
+  const definition = (await db.query("select pg_get_functiondef('private.validate_payload_before_phone(jsonb,jsonb,boolean,integer)'::regprocedure) definition")).rows[0].definition;
+  await db.exec(definition.replace("if complete and (stage=2 or field<>'admin_cost') and concept->>field is null then", "if complete and concept->>field is null then").replace("if stage=2 and (concept->>'admin_cost')::numeric >", "if (concept->>'admin_cost')::numeric >"));
+  const snapshot = async()=>Object.fromEntries(await Promise.all(["applications","application_versions","prepared_documents","application_events","calls","application_documents"].map(async table=>[table,(await db.query(`select to_jsonb(t)-'concept_layout_version' value from public.${table} t order by id`)).rows])));
+  const before = await snapshot();
+  await db.exec(await readFile(new URL("../../supabase/migrations/202610170041_concept_without_administrative_cost.sql",import.meta.url),"utf8"));
+  assert.deepEqual(await snapshot(), before);
+  for (const table of ["prepared_documents","application_versions"])
+    assert.equal((await db.query(`select count(*)::int n from public.${table} where concept_layout_version is not null`)).rows[0].n,0);
+  const owner = await temporaryAccount();
+  const make = async(admin)=>{
+    const id=await rpc("create_application",{call_id:call},owner);
+    const p=structuredClone(payload);
+    if(admin===undefined) delete p.concept.admin_cost; else p.concept.admin_cost=admin;
+    p.activities=p.activities.map(a=>({...a,id:crypto.randomUUID(),risks:a.risks.map(r=>({...r,id:crypto.randomUUID()}))}));
+    await rpc("save_application",{application_id:id,expected_revision:0,payload:p},owner);
+    const reopened=(await as(owner,()=>db.query("select payload from public.applications where id=$1",[id]))).rows[0].payload;
+    assert.deepEqual(reopened,p);
+    const prepared=await rpc("prepare_application_documents",{app_id:id,expected_revision:1},owner);
+    return {id,p,prepared};
+  };
+  const fresh=await make(undefined), missing=await make(null), historic=await make(50000);
+  for(const f of [fresh,missing,historic]) {
+    const row=(await as(owner,()=>db.query("select payload,concept_layout_version from public.prepared_documents where id=$1",[f.prepared]))).rows[0];
+    assert.deepEqual(row.payload,f.p);
+    assert.equal(row.concept_layout_version,"glf-concept-m08-v1");
+  }
+  const validate=(p,stage)=>db.query("select private.validate_payload($1::jsonb,$2::jsonb,true,$3)",[JSON.stringify(p),JSON.stringify(rules),stage]);
+  for(const admin of [undefined,null]) {
+    const p=structuredClone(fullPayload);
+    if(admin===undefined)delete p.concept.admin_cost;else p.concept.admin_cost=admin;
+    await assert.rejects(validate(p,2),/GLF_REQUIRED:admin_cost/);
+  }
+  const phase2=structuredClone(fullPayload);
+  Object.assign(phase2.concept,{requested_amount:10000,cofinance_amount:2000,admin_cost:1200});
+  await validate(phase2,2); // Existing total-cost base, unchanged by M08.
+  phase2.concept.admin_cost=1200.01;
+  await assert.rejects(validate(phase2,2),/GLF_ADMIN_LIMIT/);
+  for(const admin of [-1,1e13]) {
+    const p=structuredClone(payload);p.concept.admin_cost=admin;
+    await assert.rejects(validate(p,1),/GLF_INVALID_AMOUNT/);
+  }
+  const invalid=structuredClone(fresh.p);invalid.concept.requested_amount=100001;
+  await assert.rejects(validate(invalid,1),/GLF_CATEGORY_AMOUNT/);
+
+  // Simulate an already-prepared legacy revision; retain its rendering format
+  // on submission. The files below are synthetic local metadata, not signatures.
+  await db.query("update public.prepared_documents set concept_layout_version=null where id=$1",[historic.prepared]);
+  for(const f of [fresh,historic]) {
+    for(const kind of ["concept_signed","matrix_signed"]) {
+      const path=`${f.id}/${owner}/attachment/${crypto.randomUUID()}.pdf`;
+      await as(owner,()=>db.query("insert into storage.objects(bucket_id,name,metadata) values('application-files',$1,$2)",[path,{size:100}]));
+      await rpc("register_document",{app_id:f.id,object_path:path,original_name:kind+".pdf",mime:"application/pdf",bytes:100,checksum:"a".repeat(64),document_kind:kind},owner);
+    }
+    await rpc("submit_application",{application_id:f.id,expected_revision:1},owner);
+    const frozen=(await db.query("select payload,concept_layout_version from public.application_versions where application_id=$1",[f.id])).rows[0];
+    assert.deepEqual(frozen.payload.concept,f.p.concept);
+    assert.equal(frozen.concept_layout_version,f===historic?null:"glf-concept-m08-v1");
+  }
+  await rpc("record_review",{application_id:fresh.id,expected_revision:2,review_type:"safeguards",findings:"Revisión aislada",recommendation:"Continuar",category:"B"},"reviewer");
+  await rpc("record_decision",{application_id:fresh.id,expected_revision:2,body:"committee",decision:"invite",reference:"M08-QA",rationale:"Prueba local",invitation_deadline:"2099-01-01"},"committee");
+  const inherited=(await as(owner,()=>db.query("select stage,payload,status from public.applications where id=$1",[fresh.id]))).rows[0];
+  assert.equal(inherited.stage,2);
+  assert.equal(inherited.status,"selected_for_phase2");
+  assert.equal(inherited.payload.concept.admin_cost,undefined);
+  await assert.rejects(rpc("prepare_application_documents",{app_id:fresh.id,expected_revision:3},owner),/GLF_REQUIRED:admin_cost/);
+  const proposal=structuredClone(fullPayload);proposal.activities=inherited.payload.activities.map((a,i)=>({...proposal.activities[i],id:a.id,risks:proposal.activities[i].risks.map((r,j)=>({...r,id:a.risks[j].id}))}));
+  proposal.phase2.proposal="Proyecto completo QA";
+  await rpc("save_application",{application_id:fresh.id,expected_revision:3,payload:proposal},owner);
+  await rpc("prepare_application_documents",{app_id:fresh.id,expected_revision:4},owner);
+  const frozen=(await db.query("select payload from public.application_versions where application_id=$1 and stage=1",[fresh.id])).rows[0].payload;
+  assert.equal(frozen.concept.admin_cost,undefined);
+  for(const role of ["anon","authenticated"])
+    for(const signature of ["private.validate_payload_before_phone(jsonb,jsonb,boolean,integer)","private.freeze_concept_layout()"])
+      assert.equal((await db.query("select has_function_privilege($1,$2,'EXECUTE') allowed",[role,signature])).rows[0].allowed,false);
+});

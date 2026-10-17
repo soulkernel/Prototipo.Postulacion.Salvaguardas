@@ -1,18 +1,21 @@
 import type { Concept, Locale } from "@/lib/domain";
 import { conceptSections } from "@/lib/concept-presentation";
+import type { ConceptPresentation } from "@/lib/concept-layout";
 
 export function ConceptReview({
   concept,
   locale,
   rules,
+  presentation,
 }: {
   concept: Concept;
   locale: Locale;
   rules?: unknown;
+  presentation?: ConceptPresentation;
 }) {
   return (
     <div className="concept-review">
-      {conceptSections(concept, locale, rules).map((section) => (
+      {conceptSections(concept, locale, rules, presentation).map((section) => (
         <section
           key={section.id}
           className="concept-review-section"

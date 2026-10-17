@@ -15,7 +15,7 @@ import {
   type Rules,
   type Call,
 } from "./domain";
-import { identityFields, narrativeFields } from "./fields";
+import { identityFieldsForStage, narrativeFields } from "./fields";
 import { alignmentIssues } from "./strategic-alignment";
 import { potentialRiskIssues } from "./potential-risks";
 import { partnerIssues } from "./partners";
@@ -34,7 +34,11 @@ export function stepIssues(
   if (step <= 1) {
     const keys =
       step === 0
-        ? ["applicant_type", "category_id", ...identityFields.map((f) => f.key)]
+        ? [
+            "applicant_type",
+            "category_id",
+            ...identityFieldsForStage(stage).map((f) => f.key),
+          ]
         : narrativeFields.map((f) => f.key);
     for (const key of keys) {
       if (["partners", "other_islands", "project_islands"].includes(key))
@@ -69,7 +73,9 @@ export function stepIssues(
         !z.email().safeParse(payload.concept.email).success
       )
         invalid.push("email");
-      invalid.push(...Object.keys(financialErrors(payload.concept, rules)));
+      invalid.push(
+        ...Object.keys(financialErrors(payload.concept, rules, stage)),
+      );
     } else {
       missing.push(...resultIssues(payload.concept));
       missing.push(...activityPlanningIssues(payload));

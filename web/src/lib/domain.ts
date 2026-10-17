@@ -65,7 +65,7 @@ export const conceptSchema = z
     category_id: text,
     requested_amount: money,
     cofinance_amount: money,
-    admin_cost: money,
+    admin_cost: money.default(null),
     start_date: z.string().max(10),
     end_date: z.string().max(10),
     summary: text,
@@ -414,7 +414,9 @@ export function individualGrantIssue(
 export function financialErrors(
   c: Concept,
   rules: Rules,
+  stage = 2,
 ): Partial<Record<keyof Concept, string>> {
+  // Legacy callers retain the full-proposal check; phase-aware callers pass stage.
   const errors: Partial<Record<keyof Concept, string>> = {};
   const category = rules.categories.find((item) => item.id === c.category_id);
   if (
@@ -434,6 +436,7 @@ export function financialErrors(
   )
     errors.cofinance_amount = "COFINANCE";
   if (
+    stage === 2 &&
     c.admin_cost !== null &&
     c.requested_amount !== null &&
     c.cofinance_amount !== null &&
@@ -463,7 +466,7 @@ export function validateComplete(
   missing.push(...activityPlanningIssues(payload));
   missing.push(...potentialRiskIssues(payload));
   missing.push(...alignmentIssues(c.strategic_alignment));
-  missing.push(...Object.keys(financialErrors(c, rules)));
+  missing.push(...Object.keys(financialErrors(c, rules, stage)));
   missing.push(...geographyIssues(c));
   if (c.phone && !normalizePhone(c.phone)) missing.push("phone");
   for (const [key, value] of Object.entries(c)) {
@@ -475,6 +478,7 @@ export function validateComplete(
       key !== "results_source" &&
       key !== "summary" &&
       key !== "other_islands" &&
+      !(stage === 1 && key === "admin_cost") &&
       (value === null || (typeof value === "string" && !value.trim()))
     )
       missing.push(key);

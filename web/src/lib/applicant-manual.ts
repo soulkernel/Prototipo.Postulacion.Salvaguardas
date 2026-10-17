@@ -321,12 +321,6 @@ export const manualChapters: ManualChapter[] = [
         "Enter additional contributions and meet the percentage required for the category.",
       ],
       [
-        "Gastos administrativos (USD)",
-        "Son parte del presupuesto solicitado, no un aporte adicional. No pueden superar el límite administrativo indicado junto al campo.",
-        "Administrative expenses (USD)",
-        "These are part of the requested budget, not an additional contribution. They cannot exceed the administrative limit shown beside the field.",
-      ],
-      [
         "Costo total estimado",
         "Se calcula automáticamente: monto solicitado + cofinanciamiento. Compruebe el total mientras ingresa los valores.",
         "Estimated total cost",
@@ -363,8 +357,8 @@ export const manualChapters: ManualChapter[] = [
     ],
     steps: [
       [
-        "Ingrese el monto solicitado al GLF, el cofinanciamiento y los gastos administrativos.",
-        "Enter requested GLF funding, cofinancing and administrative expenses.",
+        "Ingrese el monto solicitado al GLF y el cofinanciamiento. En la nota conceptual no se solicita un importe separado de gastos administrativos.",
+        "Enter requested GLF funding and cofinancing. A separate administrative expense amount is not requested in the concept note.",
       ],
       [
         "Revise los límites de la categoría y el costo total estimado, que se calcula automáticamente.",
@@ -384,9 +378,9 @@ export const manualChapters: ManualChapter[] = [
       ],
       [
         "Costo total",
-        "Monto solicitado al GLF más cofinanciamiento; los gastos administrativos ya forman parte de estos costos.",
+        "Monto solicitado al GLF más cofinanciamiento. No se suma ningún importe adicional a estas dos estimaciones.",
         "Total cost",
-        "Requested GLF funding plus cofinancing; administrative expenses are already included in these costs.",
+        "Requested GLF funding plus cofinancing. No additional amount is added to these two estimates.",
       ],
     ],
     tip: [
@@ -398,10 +392,7 @@ export const manualChapters: ManualChapter[] = [
         "Monto solicitado al GLF · Cofinanciamiento",
         "Requested GLF funding · Cofinancing",
       ],
-      [
-        "Gastos administrativos · Costo total estimado",
-        "Administrative expenses · Estimated total cost",
-      ],
+      ["Costo total estimado", "Estimated total cost"],
     ],
   },
   {

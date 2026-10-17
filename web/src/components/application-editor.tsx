@@ -76,7 +76,13 @@ import {
   submitDraft,
   prepareDocuments,
 } from "@/app/applicant/actions";
-import { identityFields, narrativeFields, statusLabel } from "@/lib/fields";
+import {
+  identityFields,
+  identityFieldsForStage,
+  narrativeFields,
+  statusLabel,
+} from "@/lib/fields";
+import { currentConceptLayout } from "@/lib/concept-layout";
 import {
   newRisk,
   riskScore,
@@ -97,6 +103,7 @@ type Catalog = {
   normative_reference: string;
 };
 type Version = {
+  concept_layout_version?: string | null;
   project_title?: string;
   id: string;
   revision: number;
@@ -782,7 +789,8 @@ export function ApplicationEditor({
       setBusy(false);
     }
   }
-  const fields = step === 0 ? identityFields : narrativeFields;
+  const fields =
+    step === 0 ? identityFieldsForStage(application.stage) : narrativeFields;
   const rules = application.rules_snapshot;
   const missingLetters = missingPartnerLetters(
     payload.concept,
@@ -887,7 +895,7 @@ export function ApplicationEditor({
     );
   };
   const financial = {
-    ...financialErrors(payload.concept, rules),
+    ...financialErrors(payload.concept, rules, application.stage),
     ...projectDateErrors(payload.concept, rules),
   };
   const identification = identificationIssue(payload.concept);
@@ -919,6 +927,7 @@ export function ApplicationEditor({
     moneyTouched,
     moneyFocused,
     showCompletion || checkedStep === 0,
+    application.stage,
   );
   const financialHelp = (key: keyof Concept) =>
     isMoneyField(key) ? moneyFeedback[key].text : "";
@@ -2486,6 +2495,13 @@ export function ApplicationEditor({
                 concept={payload.concept}
                 locale={locale}
                 rules={rules}
+                presentation={{
+                  stage: application.stage,
+                  layoutVersion:
+                    editable || !versions.length
+                      ? currentConceptLayout
+                      : (versions[0].concept_layout_version ?? null),
+                }}
               />
               <p>
                 {payload.activities.length} {es ? "actividades" : "activities"}{" "}

@@ -139,6 +139,12 @@ export const identityFields: Field[] = [
     type: "number",
   },
 ];
+export function identityFieldsForStage(stage: number) {
+  return identityFields.filter(
+    (field) => stage === 2 || field.key !== "admin_cost",
+  );
+}
+
 export const narrativeFields: Field[] = [
   {
     key: "summary",

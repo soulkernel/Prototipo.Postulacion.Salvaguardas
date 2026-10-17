@@ -60,7 +60,7 @@ export default async function ReviewPage({
       .order("created_at", { ascending: false }),
     viewer.db
       .from("application_versions")
-      .select("id,revision,stage,payload")
+      .select("*")
       .eq("application_id", id)
       .order("revision", { ascending: false }),
     viewer.db
@@ -253,6 +253,10 @@ export default async function ReviewPage({
             concept={a.payload.concept}
             locale={locale}
             rules={a.rules_snapshot}
+            presentation={{
+              stage: submittedStage,
+              layoutVersion: versions?.[0]?.concept_layout_version ?? null,
+            }}
           />
         </details>
       </section>

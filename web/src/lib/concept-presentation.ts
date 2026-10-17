@@ -5,6 +5,11 @@ import { alignmentNarrative } from "./document-language";
 import { alignmentVersion } from "./strategic-alignment";
 import { projectSummary } from "./summary";
 import { resultUnits } from "./project-results";
+import {
+  currentConceptLayout,
+  includesAdministrativeCost,
+  type ConceptPresentation,
+} from "./concept-layout";
 
 export type ContentBlock =
   | { type: "paragraph"; text: string }
@@ -158,6 +163,10 @@ export function conceptSections(
   c: Concept,
   locale: Locale,
   rules?: unknown,
+  presentation: ConceptPresentation = {
+    stage: 1,
+    layoutVersion: currentConceptLayout,
+  },
 ): ConceptSection[] {
   const es = locale === "es";
   const table = (headers: string[], rows: string[][]): ContentBlock => ({
@@ -167,7 +176,7 @@ export function conceptSections(
   });
   const paragraphs = (text: string) => narrativeBlocks(text);
   const amount = (v: number | null) =>
-    v === null
+    v == null
       ? es
         ? "No consignado"
         : "Not provided"
@@ -295,12 +304,16 @@ export function conceptSections(
                 : "Incomplete"
               : amount(c.requested_amount + c.cofinance_amount),
           ],
-          [
-            es
-              ? "Gastos administrativos incluidos en el costo"
-              : "Administrative expenses included in the cost",
-            amount(c.admin_cost),
-          ],
+          ...(includesAdministrativeCost(presentation)
+            ? [
+                [
+                  es
+                    ? "Gastos administrativos incluidos en el costo"
+                    : "Administrative expenses included in the cost",
+                  amount(c.admin_cost),
+                ],
+              ]
+            : []),
         ]),
       ],
     },

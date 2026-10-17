@@ -22,6 +22,7 @@ export function financialFeedback(
   touched: Partial<Record<MoneyField, boolean>>,
   focused: MoneyField | null,
   attempted: boolean,
+  stage = 2,
 ) {
   const es = locale === "es";
   const currency = (amount: number) =>
@@ -38,7 +39,7 @@ export function financialFeedback(
           max_amount: Math.min(configuredCategory.max_amount ?? 100000, 100000),
         }
       : configuredCategory;
-  const errors = financialErrors(c, rules);
+  const errors = financialErrors(c, rules, stage);
   const requested = c.requested_amount !== null && c.requested_amount > 0;
   const hints = {
     requested_amount: category
@@ -90,6 +91,8 @@ export function financialFeedback(
   };
   return Object.fromEntries(
     moneyFields.map((key) => {
+      if (stage === 1 && key === "admin_cost")
+        return [key, { invalid: false, text: "" }];
       const eligible = focused !== key && (attempted || Boolean(touched[key]));
       const missing = c[key] === null;
       const invalid = eligible && (missing || Boolean(errors[key]));

@@ -22,7 +22,7 @@ before(async () => {
   };
   await build({
     stdin: {
-      contents: `export {POST} from './src/app/api/files/route'; export {submitDraft,prepareDocuments} from './src/app/applicant/actions'; export {emptyPayload,newActivity} from './src/lib/domain';`,
+      contents: `export {POST} from './src/app/api/files/route'; export {saveDraft,submitDraft,prepareDocuments} from './src/app/applicant/actions'; export {emptyPayload,newActivity} from './src/lib/domain';`,
       resolveDir: web,
       loader: "ts",
     },
@@ -154,6 +154,10 @@ function fixture() {
       }),
     },
     rpc: async (name, args) => {
+      if (name === "save_application") {
+        state.savedPayload = structuredClone(args.payload);
+        return { data: args.expected_revision + 1, error: null };
+      }
       if (name === "submit_application") {
         state.submitCount++;
         return { data: 1, error: null };
@@ -192,6 +196,19 @@ function request(kind = letter) {
     body: form,
   });
 }
+
+test("M08 actual save action accepts a missing administrative estimate and preserves an old amount", async () => {
+  const s = fixture();
+  s.app.stage = 1;
+  delete s.app.payload.concept.admin_cost;
+  const original = structuredClone(s.app.payload);
+  assert.deepEqual(await api.saveDraft(appId, 0, s.app.payload), {ok:true,revision:1});
+  assert.equal(s.savedPayload.concept.admin_cost, null);
+  assert.deepEqual(s.app.payload, original);
+  s.app.payload.concept.admin_cost = 987.65;
+  assert.deepEqual(await api.saveDraft(appId, 1, s.app.payload), {ok:true,revision:2});
+  assert.equal(s.savedPayload.concept.admin_cost, 987.65);
+});
 test("M05 actual upload route rejects unknown/removed partner and failed upload; registers only successful linked file", async () => {
   const s = fixture();
   const unknown = "partner_letter_" + crypto.randomUUID().replaceAll("-", "");

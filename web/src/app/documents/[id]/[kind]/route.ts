@@ -62,6 +62,7 @@ export async function GET(
     payload: version.payload as Payload,
     rules: version.rules_snapshot ?? app.rules_snapshot,
     phase2Fields,
+    conceptLayoutVersion: version.concept_layout_version ?? null,
     stage: version.stage,
     reference: app.reference_code,
     revision: version.revision,

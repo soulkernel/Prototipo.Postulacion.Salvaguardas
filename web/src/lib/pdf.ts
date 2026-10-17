@@ -1,4 +1,5 @@
 import { conceptSections, narrativeBlocks } from "./concept-presentation";
+import { currentConceptLayout } from "./concept-layout";
 import { budgetText } from "./budget";
 import { submissionNotice } from "./grant-rules";
 import { riskNarrative } from "./document-language";
@@ -21,6 +22,7 @@ export async function applicationPdf({
   stage,
   rules,
   phase2Fields = [],
+  conceptLayoutVersion = currentConceptLayout,
 }: {
   payload: Payload;
   reference: string;
@@ -32,6 +34,7 @@ export async function applicationPdf({
   stage: number;
   rules?: unknown;
   phase2Fields?: { id: string; label_es: string; label_en: string }[];
+  conceptLayoutVersion?: string | null;
 }) {
   const es = locale === "es";
   payload = synchronizeRisks(payload);
@@ -340,7 +343,10 @@ export async function applicationPdf({
         ? `Se solicita al GLF un financiamiento de ${payload.concept.requested_amount === null ? "monto no consignado" : money(payload.concept.requested_amount)} y se prevé un cofinanciamiento de ${payload.concept.cofinance_amount === null ? "monto no consignado" : money(payload.concept.cofinance_amount)}.`
         : `The applicant requests ${payload.concept.requested_amount === null ? "an unspecified amount" : money(payload.concept.requested_amount)} from GLF and plans cofinancing of ${payload.concept.cofinance_amount === null ? "an unspecified amount" : money(payload.concept.cofinance_amount)}.`,
     );
-    for (const section of conceptSections(payload.concept, locale, rules)) {
+    for (const section of conceptSections(payload.concept, locale, rules, {
+      stage,
+      layoutVersion: conceptLayoutVersion,
+    })) {
       // Keep the section explanation with the start of its content. Reserve
       // only a few table lines, rather than moving an entire long table.
       const first = section.blocks[0];
