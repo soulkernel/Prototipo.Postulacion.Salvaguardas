@@ -3,8 +3,8 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import {
-  requiredAttachments,
   attachmentRequirementsSchema,
+  applicationAttachments,
 } from "@/lib/attachment-requirements";
 import { validateRequiredDocuments } from "@/lib/attachment-validation";
 import { requireViewer } from "@/lib/data";
@@ -15,7 +15,12 @@ import {
   individualGrantIssue,
 } from "@/lib/domain";
 import { normalizePhone } from "@/lib/phone";
-import { partnerIssues, partnerText } from "@/lib/partners";
+import {
+  partnerIssues,
+  partnerText,
+  partnerPatch,
+  partnerRecords,
+} from "@/lib/partners";
 import { activityPlanningIssues } from "@/lib/activity-planning";
 import { resultIssues, resultText } from "@/lib/project-results";
 import { synchronizeRisks } from "@/lib/potential-risks";
@@ -209,6 +214,9 @@ export async function saveDraft(
               ),
             }
           : {}),
+        ...(parsed.data.concept.partner_organizations
+          ? partnerPatch(parsed.data.concept.partner_organizations)
+          : {}),
         ...(parsed.data.concept.strategic_alignment
           ? strategicText(parsed.data.concept.strategic_alignment)
           : {}),
@@ -301,20 +309,28 @@ export async function submitDraft(
     return { ok: false, error: "GLF_INVALID_GEOGRAPHY" };
   const { data: attachmentApp, error: attachmentReadError } = await db
     .from("applications")
-    .select("rules_snapshot,stage")
+    .select("rules_snapshot,stage,payload")
     .eq("id", id)
     .maybeSingle();
   if (attachmentReadError || !attachmentApp)
     return { ok: false, error: "GLF_ATTACHMENT_UNREADABLE" };
-  if (attachmentApp.rules_snapshot.attachment_requirements !== undefined) {
+  if (
+    partnerRecords(attachmentApp.payload.concept).some(
+      (p) => p.name.trim() && !p.id,
+    )
+  )
+    return { ok: false, error: "GLF_PARTNER_LINK_REQUIRED" };
+  {
     if (
+      attachmentApp.rules_snapshot.attachment_requirements !== undefined &&
       !attachmentRequirementsSchema.safeParse(
         attachmentApp.rules_snapshot.attachment_requirements,
       ).success
     )
       return { ok: false, error: "GLF_ATTACHMENT_UNREADABLE" };
-    const requirements = requiredAttachments(
+    const requirements = applicationAttachments(
       attachmentApp.rules_snapshot,
+      attachmentApp.payload.concept,
     ).filter(
       (r) =>
         attachmentApp.stage !== 1 ||

@@ -3,7 +3,10 @@ import { createHash } from "node:crypto";
 import { getViewer } from "@/lib/data";
 import { validateFile } from "@/lib/files";
 import { detectPdfSignature } from "@/lib/pdf-signature";
-import { requiredAttachments } from "@/lib/attachment-requirements";
+import {
+  applicationAttachments,
+  partnerLetterPrefix,
+} from "@/lib/attachment-requirements";
 import { validateRequiredFile } from "@/lib/attachment-validation";
 import { z } from "zod";
 export const runtime = "nodejs";
@@ -42,7 +45,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid file" }, { status: 400 });
   const { data: applicationRules, error: rulesError } = await viewer.db
     .from("applications")
-    .select("rules_snapshot")
+    .select("rules_snapshot,payload")
     .eq("id", app.data)
     .maybeSingle();
   if (rulesError || !applicationRules)
@@ -50,9 +53,15 @@ export async function POST(request: NextRequest) {
       { error: "Application unavailable" },
       { status: 403 },
     );
-  const requirement = requiredAttachments(applicationRules.rules_snapshot).find(
-    (r) => r.id === kind,
-  );
+  const requirement = applicationAttachments(
+    applicationRules.rules_snapshot,
+    applicationRules.payload.concept,
+  ).find((r) => r.id === kind);
+  if (kind.startsWith(partnerLetterPrefix) && !requirement)
+    return NextResponse.json(
+      { error: "GLF_PARTNER_LINK_REQUIRED" },
+      { status: 409 },
+    );
   if (requirement) {
     const issue = await validateRequiredFile(requirement, file.name, bytes);
     if (issue) return NextResponse.json({ error: issue }, { status: 422 });

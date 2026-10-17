@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { partnerRecords, type Partners } from "./partners";
 
 export const attachmentFormats = ["pdf", "jpg", "png", "docx", "xlsx"] as const;
 export const attachmentConditions = [
@@ -112,6 +113,85 @@ export function requiredAttachments(
         instructions_en: "",
       },
   );
+}
+
+export const partnerLetterPrefix = "partner_letter_";
+export function partnerLetterKind(id: string) {
+  return partnerLetterPrefix + id.replaceAll("-", "").toLowerCase();
+}
+export function isPartnerLetterRequirement(r: AttachmentRequirement) {
+  return (
+    ["partner_letter", "partner_letters", "partner_support_letters"].includes(
+      r.id,
+    ) ||
+    /^(cartas? de apoyo de (las )?organizaciones asociadas|letters? of support from partner organizations)\.?$/i.test(
+      r.label_es.trim(),
+    ) ||
+    /^(letters? of support from partner organizations)\.?$/i.test(
+      r.label_en.trim(),
+    )
+  );
+}
+export function partnerLetterRequirements(
+  concept: Partners,
+  rules: AttachmentRules,
+): AttachmentRequirement[] {
+  const template = requiredAttachments(rules).find(isPartnerLetterRequirement);
+  return partnerRecords(concept)
+    .filter((p) => p.name.trim() && p.id)
+    .map((p) => ({
+      id: partnerLetterKind(p.id),
+      label_es: `Carta de apoyo de ${p.name.trim()}`,
+      label_en: `Letter of support from ${p.name.trim()}`,
+      formats: template?.formats ?? [...attachmentFormats],
+      conditions: template?.conditions ?? [],
+      instructions_es: template?.instructions_es ?? "",
+      instructions_en: template?.instructions_en ?? "",
+    }));
+}
+/** Call requirements plus individual letters, without a duplicate generic letter. */
+export function applicationAttachments(
+  rules: AttachmentRules,
+  concept: Partners,
+) {
+  return [
+    ...requiredAttachments(rules).filter((r) => !isPartnerLetterRequirement(r)),
+    ...partnerLetterRequirements(concept, rules),
+  ];
+}
+export function missingPartnerLetters(
+  concept: Partners,
+  rules: AttachmentRules,
+  documents: { kind: string }[],
+) {
+  return partnerLetterRequirements(concept, rules).filter(
+    (r) => !documents.some((d) => d.kind === r.id),
+  );
+}
+export function isPartnerLetterDocument(rules: AttachmentRules, kind: string) {
+  return (
+    kind.startsWith(partnerLetterPrefix) ||
+    requiredAttachments(rules).some(
+      (r) => r.id === kind && isPartnerLetterRequirement(r),
+    )
+  );
+}
+export function partnerLetterError(
+  code: string,
+  concept: Partners,
+  locale: "es" | "en",
+) {
+  const match = code.match(
+    /GLF_PARTNER_LETTER_(REQUIRED|INVALID):([a-f0-9]{32})/,
+  );
+  if (!match) return null;
+  const name = partnerRecords(concept).find(
+    (p) => p.id.replaceAll("-", "").toLowerCase() === match[2],
+  )?.name;
+  if (!name) return null;
+  return locale === "es"
+    ? `${match[1] === "REQUIRED" ? "Falta cargar" : "No se pudo validar"} la carta de apoyo de ${name}. Revísela en Revisar y enviar → Anexos.`
+    : `${match[1] === "REQUIRED" ? "Upload" : "Could not validate"} the letter of support from ${name}. Check Review and submit → Attachments.`;
 }
 export function attachmentLabel(
   rules: AttachmentRules,

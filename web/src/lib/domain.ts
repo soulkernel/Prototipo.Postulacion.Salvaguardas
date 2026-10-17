@@ -44,6 +44,21 @@ export const conceptSchema = z
     other_islands: text.default(""),
     partners: text,
     associated_organizations: z.array(z.string().max(200)).max(50).optional(),
+    partner_organizations: z
+      .array(
+        z
+          .object({
+            id: z.uuid(),
+            name: z.string().max(200),
+          })
+          .strict(),
+      )
+      .max(50)
+      .refine(
+        (rows) =>
+          new Set(rows.map((p) => p.id.toLowerCase())).size === rows.length,
+      )
+      .optional(),
     location: text,
     project_type: text,
     category_id: text,

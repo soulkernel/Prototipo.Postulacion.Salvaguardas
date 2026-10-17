@@ -3,7 +3,13 @@ import { narrativeTextForEditing } from "@/lib/concept-presentation";
 import { ConceptReview } from "./concept-review";
 import { ConfirmRemoveButton } from "./confirm-remove-button";
 import { RequiredAttachmentUploads } from "./required-attachment-uploads";
-import { attachmentLabel } from "@/lib/attachment-requirements";
+import {
+  applicationAttachments,
+  missingPartnerLetters,
+  partnerLetterError,
+  partnerLetterPrefix,
+  isPartnerLetterDocument,
+} from "@/lib/attachment-requirements";
 import { FileDropField } from "./file-drop-field";
 import { LimitedTextarea } from "./limited-textarea";
 import { DeadlineCountdown } from "./deadline-countdown";
@@ -20,7 +26,11 @@ import {
 import { PhoneField } from "./phone-field";
 import { ActivityPlanningFields } from "./activity-planning-fields";
 import { PartnerFields } from "./partner-fields";
-import { partnerText } from "@/lib/partners";
+import {
+  initializePartners,
+  partnerPatch,
+  partnerRecords,
+} from "@/lib/partners";
 import { RequiredMark } from "./required-mark";
 import { GrantCategorySelect } from "./grant-category-select";
 import { CompletionFeedback } from "./completion-feedback";
@@ -114,6 +124,14 @@ const levels = {
   },
 };
 function message(code: string, es: boolean) {
+  if (code.includes("GLF_INVALID_PARTNERS"))
+    return es
+      ? "Revise los nombres y la identificación de las organizaciones asociadas y vuelva a guardar el borrador."
+      : "Check partner organization names and identifiers, then save the draft again.";
+  if (code.includes("GLF_PARTNER_LINK_REQUIRED"))
+    return es
+      ? "Guarde y revise las organizaciones asociadas antes de vincular sus cartas de apoyo."
+      : "Save and review partner organizations before linking their letters of support.";
   if (code.includes("GLF_ORGANIZATION_PROVINCE"))
     return es
       ? "Para una organización, la provincia del domicilio debe ser Galápagos. Corrija la provincia y revise la ciudad o localidad antes de guardar."
@@ -263,39 +281,51 @@ export function ApplicationEditor({
 }) {
   const es = locale === "es";
   const router = useRouter();
-  const [payload, setPayload] = useState<Payload>(() =>
-    editable &&
-    application.payload.concept.strategic_alignment?.version !==
-      alignmentVersion &&
-    application.payload.concept.strategic_alignment
-      ? {
-          ...application.payload,
-          concept: {
-            ...application.payload.concept,
-            email: application.payload.concept.email || accountEmail,
-            strategic_alignment: {
-              ...application.payload.concept.strategic_alignment,
-              version: alignmentVersion,
-              objectives:
-                application.payload.concept.strategic_alignment.objectives.map(
-                  (o) => ({
-                    ...o,
-                    glf: [],
-                    ...(o.kind === "specific"
-                      ? { plan: [], ods: [], contribution: "" }
-                      : {}),
-                  }),
-                ),
-            },
-          },
-        }
-      : editable && !application.payload.concept.email.trim() && accountEmail
+  const [payload, setPayload] = useState<Payload>(() => {
+    const initialPayload: Payload =
+      editable &&
+      application.payload.concept.strategic_alignment?.version !==
+        alignmentVersion &&
+      application.payload.concept.strategic_alignment
         ? {
             ...application.payload,
-            concept: { ...application.payload.concept, email: accountEmail },
+            concept: {
+              ...application.payload.concept,
+              email: application.payload.concept.email || accountEmail,
+              strategic_alignment: {
+                ...application.payload.concept.strategic_alignment,
+                version: alignmentVersion,
+                objectives:
+                  application.payload.concept.strategic_alignment.objectives.map(
+                    (o) => ({
+                      ...o,
+                      glf: [],
+                      ...(o.kind === "specific"
+                        ? { plan: [], ods: [], contribution: "" }
+                        : {}),
+                    }),
+                  ),
+              },
+            },
           }
-        : application.payload,
-  );
+        : editable && !application.payload.concept.email.trim() && accountEmail
+          ? {
+              ...application.payload,
+              concept: { ...application.payload.concept, email: accountEmail },
+            }
+          : application.payload;
+    return editable &&
+      initialPayload.concept.partner_organizations === undefined &&
+      partnerRecords(initialPayload.concept).length
+      ? {
+          ...initialPayload,
+          concept: {
+            ...initialPayload.concept,
+            ...partnerPatch(initializePartners(initialPayload.concept)),
+          },
+        }
+      : initialPayload;
+  });
   const [revision, setRevision] = useState(application.revision);
   const [saved, setSaved] = useState(JSON.stringify(application.payload));
   const revisionRef = useRef(application.revision);
@@ -544,6 +574,21 @@ export function ApplicationEditor({
       return;
     }
     if (submit) {
+      const missingLetters = missingPartnerLetters(
+        payload.concept,
+        application.rules_snapshot,
+        documents,
+      );
+      if (missingLetters.length) {
+        setStep(3);
+        setError(
+          (es ? "Falta cargar: " : "Upload: ") +
+            missingLetters
+              .map((r) => (es ? r.label_es : r.label_en))
+              .join("; "),
+        );
+        return;
+      }
       setShowCompletion(true);
       setCompletionAttempt((n) => n + 1);
       if (
@@ -639,7 +684,10 @@ export function ApplicationEditor({
       if (submit) {
         const result = await submitDraft(application.id, nextRevision);
         if (!result.ok) {
-          setError(message(result.error, es));
+          setError(
+            partnerLetterError(result.error, payload.concept, locale) ||
+              message(result.error, es),
+          );
           return;
         }
         setRevision(result.revision);
@@ -667,6 +715,14 @@ export function ApplicationEditor({
     setBusy(true);
     setError("");
     const data = new FormData(form);
+    if (
+      String(data.get("kind")).startsWith(partnerLetterPrefix) &&
+      (dirty || autoSaving)
+    ) {
+      setError(message("GLF_PARTNER_LINK_REQUIRED", es));
+      setBusy(false);
+      return;
+    }
     if (
       application.stage === 1 &&
       ["concept_signed", "matrix_signed"].includes(String(data.get("kind")))
@@ -716,6 +772,11 @@ export function ApplicationEditor({
   }
   const fields = step === 0 ? identityFields : narrativeFields;
   const rules = application.rules_snapshot;
+  const missingLetters = missingPartnerLetters(
+    payload.concept,
+    rules,
+    documents,
+  );
   const progress = submissionProgress(
     payload,
     rules,
@@ -1473,25 +1534,84 @@ export function ApplicationEditor({
                       concept={payload.concept}
                       locale={locale}
                       invalid={fieldIssue("partners")}
-                      onChange={(names) =>
+                      onChange={(rows) =>
                         setPayload((p) => ({
                           ...p,
                           concept: {
                             ...p.concept,
-                            associated_organizations: names,
-                            partners: partnerText(names),
+                            ...partnerPatch(rows),
                           },
                         }))
                       }
                     />
-                  ) : field.key === "alignment" ? null : field.key ===
-                    "phone" ? (
-                    <PhoneField
-                      key={field.key}
-                      locale={locale}
-                      value={payload.concept.phone}
-                      onChange={(value) => updateConcept("phone", value)}
-                    />
+                  ) : field.key === "alignment" ||
+                    field.key === "email" ||
+                    field.key === "phone" ? null : field.key ===
+                    "contact_name" ? (
+                    <section
+                      key="contact-details"
+                      className="activity-card contact-details-card full-width"
+                      aria-labelledby="contact-details-heading"
+                    >
+                      <h3
+                        id="contact-details-heading"
+                        className="section-card-title"
+                      >
+                        {es ? "Datos de contacto" : "Contact details"}
+                      </h3>
+                      <div className="contact-details-grid">
+                        {(["contact_name", "email"] as const).map((key) => (
+                          <label
+                            key={key}
+                            className="editor-field"
+                            data-validation-field={key}
+                          >
+                            <span>
+                              {key === "contact_name"
+                                ? es
+                                  ? "Persona de contacto"
+                                  : "Contact person"
+                                : es
+                                  ? "Correo electrónico de contacto"
+                                  : "Contact email"}
+                              <RequiredMark locale={locale} />
+                            </span>
+                            <input
+                              type={key === "email" ? "email" : "text"}
+                              value={payload.concept[key]}
+                              maxLength={12000}
+                              aria-required="true"
+                              aria-invalid={fieldIssue(key)}
+                              aria-describedby={
+                                currentIssues.missing.includes(key)
+                                  ? `field-required-${key}`
+                                  : undefined
+                              }
+                              onChange={(e) =>
+                                updateConcept(key, e.target.value)
+                              }
+                            />
+                            {currentIssues.missing.includes(key) && (
+                              <small
+                                className="field-warning"
+                                data-field-message="error"
+                                id={`field-required-${key}`}
+                              >
+                                {es
+                                  ? "Complete este campo obligatorio."
+                                  : "Complete this required field."}
+                              </small>
+                            )}
+                          </label>
+                        ))}
+                        <PhoneField
+                          inline
+                          locale={locale}
+                          value={payload.concept.phone}
+                          onChange={(value) => updateConcept("phone", value)}
+                        />
+                      </div>
+                    </section>
                   ) : (
                     <label
                       key={field.key}
@@ -2617,6 +2737,9 @@ export function ApplicationEditor({
           })}
           <RequiredAttachmentUploads
             rules={rules}
+            concept={payload.concept}
+            ready={!dirty && !autoSaving}
+            uploadError={operation === "upload" ? error : ""}
             stage={application.stage}
             locale={locale}
             documents={documents}
@@ -2638,13 +2761,16 @@ export function ApplicationEditor({
                       : "Signed Concept Note (PDF)",
                   ]
                 : []),
-              ...rules.required_attachments.map((k) =>
-                attachmentLabel(rules, k, locale),
+              ...applicationAttachments(rules, payload.concept).map((r) =>
+                es ? r.label_es : r.label_en,
               ),
             ].join(", ") || (es ? "Ninguno adicional" : "None additional")}
           </p>
           <RequiredAttachmentUploads
             rules={rules}
+            concept={payload.concept}
+            ready={!dirty && !autoSaving}
+            uploadError={operation === "upload" ? error : ""}
             stage={application.stage}
             locale={locale}
             documents={documents}
@@ -2652,7 +2778,12 @@ export function ApplicationEditor({
             onUpload={uploadForm}
           />
           {documents
-            .filter((d) => !rules.required_attachments.includes(d.kind))
+            .filter(
+              (d) =>
+                !applicationAttachments(rules, payload.concept).some(
+                  (r) => r.id === d.kind,
+                ) && !isPartnerLetterDocument(rules, d.kind),
+            )
             .map((d) => (
               <div className="document-row" key={d.id}>
                 <span>
@@ -2730,6 +2861,16 @@ export function ApplicationEditor({
                 : "All changes saved"}
           </span>
           <div className="editor-action-feedback">
+            {step === 3 && !!missingLetters.length && (
+              <p className="field-warning" role="status">
+                {es
+                  ? "Cartas de apoyo pendientes: "
+                  : "Pending letters of support: "}
+                {missingLetters
+                  .map((r) => (es ? r.label_es : r.label_en))
+                  .join("; ")}
+              </p>
+            )}
             {step === 3 && application.stage === 1 && !signedDocumentsReady && (
               <p className="field-help" role="status">
                 {es
@@ -2764,7 +2905,12 @@ export function ApplicationEditor({
               {step === 3 ? (
                 <button
                   className="button primary"
-                  disabled={busy || !signedDocumentsReady || !budgetUiValid}
+                  disabled={
+                    busy ||
+                    !!missingLetters.length ||
+                    !signedDocumentsReady ||
+                    !budgetUiValid
+                  }
                   aria-busy={busy && operation === "submit"}
                   onClick={() => persist(true)}
                   aria-describedby={

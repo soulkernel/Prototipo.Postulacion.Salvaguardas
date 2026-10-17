@@ -9,12 +9,14 @@ export function FileDropField({
   disabled = false,
   onChange,
   required = true,
+  label,
 }: {
   locale: Locale;
   accept: string;
   disabled?: boolean;
   onChange?: () => void;
   required?: boolean;
+  label?: string;
 }) {
   const es = locale === "es",
     ref = useRef<HTMLInputElement>(null),
@@ -82,7 +84,13 @@ export function FileDropField({
         accept={accept}
         required={required}
         disabled={disabled}
-        aria-label={es ? "Seleccionar archivo" : "Select file"}
+        aria-label={
+          label
+            ? `${es ? "Seleccionar archivo" : "Select file"}: ${label}`
+            : es
+              ? "Seleccionar archivo"
+              : "Select file"
+        }
         aria-describedby={id}
         aria-invalid={Boolean(error)}
         onChange={(e) => {

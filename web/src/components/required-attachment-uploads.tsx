@@ -4,7 +4,14 @@ import {
   conditionLabel,
   type AttachmentRules,
 } from "@/lib/attachment-requirements";
-import { requiredAttachments } from "@/lib/attachment-requirements";
+import {
+  applicationAttachments,
+  partnerLetterPrefix,
+  requiredAttachments,
+  isPartnerLetterRequirement,
+} from "@/lib/attachment-requirements";
+import { useRef, useState } from "react";
+import type { Partners } from "@/lib/partners";
 import { FileDropField } from "./file-drop-field";
 import { DocumentDownload } from "./document-download";
 import { ActionLabel } from "./submit-button";
@@ -17,6 +24,9 @@ export function RequiredAttachmentUploads({
   documents,
   busy,
   onUpload,
+  concept,
+  ready = true,
+  uploadError = "",
 }: {
   rules: AttachmentRules;
   stage: number;
@@ -24,33 +34,104 @@ export function RequiredAttachmentUploads({
   documents: { id: string; file_name: string; kind: string }[];
   busy: boolean;
   onUpload: (form: HTMLFormElement) => Promise<void>;
+  concept: Partners;
+  ready?: boolean;
+  uploadError?: string;
 }) {
   const es = locale === "es";
-  const requirements = requiredAttachments(rules).filter(
+  const [activeKind, setActiveKind] = useState("");
+  const [pending, setPending] = useState(false);
+  const locked = useRef(false);
+  const [localError, setLocalError] = useState("");
+  const requirements = applicationAttachments(rules, concept).filter(
     (r) => stage !== 1 || !["concept_signed", "matrix_signed"].includes(r.id),
   );
-  if (!requirements.length) return null;
+  const genericIds = requiredAttachments(rules)
+    .filter(isPartnerLetterRequirement)
+    .map((r) => r.id);
+  const unlinked = documents.filter(
+    (d) =>
+      (d.kind.startsWith(partnerLetterPrefix) ||
+        genericIds.includes(d.kind) ||
+        (stage === 1 && d.kind === "other")) &&
+      !requirements.some((r) => r.id === d.kind),
+  );
+  const historyTitle = unlinked.some((d) => d.kind === "other")
+    ? es
+      ? "Archivos conservados sin vínculo con una organización"
+      : "Retained files without an organization link"
+    : es
+      ? "Cartas conservadas sin vínculo actual"
+      : "Retained letters without a current link";
+  if (!requirements.length && !unlinked.length) return null;
   return (
     <section className="required-attachment-uploads">
-      <h3>
-        {es
-          ? "Anexos requeridos por la convocatoria"
-          : "Attachments required by this call"}
-      </h3>
+      <h3>{es ? "Anexos" : "Attachments"}</h3>
+      {stage !== 1 &&
+        documents.some((d) => d.kind === "other") &&
+        requirements.some((r) => r.id.startsWith(partnerLetterPrefix)) && (
+          <p className="field-help">
+            {es
+              ? "Si una carta anterior figura como Otro anexo, vuelva a cargarla en el campo de su organización para vincularla expresamente. No se asignan cartas automáticamente."
+              : "If an earlier letter is listed as Other attachment, upload it in its organization's field to explicitly link it. Letters are not assigned automatically."}
+          </p>
+        )}
+      {!ready &&
+        requirements.some((r) => r.id.startsWith(partnerLetterPrefix)) && (
+          <p role="status">
+            {es
+              ? "Guarde los cambios de las organizaciones antes de cargar sus cartas de apoyo."
+              : "Save changes to partner organizations before uploading their letters of support."}
+          </p>
+        )}
       {requirements.map((r) => (
         <form
           key={r.id}
           className="live-form call-attachment-card"
-          onSubmit={(e) => {
+          aria-labelledby={`attachment-title-${r.id}`}
+          onSubmit={async (e) => {
             e.preventDefault();
-            if (e.currentTarget.reportValidity())
-              void onUpload(e.currentTarget);
+            if (
+              busy ||
+              locked.current ||
+              (r.id.startsWith(partnerLetterPrefix) && !ready) ||
+              !e.currentTarget.reportValidity()
+            )
+              return;
+            locked.current = true;
+            setActiveKind(r.id);
+            setPending(true);
+            setLocalError("");
+            try {
+              await onUpload(e.currentTarget);
+            } catch {
+              setLocalError(
+                es
+                  ? "No se pudo cargar el archivo. Inténtelo de nuevo."
+                  : "Could not upload the file. Try again.",
+              );
+            } finally {
+              locked.current = false;
+              setPending(false);
+            }
           }}
         >
-          <h4>{es ? r.label_es : r.label_en}</h4>
-          {!documents.some((d) => d.kind === r.id) && (
-            <p>{es ? "Pendiente de cargar." : "Not yet uploaded."}</p>
-          )}
+          <h4 id={`attachment-title-${r.id}`}>
+            {es ? r.label_es : r.label_en}
+          </h4>
+          <p role="status">
+            {pending && activeKind === r.id
+              ? es
+                ? "Cargando archivo…"
+                : "Uploading file…"
+              : documents.some((d) => d.kind === r.id)
+                ? es
+                  ? "Archivo cargado."
+                  : "File uploaded."
+                : es
+                  ? "Pendiente de cargar."
+                  : "Not yet uploaded."}
+          </p>
           <input type="hidden" name="kind" value={r.id} />
           <p>
             {es ? "Formatos admitidos" : "Accepted formats"}:{" "}
@@ -90,11 +171,29 @@ export function RequiredAttachmentUploads({
           <FileDropField
             locale={locale}
             accept={attachmentAccept(r)}
-            disabled={busy}
+            disabled={
+              busy ||
+              pending ||
+              (r.id.startsWith(partnerLetterPrefix) && !ready)
+            }
+            label={es ? r.label_es : r.label_en}
           />
-          <button className="button secondary" disabled={busy} aria-busy={busy}>
+          {activeKind === r.id && (uploadError || localError) && (
+            <p className="auth-error" role="alert">
+              {uploadError || localError}
+            </p>
+          )}
+          <button
+            className="button secondary"
+            disabled={
+              busy ||
+              pending ||
+              (r.id.startsWith(partnerLetterPrefix) && !ready)
+            }
+            aria-busy={pending && activeKind === r.id}
+          >
             <ActionLabel
-              busy={busy}
+              busy={pending && activeKind === r.id}
               pendingLabel={es ? "Guardando…" : "Saving…"}
             >
               {es ? "Guardar anexo" : "Save attachment"}
@@ -102,6 +201,24 @@ export function RequiredAttachmentUploads({
           </button>
         </form>
       ))}
+      {!!unlinked.length && (
+        <section aria-label={historyTitle}>
+          <h4>{historyTitle}</h4>
+          <p>
+            {es
+              ? "Estos archivos se conservan, pero no cuentan como carta de una organización actual. Si alguno corresponde a una carta de apoyo de una organización registrada, vuelva a cargarlo en su campo individual para vincularlo expresamente. No se han reasignado ni eliminado."
+              : "These files are retained but do not count as a letter for a current organization. If a file is a letter of support from a registered organization, upload it in its individual field to explicitly link it. They have not been reassigned or deleted."}
+          </p>
+          {unlinked.map((d) => (
+            <div className="document-row" key={d.id}>
+              <span>{d.file_name}</span>
+              <DocumentDownload href={`/files/${d.id}`} locale={locale}>
+                {es ? "Descargar" : "Download"}
+              </DocumentDownload>
+            </div>
+          ))}
+        </section>
+      )}
     </section>
   );
 }

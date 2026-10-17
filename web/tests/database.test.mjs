@@ -4,6 +4,7 @@ import { readFile, readdir } from "node:fs/promises";
 import { PGlite } from "@electric-sql/pglite";
 import { vector } from "@electric-sql/pglite-pgvector";
 const db = new PGlite({ extensions: { vector } });
+let currentPayloadValidator;
 const ids = {
   applicant: "00000000-0000-4000-8000-000000000001",
   other: "00000000-0000-4000-8000-000000000002",
@@ -14,6 +15,8 @@ const ids = {
   admin: "00000000-0000-4000-8000-000000000007",
 };
 test("submission core repair restores a missing dependency without exposing a bypass RPC", async () => {
+  currentPayloadValidator = (await db.query("select pg_get_functiondef('private.validate_payload(jsonb,jsonb,boolean,integer)'::regprocedure) as definition")).rows[0].definition;
+  const currentCore = (await db.query("select pg_get_functiondef('public.submit_application_core(uuid,integer)'::regprocedure) as definition")).rows[0].definition;
   await db.exec("drop function public.submit_application_core(uuid,integer)");
   await db.exec(
     await readFile(
@@ -31,6 +34,7 @@ test("submission core repair restores a missing dependency without exposing a by
     );
     assert.equal(result.rows[0].allowed, false);
   }
+  await db.exec(currentCore);
 });
 test("browser roles cannot truncate or directly modify prepared documents", async () => {
   for (const role of ["anon", "authenticated"]) {
@@ -3170,4 +3174,75 @@ test("v2 dossiers preserve unified and legacy summaries across signing, review, 
       fullPayload.activities[0].risks[0].residual_probability,
     );
   }
+});
+
+
+test("M05 database: isolated drafts, individual letters, history and direct RPC submission", async()=>{
+ // M01/M03 deliberately replay earlier validators. Restore the latest installed wrapper before testing M05.
+ await db.exec(currentPayloadValidator);
+ const owner=await temporaryAccount();
+ const c=await rpc("create_call",{details:{code:"M05-LOCAL",title_es:"M05",title_en:"M05",description_es:"QA",description_en:"QA",opens_at:"2020-01-01T00:00:00Z",closes_at:"2099-01-01T00:00:00Z",rules:{...rules,required_attachments:["partner_letters"]}}},"grants");
+ await rpc("publish_call",{call_id:c},"grants");
+ const a={id:crypto.randomUUID(),name:"Socio A"}, b={id:crypto.randomUUID(),name:"Socio B"};
+ const patch=(rows)=>({partner_organizations:rows,associated_organizations:rows.map(r=>r.name),partners:rows.map((r,i)=>`${i+1}. ${r.name}`).join("\n")});
+ const kind=p=>"partner_letter_"+p.id.replaceAll("-","");
+ const make=async(rows)=>{
+  const id=await rpc("create_application",{call_id:c},owner);
+  const p=structuredClone(payload);Object.assign(p.concept,patch(rows));
+  p.activities=p.activities.map(a=>({...a,id:crypto.randomUUID(),risks:a.risks.map(r=>({...r,id:crypto.randomUUID()}))}));
+  await rpc("save_application",{application_id:id,expected_revision:0,payload:p},owner);
+  return {id,p};
+ };
+ const upload=async(id,k,n="letter.pdf")=>{
+  const path=`${id}/${owner}/attachment/${crypto.randomUUID()}.pdf`;
+  await as(owner,()=>db.query("insert into storage.objects(bucket_id,name,metadata) values('application-files',$1,$2)",[path,{size:100}]));
+  return rpc("register_document",{app_id:id,object_path:path,original_name:n,mime:"application/pdf",bytes:100,checksum:"a".repeat(64),document_kind:k},owner);
+ };
+ const signed=async(id,revision)=>{
+  await rpc("prepare_application_documents",{app_id:id,expected_revision:revision},owner);
+  await upload(id,"concept_signed","concept.pdf");await upload(id,"matrix_signed","matrix.pdf");
+ };
+ const check=async(id)=>db.query("select private.validate_partner_letters(a) from public.applications a where id=$1",[id]);
+ const multi=await make([a,b]); // Missing letters do not prevent draft saving or PDF preparation.
+ await signed(multi.id,1);
+ await assert.rejects(rpc("submit_application",{application_id:multi.id,expected_revision:1},owner),new RegExp("GLF_PARTNER_LETTER_REQUIRED:"+a.id.replaceAll("-","")));
+ await upload(multi.id,"partner_letters","old-unlinked.pdf");
+ await assert.rejects(check(multi.id),/GLF_PARTNER_LETTER_REQUIRED/);
+ const first=await upload(multi.id,kind(a));
+ await assert.rejects(check(multi.id),new RegExp("GLF_PARTNER_LETTER_REQUIRED:"+b.id.replaceAll("-","")));
+ await assert.rejects(upload(multi.id,kind({id:crypto.randomUUID()})),/GLF_PARTNER_LINK_REQUIRED/);
+ await upload(multi.id,kind(b));
+ await check(multi.id);
+ Object.assign(multi.p.concept,patch([b,{...a,name:"Socio A renombrado"}]));
+ await rpc("save_application",{application_id:multi.id,expected_revision:1,payload:multi.p},owner);
+ await check(multi.id);
+ const reopened=(await as(owner,()=>db.query("select payload from public.applications where id=$1",[multi.id]))).rows[0].payload;
+ assert.equal(reopened.concept.partner_organizations[1].id,a.id);
+ assert.equal(reopened.concept.partner_organizations[1].name,"Socio A renombrado");
+ Object.assign(multi.p.concept,patch([b]));
+ await rpc("save_application",{application_id:multi.id,expected_revision:2,payload:multi.p},owner);
+ await check(multi.id);
+ assert.equal((await db.query("select count(*)::int n from public.application_documents where id=$1",[first])).rows[0].n,1);
+ await signed(multi.id,3);
+ assert.equal(await rpc("submit_application",{application_id:multi.id,expected_revision:3},owner),4);
+ const snap=(await db.query("select payload from public.application_versions where application_id=$1",[multi.id])).rows[0].payload;
+ assert.equal(snap.concept.partner_organizations[0].id,b.id);
+ assert.ok(snap.attachments.some(d=>d.id===first));
+ const zero=await make([]);await signed(zero.id,1);
+ assert.equal(await rpc("submit_application",{application_id:zero.id,expected_revision:1},owner),2);
+ const single=await make([a]);await upload(single.id,kind(a));await signed(single.id,1);
+ assert.equal(await rpc("submit_application",{application_id:single.id,expected_revision:1},owner),2);
+ const legacy=await make([]);delete legacy.p.concept.partner_organizations;legacy.p.concept.associated_organizations=["Socio antiguo"];legacy.p.concept.partners="Socio antiguo";
+ await rpc("save_application",{application_id:legacy.id,expected_revision:1,payload:legacy.p},owner);
+ await upload(legacy.id,"partner_letters");await signed(legacy.id,2);
+ await assert.rejects(rpc("submit_application",{application_id:legacy.id,expected_revision:2},owner),/GLF_PARTNER_LINK_REQUIRED/);
+ const blank=await make([{...a,name:""}]);
+ await assert.rejects(rpc("prepare_application_documents",{app_id:blank.id,expected_revision:1},owner),/GLF_REQUIRED:partners/);
+ const invalid=structuredClone(payload);Object.assign(invalid.concept,patch([a,a]));
+ await assert.rejects(db.query("select private.validate_payload($1::jsonb,$2::jsonb,false,1)",[JSON.stringify(invalid),JSON.stringify(rules)]),/GLF_INVALID_PARTNERS/);
+ for(const role of ["anon","authenticated"]){
+  for(const signature of ["private.validate_partner_letters(public.applications)","private.check_partner_letter_upload()","public.submit_application_core(uuid,integer)"]){
+   assert.equal((await db.query("select has_function_privilege($1,$2,'EXECUTE') allowed",[role,signature])).rows[0].allowed,false);
+  }
+ }
 });

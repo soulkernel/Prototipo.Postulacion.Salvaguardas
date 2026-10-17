@@ -1,4 +1,5 @@
 import { stepIssues } from "./step-validation";
+import { applicationAttachments } from "./attachment-requirements";
 import {
   validateComplete,
   type Payload,
@@ -67,7 +68,7 @@ export function submissionProgress(
     expected = issues(blank(payload) as Payload);
   pending.forEach((k) => expected.add(k));
   const required = new Set([
-    ...rules.required_attachments,
+    ...applicationAttachments(rules, payload.concept).map((r) => r.id),
     ...(stage === 1 ? ["concept_signed", "matrix_signed"] : []),
   ]);
   const missingDocs = [...required].filter(

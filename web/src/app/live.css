@@ -1270,3 +1270,20 @@ input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* Shared contact card: keep four controls aligned without an empty half-row. */
+.contact-details-card { container: contact-details / inline-size; }
+.contact-details-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.45fr) minmax(0, .85fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.contact-details-grid > .editor-field { min-width: 0; align-content: start; }
+.contact-details-grid .contact-phone-help { margin: 0; }
+@container contact-details (max-width: 760px) {
+  .contact-details-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@container contact-details (max-width: 440px) {
+  .contact-details-grid { grid-template-columns: minmax(0, 1fr); }
+}

@@ -448,9 +448,9 @@ export const manualChapters: ManualChapter[] = [
       ],
       [
         "Organizaciones asociadas (opcional)",
-        "Registre cada organización por separado. Use + para añadir otra y el icono de papelera para retirar una entrada; no incluya organizaciones sin participación prevista.",
+        "Registre cada organización por separado. Use + para añadir otra y el icono de papelera para retirar una entrada; no incluya organizaciones sin participación prevista. Cada organización registrada necesita su propia carta de apoyo, que debe cargar en Revisar y enviar → Anexos. Puede guardar el borrador aunque falten cartas.",
         "Partner organizations (optional)",
-        "Register each organization separately. Use + to add another and the trash icon to delete an entry; only include organizations expected to participate.",
+        "Register each organization separately. Use + to add another and the trash icon to delete an entry; only include organizations expected to participate. Each registered organization needs its own letter of support under Review and submit → Attachments. You can save a draft while letters are missing.",
       ],
       [
         "Contadores / revisión ortográfica",
@@ -968,6 +968,12 @@ export const manualChapters: ManualChapter[] = [
         "Cada documento requerido tiene su propia tarjeta con nombre, formatos admitidos, condiciones e instrucciones. Cargue el archivo en la tarjeta correspondiente y pulse Guardar anexo. Una firma electrónica requiere PDF; la autenticidad de la firma y la notarización serán revisadas por GLF.",
         "Additional attachments required by the call",
         "Each required document has its own card with its name, accepted formats, conditions and instructions. Upload the file in the matching card and select Save attachment. Electronic signatures require PDF; GLF will review signature authenticity and notarization.",
+      ],
+      [
+        "Carta de apoyo por organización asociada",
+        "En Anexos aparece una tarjeta con el nombre de cada organización registrada. Guarde primero los cambios de las organizaciones; después arrastre o seleccione la carta correspondiente y pulse Guardar anexo. Compruebe que figure como Archivo cargado. No podrá enviar si falta alguna carta; sin organizaciones asociadas, no se exige ninguna. Cambiar el nombre conserva su carta. Al eliminar una organización, deja de exigirse su carta y los archivos anteriores se conservan. Las cartas antiguas sin vínculo deben volver a cargarse en la tarjeta de la organización correcta; el portal no las asigna automáticamente.",
+        "Letter of support for each partner organization",
+        "Attachments shows a card named after each registered organization. Save organization changes first, then drag or select the matching letter and select Save attachment. Check that it shows File uploaded. Submission is blocked if a letter is missing; none is required without partner organizations. Renaming an organization keeps its letter. Removing an organization ends its letter requirement and retains earlier files. Upload unlinked earlier letters again in the correct organization's card; the portal does not assign them automatically.",
       ],
       [
         "Documento de versión anterior",

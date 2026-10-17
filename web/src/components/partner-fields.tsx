@@ -1,7 +1,8 @@
 "use client";
+import { useId } from "react";
 import { ConfirmRemoveButton } from "./confirm-remove-button";
 import type { Concept, Locale } from "@/lib/domain";
-import { partnerOrganizations } from "@/lib/partners";
+import { partnerRecords, type PartnerOrganization } from "@/lib/partners";
 export function PartnerFields({
   concept,
   locale,
@@ -11,10 +12,11 @@ export function PartnerFields({
   concept: Concept;
   locale: Locale;
   invalid: boolean;
-  onChange: (names: string[]) => void;
+  onChange: (rows: PartnerOrganization[]) => void;
 }) {
+  const noticeId = useId();
   const es = locale === "es",
-    names = partnerOrganizations(concept);
+    rows = partnerRecords(concept);
   return (
     <section
       data-validation-field="partners"
@@ -27,8 +29,8 @@ export function PartnerFields({
           : "Partner organizations (if applicable)"}{" "}
         <small>({es ? "Opcional" : "Optional"})</small>
       </h3>
-      {names.map((name, i) => (
-        <div className="partner-row" key={i}>
+      {rows.map(({ id, name }, i) => (
+        <div className="partner-row" key={id || `legacy-${i}`}>
           <label>
             {es ? "Organización asociada" : "Partner organization"} {i + 1}
             <input
@@ -36,12 +38,22 @@ export function PartnerFields({
               maxLength={200}
               aria-required="true"
               aria-invalid={invalid && !name.trim()}
+              aria-describedby={`${noticeId}-partner-${i}`}
               onChange={(e) =>
                 onChange(
-                  names.map((n, index) => (index === i ? e.target.value : n)),
+                  rows.map((p, index) => ({
+                    ...p,
+                    id: p.id || crypto.randomUUID(),
+                    name: index === i ? e.target.value : p.name,
+                  })),
                 )
               }
             />
+            <small id={`${noticeId}-partner-${i}`} className="field-help">
+              {es
+                ? "Recuerde que debe contar con una carta de apoyo de esta organización y adjuntarla en Revisar y enviar → Anexos."
+                : "You must obtain a letter of support from this organization and upload it under Review and submit → Attachments."}
+            </small>
             {invalid && !name.trim() && (
               <small className="danger-text">
                 {es
@@ -53,21 +65,28 @@ export function PartnerFields({
           <ConfirmRemoveButton
             locale={locale}
             element={`${es ? "Organización asociada" : "Partner organization"} ${i + 1}: ${name || "—"}`}
+            consequence={
+              es
+                ? "Se eliminará esta organización del formulario y dejará de exigirse su carta de apoyo. Los archivos ya cargados se conservarán en el historial documental y no se asignarán a otra organización."
+                : "This organization will be removed from the form and its letter of support will no longer be required. Uploaded files will remain in the document history and will not be assigned to another organization."
+            }
             aria-label={
               (es
                 ? "Quitar organización asociada "
                 : "Remove partner organization ") +
               (i + 1)
             }
-            onConfirm={() => onChange(names.filter((_, index) => index !== i))}
+            onConfirm={() => onChange(rows.filter((_, index) => index !== i))}
           />
         </div>
       ))}
       <button
         type="button"
         className="button secondary"
-        disabled={names.length >= 50}
-        onClick={() => onChange([...names, ""])}
+        disabled={rows.length >= 50}
+        onClick={() =>
+          onChange([...rows, { id: crypto.randomUUID(), name: "" }])
+        }
       >
         + {es ? "Agregar organización" : "Add organization"}
       </button>

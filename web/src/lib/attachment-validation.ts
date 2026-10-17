@@ -3,6 +3,7 @@ import { detectPdfSignature } from "./pdf-signature";
 import {
   attachmentFormatAllowed,
   type AttachmentRequirement,
+  partnerLetterPrefix,
 } from "./attachment-requirements";
 
 export async function validateRequiredFile(
@@ -38,7 +39,10 @@ export async function validateRequiredDocuments(
       // Callers order the files newest first; a replaced file must be rechecked.
       const document = documents.find((d) => d.kind === requirement.id);
       if (!document) {
-        failure = "GLF_ATTACHMENT_REQUIRED";
+        failure = requirement.id.startsWith(partnerLetterPrefix)
+          ? "GLF_PARTNER_LETTER_REQUIRED:" +
+            requirement.id.slice(partnerLetterPrefix.length)
+          : "GLF_ATTACHMENT_REQUIRED";
         return;
       }
       try {
@@ -47,9 +51,16 @@ export async function validateRequiredDocuments(
           document.file_name,
           await load(document.storage_path),
         );
-        if (error) failure = error;
+        if (error)
+          failure = requirement.id.startsWith(partnerLetterPrefix)
+            ? "GLF_PARTNER_LETTER_INVALID:" +
+              requirement.id.slice(partnerLetterPrefix.length)
+            : error;
       } catch {
-        failure = "GLF_ATTACHMENT_UNREADABLE";
+        failure = requirement.id.startsWith(partnerLetterPrefix)
+          ? "GLF_PARTNER_LETTER_INVALID:" +
+            requirement.id.slice(partnerLetterPrefix.length)
+          : "GLF_ATTACHMENT_UNREADABLE";
       }
     }
   }
