@@ -2801,7 +2801,10 @@ select {
 .draft-row-actions .button.secondary:hover { background: #eef3fb; }
 @media (max-width: 600px) { .draft-row-actions { flex-direction: column; align-items: stretch; } }
 .button.danger { background: #a32626; color: white; border-color: #a32626; }
-.draft-delete-dialog { width: min(560px, calc(100vw - 32px)); border: 1px solid #d9e2ec; border-radius: 14px; padding: 24px; color: #203b64; }
+.draft-delete-dialog { width: min(560px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow: auto; margin: auto; border: 1px solid #d9e2ec; border-radius: 14px; padding: 24px; color: #203b64; }
+.draft-delete-dialog h2 { margin: 0 0 .75rem; font-size: 1.125rem; font-weight: 600; line-height: 1.35; }
+.draft-delete-dialog p { margin: .65rem 0; }
+.draft-delete-dialog .live-actions { margin-top: 1rem; }
 .draft-delete-dialog::backdrop { background: rgb(0 0 0 / 40%); }
 .draft-save-status { margin-bottom: 18px; }
 .partner-fields h3 { font-size: 14px; margin-bottom: 12px; }
