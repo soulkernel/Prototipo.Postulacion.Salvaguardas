@@ -1631,8 +1631,8 @@ export function ApplicationEditor({
                         >
                           <option value="">
                             {es
-                              ? "Seleccione una línea temática"
-                              : "Select a theme"}
+                              ? "Seleccione un tema de aplicación"
+                              : "Select an application topic"}
                           </option>
                           {!rules.themes.some(
                             (t) => t.id === payload.concept.project_type,

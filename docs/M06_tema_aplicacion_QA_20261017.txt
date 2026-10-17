@@ -1,0 +1,62 @@
+M06 — CAMBIO DE RÓTULO: TEMA DE APLICACIÓN / APPLICATION TOPIC
+Fecha: 17 de octubre de 2026.
+Estado: IMPLEMENTACIÓN LOCAL, SIN PUBLICACIÓN.
+Repositorio: D:\GDRIVE LOCAL\CONSULTORIAS\SALVAGUARDAS GLF\portal-app
+Rama: feat/full-grants-platform
+HEAD revisado y conservado: 79f0c1c1f088f266d14a21aafddad38dfb6821cc (0.7.23).
+
+DIAGNÓSTICO PREVIO
+Se leyeron web/AGENTS.md y la guía instalada de Next.js relevante. Se confirmaron las rutas reales web/src/lib/fields.ts, web/src/components/application-editor.tsx y web/src/lib/concept-presentation.ts. Se revisaron la rama, el HEAD, los cambios existentes y todas las referencias project_type de web/src, pruebas y migraciones.
+La presentación aún decía Tipo de proyecto / Project type en identityFields, manual y Excel de respaldos. El selector usaba Seleccione una línea temática / Select a theme. La reportería y sus exportaciones llamaban al mismo dato tipo o línea temática. No había una brecha de modelo ni de catálogo.
+El único cambio versionado previo era scratch/desktop.ini; quedó intacto. Los archivos auxiliares y documentos no versionados anteriores se preservaron.
+
+IMPLEMENTACIÓN MÍNIMA
+Se cambió exclusivamente el texto visible del campo y sus referencias de presentación a Tema de aplicación / Application topic, con el texto de selección coherente en ambos idiomas.
+Se conserva literalmente la clave project_type, la lectura y escritura del editor, los identificadores de opciones, los catálogos y reglas de cada convocatoria, las restricciones de elegibilidad y los valores históricos.
+concept-presentation.ts se inspeccionó pero NO se modificó: ya usa identityFields y callThemeLabel, por lo que revisión externa/interna y PDF reciben el nuevo rótulo sin duplicar lógica. completion-guidance también obtiene el nombre de identityFields; sus mensajes se actualizan sin cambiar la validación.
+No se cambió domain.ts, call-themes.ts, grant-rules.ts, acciones de servidor ni SQL. No se necesita migración. No se modificaron documentos firmados ni versiones históricas.
+
+ARCHIVOS DE CÓDIGO MODIFICADOS (7)
+1. web/src/lib/fields.ts — rótulo compartido ES/EN.
+2. web/src/components/application-editor.tsx — únicamente texto de la opción inicial del selector.
+3. web/src/lib/applicant-manual.ts — rótulo y ayuda breve del mismo campo.
+4. web/src/lib/backup-workbook.ts — encabezado del Excel, sin alterar valores ni orden de columnas.
+5. web/src/lib/report-export.ts — encabezados del mismo dato en tablas, Excel y CSV.
+6. web/src/app/internal/reports/page.tsx — título de agrupación por el mismo dato, sin cambiar by_type ni sus cálculos.
+7. web/src/lib/report-pdf.ts — título de distribución por tema de aplicación, sin alterar los datos ni la estructura.
+El rótulo «líneas temáticas» de la configuración de convocatorias y sus opciones permanece intacto: este requerimiento no cambia ese catálogo. Los nombres de hojas descriptivos «Distribución temática / Thematic distribution» se conservan.
+
+PRUEBAS EJECUTADAS Y RESULTADOS
+• npm test: 148 aprobadas, 0 fallidas; 48 SQL/servidor y 100 TypeScript/documentos. Las pruebas de base utilizan PGlite y las de servidor dependencias simuladas, no producción.
+• npm run lint: correcto. npm run build: correcto, TypeScript y 26 páginas generadas. git diff --check -- web: correcto. Las advertencias de normalización CRLF no son errores del cambio.
+• Búsqueda final en web/src: sin apariciones de Tipo de proyecto, Project type ni el texto anterior del selector. Todas las referencias persistidas a project_type permanecen.
+• Comprobación específica de datos ES/EN: campo compartido, mensajes de pendientes, esquema y serialización/reapertura, revisión, Excel de respaldos, tablas de reportes, Excel/CSV y PDF. Entradas y catálogo no se mutan.
+• Navegador local: 10 casos registrados y 18 aserciones directas correctas. Se ejecutó el componente real ApplicationEditor con guardado simulado en localStorage y bloqueo de red. No equivale a guardar en Supabase.
+• Borrador histórico sintético: texto exacto «Conservación marina histórica — valor original». Se cargó como opción de compatibilidad fuera del catálogo; guardar y reabrir conservó ese mismo texto. Para activar el guardado se editó exclusivamente una dirección sintética del banco de prueba. No se tocaron nombres, contactos, títulos ni datos de expedientes reales.
+• Tema estándar: seleccionar Investigación guardó project_type=research y reabrió research. Al cambiar a inglés se mostró Research con el mismo ID.
+• Tema personalizado sintético: seleccionar Restauración marina QA guardó project_type=custom_11111111-1111-4111-8111-111111111111. Reabrir conservó exactamente ese identificador y la etiqueta. El catálogo completo guardado permaneció idéntico al de las otras pruebas.
+• Revisión web: Tema de aplicación → Restauración marina QA; Application topic → QA marine restoration, para el mismo valor guardado.
+• Borrador sintético sin catálogo: conserva el control de texto anterior; el rótulo cambia en ES/EN, guardar y reabrir conserva exactamente el valor histórico. No se fuerza un catálogo nuevo.
+• PDF: generados por las funciones reales 4 notas conceptuales (histórico/catálogo, ES/EN), 2 reportes (ES/EN) y 2 evaluaciones ambientales/sociales (ES/EN), sin firmas. Reabiertos con pypdf; los 8 carecen del rótulo anterior. Las notas y los reportes contienen la terminología nueva; las evaluaciones no presentan ese campo y no se les añadió. Se renderizaron 8 páginas relevantes con Poppler y se inspeccionó la lámina conjunta: rótulos y valores legibles, sin recortes ni solapamientos en las zonas afectadas. No se rediseñaron los documentos ni se alteró su contenido por este cambio.
+
+AJUSTES DEL BANCO DE PRUEBA
+La primera ejecución específica no resolvía fflate desde scratch; se corrigió solo la importación del script QA. La comprobación inicial de Excel utilizó una versión vacía; se corrigió el expediente sintético para incluir una versión presentada, respetando la lógica vigente de exportación. La primera búsqueda de texto PDF era sensible a mayúsculas en el título «Distribution by application topic»; se corrigió la aserción. Los ensayos finales completos pasaron. No se corrigió ni modificó lógica de producción para satisfacer esas pruebas.
+El guardado de un formulario sin cambios permanece deshabilitado, como corresponde; se comprobó con una modificación sintética distinta del tema.
+
+EVIDENCIA Y REPRODUCCIÓN
+scratch/m06-qa/tests.log, lint.log, build.log.
+scratch/m06-qa/verify.ts y focused.log — ejecutar desde web con node node_modules/tsx/dist/cli.mjs ../scratch/m06-qa/verify.ts.
+scratch/m06-qa/data-evidence.json — valores, rótulos y páginas generadas.
+scratch/m06-qa/browser-evidence.json, assert-browser.mjs, browser-assertions.log.
+scratch/m06-qa/pdf-evidence.json, verify-pdfs.py, pdf-check.log, pdf-render/all-labelled-pages.jpg.
+scratch/m06-qa/tema-formulario-es.png — captura de pantalla local con el nuevo rótulo.
+PDF, Excel y CSV de prueba se conservan en scratch/m06-qa; son evidencia sintética, no expedientes presentados ni documentos firmados.
+Banco de prueba reproducible: scratch/m06-qa/ui.tsx y run.mjs.
+Vista local: http://127.0.0.1:3191/
+Caso sin catálogo: http://127.0.0.1:3191/?withoutCatalog
+Se utilizó el CSS compilado completo de la aplicación para la comprobación visual.
+
+PENDIENTES Y LÍMITES
+No quedan bloqueos funcionales identificados dentro de M06. El cambio sigue local y sin commit, push o despliegue, conforme a la instrucción. No se accedió a Supabase ni a Vercel para modificar o validar datos remotos durante M06. El guardado real remoto y la revisión del despliegue quedan fuera de esta entrega local; no se presentan como pruebas ejecutadas.
+El servidor local utiliza datos aislados, funciones de guardado simuladas y bloqueo de solicitudes de red. Los borradores antiguos probados son fixtures sintéticos compatibles, no copias de datos personales o expedientes reales.
+No se hicieron migraciones, envíos, firmas, comunicaciones ni cambios de usuarios. Se conservó la versión 0.7.23 porque este ajuste no se publicó. No se modificaron permisos, almacenamiento, historiales ni datos reales.

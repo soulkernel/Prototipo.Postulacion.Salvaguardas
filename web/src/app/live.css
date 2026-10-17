@@ -1287,3 +1287,8 @@ input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="
 @container contact-details (max-width: 440px) {
   .contact-details-grid { grid-template-columns: minmax(0, 1fr); }
 }
+
+.project-location-fields { display: grid; gap: 24px; margin-top: 24px; }
+.project-location-field { display: grid; gap: 8px; min-width: 0; }
+.live-form .project-location-field > label { display: block; margin: 0; }
+.live-form .project-location-field > small { margin: 0; font-size: 12px; font-weight: 400; line-height: 1.5; }

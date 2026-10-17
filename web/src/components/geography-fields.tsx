@@ -1,4 +1,5 @@
 "use client";
+import { useId } from "react";
 import {
   cities,
   islands,
@@ -22,6 +23,7 @@ export function GeographyFields({
   mode: "address" | "project";
 }) {
   const es = locale === "es";
+  const id = useId();
   const label = (text: string) => (
     <span className="field-label">
       {text}
@@ -203,33 +205,53 @@ export function GeographyFields({
           </label>
         ))}
       </div>
-      {c.project_islands.includes("Otras islas") && (
-        <label>
-          {label(es ? "Indique las otras islas" : "Specify other islands")}
-          <input
-            data-validation-field="other_islands"
-            aria-required="true"
-            maxLength={12000}
-            value={c.other_islands}
-            onChange={(e) => onChange({ other_islands: e.target.value })}
-          />
-        </label>
-      )}
-      <label>
-        {label(
-          es
-            ? "Ubicación específica y ámbito del proyecto"
-            : "Specific project location and scope",
+      <div className="project-location-fields">
+        {c.project_islands.includes("Otras islas") && (
+          <div className="project-location-field">
+            <label htmlFor={`${id}-other-islands`}>
+              {label(es ? "Indique las otras islas" : "Specify other islands")}
+            </label>
+            <small id={`${id}-other-islands-help`}>
+              {es
+                ? "Escriba los nombres de las islas o islotes adicionales donde se ejecutará el proyecto."
+                : "Enter the names of any additional islands or islets where the project will take place."}
+            </small>
+            <input
+              id={`${id}-other-islands`}
+              data-validation-field="other_islands"
+              aria-required="true"
+              aria-describedby={`${id}-other-islands-help`}
+              maxLength={12000}
+              value={c.other_islands}
+              onChange={(e) => onChange({ other_islands: e.target.value })}
+            />
+          </div>
         )}
-        <textarea
-          data-validation-field="location"
-          aria-required="true"
-          rows={3}
-          maxLength={12000}
-          value={c.location}
-          onChange={(e) => onChange({ location: e.target.value })}
-        />
-      </label>
+        <div className="project-location-field">
+          <label htmlFor={`${id}-location`}>
+            {label(
+              es
+                ? "Ubicación específica y ámbito del proyecto"
+                : "Specific project location and scope",
+            )}
+          </label>
+          <small id={`${id}-location-help`}>
+            {es
+              ? "Describa los sitios concretos de intervención y el área que abarcará el proyecto."
+              : "Describe the specific intervention sites and the area the project will cover."}
+          </small>
+          <textarea
+            id={`${id}-location`}
+            data-validation-field="location"
+            aria-required="true"
+            aria-describedby={`${id}-location-help`}
+            rows={3}
+            maxLength={12000}
+            value={c.location}
+            onChange={(e) => onChange({ location: e.target.value })}
+          />
+        </div>
+      </div>
     </section>
   );
 }

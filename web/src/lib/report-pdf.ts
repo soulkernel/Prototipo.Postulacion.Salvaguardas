@@ -144,7 +144,9 @@ export async function reportPdf(report: ReportExport) {
     );
   y -= 12;
   section(
-    es ? "Distribución por línea temática" : "Distribution by thematic line",
+    es
+      ? "Distribución por tema de aplicación"
+      : "Distribution by application topic",
   );
   if (tables.themes.length === 1)
     text(es ? "No hay postulaciones recibidas." : "No received applications.");

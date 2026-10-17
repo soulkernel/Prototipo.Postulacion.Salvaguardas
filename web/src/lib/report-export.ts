@@ -101,7 +101,7 @@ export function reportTables(report: ReportExport) {
       t("Correo electrónico", "Email"),
       t("Teléfono", "Phone"),
       t("Categoría", "Category"),
-      t("Línea temática", "Thematic line"),
+      t("Tema de aplicación", "Application topic"),
       t("Etapa de la última presentación", "Latest submission stage"),
       t("Estado", "Status"),
       t("Monto solicitado (USD)", "Requested amount (USD)"),
@@ -158,7 +158,7 @@ export function reportTables(report: ReportExport) {
   ];
   const themes: Cell[][] = [
     [
-      t("Línea temática", "Thematic line"),
+      t("Tema de aplicación", "Application topic"),
       t("Postulaciones recibidas", "Received applications"),
     ],
     ...s.by_type.map((r) => [

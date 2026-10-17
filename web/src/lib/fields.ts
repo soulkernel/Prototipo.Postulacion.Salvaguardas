@@ -107,7 +107,7 @@ export const identityFields: Field[] = [
     es: "Ubicación específica y ámbito del proyecto",
     en: "Specific project location and scope",
   },
-  { key: "project_type", es: "Tipo de proyecto", en: "Project type" },
+  { key: "project_type", es: "Tema de aplicación", en: "Application topic" },
   {
     key: "start_date",
     es: "Fecha de inicio del proyecto",

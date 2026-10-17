@@ -71,7 +71,7 @@ export function summaryWorkbook(
     t("Convocatoria", "Call"),
     t("Proyecto", "Project"),
     t("Categoría de subvención", "Grant category"),
-    t("Tipo de proyecto", "Project type"),
+    t("Tema de aplicación", "Application topic"),
     t("Estado", "Status"),
     t("Tipo de solicitante", "Applicant type"),
     t("Proponente", "Applicant"),

@@ -104,8 +104,8 @@ export default async function Reports({
           <section className="live-card">
             <h2>
               {es
-                ? "Postulaciones recibidas por tipo"
-                : "Received applications by type"}
+                ? "Postulaciones recibidas por tema de aplicación"
+                : "Received applications by application topic"}
             </h2>
             <ul>
               {report.by_type.map(
