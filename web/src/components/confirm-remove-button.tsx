@@ -74,8 +74,8 @@ export function ConfirmRemoveButton({
                   ? "Se eliminará la información ingresada en este elemento."
                   : "The information entered in this item will be deleted.")}{" "}
               {es
-                ? "Esta acción no se puede deshacer desde el formulario."
-                : "This action cannot be undone from the form."}
+                ? "Esta acción no se puede deshacer."
+                : "This action cannot be undone."}
             </p>
             {error && (
               <p role="alert" className="error">
