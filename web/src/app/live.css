@@ -274,6 +274,18 @@ a {
 .activity-card > .live-title {
   margin-top: 0;
 }
+.estimated-total-card {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+.estimated-total-card.is-inline {
+  grid-column: auto;
+  align-self: start;
+  padding: 16px;
+}
+.estimated-total-card strong {
+  overflow-wrap: anywhere;
+}
 .live-risk {
   border: 1px solid #d7e0e7;
   background: white;

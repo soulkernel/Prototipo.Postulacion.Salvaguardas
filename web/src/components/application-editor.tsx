@@ -1807,28 +1807,31 @@ export function ApplicationEditor({
                     </label>
                   ),
                 )}
-              </div>
-              {step === 0 && (
-                <div className="activity-card" aria-live="polite">
-                  <span>
-                    {es ? "Costo total estimado" : "Estimated total cost"}
-                  </span>
-                  <strong
-                    style={{
-                      display: "block",
-                      fontSize: "1.8rem",
-                      marginTop: "0.3rem",
-                    }}
+                {step === 0 && (
+                  <div
+                    className={`activity-card estimated-total-card${application.stage === 1 ? " is-inline" : ""}`}
+                    aria-live="polite"
                   >
-                    {currency(totalCost)}
-                  </strong>
-                  <small>
-                    {es
-                      ? "Monto solicitado al GLF + cofinanciamiento"
-                      : "GLF requested amount + cofinancing"}
-                  </small>
-                </div>
-              )}
+                    <span>
+                      {es ? "Costo total estimado" : "Estimated total cost"}
+                    </span>
+                    <strong
+                      style={{
+                        display: "block",
+                        fontSize: "1.8rem",
+                        marginTop: "0.3rem",
+                      }}
+                    >
+                      {currency(totalCost)}
+                    </strong>
+                    <small>
+                      {es
+                        ? "Monto solicitado al GLF + cofinanciamiento"
+                        : "GLF requested amount + cofinancing"}
+                    </small>
+                  </div>
+                )}
+              </div>
               {step === 0 && application.stage === 2 && (
                 <BudgetFields
                   value={payload.budget}
