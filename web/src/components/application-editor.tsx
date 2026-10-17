@@ -825,6 +825,14 @@ export function ApplicationEditor({
   const selectedCategory = rules.categories.find(
     (c) => c.id === payload.concept.category_id,
   );
+  const categoryMonthsEs =
+    selectedCategory?.max_months === 12
+      ? "doce"
+      : selectedCategory?.max_months === 24
+        ? "veinticuatro"
+        : selectedCategory?.max_months === 36
+          ? "treinta y seis"
+          : selectedCategory?.max_months;
   const totalCost =
     (payload.concept.requested_amount || 0) +
     (payload.concept.cofinance_amount || 0);
@@ -1657,8 +1665,8 @@ export function ApplicationEditor({
                           field.key === "start_date"
                             ? financial[field.key] === "CATEGORY_DURATION"
                               ? es
-                                ? `La duración supera el máximo de ${selectedCategory?.max_months} meses de la categoría seleccionada. Corrija las fechas para continuar.`
-                                : `Duration exceeds the selected category maximum of ${selectedCategory?.max_months} months. Correct the dates to continue.`
+                                ? `La duración del proyecto supera el máximo de ${categoryMonthsEs} meses de la categoría de subvención seleccionada por usted. Corrija las fechas para continuar.`
+                                : `The project duration exceeds the maximum of ${selectedCategory?.max_months} months for the grant category you selected. Correct the dates to continue.`
                               : es
                                 ? "Ingrese fechas válidas. La finalización debe ser posterior al inicio del proyecto."
                                 : "Enter valid dates. The project end must follow its start."
