@@ -10,6 +10,7 @@ import {
   type Rules,
 } from "../src/lib/domain";
 const rules: Rules = {
+  themes: [{ id: "research", label_es: "Investigación", label_en: "Research" }],
   categories: [
     {
       id: "small",
@@ -35,6 +36,7 @@ function complete() {
       Object.assign(p.concept, { [key]: "Texto completo" });
   Object.assign(p.concept, {
     applicant_type: "ngo",
+    project_type: "research",
     category_id: "small",
     requested_amount: 10000,
     cofinance_amount: 0,

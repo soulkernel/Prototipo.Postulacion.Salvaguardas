@@ -1,6 +1,8 @@
 "use client";
 import { narrativeTextForEditing } from "@/lib/concept-presentation";
 import { ConceptReview } from "./concept-review";
+import { ApplicationTopicSelect } from "./application-topic-select";
+import { applicationTopicMessage } from "@/lib/call-themes";
 import { ConfirmRemoveButton } from "./confirm-remove-button";
 import { RequiredAttachmentUploads } from "./required-attachment-uploads";
 import {
@@ -124,6 +126,16 @@ const levels = {
   },
 };
 function message(code: string, es: boolean) {
+  if (code.includes("GLF_CALL_THEMES_REQUIRED"))
+    return applicationTopicMessage(
+      "GLF_CALL_THEMES_REQUIRED",
+      es ? "es" : "en",
+    );
+  if (code.includes("GLF_INVALID_PROJECT_THEME"))
+    return applicationTopicMessage(
+      "GLF_INVALID_PROJECT_THEME",
+      es ? "es" : "en",
+    );
   if (code.includes("GLF_INVALID_PARTNERS"))
     return es
       ? "Revise los nombres y la identificación de las organizaciones asociadas y vuelva a guardar el borrador."
@@ -1622,32 +1634,16 @@ export function ApplicationEditor({
                         {es ? field.es : field.en}
                         <RequiredMark locale={locale} />
                       </span>
-                      {field.key === "project_type" && rules.themes?.length ? (
-                        <select
+                      {field.key === "project_type" ? (
+                        <ApplicationTopicSelect
                           value={payload.concept.project_type}
-                          onChange={(e) =>
-                            updateConcept("project_type", e.target.value)
+                          themes={rules.themes}
+                          locale={locale}
+                          invalid={fieldIssue(field.key)}
+                          onChange={(value) =>
+                            updateConcept("project_type", value)
                           }
-                        >
-                          <option value="">
-                            {es
-                              ? "Seleccione un tema de aplicación"
-                              : "Select an application topic"}
-                          </option>
-                          {!rules.themes.some(
-                            (t) => t.id === payload.concept.project_type,
-                          ) &&
-                            payload.concept.project_type && (
-                              <option value={payload.concept.project_type}>
-                                {payload.concept.project_type}
-                              </option>
-                            )}
-                          {rules.themes.map((t) => (
-                            <option value={t.id} key={t.id}>
-                              {es ? t.label_es : t.label_en}
-                            </option>
-                          ))}
-                        </select>
+                        />
                       ) : field.type === "textarea" ? (
                         <LimitedTextarea
                           locale={locale}
@@ -1762,6 +1758,7 @@ export function ApplicationEditor({
                         </small>
                       )}
                       {currentIssues.missing.includes(field.key) &&
+                        field.key !== "project_type" &&
                         !isMoneyField(field.key) &&
                         !financial[field.key] && (
                           <small

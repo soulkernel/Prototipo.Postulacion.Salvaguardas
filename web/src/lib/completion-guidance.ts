@@ -1,4 +1,5 @@
 import { alignmentVersion } from "./strategic-alignment";
+import { applicationTopicIssue, applicationTopicMessage } from "./call-themes";
 import { stepIssues } from "./step-validation";
 import {
   validateComplete,
@@ -115,6 +116,10 @@ export function completionGuidance(
           ? 2
           : 1;
     let text = f?.[es ? "es" : "en"] || names[key];
+    if (key === "project_type") {
+      const issue = applicationTopicIssue(payload.concept.project_type, rules);
+      if (issue) text = applicationTopicMessage(issue, locale);
+    }
     let selector = field(key);
     if (key.startsWith("no_risks_reason_")) {
       const n = Number(key.split("_").at(-1));

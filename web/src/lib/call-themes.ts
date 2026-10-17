@@ -2,6 +2,28 @@ import { z } from "zod";
 import { callThemes } from "./grant-rules";
 
 export type CallTheme = { id: string; label_es: string; label_en: string };
+export function applicationTopicIssue(
+  value: string,
+  rules: { themes?: CallTheme[] },
+): "GLF_CALL_THEMES_REQUIRED" | "GLF_INVALID_PROJECT_THEME" | null {
+  if (!rules.themes?.length) return "GLF_CALL_THEMES_REQUIRED";
+  return rules.themes.some((theme) => theme.id === value)
+    ? null
+    : "GLF_INVALID_PROJECT_THEME";
+}
+
+export function applicationTopicMessage(
+  issue: Exclude<ReturnType<typeof applicationTopicIssue>, null>,
+  locale: "es" | "en",
+) {
+  if (issue === "GLF_CALL_THEMES_REQUIRED")
+    return locale === "es"
+      ? "Los temas de esta convocatoria aún no están configurados en este expediente. Puede guardar el borrador, pero no preparar documentos ni enviar. Contacte al GLF para que revise el catálogo aprobado."
+      : "This application's call topics have not been configured yet. You can save the draft, but cannot prepare documents or submit. Contact GLF to review the approved catalogue.";
+  return locale === "es"
+    ? "Seleccione un tema de aplicación del catálogo de esta convocatoria. Si existe un valor anterior, se conservará hasta que usted elija un tema válido."
+    : "Select an application topic from this call's catalogue. Any previous value will be preserved until you choose a valid topic.";
+}
 const normalized = (text: string) =>
   text
     .normalize("NFD")

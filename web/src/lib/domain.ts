@@ -4,6 +4,7 @@ import {
 } from "./applicant-validation";
 import type { AttachmentRequirement } from "./attachment-requirements";
 import { z } from "zod";
+import { applicationTopicIssue } from "./call-themes";
 import { budgetSchema, budgetIssues } from "./budget";
 import { normalizePhone } from "./phone";
 import { geographyIssues, applicantTypeAddressPatch } from "./geography";
@@ -455,10 +456,7 @@ export function validateComplete(
   missing.push(...identificationIssues(c));
   missing.push(...Object.keys(projectDateErrors(c, rules)));
   if (stage === 2) missing.push(...budgetIssues(payload.budget, c));
-  if (
-    rules.themes?.length &&
-    !rules.themes.some((t) => t.id === c.project_type)
-  )
+  if (applicationTopicIssue(c.project_type, rules))
     missing.push("project_type");
   missing.push(...partnerIssues(c));
   missing.push(...resultIssues(c));

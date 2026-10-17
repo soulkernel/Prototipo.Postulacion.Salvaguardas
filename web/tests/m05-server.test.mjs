@@ -22,7 +22,7 @@ before(async () => {
   };
   await build({
     stdin: {
-      contents: `export {POST} from './src/app/api/files/route'; export {submitDraft} from './src/app/applicant/actions'; export {emptyPayload,newActivity} from './src/lib/domain';`,
+      contents: `export {POST} from './src/app/api/files/route'; export {submitDraft,prepareDocuments} from './src/app/applicant/actions'; export {emptyPayload,newActivity} from './src/lib/domain';`,
       resolveDir: web,
       loader: "ts",
     },
@@ -61,6 +61,7 @@ function fixture() {
   const payload = api.emptyPayload();
   Object.assign(payload.concept, {
     applicant_type: "organization",
+    project_type: "research",
     province: "Galápagos",
     city: "Puerto Ayora",
     project_islands: ["Santa Cruz"],
@@ -79,7 +80,7 @@ function fixture() {
   const state = {
     app: {
       payload,
-      rules_snapshot: { required_attachments: [], summary_word_limit: 500 },
+      rules_snapshot: { required_attachments: [], summary_word_limit: 500, themes: [{id:"research",label_es:"Investigación",label_en:"Research"}] },
       stage: 2,
       revision: 0,
     },
@@ -243,4 +244,35 @@ test("M05 actual submit action blocks missing or unreadable individual letter be
   assert.equal(result.ok, false);
   assert.equal(result.error, "GLF_PARTNER_LINK_REQUIRED");
   assert.equal(s.submitCount, 2);
+});
+
+test("M07 actual server actions block missing catalogues and foreign or historical topics before preparation/submission RPC", async () => {
+  for (const themes of [undefined, []]) {
+    const s = fixture();
+    s.app.rules_snapshot.themes = themes;
+    const original = structuredClone(s.app);
+    assert.deepEqual(await api.submitDraft(appId, 0), {ok:false,error:"GLF_CALL_THEMES_REQUIRED"});
+    assert.deepEqual(await api.prepareDocuments(appId, 0), {error:"GLF_CALL_THEMES_REQUIRED"});
+    assert.equal(s.submitCount, 0);
+    assert.equal(s.registerCount, 0);
+    assert.deepEqual(s.app, original);
+  }
+  for (const value of ["education", "Investigación", "Tema histórico"]) {
+    const s = fixture();
+    s.app.payload.concept.project_type = value;
+    assert.equal((await api.submitDraft(appId,0)).error, "GLF_INVALID_PROJECT_THEME");
+    assert.equal((await api.prepareDocuments(appId,0)).error, "GLF_INVALID_PROJECT_THEME");
+    assert.equal(s.submitCount, 0);
+    assert.equal(s.registerCount, 0);
+    assert.equal(s.app.payload.concept.project_type, value);
+  }
+  // With its own catalogue selection, the actual action can reach the mocked RPC.
+  for (const id of ["research", "education"]) {
+    const s = fixture();
+    s.app.payload.concept.project_type = id;
+    s.app.rules_snapshot.themes = [{id,label_es:"Tema de prueba",label_en:"Test topic"}];
+    Object.assign(s.app.payload.concept, {partner_organizations:[],associated_organizations:[],partners:""});
+    assert.equal((await api.submitDraft(appId,0)).ok, true);
+    assert.equal(s.submitCount, 1);
+  }
 });

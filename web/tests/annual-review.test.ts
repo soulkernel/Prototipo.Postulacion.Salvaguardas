@@ -189,6 +189,127 @@ test("custom theme identifiers display the frozen bilingual label and preserve h
   assert.equal(callThemeLabel("Histórico", null, "en"), "Histórico");
 });
 
+test("M07 application topics use only each frozen call catalogue, not the authoring options or labels", async () => {
+  const { applicationTopicIssue } = await import("../src/lib/call-themes");
+  const a = callThemes[0],
+    b = callThemes[1];
+  const first = { themes: [a], theme_options: [a, b] };
+  const second = { themes: [b], theme_options: [a, b] };
+  for (const [rules, allowed, foreign] of [
+    [first, a, b],
+    [second, b, a],
+  ] as const) {
+    assert.equal(applicationTopicIssue(allowed.id, rules), null);
+    for (const value of [
+      foreign.id,
+      allowed.label_es,
+      allowed.label_en,
+      "legacy",
+      "",
+    ])
+      assert.equal(
+        applicationTopicIssue(value, rules),
+        "GLF_INVALID_PROJECT_THEME",
+      );
+  }
+  for (const rules of [{}, { themes: [] }, { themes: [], theme_options: [a] }])
+    assert.equal(
+      applicationTopicIssue(a.id, rules),
+      "GLF_CALL_THEMES_REQUIRED",
+    );
+});
+
+test("M07 incomplete and historical drafts remain parseable; completion and guidance block missing catalogues in both phases", async () => {
+  const { emptyPayload, payloadSchema, validateComplete } =
+    await import("../src/lib/domain");
+  const { stepIssues } = await import("../src/lib/step-validation");
+  const { completionGuidance } = await import("../src/lib/completion-guidance");
+  const p = emptyPayload();
+  p.concept.project_type = "Tema histórico sin reasignar";
+  const original = structuredClone(p);
+  const base = {
+    categories: [],
+    applicant_types: [],
+    max_admin_percent: 10,
+    summary_word_limit: 500,
+    required_attachments: [],
+    privacy_es: "",
+    privacy_en: "",
+  };
+  for (const themes of [undefined, [], [callThemes[0]]]) {
+    const rules = { ...base, themes };
+    assert.ok(payloadSchema.safeParse(p).success);
+    assert.ok(stepIssues(p, rules, 1, 0).invalid.includes("project_type"));
+    for (const stage of [1, 2]) {
+      assert.ok(validateComplete(p, rules, stage).includes("project_type"));
+      for (const locale of ["es", "en"] as const) {
+        const issue = completionGuidance(p, rules, stage, [], locale).find(
+          (i) => i.id === "project_type",
+        );
+        assert.equal(issue?.step, 0);
+        assert.equal(issue?.selector, '[data-validation-field="project_type"]');
+        assert.match(
+          issue!.text,
+          themes?.length ? /catálogo|catalogue/ : /configurados|configured/,
+        );
+      }
+    }
+  }
+  assert.deepEqual(p, original);
+  p.concept.project_type = callThemes[0].id;
+  assert.ok(
+    !validateComplete(p, { ...base, themes: [callThemes[0]] }, 1).includes(
+      "project_type",
+    ),
+  );
+});
+
+test("M07 ES/EN topic selector disables previous values and missing catalogues, with associated accessible help and no free text", async () => {
+  const { createElement } = await import("react");
+  const { renderToStaticMarkup } = await import("react-dom/server");
+  const { ApplicationTopicSelect } =
+    await import("../src/components/application-topic-select");
+  for (const locale of ["es", "en"] as const) {
+    for (const themes of [undefined, [], [callThemes[0]], [callThemes[1]]]) {
+      const before = JSON.stringify(themes);
+      const html = renderToStaticMarkup(
+        createElement(ApplicationTopicSelect, {
+          locale,
+          themes,
+          value: "Tema anterior",
+          invalid: false,
+          onChange: () => assert.fail("render mutated data"),
+        }),
+      );
+      assert.match(
+        html,
+        /<option value="Tema anterior" disabled="" selected="">/,
+      );
+      assert.match(html, /<option value="" disabled="">/);
+      assert.match(html, /valor anterior|previous value/);
+      assert.match(html, /aria-describedby="([^"]+)"/);
+      const id = html.match(/aria-describedby="([^"]+)"/)![1];
+      assert.ok(html.includes(`id="${id}"`));
+      assert.ok(!html.includes("<input"));
+      if (themes?.length) {
+        assert.ok(!/<select[^>]*disabled/.test(html));
+        assert.ok(html.includes(`value="${themes[0].id}"`));
+        assert.ok(
+          html.includes(
+            locale === "es" ? themes[0].label_es : themes[0].label_en,
+          ),
+        );
+        assert.ok(
+          !html.includes(
+            `value="${themes[0].id === callThemes[0].id ? callThemes[1].id : callThemes[0].id}"`,
+          ),
+        );
+      } else assert.match(html, /<select[^>]*disabled=""/);
+      assert.equal(JSON.stringify(themes), before);
+    }
+  }
+});
+
 test("attachment definitions require formats, bilingual names and coherent conditions while preserving legacy attachments", async () => {
   const {
     attachmentRequirementsSchema,

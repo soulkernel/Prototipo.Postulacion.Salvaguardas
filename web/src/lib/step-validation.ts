@@ -21,6 +21,7 @@ import { potentialRiskIssues } from "./potential-risks";
 import { partnerIssues } from "./partners";
 import { activityPlanningIssues } from "./activity-planning";
 import { resultIssues } from "./project-results";
+import { applicationTopicIssue } from "./call-themes";
 export function stepIssues(
   payload: Payload,
   rules: Rules,
@@ -50,6 +51,8 @@ export function stepIssues(
         missing.push(key);
     }
     if (step === 0) {
+      if (applicationTopicIssue(payload.concept.project_type, rules))
+        invalid.push("project_type");
       invalid.push(...identificationIssues(payload.concept));
       invalid.push(...Object.keys(projectDateErrors(payload.concept, rules)));
       if (stage === 2)

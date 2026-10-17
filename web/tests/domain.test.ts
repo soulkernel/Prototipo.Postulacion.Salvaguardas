@@ -501,6 +501,9 @@ test("geography requires address location and consistent project islands", () =>
 });
 test("continue reports missing required fields and financial errors together", () => {
   const rules = {
+    themes: [
+      { id: "research", label_es: "Investigación", label_en: "Research" },
+    ],
     categories: [
       { id: "small", min_amount: 0, max_amount: 100000, cofinance_percent: 0 },
     ],
@@ -509,6 +512,7 @@ test("continue reports missing required fields and financial errors together", (
   } as Rules;
   const p = emptyPayload();
   Object.assign(p.concept, {
+    project_type: "research",
     category_id: "small",
     requested_amount: 120000,
     cofinance_amount: 12000,

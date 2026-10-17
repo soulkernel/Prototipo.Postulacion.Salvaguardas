@@ -388,6 +388,7 @@ test("corpus import requires administrator and preserves pending approval and ve
   assert.equal(visible.rows[0].approved, false);
 });
 const rules = {
+  themes: [{ id: "research", label_es: "Investigación", label_en: "Research" }],
   categories: [
     {
       id: "small",
@@ -1251,7 +1252,7 @@ const fullPayload = {
     address: "Galápagos",
     partners: "",
     location: "Santa Cruz",
-    project_type: "Conservación",
+    project_type: "research",
     category_id: "small",
     summary: "Resumen de prueba",
     objectives: "Objetivos",
@@ -3245,4 +3246,96 @@ test("M05 database: isolated drafts, individual letters, history and direct RPC 
    assert.equal((await db.query("select has_function_privilege($1,$2,'EXECUTE') allowed",[role,signature])).rows[0].allowed,false);
   }
  }
+});
+
+test("M07 SQL: distinct call catalogues, invalid/legacy topics, draft roundtrip and missing-catalogue completion block", async () => {
+  await db.exec(currentPayloadValidator);
+  const owner = await temporaryAccount();
+  const research = {id:"research",label_es:"Investigación",label_en:"Research"};
+  const education = {id:"education",label_es:"Iniciativas de Educación y vinculación comunitaria",label_en:"Education and community outreach"};
+  const fixtures = [];
+  for (const [name, themes] of [["A",[research]], ["B",[education]], ["NONE",[]]]) {
+    const r = {...rules, themes, theme_options:[research, education]};
+    const c = await rpc("create_call", {details:{code:"M07-"+name,title_es:"M07 "+name,title_en:"M07 "+name,description_es:"QA",description_en:"QA",opens_at:"2020-01-01T00:00:00Z",closes_at:"2099-01-01T00:00:00Z",rules:r}}, "grants");
+    await rpc("publish_call", {call_id:c}, "grants");
+    const id = await rpc("create_application", {call_id:c}, owner);
+    const p = structuredClone(payload);
+    p.concept.project_type = name === "NONE" ? "Tema histórico sin catálogo" : themes[0].id;
+    p.activities = p.activities.map(a=>({...a,id:crypto.randomUUID(),risks:a.risks.map(r=>({...r,id:crypto.randomUUID()}))}));
+    const read = async()=> (await as(owner,()=>db.query("select payload,rules_snapshot,revision,status from public.applications where id=$1",[id]))).rows[0];
+    await rpc("save_application", {application_id:id,expected_revision:0,payload:p}, owner);
+    const reopened = await read();
+    assert.deepEqual(reopened.payload,p);
+    assert.deepEqual(reopened.rules_snapshot.themes,themes);
+    fixtures.push({c,id,p,r,read});
+  }
+  const validate = (p,r,complete=true,stage=1)=>db.query("select private.validate_payload($1::jsonb,$2::jsonb,$3,$4)",[JSON.stringify(p),JSON.stringify(r),complete,stage]);
+  for (const [i, own, foreign] of [[0,"research","education"],[1,"education","research"]]) {
+    const f = fixtures[i];
+    await validate(f.p,f.r);
+    await rpc("prepare_application_documents",{app_id:f.id,expected_revision:1},owner);
+    for (const value of [foreign,"Texto libre",""]) {
+      const p = structuredClone(f.p);p.concept.project_type=value;
+      await validate(p,f.r,false);
+      await assert.rejects(validate(p,f.r),/GLF_INVALID_PROJECT_THEME|GLF_REQUIRED:project_type/);
+    }
+    assert.equal((await f.read()).payload.concept.project_type,own);
+  }
+  const f = fixtures[2], original = await f.read();
+  const withoutThemes = {...f.r};
+  delete withoutThemes.themes;
+  for (const r of [f.r, {...f.r,themes:null}, withoutThemes]) {
+    await validate(f.p,r,false);
+    for (const stage of [1,2])
+      await assert.rejects(validate(f.p,r,true,stage),/GLF_CALL_THEMES_REQUIRED/);
+  }
+  await assert.rejects(rpc("prepare_application_documents",{app_id:f.id,expected_revision:1},owner),/GLF_CALL_THEMES_REQUIRED/);
+  assert.deepEqual(await f.read(),original);
+  // A foreign historical value can be saved/reopened but never completed.
+  const legacy = fixtures[0];legacy.p.concept.project_type="Texto histórico original";
+  await rpc("save_application",{application_id:legacy.id,expected_revision:1,payload:legacy.p},owner);
+  assert.equal((await legacy.read()).payload.concept.project_type,"Texto histórico original");
+  await assert.rejects(rpc("prepare_application_documents",{app_id:legacy.id,expected_revision:2},owner),/GLF_INVALID_PROJECT_THEME/);
+  // Editing the live call does not rewrite this application's frozen catalogue.
+  await db.query("update public.calls set rules=$1 where id=$2",[JSON.stringify(fixtures[1].r),legacy.c]);
+  assert.deepEqual((await legacy.read()).rules_snapshot.themes,[research]);
+  legacy.p.concept.project_type="research";
+  await rpc("save_application",{application_id:legacy.id,expected_revision:2,payload:legacy.p},owner);
+  await rpc("prepare_application_documents",{app_id:legacy.id,expected_revision:3},owner);
+  assert.equal((await legacy.read()).payload.concept.project_type,"research");
+  for (const role of ["anon","authenticated"])
+    for (const signature of ["private.validate_payload(jsonb,jsonb,boolean,integer)","private.validate_payload_before_call_topics(jsonb,jsonb,boolean,integer)"])
+      assert.equal((await db.query("select has_function_privilege($1,$2,'EXECUTE') allowed",[role,signature])).rows[0].allowed,false);
+});
+
+test("M07 migration preserves all existing drafts, submitted versions, prepared documents and events", async () => {
+  await db.exec("drop function private.validate_payload(jsonb,jsonb,boolean,integer); alter function private.validate_payload_before_call_topics(jsonb,jsonb,boolean,integer) rename to validate_payload;");
+  // Isolated pre-M07 dossier with prepared documents: even an old prepared
+  // revision and two registered PDFs must not bypass the new catalogue rule.
+  const owner = await temporaryAccount();
+  const c = await rpc("create_call",{details:{code:"M07-LEGACY",title_es:"M07 legado",title_en:"M07 legacy",description_es:"QA",description_en:"QA",opens_at:"2020-01-01T00:00:00Z",closes_at:"2099-01-01T00:00:00Z",rules:{...rules,themes:[]}}},"grants");
+  await rpc("publish_call",{call_id:c},"grants");
+  const id = await rpc("create_application",{call_id:c},owner);
+  const p = structuredClone(payload);
+  p.concept.project_type = "Tema histórico sin catálogo";
+  p.activities=p.activities.map(a=>({...a,id:crypto.randomUUID(),risks:a.risks.map(r=>({...r,id:crypto.randomUUID()}))}));
+  await rpc("save_application",{application_id:id,expected_revision:0,payload:p},owner);
+  await rpc("prepare_application_documents",{app_id:id,expected_revision:1},owner);
+  for (const kind of ["concept_signed","matrix_signed"]) {
+    const path=`${id}/${owner}/attachment/${crypto.randomUUID()}.pdf`;
+    await as(owner,()=>db.query("insert into storage.objects(bucket_id,name,metadata) values('application-files',$1,$2)",[path,{size:100}]));
+    await rpc("register_document",{app_id:id,object_path:path,original_name:kind+".pdf",mime:"application/pdf",bytes:100,checksum:"a".repeat(64),document_kind:kind},owner);
+  }
+  const snapshot = async()=>({
+    applications:(await db.query("select * from public.applications order by id")).rows,
+    versions:(await db.query("select * from public.application_versions order by id")).rows,
+    prepared:(await db.query("select * from public.prepared_documents order by id")).rows,
+    events:(await db.query("select * from public.application_events order by id")).rows,
+    calls:(await db.query("select * from public.calls order by id")).rows,
+  });
+  const before = await snapshot();
+  await db.exec(await readFile(new URL("../../supabase/migrations/202610170040_call_topics_required.sql",import.meta.url),"utf8"));
+  assert.deepEqual(await snapshot(),before);
+  await assert.rejects(rpc("submit_application",{application_id:id,expected_revision:1},owner),/GLF_CALL_THEMES_REQUIRED/);
+  assert.deepEqual(await snapshot(),before);
 });

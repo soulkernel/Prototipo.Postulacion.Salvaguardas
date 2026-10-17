@@ -29,6 +29,7 @@ import { projectSummary } from "@/lib/summary";
 import { words } from "@/lib/domain";
 import { detectPdfSignature } from "@/lib/pdf-signature";
 import { submissionError } from "@/lib/submission-error";
+import { applicationTopicIssue } from "@/lib/call-themes";
 import {
   strategicText,
   alignmentVersion,
@@ -50,16 +51,20 @@ async function validStoredPhone(db: SupabaseClient, id: string) {
 async function storedGrantEligibilityError(db: SupabaseClient, id: string) {
   const { data, error } = await db
     .from("applications")
-    .select("payload")
+    .select("payload,rules_snapshot")
     .eq("id", id)
     .maybeSingle();
   const parsed = payloadSchema.safeParse(data?.payload);
   if (error || !parsed.success) return "GLF_INVALID_PAYLOAD";
   if (organizationProvinceIssue(parsed.data.concept))
     return "GLF_ORGANIZATION_PROVINCE";
-  return individualGrantIssue(parsed.data.concept)
-    ? "GLF_INDIVIDUAL_SMALL_ONLY"
-    : null;
+  if (individualGrantIssue(parsed.data.concept))
+    return "GLF_INDIVIDUAL_SMALL_ONLY";
+  if (!data?.rules_snapshot) return "GLF_INVALID_PAYLOAD";
+  return applicationTopicIssue(
+    parsed.data.concept.project_type,
+    data.rules_snapshot,
+  );
 }
 async function validStoredGeography(db: SupabaseClient, id: string) {
   const { data, error } = await db
