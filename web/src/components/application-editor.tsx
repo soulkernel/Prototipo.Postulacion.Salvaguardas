@@ -16,7 +16,6 @@ import { FileDropField } from "./file-drop-field";
 import { LimitedTextarea } from "./limited-textarea";
 import { NarrativeTextarea } from "./narrative-textarea";
 import { MoneyInput } from "./money-input";
-import { moneyEntryError } from "@/lib/money-input";
 import { DeadlineCountdown } from "./deadline-countdown";
 import { DocumentDownload } from "./document-download";
 import { useEffect, useState, useRef } from "react";
@@ -378,7 +377,22 @@ export function ApplicationEditor({
   const [invalidMoneyEntries, setInvalidMoneyEntries] = useState<
     Partial<Record<MoneyField, boolean>>
   >({});
-  const moneyUiValid = !Object.values(invalidMoneyEntries).some(Boolean);
+  const [moneyInputText, setMoneyInputText] = useState<
+    Partial<Record<MoneyField, string>>
+  >({});
+  const moneyTextValid = !Object.values(invalidMoneyEntries).some(Boolean);
+  const fundingErrors = financialErrors(
+    payload.concept,
+    application.rules_snapshot,
+    application.stage,
+  );
+  const moneyUiValid =
+    moneyTextValid &&
+    !fundingErrors.requested_amount &&
+    !fundingErrors.cofinance_amount;
+  const moneyActionError = es
+    ? "Revise los importes marcados y corríjalos para continuar."
+    : "Check the highlighted amounts and correct them to continue.";
   const [identityTouched, setIdentityTouched] = useState(false);
   const [identityFocused, setIdentityFocused] = useState(false);
   const [documents, setDocuments] = useState(initialDocuments);
@@ -387,7 +401,7 @@ export function ApplicationEditor({
     revision: number;
     created_at: string;
   } | null>(initialPrepared);
-  const dirty = JSON.stringify(payload) !== saved || !moneyUiValid;
+  const dirty = JSON.stringify(payload) !== saved || !moneyTextValid;
   const signedDocumentsReady =
     application.stage !== 1 ||
     Boolean(
@@ -941,21 +955,20 @@ export function ApplicationEditor({
     moneyFocused,
     showCompletion || checkedStep === 0,
     application.stage,
+    moneyInputText,
   );
   const financialHelp = (key: keyof Concept) =>
-    isMoneyField(key) && !invalidMoneyEntries[key]
-      ? moneyFeedback[key].text
-      : "";
+    isMoneyField(key) ? moneyFeedback[key].text : "";
   const visibleFinancialError = (key: keyof Concept) =>
-    isMoneyField(key)
-      ? !invalidMoneyEntries[key] && moneyFeedback[key].invalid
-      : Boolean(financial[key]);
+    isMoneyField(key) ? moneyFeedback[key].invalid : Boolean(financial[key]);
   function checkMoneyEntries() {
     if (moneyUiValid) return true;
-    setError(moneyEntryError(locale));
+    setError(moneyActionError);
+    setCheckedStep(0);
+    setMoneyTouched({ requested_amount: true, cofinance_amount: true });
     setStep(0);
-    const key = Object.keys(invalidMoneyEntries).find(
-      (k) => invalidMoneyEntries[k as MoneyField],
+    const key = (["requested_amount", "cofinance_amount"] as const).find(
+      (k) => invalidMoneyEntries[k] || fundingErrors[k],
     );
     requestAnimationFrame(() =>
       document.getElementById(`money-${key}`)?.focus(),
@@ -1730,15 +1743,8 @@ export function ApplicationEditor({
                           id={`money-${field.key}`}
                           locale={locale}
                           value={payload.concept[field.key]}
-                          invalid={
-                            moneyFeedback[field.key].invalid &&
-                            !invalidMoneyEntries[field.key]
-                          }
-                          describedBy={
-                            invalidMoneyEntries[field.key]
-                              ? undefined
-                              : `field-message-${field.key}`
-                          }
+                          invalid={moneyFeedback[field.key].invalid}
+                          describedBy={`field-message-${field.key}`}
                           readOnly={
                             application.stage === 2 &&
                             !!payload.budget?.lines.length
@@ -1753,16 +1759,18 @@ export function ApplicationEditor({
                             }));
                             setMoneyFocused(null);
                           }}
-                          onValidity={(valid) => {
+                          onValidity={(valid, text) => {
+                            setMoneyInputText((current) => ({
+                              ...current,
+                              [field.key]: text,
+                            }));
                             setInvalidMoneyEntries((current) => ({
                               ...current,
                               [field.key]: !valid,
                             }));
                             if (valid)
                               setError((current) =>
-                                current === moneyEntryError(locale)
-                                  ? ""
-                                  : current,
+                                current === moneyActionError ? "" : current,
                               );
                           }}
                           onChange={(value) => updateConcept(field.key, value)}
@@ -1878,30 +1886,32 @@ export function ApplicationEditor({
                               : "Complete this required field."}
                           </small>
                         )}
-                      {financial[field.key] && !financialHelp(field.key) && (
-                        <small
-                          className="field-warning"
-                          role="alert"
-                          data-field-message="error"
-                          id={`field-error-${field.key}`}
-                        >
-                          {field.key === "end_date" ||
-                          field.key === "start_date"
-                            ? financial[field.key] === "CATEGORY_DURATION"
-                              ? es
-                                ? `La duración del proyecto supera el máximo de ${categoryMonthsEs} meses de la categoría de subvención seleccionada por usted. Corrija las fechas para continuar.`
-                                : `The project duration exceeds the maximum of ${selectedCategory?.max_months} months for the grant category you selected. Correct the dates to continue.`
-                              : es
-                                ? "Ingrese fechas válidas. La finalización debe ser posterior al inicio del proyecto."
-                                : "Enter valid dates. The project end must follow its start."
-                            : financial[field.key] === "CATEGORY_AMOUNT"
-                              ? (es
-                                  ? "El monto solicitado no corresponde a la categoría seleccionada. "
-                                  : "The requested amount is outside the selected category. ") +
-                                financialHelp(field.key)
-                              : message(financial[field.key]!, es)}
-                        </small>
-                      )}
+                      {!isMoneyField(field.key) &&
+                        financial[field.key] &&
+                        !financialHelp(field.key) && (
+                          <small
+                            className="field-warning"
+                            role="alert"
+                            data-field-message="error"
+                            id={`field-error-${field.key}`}
+                          >
+                            {field.key === "end_date" ||
+                            field.key === "start_date"
+                              ? financial[field.key] === "CATEGORY_DURATION"
+                                ? es
+                                  ? `La duración del proyecto supera el máximo de ${categoryMonthsEs} meses de la categoría de subvención seleccionada por usted. Corrija las fechas para continuar.`
+                                  : `The project duration exceeds the maximum of ${selectedCategory?.max_months} months for the grant category you selected. Correct the dates to continue.`
+                                : es
+                                  ? "Ingrese fechas válidas. La finalización debe ser posterior al inicio del proyecto."
+                                  : "Enter valid dates. The project end must follow its start."
+                              : financial[field.key] === "CATEGORY_AMOUNT"
+                                ? (es
+                                    ? "El monto solicitado no corresponde a la categoría seleccionada. "
+                                    : "The requested amount is outside the selected category. ") +
+                                  financialHelp(field.key)
+                                : message(financial[field.key]!, es)}
+                          </small>
+                        )}
                     </label>
                   ),
                 )}
@@ -2727,7 +2737,7 @@ export function ApplicationEditor({
           <div className="document-actions">
             <button
               className="button dark"
-              disabled={busy || dirty || !budgetUiValid}
+              disabled={busy || dirty || !budgetUiValid || !moneyUiValid}
               aria-busy={busy && operation === "prepare"}
               onClick={async () => {
                 if (busy) return;

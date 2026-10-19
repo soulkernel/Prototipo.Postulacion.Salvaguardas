@@ -76,7 +76,7 @@ test("money warnings wait for blur or an attempt, while required values and cate
       "requested_amount",
       true,
     ).requested_amount.invalid,
-    false,
+    true,
   );
   Object.assign(c, { requested_amount: 250000.01, cofinance_amount: 62500.01 });
   assert.deepEqual(financialErrors(c, r), {});

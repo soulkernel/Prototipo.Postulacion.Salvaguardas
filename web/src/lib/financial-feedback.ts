@@ -4,6 +4,7 @@ import {
   type Rules,
   type Locale,
 } from "./domain";
+import { inspectMoneyEntry, moneyEntryError } from "./money-input";
 
 export const moneyFields = [
   "requested_amount",
@@ -23,6 +24,7 @@ export function financialFeedback(
   focused: MoneyField | null,
   attempted: boolean,
   stage = 2,
+  inputText: Partial<Record<MoneyField, string>> = {},
 ) {
   const es = locale === "es";
   const currency = (amount: number) =>
@@ -40,7 +42,20 @@ export function financialFeedback(
         }
       : configuredCategory;
   const errors = financialErrors(c, rules, stage);
-  const requested = c.requested_amount !== null && c.requested_amount > 0;
+  const requestedEntry =
+    inputText.requested_amount === undefined
+      ? undefined
+      : inspectMoneyEntry(inputText.requested_amount);
+  const requested =
+    c.requested_amount !== null &&
+    c.requested_amount > 0 &&
+    (requestedEntry === undefined ||
+      (requestedEntry.kind === "amount" && requestedEntry.supported));
+  const categoryName = category
+    ? es
+      ? category.label_es
+      : category.label_en
+    : "";
   const hints = {
     requested_amount: category
       ? (es ? "Monto permitido: " : "Allowed amount: ") +
@@ -64,7 +79,11 @@ export function financialFeedback(
           : "Cofinancing is optional. Enter 0 if no additional contributions are planned."
         : requested
           ? (es ? "Cofinanciamiento mínimo: " : "Minimum cofinancing: ") +
-            currency((c.requested_amount! * category.cofinance_percent) / 100)
+            currency((c.requested_amount! * category.cofinance_percent) / 100) +
+            ` (${category.cofinance_percent}% ` +
+            (es
+              ? "del monto solicitado al GLF)."
+              : "of requested GLF funding).")
           : (es ? "Cofinanciamiento mínimo: " : "Minimum cofinancing: ") +
             category.cofinance_percent +
             (es
@@ -93,19 +112,68 @@ export function financialFeedback(
     moneyFields.map((key) => {
       if (stage === 1 && key === "admin_cost")
         return [key, { invalid: false, text: "" }];
-      const eligible = focused !== key && (attempted || Boolean(touched[key]));
+      const eligible = attempted || (focused !== key && Boolean(touched[key]));
+      const raw = inputText[key];
+      const entry = raw === undefined ? undefined : inspectMoneyEntry(raw);
+      const amount =
+        entry === undefined
+          ? c[key]
+          : entry.kind === "amount"
+            ? entry.value
+            : null;
+      // The grant maximum takes precedence even when raw digits exceed numeric storage capacity.
+      if (
+        key === "requested_amount" &&
+        category?.max_amount !== null &&
+        category &&
+        amount !== null &&
+        amount > category.max_amount &&
+        (entry?.kind === "amount" || eligible)
+      ) {
+        return [
+          key,
+          {
+            invalid: true,
+            text: es
+              ? `El monto solicitado supera el máximo de ${currency(category.max_amount)} de la categoría de subvención ${categoryName} seleccionada por usted. Corrija el monto para continuar.`
+              : `The requested amount exceeds the maximum of ${currency(category.max_amount)} for the ${categoryName} grant category you selected. Correct the amount to continue.`,
+          },
+        ];
+      }
+      if (
+        entry?.kind === "format" ||
+        (entry?.kind === "amount" && !entry.supported)
+      )
+        return [key, { invalid: true, text: moneyEntryError(locale, raw) }];
       const missing = c[key] === null;
       const invalid = eligible && (missing || Boolean(errors[key]));
+      let text = hints[key];
+      if (invalid) {
+        if (missing)
+          text =
+            (es
+              ? "Complete este campo obligatorio. "
+              : "Complete this required field. ") + hints[key];
+        else if (key === "requested_amount")
+          text =
+            (es
+              ? `El monto solicitado no corresponde a la categoría de subvención ${categoryName} seleccionada por usted. `
+              : `The requested amount is outside the ${categoryName} grant category you selected. `) +
+            hints[key];
+        else if (key === "cofinance_amount" && requested)
+          text =
+            (es
+              ? "El cofinanciamiento es inferior al mínimo exigido. "
+              : "Cofinancing is below the required minimum. ") + hints[key];
+      }
       return [
         key,
         {
-          invalid,
-          text:
-            invalid && missing
-              ? (es
-                  ? "Complete este campo obligatorio. "
-                  : "Complete this required field. ") + hints[key]
-              : hints[key],
+          invalid:
+            key === "cofinance_amount" && !requested && !missing
+              ? false
+              : invalid,
+          text,
         },
       ];
     }),

@@ -1,11 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  formatMoneyEntry,
-  moneyEntryError,
-  parseMoneyEntry,
-} from "../lib/money-input";
+import { formatMoneyEntry, parseMoneyEntry } from "../lib/money-input";
 
 /** Preserve in-progress decimal separators and zeros across parent/autosave renders. */
 export function MoneyInput({
@@ -27,7 +23,7 @@ export function MoneyInput({
   describedBy?: string;
   readOnly?: boolean;
   onChange: (value: number | null) => void;
-  onValidity: (valid: boolean) => void;
+  onValidity: (valid: boolean, text: string) => void;
   onFocus: () => void;
   onBlur: () => void;
 }) {
@@ -35,7 +31,6 @@ export function MoneyInput({
   const [changed, setChanged] = useState(false);
   const entry = raw === null ? null : parseMoneyEntry(raw);
   const malformed = !readOnly && changed && entry?.valid === false;
-  const errorId = `${id}-format-error`;
   return (
     <>
       <input
@@ -47,10 +42,7 @@ export function MoneyInput({
         readOnly={readOnly}
         aria-required="true"
         aria-invalid={Boolean(malformed || invalid)}
-        aria-describedby={
-          [describedBy, malformed ? errorId : ""].filter(Boolean).join(" ") ||
-          undefined
-        }
+        aria-describedby={describedBy}
         placeholder={locale === "es" ? "Ej.: 12500,50" : "e.g. 12500.50"}
         value={
           readOnly
@@ -64,7 +56,7 @@ export function MoneyInput({
           const parsed = parseMoneyEntry(text);
           setRaw(text);
           setChanged(true);
-          onValidity(parsed.valid);
+          onValidity(parsed.valid, text);
           if (parsed.valid) onChange(parsed.value);
         }}
         onBlur={() => {
@@ -76,16 +68,6 @@ export function MoneyInput({
           onBlur();
         }}
       />
-      {malformed && (
-        <small
-          id={errorId}
-          className="field-warning"
-          data-field-message="error"
-          role="alert"
-        >
-          {moneyEntryError(locale)}
-        </small>
-      )}
     </>
   );
 }

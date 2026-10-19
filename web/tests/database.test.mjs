@@ -407,6 +407,32 @@ const rules = {
   privacy_es: "Aviso de prueba",
   privacy_en: "Test notice",
 };
+test("money entry regression: SQL independently enforces grant maxima and 10/25 percent cofinancing minima", async () => {
+  const configured = structuredClone(rules);
+  configured.categories = [
+    { ...rules.categories[0], id: "small", min_amount: 0, max_amount: 100000, cofinance_percent: 0 },
+    { ...rules.categories[0], id: "medium", min_amount: 100000.01, max_amount: 250000, cofinance_percent: 10 },
+    { ...rules.categories[0], id: "large", min_amount: 250000.01, max_amount: null, cofinance_percent: 25 },
+  ];
+  const p = structuredClone(payload);
+  const validate = () => db.query("select private.validate_payload($1::jsonb,$2::jsonb,true,1)", [JSON.stringify(p), JSON.stringify(configured)]);
+  for (const [category, requested, cofinance] of [
+    ["small", 100000, 0], ["medium", 100000.01, 10000.01],
+    ["medium", 250000, 25000], ["large", 250000.01, 62500.01],
+    ["large", 1000000, 250000], ["large", 1000000, 900000],
+  ]) {
+    Object.assign(p.concept, {category_id:category, requested_amount:requested, cofinance_amount:cofinance});
+    await validate();
+    if (category !== "small" && cofinance === (category === "medium" ? 25000 : 250000)) {
+      p.concept.cofinance_amount = cofinance - 0.01;
+      await assert.rejects(validate(), /GLF_COFINANCE_REQUIRED/);
+    }
+  }
+  for (const [category, requested, cofinance] of [["small",100000.01,0],["medium",250000.01,100000]]) {
+    Object.assign(p.concept, {category_id:category, requested_amount:requested, cofinance_amount:cofinance});
+    await assert.rejects(validate(), /GLF_CATEGORY_AMOUNT/);
+  }
+});
 let call, app;
 async function temporaryAccount(academic = false) {
   const id = crypto.randomUUID();
