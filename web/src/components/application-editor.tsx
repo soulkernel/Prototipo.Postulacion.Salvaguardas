@@ -15,6 +15,8 @@ import {
 import { FileDropField } from "./file-drop-field";
 import { LimitedTextarea } from "./limited-textarea";
 import { NarrativeTextarea } from "./narrative-textarea";
+import { MoneyInput } from "./money-input";
+import { moneyEntryError } from "@/lib/money-input";
 import { DeadlineCountdown } from "./deadline-countdown";
 import { DocumentDownload } from "./document-download";
 import { useEffect, useState, useRef } from "react";
@@ -373,6 +375,10 @@ export function ApplicationEditor({
     Partial<Record<MoneyField, boolean>>
   >({});
   const [moneyFocused, setMoneyFocused] = useState<MoneyField | null>(null);
+  const [invalidMoneyEntries, setInvalidMoneyEntries] = useState<
+    Partial<Record<MoneyField, boolean>>
+  >({});
+  const moneyUiValid = !Object.values(invalidMoneyEntries).some(Boolean);
   const [identityTouched, setIdentityTouched] = useState(false);
   const [identityFocused, setIdentityFocused] = useState(false);
   const [documents, setDocuments] = useState(initialDocuments);
@@ -381,7 +387,7 @@ export function ApplicationEditor({
     revision: number;
     created_at: string;
   } | null>(initialPrepared);
-  const dirty = JSON.stringify(payload) !== saved;
+  const dirty = JSON.stringify(payload) !== saved || !moneyUiValid;
   const signedDocumentsReady =
     application.stage !== 1 ||
     Boolean(
@@ -397,7 +403,8 @@ export function ApplicationEditor({
       ),
     );
   useEffect(() => {
-    if (!editable || !dirty || busy || autoSaving || autoError) return;
+    if (!editable || !dirty || !moneyUiValid || busy || autoSaving || autoError)
+      return;
     const timer = setTimeout(() => {
       const snapshot = payload,
         serialized = JSON.stringify(snapshot);
@@ -431,6 +438,7 @@ export function ApplicationEditor({
     payload,
     saved,
     dirty,
+    moneyUiValid,
     busy,
     autoSaving,
     autoError,
@@ -582,6 +590,7 @@ export function ApplicationEditor({
   );
   async function persist(submit = false) {
     if (busy || !editable) return;
+    if (!checkMoneyEntries()) return;
     if (!budgetUiValid) {
       setError(
         es
@@ -815,6 +824,7 @@ export function ApplicationEditor({
       )
     : [];
   const goToIssue = (issue: CompletionIssue) => {
+    if (!checkMoneyEntries()) return;
     setStep(issue.step);
     setCheckedStep(issue.step);
     setFocusIssue({ ...issue });
@@ -933,9 +943,25 @@ export function ApplicationEditor({
     application.stage,
   );
   const financialHelp = (key: keyof Concept) =>
-    isMoneyField(key) ? moneyFeedback[key].text : "";
+    isMoneyField(key) && !invalidMoneyEntries[key]
+      ? moneyFeedback[key].text
+      : "";
   const visibleFinancialError = (key: keyof Concept) =>
-    isMoneyField(key) ? moneyFeedback[key].invalid : Boolean(financial[key]);
+    isMoneyField(key)
+      ? !invalidMoneyEntries[key] && moneyFeedback[key].invalid
+      : Boolean(financial[key]);
+  function checkMoneyEntries() {
+    if (moneyUiValid) return true;
+    setError(moneyEntryError(locale));
+    setStep(0);
+    const key = Object.keys(invalidMoneyEntries).find(
+      (k) => invalidMoneyEntries[k as MoneyField],
+    );
+    requestAnimationFrame(() =>
+      document.getElementById(`money-${key}`)?.focus(),
+    );
+    return false;
+  }
   const initialTotal = payload.activities
     .flatMap((a) => a.risks)
     .reduce((sum, r) => sum + (riskScore(r.probability, r.severity) || 0), 0);
@@ -1066,6 +1092,7 @@ export function ApplicationEditor({
             aria-current={step === i ? "step" : undefined}
             disabled={busy}
             onClick={() => {
+              if (!checkMoneyEntries()) return;
               if (!budgetUiValid) {
                 setError(
                   es
@@ -1697,6 +1724,49 @@ export function ApplicationEditor({
                             updateConcept(field.key, e.target.value)
                           }
                         />
+                      ) : field.key === "requested_amount" ||
+                        field.key === "cofinance_amount" ? (
+                        <MoneyInput
+                          id={`money-${field.key}`}
+                          locale={locale}
+                          value={payload.concept[field.key]}
+                          invalid={
+                            moneyFeedback[field.key].invalid &&
+                            !invalidMoneyEntries[field.key]
+                          }
+                          describedBy={
+                            invalidMoneyEntries[field.key]
+                              ? undefined
+                              : `field-message-${field.key}`
+                          }
+                          readOnly={
+                            application.stage === 2 &&
+                            !!payload.budget?.lines.length
+                          }
+                          onFocus={() =>
+                            setMoneyFocused(field.key as MoneyField)
+                          }
+                          onBlur={() => {
+                            setMoneyTouched((current) => ({
+                              ...current,
+                              [field.key]: true,
+                            }));
+                            setMoneyFocused(null);
+                          }}
+                          onValidity={(valid) => {
+                            setInvalidMoneyEntries((current) => ({
+                              ...current,
+                              [field.key]: !valid,
+                            }));
+                            if (valid)
+                              setError((current) =>
+                                current === moneyEntryError(locale)
+                                  ? ""
+                                  : current,
+                              );
+                          }}
+                          onChange={(value) => updateConcept(field.key, value)}
+                        />
                       ) : (
                         <input
                           aria-required="true"
@@ -1730,11 +1800,9 @@ export function ApplicationEditor({
                                   payload.concept.start_date,
                                   selectedCategory?.max_months || 36,
                                 )
-                              : field.key === "requested_amount"
-                                ? (selectedCategory?.max_amount ?? undefined)
-                                : field.key === "admin_cost"
-                                  ? adminLimit
-                                  : undefined
+                              : field.key === "admin_cost"
+                                ? adminLimit
+                                : undefined
                           }
                           aria-invalid={
                             isMoneyField(field.key)
@@ -1852,7 +1920,11 @@ export function ApplicationEditor({
                         marginTop: "0.3rem",
                       }}
                     >
-                      {currency(totalCost)}
+                      {moneyUiValid
+                        ? currency(totalCost)
+                        : es
+                          ? "Revise los importes"
+                          : "Check amounts"}
                     </strong>
                     <small>
                       {es
@@ -2955,7 +3027,8 @@ export function ApplicationEditor({
                     busy ||
                     !!missingLetters.length ||
                     !signedDocumentsReady ||
-                    !budgetUiValid
+                    !budgetUiValid ||
+                    !moneyUiValid
                   }
                   aria-busy={busy && operation === "submit"}
                   onClick={() => persist(true)}
@@ -2980,6 +3053,7 @@ export function ApplicationEditor({
                     error ? "application-action-error" : undefined
                   }
                   onClick={() => {
+                    if (!checkMoneyEntries()) return;
                     if (!budgetUiValid) {
                       setError(
                         es
