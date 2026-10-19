@@ -1,5 +1,6 @@
 "use client";
 import { ConfirmRemoveButton } from "./confirm-remove-button";
+import { RequiredMark } from "./required-mark";
 import { LimitedTextarea } from "./limited-textarea";
 import { Plus } from "lucide-react";
 import { OtherPlanningInstruments } from "./other-planning-instruments";
@@ -195,8 +196,39 @@ export function StrategicFields({
           );
         };
         return (
-          <section role="group" className="strategic-objective" key={o.id}>
-            <h3 className="section-card-title">{title}</h3>
+          <section
+            role="group"
+            className="strategic-objective"
+            key={o.id}
+            aria-labelledby={`objective-title-${o.id}`}
+          >
+            <div className="form-card-heading">
+              <h3 className="section-card-title" id={`objective-title-${o.id}`}>
+                <label htmlFor={`objective-${o.id}`}>
+                  {title}
+                  <RequiredMark locale={locale} />
+                </label>
+              </h3>
+              {o.kind === "specific" && (
+                <ConfirmRemoveButton
+                  locale={locale}
+                  element={`${title}: ${o.text || "—"}`}
+                  consequence={
+                    es
+                      ? "Se eliminará este objetivo y se retirarán sus vínculos con actividades y resultados. Las actividades y los resultados se conservarán; revise su asociación con otro objetivo."
+                      : "This objective and its links to activities and results will be removed. Activities and results will be kept; review their links to another objective."
+                  }
+                  onConfirm={() =>
+                    onChange({
+                      ...value,
+                      objectives: value.objectives.filter((x) => x.id !== o.id),
+                    })
+                  }
+                  className="objective-remove"
+                  aria-label={`${es ? "Eliminar" : "Remove"} ${title}`}
+                />
+              )}
+            </div>
             <div
               className={
                 o.kind === "general"
@@ -205,9 +237,6 @@ export function StrategicFields({
               }
             >
               <div className="strategic-objective-text">
-                <label htmlFor={`objective-${o.id}`}>
-                  <span className="field-label">{title} *</span>
-                </label>
                 <LimitedTextarea
                   locale={locale}
                   id={`objective-${o.id}`}
@@ -253,25 +282,6 @@ export function StrategicFields({
                 </div>
               )}
             </div>
-            {o.kind === "specific" && (
-              <ConfirmRemoveButton
-                locale={locale}
-                element={`${title}: ${o.text || "—"}`}
-                consequence={
-                  es
-                    ? "Se eliminará este objetivo y se retirarán sus vínculos con actividades y resultados. Las actividades y los resultados se conservarán; revise su asociación con otro objetivo."
-                    : "This objective and its links to activities and results will be removed. Activities and results will be kept; review their links to another objective."
-                }
-                onConfirm={() =>
-                  onChange({
-                    ...value,
-                    objectives: value.objectives.filter((x) => x.id !== o.id),
-                  })
-                }
-                className="objective-remove"
-                aria-label={`${es ? "Eliminar" : "Remove"} ${title}`}
-              />
-            )}
           </section>
         );
       })}

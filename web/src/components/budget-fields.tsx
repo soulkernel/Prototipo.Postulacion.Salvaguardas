@@ -139,9 +139,32 @@ export function BudgetFields({
       </label>
       {value.lines.map((l, i) => (
         <section role="group" className="activity-card" key={l.id}>
-          <h3 className="section-card-title">
-            {es ? "Partida" : "Line"} {i + 1}
-          </h3>
+          <div className="form-card-heading">
+            <h3 className="section-card-title">
+              {es ? "Partida" : "Line"} {i + 1}
+            </h3>
+            <ConfirmRemoveButton
+              locale={es ? "es" : "en"}
+              element={`${es ? "Partida" : "Budget line"} ${i + 1}: ${l.description || "—"}`}
+              consequence={
+                es
+                  ? "Se eliminará esta partida y sus importes. Los totales del presupuesto se recalcularán con las partidas restantes."
+                  : "This budget line and its amounts will be removed. Budget totals will be recalculated from the remaining lines."
+              }
+              onConfirm={() => {
+                const next = Object.fromEntries(
+                  Object.entries(invalid).filter(([k]) => !k.startsWith(l.id)),
+                );
+                setInvalid(next);
+                onValidity(!Object.values(next).some(Boolean));
+                onChange({
+                  ...value,
+                  lines: value.lines.filter((x) => x.id !== l.id),
+                });
+              }}
+              aria-label={`${es ? "Eliminar partida" : "Remove budget line"} ${i + 1}`}
+            />
+          </div>
           <div className="live-grid">
             <label>
               {es ? "Año" : "Year"}
@@ -216,27 +239,6 @@ export function BudgetFields({
               ? "Si la partida mezcla conceptos, sepárela para identificar correctamente la remuneración."
               : "Split mixed lines to identify remuneration correctly."}
           </small>
-          <ConfirmRemoveButton
-            locale={es ? "es" : "en"}
-            element={`${es ? "Partida" : "Budget line"} ${i + 1}: ${l.description || "—"}`}
-            consequence={
-              es
-                ? "Se eliminará esta partida y sus importes. Los totales del presupuesto se recalcularán con las partidas restantes."
-                : "This budget line and its amounts will be removed. Budget totals will be recalculated from the remaining lines."
-            }
-            onConfirm={() => {
-              const next = Object.fromEntries(
-                Object.entries(invalid).filter(([k]) => !k.startsWith(l.id)),
-              );
-              setInvalid(next);
-              onValidity(!Object.values(next).some(Boolean));
-              onChange({
-                ...value,
-                lines: value.lines.filter((x) => x.id !== l.id),
-              });
-            }}
-            aria-label={`${es ? "Eliminar partida" : "Remove budget line"} ${i + 1}`}
-          />
         </section>
       ))}
       <button

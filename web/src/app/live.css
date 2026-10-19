@@ -1318,6 +1318,10 @@ dialog.narrative-adjust-dialog {
 
 /* Shared validation and card headings — applicant/staff, 2026-10-14. */
 .section-card-title { margin: 0 0 16px; padding: 0; color: var(--navy); font-size: 17px; font-weight: 700; line-height: 1.4; }
+.form-card-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; margin-bottom: 12px; }
+.form-card-heading > h3 { min-width: 0; margin: 0; overflow-wrap: anywhere; }
+.form-card-heading h3 label { display: inline; margin: 0; font: inherit; color: inherit; cursor: pointer; }
+.form-card-heading > .button.remove-icon-button { flex: 0 0 auto; margin: 0; }
 .live-title.module-heading { display: block; }
 .module-heading.application-heading h1 { font-size: 18px; }
 .module-heading.application-heading .application-project-title { font-size: 18px; }

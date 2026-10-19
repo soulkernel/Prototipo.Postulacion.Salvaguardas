@@ -68,9 +68,22 @@ export function ProjectResultFields({
               key={r.id}
               data-validation-result={i + 1}
             >
-              <h3 className="section-card-title">
-                {es ? "Resultado" : "Result"} {i + 1}
-              </h3>
+              <div className="form-card-heading">
+                <h3 className="section-card-title">
+                  {es ? "Resultado" : "Result"} {i + 1}
+                </h3>
+                <ConfirmRemoveButton
+                  locale={es ? "es" : "en"}
+                  element={`${es ? "Resultado" : "Result"} ${i + 1}: ${r.result || "—"}`}
+                  consequence={
+                    es
+                      ? "Se eliminarán este resultado, su indicador, meta, unidad, evidencia prevista y vínculo con el objetivo. El objetivo se conservará. El texto anterior, si existe, seguirá disponible para consulta."
+                      : "This result, its indicator, target, unit, expected evidence and objective link will be removed. The objective will be kept. Previous text, if any, will remain available for reference."
+                  }
+                  onConfirm={() => onChange(value.filter((_, j) => i !== j))}
+                  aria-label={`${es ? "Quitar resultado" : "Remove result"} ${i + 1}`}
+                />
+              </div>
               <label>
                 <span className="field-label">
                   {es ? "Resultado esperado" : "Expected result"} *
@@ -217,17 +230,6 @@ export function ProjectResultFields({
                   onChange={(e) => update(i, { evidence: e.target.value })}
                 />
               </label>
-              <ConfirmRemoveButton
-                locale={es ? "es" : "en"}
-                element={`${es ? "Resultado" : "Result"} ${i + 1}: ${r.result || "—"}`}
-                consequence={
-                  es
-                    ? "Se eliminarán este resultado, su indicador, meta, unidad, evidencia prevista y vínculo con el objetivo. El objetivo se conservará. El texto anterior, si existe, seguirá disponible para consulta."
-                    : "This result, its indicator, target, unit, expected evidence and objective link will be removed. The objective will be kept. Previous text, if any, will remain available for reference."
-                }
-                onConfirm={() => onChange(value.filter((_, j) => i !== j))}
-                aria-label={`${es ? "Quitar resultado" : "Remove result"} ${i + 1}`}
-              />
             </section>
           ))}
           <button

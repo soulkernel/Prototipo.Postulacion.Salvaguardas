@@ -45,9 +45,25 @@ export function ActivityPlanningFields({
           key={activity.id}
           data-validation-activity={i + 1}
         >
-          <h3>
-            {es ? "Actividad" : "Activity"} {i + 1}
-          </h3>
+          <div className="form-card-heading">
+            <h3>
+              {es ? "Actividad" : "Activity"} {i + 1}
+            </h3>
+            <ConfirmRemoveButton
+              locale={locale}
+              element={`${es ? "Actividad" : "Activity"} ${i + 1}: ${activity.title || "—"}`}
+              consequence={
+                es
+                  ? "Se eliminarán esta actividad, su descripción y sus vínculos con objetivos. Los objetivos se conservarán."
+                  : "This activity, its description and its objective links will be removed. Objectives will be kept."
+              }
+              disabled={activity.risks.length > 0}
+              onConfirm={() =>
+                onChange(payload.activities.filter((a) => a.id !== activity.id))
+              }
+              aria-label={`${es ? "Quitar actividad" : "Remove activity"} ${i + 1}`}
+            />
+          </div>
           <div className="live-form">
             <label>
               <span className="field-label">
@@ -138,20 +154,6 @@ export function ActivityPlanningFields({
                   : "This activity already has associated risks. If you change its content, review its screening too. To remove it, first remove its associated risks in the screening."}
               </p>
             )}
-            <ConfirmRemoveButton
-              locale={locale}
-              element={`${es ? "Actividad" : "Activity"} ${i + 1}: ${activity.title || "—"}`}
-              consequence={
-                es
-                  ? "Se eliminarán esta actividad, su descripción y sus vínculos con objetivos. Los objetivos se conservarán."
-                  : "This activity, its description and its objective links will be removed. Objectives will be kept."
-              }
-              disabled={activity.risks.length > 0}
-              onConfirm={() =>
-                onChange(payload.activities.filter((a) => a.id !== activity.id))
-              }
-              aria-label={`${es ? "Quitar actividad" : "Remove activity"} ${i + 1}`}
-            />
           </div>
         </section>
       ))}
