@@ -32,7 +32,7 @@ import { submissionError } from "@/lib/submission-error";
 import { applicationTopicIssue } from "@/lib/call-themes";
 import {
   strategicText,
-  alignmentVersion,
+  currentAlignmentVersion,
   newObjective,
 } from "@/lib/strategic-alignment";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -169,8 +169,11 @@ export async function createDraft(form: FormData) {
   payload.concept.project_results = [];
   payload.concept.risk_register = [];
   payload.concept.strategic_alignment = {
-    version: alignmentVersion,
-    objectives: [newObjective("general"), newObjective("specific")],
+    version: currentAlignmentVersion,
+    objectives: [
+      newObjective("general", currentAlignmentVersion),
+      newObjective("specific", currentAlignmentVersion),
+    ],
   };
   Object.assign(
     payload.concept,

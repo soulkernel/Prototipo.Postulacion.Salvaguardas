@@ -2,7 +2,10 @@ import type { Concept, Locale } from "./domain";
 import { identityFields, narrativeFields } from "./fields";
 import { callThemeLabel } from "./call-themes";
 import { alignmentNarrative } from "./document-language";
-import { alignmentVersion } from "./strategic-alignment";
+import {
+  generalOnlyAlignment,
+  requiresObjectiveContribution,
+} from "./strategic-alignment";
 import { projectSummary } from "./summary";
 import { resultUnits } from "./project-results";
 import {
@@ -377,15 +380,16 @@ export function conceptSections(
       blocks = c.strategic_alignment.objectives
         .filter(
           (o) =>
-            c.strategic_alignment!.version !== alignmentVersion ||
+            !generalOnlyAlignment(c.strategic_alignment!.version) ||
             o.kind === "general",
         )
         .flatMap((o) =>
           alignmentNarrative(
-            c.strategic_alignment!.version === alignmentVersion
+            generalOnlyAlignment(c.strategic_alignment!.version)
               ? { ...o, glf: [] }
               : o,
             locale,
+            requiresObjectiveContribution(c.strategic_alignment!.version),
           ).flatMap(paragraphs),
         );
     if (f.key === "results" && c.project_results !== undefined)
@@ -465,7 +469,14 @@ export function conceptSections(
     sections.push({
       id: f.key,
       title: es ? f.es : f.en,
-      introduction: introductions[f.key]?.[es ? 0 : 1] || "",
+      introduction:
+        f.key === "alignment" &&
+        c.strategic_alignment &&
+        !requiresObjectiveContribution(c.strategic_alignment.version)
+          ? es
+            ? "La alineación relaciona el objetivo general con el Plan Galápagos 2030 y los Objetivos de Desarrollo Sostenible (ODS). También presenta los otros instrumentos de planificación que el postulante haya añadido."
+            : "Alignment connects the general objective with the Galapagos 2030 Plan and the Sustainable Development Goals (SDGs). It also presents any other planning instruments added by the applicant."
+          : introductions[f.key]?.[es ? 0 : 1] || "",
       blocks,
     });
   }

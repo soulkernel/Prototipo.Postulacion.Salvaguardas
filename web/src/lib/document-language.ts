@@ -9,6 +9,7 @@ import { riskLevel, riskScore, type Locale } from "./domain";
 export function alignmentNarrative(
   objective: ProjectObjective,
   locale: Locale,
+  includeContribution = true,
 ): string[] {
   const es = locale === "es";
   const paragraphs = [objective.text];
@@ -51,7 +52,15 @@ export function alignmentNarrative(
           .join("; ") +
         ".",
     );
-  if (objective.contribution.trim())
+  if (objective.kind === "general")
+    for (const item of objective.other_instruments || []) {
+      paragraphs.push(
+        es
+          ? `Según la alineación indicada por el postulante, el objetivo general también se alinea con el instrumento «${item.name.trim() || "Nombre pendiente"}», específicamente con su objetivo «${item.objective.trim() || "Objetivo pendiente"}».`
+          : `According to the alignment provided by the applicant, the general objective also aligns with the instrument “${item.name.trim() || "Name pending"}”, specifically with its objective “${item.objective.trim() || "Objective pending"}”.`,
+      );
+    }
+  if (includeContribution && objective.contribution?.trim())
     paragraphs.push(
       (es
         ? "Contribución esperada del proyecto, según el aplicante: "

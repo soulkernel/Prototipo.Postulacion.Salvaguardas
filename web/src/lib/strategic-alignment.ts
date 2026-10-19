@@ -2,6 +2,13 @@ import { z } from "zod";
 
 export const legacyAlignmentVersion = "pg2030-anexo6-glf2024-ods2015-v1";
 export const alignmentVersion = "pg2030-ods-general-v2";
+export const currentAlignmentVersion = "pg2030-ods-general-v3";
+export function generalOnlyAlignment(version: string) {
+  return version === alignmentVersion || version === currentAlignmentVersion;
+}
+export function requiresObjectiveContribution(version: string) {
+  return version !== currentAlignmentVersion;
+}
 export const planSource =
   "https://unidosporgalapagos.wordpress.com/wp-content/uploads/2021/05/anexo-no.-6-alineacion-pg2030-con-planificacion-nacional-final-sc.pdf";
 export const glfSource =
@@ -174,6 +181,18 @@ export const glfLines = [
   ],
 ].map(([es, en], i) => ({ id: `GLF-L0${i + 1}`, es, en }));
 const unique = <T>(values: T[]) => new Set(values).size === values.length;
+export const otherInstrumentLimit = 10;
+export const otherInstrumentSchema = z
+  .object({
+    id: z.uuid(),
+    name: z.string().max(2000),
+    objective: z.string().max(2000),
+  })
+  .strict();
+export type OtherInstrument = z.infer<typeof otherInstrumentSchema>;
+export function newOtherInstrument(): OtherInstrument {
+  return { id: crypto.randomUUID(), name: "", objective: "" };
+}
 export const objectiveSchema = z
   .object({
     id: z.uuid(),
@@ -188,29 +207,59 @@ export const objectiveSchema = z
       .array(z.enum(glfLines.map((p) => p.id) as [string, ...string[]]))
       .max(7)
       .refine(unique),
-    contribution: z.string().max(600),
+    contribution: z.string().max(600).optional(),
+    other_instruments: z
+      .array(otherInstrumentSchema)
+      .max(otherInstrumentLimit)
+      .refine((items) => unique(items.map((item) => item.id)))
+      .optional(),
   })
   .strict();
 export const strategicSchema = z
   .object({
-    version: z.enum([alignmentVersion, legacyAlignmentVersion]),
+    version: z.enum([
+      currentAlignmentVersion,
+      alignmentVersion,
+      legacyAlignmentVersion,
+    ]),
     legacy_text: z.string().max(24001).optional(),
     objectives: z.array(objectiveSchema).min(1).max(11),
   })
   .strict()
   .superRefine((v, ctx) => {
     if (
-      v.version === alignmentVersion &&
+      v.objectives.some(
+        (o) =>
+          o.other_instruments?.length &&
+          (!generalOnlyAlignment(v.version) || o.kind !== "general"),
+      )
+    )
+      ctx.addIssue({
+        code: "custom",
+        message: "Other instruments belong only to the general objective",
+      });
+    if (
+      generalOnlyAlignment(v.version) &&
       v.objectives.some(
         (o) =>
           o.glf.length ||
           (o.kind === "specific" &&
-            (o.plan.length || o.ods.length || o.contribution)),
+            (o.plan.length ||
+              o.ods.length ||
+              (requiresObjectiveContribution(v.version) && o.contribution))),
       )
     )
       ctx.addIssue({
         code: "custom",
         message: "Only the general objective can align with Plan and SDGs",
+      });
+    if (
+      requiresObjectiveContribution(v.version) &&
+      v.objectives.some((o) => o.contribution === undefined)
+    )
+      ctx.addIssue({
+        code: "custom",
+        message: "Historical alignment requires its contribution field",
       });
     if (
       !unique(v.objectives.map((o) => o.id)) ||
@@ -228,7 +277,10 @@ export const strategicSchema = z
   });
 export type StrategicAlignment = z.infer<typeof strategicSchema>;
 export type ProjectObjective = z.infer<typeof objectiveSchema>;
-export function newObjective(kind: ProjectObjective["kind"]): ProjectObjective {
+export function newObjective(
+  kind: ProjectObjective["kind"],
+  version: string = alignmentVersion,
+): ProjectObjective {
   return {
     id: crypto.randomUUID(),
     kind,
@@ -236,7 +288,7 @@ export function newObjective(kind: ProjectObjective["kind"]): ProjectObjective {
     plan: [],
     ods: [],
     glf: [],
-    contribution: "",
+    ...(requiresObjectiveContribution(version) ? { contribution: "" } : {}),
   };
 }
 export function suggestedOds(policies: string[]) {
@@ -249,15 +301,24 @@ export function suggestedOds(policies: string[]) {
 export function alignmentIssues(value: StrategicAlignment | undefined) {
   if (!value) return [];
   const issues: string[] = [];
+  if (
+    value.objectives.some((o) =>
+      o.other_instruments?.some(
+        (item) => !item.name.trim() || !item.objective.trim(),
+      ),
+    )
+  )
+    issues.push("other_instruments");
   if (!value.objectives.some((o) => o.kind === "specific"))
     issues.push("objectives");
   if (value.objectives.some((o) => !o.text.trim())) issues.push("objectives");
-  if (value.version === alignmentVersion) {
+  if (generalOnlyAlignment(value.version)) {
     const general = value.objectives.find((o) => o.kind === "general");
     if (
-      !general?.contribution.trim() ||
-      !general.plan.length ||
-      !general.ods.length
+      !general?.plan.length ||
+      !general.ods.length ||
+      (requiresObjectiveContribution(value.version) &&
+        !general.contribution?.trim())
     )
       issues.push("alignment");
     return [...new Set(issues)];
@@ -265,7 +326,7 @@ export function alignmentIssues(value: StrategicAlignment | undefined) {
   if (
     value.objectives.some(
       (o) =>
-        !o.contribution.trim() ||
+        !o.contribution?.trim() ||
         !(o.plan.length || o.ods.length || o.glf.length),
     )
   )
@@ -291,7 +352,7 @@ export function strategicText(
     )
     .join("\n\n");
   const alignment = value.objectives
-    .filter((o) => value.version !== alignmentVersion || o.kind === "general")
+    .filter((o) => !generalOnlyAlignment(value.version) || o.kind === "general")
     .map((o) => {
       const labels = (
         ids: string[],
@@ -302,11 +363,17 @@ export function strategicText(
             (id) => `${id}: ${items.find((p) => p.id === id)?.[locale] || id}`,
           )
           .join("; ");
-      return `${o.text}\nPlan Galápagos 2030: ${labels(o.plan, planPolicies)}\nODS: ${o.ods.map((id) => `${id}: ${sdgGoals[id - 1]?.[locale] ?? id}`).join("; ")}\n${value.version === alignmentVersion ? "" : `${locale === "es" ? "Prioridades estratégicas del GLF" : "GLF strategic priorities"}: ${labels(o.glf, glfLines)}\n`}${locale === "es" ? "Contribución esperada" : "Expected contribution"}: ${o.contribution}`;
+      const other = (o.other_instruments || [])
+        .map(
+          (item) =>
+            `${locale === "es" ? "Otro instrumento de planificación" : "Other planning instrument"}: ${item.name}\n${locale === "es" ? "Objetivo del instrumento" : "Instrument objective"}: ${item.objective}`,
+        )
+        .join("\n");
+      return `${o.text}\nPlan Galápagos 2030: ${labels(o.plan, planPolicies)}\nODS: ${o.ods.map((id) => `${id}: ${sdgGoals[id - 1]?.[locale] ?? id}`).join("; ")}\n${generalOnlyAlignment(value.version) ? "" : `${locale === "es" ? "Prioridades estratégicas del GLF" : "GLF strategic priorities"}: ${labels(o.glf, glfLines)}\n`}${other ? other + "\n" : ""}${requiresObjectiveContribution(value.version) ? `${locale === "es" ? "Contribución esperada" : "Expected contribution"}: ${o.contribution}` : ""}`;
     })
     .join("\n\n");
   return {
     objectives,
-    alignment: `${locale === "es" ? "Referencias" : "References"}: ${value.version}\n${alignment}\n\nPlan: ${planSource}\nODS: https://sdgs.un.org/es/goals${value.version === alignmentVersion ? "" : `\nGLF: ${glfSource}`}`,
+    alignment: `${locale === "es" ? "Referencias" : "References"}: ${value.version}\n${alignment}\n\nPlan: ${planSource}\nODS: https://sdgs.un.org/es/goals${generalOnlyAlignment(value.version) ? "" : `\nGLF: ${glfSource}`}`,
   };
 }

@@ -22,6 +22,10 @@ import { ConceptReview } from "../src/components/concept-review";
 import { summaryWorkbook } from "../src/lib/backup-workbook";
 import { unzipSync, strFromU8 } from "fflate";
 import { manualChapters } from "../src/lib/applicant-manual";
+import {
+  currentAlignmentVersion,
+  newObjective,
+} from "../src/lib/strategic-alignment";
 
 const rules: Rules = {
   categories: [
@@ -79,6 +83,53 @@ function complete() {
   p.truthful = true;
   return p;
 }
+
+test("M15 complete v3 reaches 100% without a contribution field and keeps beneficiaries required", () => {
+  const p = complete();
+  const general = {
+    ...newObjective("general", currentAlignmentVersion),
+    text: "Conservar hábitats",
+    plan: ["E1"],
+    ods: [14],
+  };
+  const specific = {
+    ...newObjective("specific", currentAlignmentVersion),
+    text: "Restaurar hábitats",
+  };
+  p.concept.strategic_alignment = {
+    version: currentAlignmentVersion,
+    objectives: [general, specific],
+  };
+  p.activities[0].objective_ids = [specific.id];
+  assert.equal(payloadSchema.safeParse(p).success, true);
+  assert.ok(!manualChapters.flatMap(chapter => chapter.rows).some(row => row[0] === "Contribución o beneficio esperado"));
+  assert.ok(!manualChapters.flatMap(chapter => chapter.screen).some(row => row[0] === "Contribución o beneficio esperado *"));
+  assert.deepEqual(validateComplete(p, rules, 1), []);
+  assert.deepEqual(stepIssues(p, rules, 1, 1), { missing: [], invalid: [] });
+  for (const locale of ["es", "en"] as const)
+    assert.deepEqual(completionGuidance(p, rules, 1, [], locale), []);
+  assert.equal(
+    submissionProgress(
+      p,
+      rules,
+      1,
+      [],
+      [{ kind: "concept_signed" }, { kind: "matrix_signed" }],
+      true,
+      true,
+    ).percent,
+    100,
+  );
+  Object.assign(general, { contribution: "APORTE_HISTORICO_M15" });
+  assert.deepEqual(validateComplete(p, rules, 1), []);
+  assert.equal(
+    payloadSchema.parse(p).concept.strategic_alignment!.objectives[0]
+      .contribution,
+    "APORTE_HISTORICO_M15",
+  );
+  p.concept.beneficiaries = "";
+  assert.ok(validateComplete(p, rules, 1).includes("beneficiaries"));
+});
 
 test("M08 new concept without admin_cost can be parsed and completed at 100%, with no hidden mandatory field", () => {
   const raw = complete();

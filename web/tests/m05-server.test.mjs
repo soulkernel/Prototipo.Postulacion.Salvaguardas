@@ -197,6 +197,37 @@ function request(kind = letter) {
   });
 }
 
+test("M15 actual save action accepts missing contribution and retains old values without copying them into active narratives", async () => {
+  const s = fixture();
+  const general = { id: crypto.randomUUID(), kind: "general", text: "Conservar hábitats", plan: ["E1"], ods: [14], glf: [] };
+  const specific = { id: crypto.randomUUID(), kind: "specific", text: "Restaurar hábitats", plan: [], ods: [], glf: [] };
+  s.app.payload.concept.strategic_alignment = { version: "pg2030-ods-general-v3", objectives: [general, specific] };
+  assert.equal((await api.saveDraft(appId, 0, s.app.payload)).ok, true);
+  assert.equal("contribution" in s.savedPayload.concept.strategic_alignment.objectives[0], false);
+  general.contribution = "APORTE_HISTORICO_M15";
+  assert.equal((await api.saveDraft(appId, 1, s.app.payload)).ok, true);
+  assert.equal(s.savedPayload.concept.strategic_alignment.objectives[0].contribution, "APORTE_HISTORICO_M15");
+  for (const key of ["objectives", "alignment", "summary", "results", "beneficiaries"]) assert.doesNotMatch(s.savedPayload.concept[key], /APORTE_HISTORICO_M15/);
+});
+
+test("M13 actual save action preserves optional instruments and objective links, including incomplete drafts", async () => {
+  const s = fixture();
+  const general = { id: crypto.randomUUID(), kind: "general", text: "Conservar hábitats", plan: ["E1"], ods: [14], glf: [], contribution: "Conservación", other_instruments: [{ id: crypto.randomUUID(), name: "", objective: "" }] };
+  const specific = { id: crypto.randomUUID(), kind: "specific", text: "Restaurar hábitats", plan: [], ods: [], glf: [], contribution: "" };
+  s.app.payload.concept.strategic_alignment = { version: "pg2030-ods-general-v2", objectives: [general, specific] };
+  s.app.payload.activities[0].objective_ids = [specific.id];
+  assert.equal((await api.saveDraft(appId, 0, s.app.payload)).ok, true);
+  assert.deepEqual(s.savedPayload.concept.strategic_alignment.objectives[0].other_instruments, general.other_instruments);
+  general.other_instruments[0].name = "Plan ficticio M13";
+  general.other_instruments[0].objective = "Objetivo externo ficticio";
+  assert.equal((await api.saveDraft(appId, 1, s.app.payload)).ok, true);
+  assert.match(s.savedPayload.concept.alignment, /Plan ficticio M13/);
+  assert.equal(s.savedPayload.concept.strategic_alignment.objectives[0].id, general.id);
+  assert.deepEqual(s.savedPayload.activities[0].objective_ids, [specific.id]);
+  general.other_instruments[0].id = "invalid";
+  assert.deepEqual(await api.saveDraft(appId, 2, s.app.payload), { ok: false, error: "GLF_INVALID_PAYLOAD" });
+});
+
 test("M08 actual save action accepts a missing administrative estimate and preserves an old amount", async () => {
   const s = fixture();
   s.app.stage = 1;

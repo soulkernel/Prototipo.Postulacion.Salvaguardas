@@ -14,6 +14,7 @@ import {
 } from "@/lib/attachment-requirements";
 import { FileDropField } from "./file-drop-field";
 import { LimitedTextarea } from "./limited-textarea";
+import { NarrativeTextarea } from "./narrative-textarea";
 import { DeadlineCountdown } from "./deadline-countdown";
 import { DocumentDownload } from "./document-download";
 import { useEffect, useState, useRef } from "react";
@@ -65,7 +66,7 @@ import {
   projectDateErrors,
   maxProjectEnd,
 } from "@/lib/applicant-validation";
-import { alignmentVersion } from "@/lib/strategic-alignment";
+import { currentAlignmentVersion } from "@/lib/strategic-alignment";
 import { strategicText } from "@/lib/strategic-alignment";
 import { ActionLabel } from "./submit-button";
 import { projectSummary, emptySummary } from "@/lib/summary";
@@ -189,8 +190,8 @@ function message(code: string, es: boolean) {
       : "Check registered risks: link each risk to at least one activity and assess it without duplicates.";
   if (code.includes("ALIGNMENT"))
     return es
-      ? "Complete los objetivos y la contribución y alineación del objetivo general con Plan Galápagos 2030 y ODS."
-      : "Complete objectives and the general objective contribution and alignment with Plan Galápagos 2030 and SDGs.";
+      ? "Complete los objetivos y la alineación del objetivo general con Plan Galápagos 2030 y ODS."
+      : "Complete objectives and the general objective alignment with Plan Galápagos 2030 and SDGs.";
   if (code.includes("SUMMARY"))
     return es
       ? "Complete el resumen del proyecto y respete el límite de palabras."
@@ -304,7 +305,7 @@ export function ApplicationEditor({
     const initialPayload: Payload =
       editable &&
       application.payload.concept.strategic_alignment?.version !==
-        alignmentVersion &&
+        currentAlignmentVersion &&
       application.payload.concept.strategic_alignment
         ? {
             ...application.payload,
@@ -313,15 +314,13 @@ export function ApplicationEditor({
               email: application.payload.concept.email || accountEmail,
               strategic_alignment: {
                 ...application.payload.concept.strategic_alignment,
-                version: alignmentVersion,
+                version: currentAlignmentVersion,
                 objectives:
                   application.payload.concept.strategic_alignment.objectives.map(
                     (o) => ({
                       ...o,
                       glf: [],
-                      ...(o.kind === "specific"
-                        ? { plan: [], ods: [], contribution: "" }
-                        : {}),
+                      ...(o.kind === "specific" ? { plan: [], ods: [] } : {}),
                     }),
                   ),
               },
@@ -828,6 +827,10 @@ export function ApplicationEditor({
   const fieldIssue = (key: string) =>
     currentIssues.missing.includes(key) || currentIssues.invalid.includes(key);
   const issueLabel = (key: string) => {
+    if (key === "other_instruments")
+      return es
+        ? "Otros instrumentos: complete el nombre y el objetivo de cada instrumento añadido"
+        : "Other instruments: complete each added instrument's name and objective";
     if (key === "ruc")
       return es
         ? "RUC de la organización: ingrese 13 dígitos"
@@ -1633,6 +1636,33 @@ export function ApplicationEditor({
                         />
                       </div>
                     </section>
+                  ) : [
+                      "beneficiaries",
+                      "sustainability",
+                      "monitoring",
+                    ].includes(field.key) ? (
+                    <div
+                      key={field.key}
+                      data-validation-field={field.key}
+                      className="editor-field full-width narrative-field"
+                    >
+                      <label htmlFor={`concept-${field.key}`}>
+                        <span>
+                          {es ? field.es : field.en}
+                          <RequiredMark locale={locale} />
+                        </span>
+                      </label>
+                      <NarrativeTextarea
+                        id={`concept-${field.key}`}
+                        label={es ? field.es : field.en}
+                        locale={locale}
+                        invalid={fieldIssue(field.key)}
+                        value={narrativeTextForEditing(
+                          String(payload.concept[field.key] ?? ""),
+                        )}
+                        onChange={(value) => updateConcept(field.key, value)}
+                      />
+                    </div>
                   ) : (
                     <label
                       key={field.key}

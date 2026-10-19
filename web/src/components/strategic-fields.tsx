@@ -2,13 +2,15 @@
 import { ConfirmRemoveButton } from "./confirm-remove-button";
 import { LimitedTextarea } from "./limited-textarea";
 import { Plus } from "lucide-react";
+import { OtherPlanningInstruments } from "./other-planning-instruments";
 import {
   glfLines,
   planPolicies,
   sdgGoals,
   suggestedOds,
   newObjective,
-  alignmentVersion,
+  currentAlignmentVersion,
+  generalOnlyAlignment,
   alignmentIssues,
   type StrategicAlignment,
   type ProjectObjective,
@@ -50,9 +52,12 @@ export function StrategicFields({
           type="button"
           onClick={() =>
             onChange({
-              version: alignmentVersion,
+              version: currentAlignmentVersion,
               legacy_text: legacy.trim() || undefined,
-              objectives: [newObjective("general"), newObjective("specific")],
+              objectives: [
+                newObjective("general", currentAlignmentVersion),
+                newObjective("specific", currentAlignmentVersion),
+              ],
             })
           }
         >
@@ -235,33 +240,16 @@ export function StrategicFields({
                       ? "Los ODS relacionados se muestran primero. Usted confirma cuáles corresponden."
                       : "Related SDGs are shown first. You confirm which apply."}
                   </small>
-                </div>
-              )}
-              {o.kind === "general" && (
-                <div className="strategic-objective-text">
-                  <label htmlFor={`benefit-${o.id}`}>
-                    <span className="field-label">
-                      {es
-                        ? "Contribución o beneficio esperado *"
-                        : "Expected contribution or benefit *"}
-                    </span>
-                  </label>
-                  <LimitedTextarea
-                    locale={locale}
-                    id={`benefit-${o.id}`}
-                    aria-required="true"
-                    rows={3}
-                    maxLength={600}
-                    value={o.contribution}
-                    placeholder={
-                      es
-                        ? "¿Qué resultado aportará a las referencias elegidas?"
-                        : "What result will contribute to the selected references?"
-                    }
-                    onChange={(e) =>
-                      update(o.id, { contribution: e.target.value })
-                    }
-                  />
+                  {generalOnlyAlignment(value.version) && (
+                    <OtherPlanningInstruments
+                      objectiveId={o.id}
+                      items={o.other_instruments || []}
+                      locale={locale}
+                      onChange={(items) =>
+                        update(o.id, { other_instruments: items })
+                      }
+                    />
+                  )}
                 </div>
               )}
             </div>
@@ -294,7 +282,10 @@ export function StrategicFields({
           onClick={() =>
             onChange({
               ...value,
-              objectives: [...value.objectives, newObjective("specific")],
+              objectives: [
+                ...value.objectives,
+                newObjective("specific", value.version),
+              ],
             })
           }
         >
@@ -305,8 +296,15 @@ export function StrategicFields({
       {alignmentIssues(value).length > 0 && (
         <p className="help">
           {es
-            ? "Complete los objetivos. Para el objetivo general, seleccione Plan Galápagos 2030 y ODS e indique la contribución esperada. Puede guardar un borrador incompleto."
-            : "Complete the objectives. For the general objective, select Plan Galápagos 2030 and SDGs and describe the expected contribution. You may save an incomplete draft."}
+            ? "Complete los objetivos. Para el objetivo general, seleccione Plan Galápagos 2030 y ODS. Puede guardar un borrador incompleto."
+            : "Complete the objectives. For the general objective, select Plan Galápagos 2030 and SDGs. You may save an incomplete draft."}
+          {alignmentIssues(value).includes("other_instruments") && (
+            <span>
+              {es
+                ? " Complete el nombre y el objetivo de cada instrumento adicional que haya añadido."
+                : " Complete the name and objective of each additional instrument you have added."}
+            </span>
+          )}
         </p>
       )}
     </section>

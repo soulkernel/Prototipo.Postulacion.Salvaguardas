@@ -7,6 +7,73 @@ import {
 } from "../src/lib/concept-presentation";
 import { emptyPayload } from "../src/lib/domain";
 import { emptySummary, projectSummary } from "../src/lib/summary";
+import { adjustNarrativeLineBreaks } from "../src/lib/narrative-editing";
+
+test("explicit line-break suggestion reflows imported wraps without changing words or captions", () => {
+  const source =
+    "La comunidad participa en las actividades de conservación costera y monitoreo de\n" +
+    "aves marinas en las islas.\n" +
+    " \n".repeat(13) +
+    "Fig. 1. Colonias de aves.\n\n• Formación local.\n• Vigilancia sanitaria.";
+  const adjusted = adjustNarrativeLineBreaks(source);
+  assert.match(adjusted, /monitoreo de aves marinas/);
+  assert.ok(!adjusted.includes("\n\n\n"));
+  assert.match(
+    adjusted,
+    /\n\nFig\. 1\. Colonias de aves\.\n\n• Formación local\.\n• Vigilancia sanitaria\./,
+  );
+  assert.equal(
+    adjusted.replace(/\s+/g, " ").trim(),
+    source.replace(/\s+/g, " ").trim(),
+  );
+  assert.equal(adjustNarrativeLineBreaks(adjusted), adjusted);
+  assert.ok(source.includes(" \n".repeat(13)), "The source is never mutated");
+});
+
+test("line-break preview preserves intentional labels, lists, tables, paragraphs and empty fields", () => {
+  for (const source of [
+    "",
+    "Texto breve.\nOtra línea.\n\nOtro párrafo.",
+    "Componente: Replicabilidad\nDescripción: La metodología permite replicar el trabajo en otras islas.",
+    "Strategy: Passive surveillance\nActivity: Observation\nProgress indicators: Reports\nSuccess indicators: Early detection",
+    "• " +
+      "Actividad comunitaria. ".repeat(5).trimEnd() +
+      "\n  • Detalle subordinado\n• Otra actividad",
+    "1. Un resultado\n2. Otro resultado",
+    "| Componente | Descripción |\n| --- | --- |\n| Continuidad | Comunidad |",
+    "Columna A\tColumna B\nvalor A\tvalor B",
+    "https://example.org/" + "ruta/".repeat(20) + "\nDescripción de la fuente.",
+  ]) {
+    assert.equal(adjustNarrativeLineBreaks(source), source);
+  }
+});
+
+test("accepted line-break adjustment retains review/PDF blocks and labelled relationships", () => {
+  const source =
+    "Estrategia: Vigilancia\nActividad: Recorridos\nIndicadores de avance: Reportes\nIndicadores de éxito: Eventos identificados\n\n" +
+    "La comunidad participa en las actividades de conservación costera y monitoreo de\naves marinas.";
+  assert.deepEqual(
+    narrativeBlocks(adjustNarrativeLineBreaks(source)),
+    narrativeBlocks(source),
+  );
+  const concept = emptyPayload().concept;
+  for (const key of ["beneficiaries", "sustainability", "monitoring"] as const)
+    concept[key] = source;
+  const before = JSON.stringify(concept);
+  for (const locale of ["es", "en"] as const) {
+    const original = conceptSections(concept, locale);
+    const adjustedConcept = { ...concept };
+    for (const key of [
+      "beneficiaries",
+      "sustainability",
+      "monitoring",
+    ] as const) {
+      adjustedConcept[key] = adjustNarrativeLineBreaks(concept[key]);
+    }
+    assert.deepEqual(conceptSections(adjustedConcept, locale), original);
+  }
+  assert.equal(JSON.stringify(concept), before);
+});
 
 test("review and PDF share the integrated summary without restoring six headings or mutating drafts", () => {
   const c = emptyPayload().concept;

@@ -515,12 +515,6 @@ export const manualChapters: ManualChapter[] = [
         "Review SDGs suggested by the selected Plan objective or browse others. Select those genuinely relevant; suggestions do not replace your judgement.",
       ],
       [
-        "Contribución o beneficio esperado",
-        "Explique cómo el objetivo aporta a la alineación elegida; hasta 600 caracteres.",
-        "Expected contribution or benefit",
-        "Explain how the objective contributes to the selected alignment; up to 600 characters.",
-      ],
-      [
         "Papelera: quitar selección u objetivo",
         "Retira una asociación o un objetivo específico. Revise después las actividades y resultados que lo utilizaban.",
         "Trash icon: remove selection or objective",
@@ -528,15 +522,11 @@ export const manualChapters: ManualChapter[] = [
       ],
     ],
     tip: [
-      "Ejemplo ilustrativo: «Fortalecer capacidades de jóvenes para la conservación marina» → seleccione el objetivo pertinente del Plan, el ODS, y explique el aporte concreto.",
-      "Illustrative example: ‘Strengthen young people's capacity for marine conservation’ → select the relevant Plan objective, SDG, and explain the specific contribution.",
+      "Ejemplo ilustrativo: «Fortalecer capacidades de jóvenes para la conservación marina» → seleccione el objetivo pertinente del Plan y los ODS correspondientes.",
+      "Illustrative example: ‘Strengthen young people's capacity for marine conservation’ → select the relevant Plan objective and SDGs.",
     ],
     screen: [
       ["Objetivo general * → Plan · ODS", "General objective * → Plan · SDGs"],
-      [
-        "Contribución o beneficio esperado *",
-        "Expected contribution or benefit *",
-      ],
       [
         "OE1: objetivo específico (sin alineación)",
         "SO1: specific objective (no alignment)",

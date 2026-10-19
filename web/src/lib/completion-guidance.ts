@@ -1,4 +1,7 @@
-import { alignmentVersion } from "./strategic-alignment";
+import {
+  generalOnlyAlignment,
+  requiresObjectiveContribution,
+} from "./strategic-alignment";
 import { applicationTopicIssue, applicationTopicMessage } from "./call-themes";
 import { stepIssues } from "./step-validation";
 import {
@@ -44,6 +47,7 @@ export function completionGuidance(
   ];
   const alignment = payload.concept.strategic_alignment;
   keys.forEach((key) => {
+    if (key === "other_instruments") return; // Individual missing fields are identified below.
     if (key.startsWith("budget_")) {
       add(
         key,
@@ -149,6 +153,24 @@ export function completionGuidance(
   if (alignment) {
     let n = 0;
     alignment.objectives.forEach((o) => {
+      if (o.kind === "general")
+        for (const item of o.other_instruments || []) {
+          for (const key of ["name", "objective"] as const)
+            if (!item[key].trim()) {
+              add(
+                `other-instrument-${key}-${item.id}`,
+                1,
+                es
+                  ? key === "name"
+                    ? "Indique el nombre del instrumento adicional"
+                    : `Indique el objetivo del instrumento ${item.name || "adicional"}`
+                  : key === "name"
+                    ? "Enter the additional instrument name"
+                    : `Enter the objective of the instrument ${item.name || "added"}`,
+                `[id="other-instrument-${key}-${item.id}"]`,
+              );
+            }
+        }
       const title =
         o.kind === "general"
           ? es
@@ -163,8 +185,9 @@ export function completionGuidance(
           `[id="objective-${o.id}"]`,
         );
       if (
-        (alignment.version !== alignmentVersion || o.kind === "general") &&
-        !o.contribution.trim()
+        requiresObjectiveContribution(alignment.version) &&
+        (!generalOnlyAlignment(alignment.version) || o.kind === "general") &&
+        !o.contribution?.trim()
       )
         add(
           "benefit-" + o.id,
@@ -176,7 +199,7 @@ export function completionGuidance(
           `[id="benefit-${o.id}"]`,
         );
       if (
-        (alignment.version !== alignmentVersion || o.kind === "general") &&
+        (!generalOnlyAlignment(alignment.version) || o.kind === "general") &&
         !(o.plan.length || o.ods.length || o.glf.length)
       )
         add(
@@ -198,13 +221,14 @@ export function completionGuidance(
           : "Add at least one specific objective",
         ".strategic-fields",
       );
-    for (const key of (alignment.version === alignmentVersion
+    for (const key of (generalOnlyAlignment(alignment.version)
       ? ["plan", "ods"]
       : ["plan", "ods", "glf"]) as ("plan" | "ods" | "glf")[])
       if (
         !alignment.objectives.some(
           (o) =>
-            (alignment.version !== alignmentVersion || o.kind === "general") &&
+            (!generalOnlyAlignment(alignment.version) ||
+              o.kind === "general") &&
             o[key].length,
         )
       )

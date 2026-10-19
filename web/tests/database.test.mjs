@@ -3340,6 +3340,104 @@ test("M07 migration preserves all existing drafts, submitted versions, prepared 
   assert.deepEqual(await snapshot(),before);
 });
 
+test("M13 optional planning instruments persist locally and enforce completion without modifying historical records", async () => {
+  const snapshot = async () => Object.fromEntries(await Promise.all(["applications", "application_versions", "prepared_documents", "application_events", "calls", "application_documents"].map(async table => [table, (await db.query(`select to_jsonb(t) value from public.${table} t order by id`)).rows])));
+  // Reapply only the M13 DDL in the isolated in-memory database.
+  await db.exec("drop function private.validate_payload(jsonb,jsonb,boolean,integer); alter function private.validate_payload_before_other_instruments(jsonb,jsonb,boolean,integer) rename to validate_payload;");
+  const before = await snapshot();
+  await db.exec(await readFile(new URL("../../supabase/migrations/202610190042_other_planning_instruments.sql", import.meta.url), "utf8"));
+  assert.deepEqual(await snapshot(), before);
+  for (const role of ["anon", "authenticated"]) assert.equal((await db.query("select has_function_privilege($1,'private.validate_payload(jsonb,jsonb,boolean,integer)','EXECUTE') allowed", [role])).rows[0].allowed, false);
+  const p = structuredClone(payload);
+  const generalId = crypto.randomUUID(), specificId = crypto.randomUUID();
+  for (const activity of p.activities) { activity.id = crypto.randomUUID(); for (const risk of activity.risks) risk.id = crypto.randomUUID(); }
+  p.concept.strategic_alignment = { version: "pg2030-ods-general-v2", objectives: [
+    { id: generalId, kind: "general", text: "Conservar hábitats", plan: ["E1"], ods: [14], glf: [], contribution: "Conservación comunitaria" },
+    { id: specificId, kind: "specific", text: "Restauración local", plan: [], ods: [], glf: [], contribution: "" },
+  ] };
+  p.activities[0].objective_ids = [specificId];
+  const validate = (value, complete = true, stage = 1) => db.query("select private.validate_payload($1::jsonb,$2::jsonb,$3,$4)", [JSON.stringify(value), JSON.stringify(rules), complete, stage]);
+  await validate(p); // Zero extra instruments does not add a requirement.
+  const instrument = { id: crypto.randomUUID(), name: "", objective: "" };
+  p.concept.strategic_alignment.objectives[0].other_instruments = [instrument];
+  await validate(p, false);
+  await assert.rejects(validate(p), /GLF_OTHER_INSTRUMENT_REQUIRED/);
+  instrument.name = "Plan ficticio M13";
+  await assert.rejects(validate(p), /GLF_OTHER_INSTRUMENT_REQUIRED/);
+  instrument.objective = "Objetivo externo ficticio";
+  await validate(p);
+  const phase2 = structuredClone(fullPayload);
+  phase2.concept.strategic_alignment = structuredClone(p.concept.strategic_alignment);
+  phase2.activities[0].objective_ids = [specificId];
+  await validate(phase2, true, 2);
+  for (const patch of [{ id: "invalid" }, { name: null }, { objective: "x".repeat(2001) }, { extra: "unknown" }]) {
+    const invalid = structuredClone(p); invalid.concept.strategic_alignment.objectives[0].other_instruments[0] = { ...instrument, ...patch };
+    await assert.rejects(validate(invalid, false), /GLF_INVALID_OTHER_INSTRUMENT/);
+  }
+  for (const mode of ["duplicate", "specific", "no-plan", "no-ods"]) {
+    const invalid = structuredClone(p), general = invalid.concept.strategic_alignment.objectives[0];
+    if (mode === "duplicate") general.other_instruments.push(instrument);
+    if (mode === "specific") { delete general.other_instruments; invalid.concept.strategic_alignment.objectives[1].other_instruments = [instrument]; }
+    if (mode === "no-plan") general.plan = [];
+    if (mode === "no-ods") general.ods = [];
+    await assert.rejects(validate(invalid), mode.startsWith("no-") ? /GLF_ALIGNMENT_REQUIRED/ : /GLF_INVALID_OTHER_INSTRUMENT/);
+  }
+  const owner = await temporaryAccount();
+  const id = await rpc("create_application", { call_id: call }, owner);
+  await rpc("save_application", { application_id: id, expected_revision: 0, payload: p }, owner);
+  let reopened = (await as(owner, () => db.query("select payload from public.applications where id=$1", [id]))).rows[0].payload;
+  assert.deepEqual(reopened, p);
+  reopened.concept.strategic_alignment.objectives[0].other_instruments[0].name = "Plan ficticio actualizado";
+  await rpc("save_application", { application_id: id, expected_revision: 1, payload: reopened }, owner);
+  const edited = (await as(owner, () => db.query("select payload from public.applications where id=$1", [id]))).rows[0].payload;
+  assert.equal(edited.concept.strategic_alignment.objectives[0].id, generalId);
+  assert.equal(edited.concept.strategic_alignment.objectives[0].other_instruments[0].id, instrument.id);
+  assert.equal(edited.concept.strategic_alignment.objectives[0].other_instruments[0].name, "Plan ficticio actualizado");
+  assert.deepEqual(edited.activities[0].objective_ids, [specificId]);
+});
+
+test("M15 migration keeps historical records and allows new complete forms without contribution, including direct RPC", async () => {
+  const snapshot = async () => Object.fromEntries(await Promise.all(["applications", "application_versions", "prepared_documents", "application_events", "calls", "application_documents"].map(async table => [table, (await db.query(`select to_jsonb(t) value from public.${table} t order by id`)).rows])));
+  const before = await snapshot();
+  await db.exec(await readFile(new URL("../../supabase/migrations/202610190043_objective_without_contribution.sql", import.meta.url), "utf8"));
+  assert.deepEqual(await snapshot(), before);
+  const p = structuredClone(payload), generalId = crypto.randomUUID(), specificId = crypto.randomUUID();
+  for (const activity of p.activities) { activity.id = crypto.randomUUID(); for (const risk of activity.risks) risk.id = crypto.randomUUID(); }
+  p.concept.strategic_alignment = { version: "pg2030-ods-general-v3", objectives: [
+    { id: generalId, kind: "general", text: "Conservar hábitats", plan: ["E1"], ods: [14], glf: [], other_instruments: [{ id: crypto.randomUUID(), name: "Plan ficticio", objective: "Objetivo externo" }] },
+    { id: specificId, kind: "specific", text: "Restaurar hábitats", plan: [], ods: [], glf: [] },
+  ] };
+  p.activities[0].objective_ids = [specificId];
+  const validate = (value, complete = true) => db.query("select private.validate_payload($1::jsonb,$2::jsonb,$3,1)", [JSON.stringify(value), JSON.stringify(rules), complete]);
+  await validate(p); await validate(p, false);
+  const phase2 = structuredClone(fullPayload);
+  phase2.concept.strategic_alignment = structuredClone(p.concept.strategic_alignment);
+  phase2.activities[0].objective_ids = [specificId];
+  await db.query("select private.validate_payload($1::jsonb,$2::jsonb,true,2)", [JSON.stringify(phase2), JSON.stringify(rules)]);
+  for (const field of ["plan", "ods"]) {
+    const invalid = structuredClone(p); invalid.concept.strategic_alignment.objectives[0][field] = [];
+    await assert.rejects(validate(invalid), /GLF_ALIGNMENT_REQUIRED/);
+  }
+  const historical = structuredClone(p); historical.concept.strategic_alignment.version = "pg2030-ods-general-v2";
+  historical.concept.strategic_alignment.objectives.forEach(o => o.contribution = "");
+  await assert.rejects(validate(historical), /GLF_ALIGNMENT_REQUIRED/);
+  historical.concept.strategic_alignment.objectives[0].contribution = "APORTE_HISTORICO_M15";
+  await validate(historical);
+  const owner = await temporaryAccount(), id = await rpc("create_application", { call_id: call }, owner);
+  await rpc("save_application", { application_id: id, expected_revision: 0, payload: p }, owner);
+  let reopened = (await as(owner, () => db.query("select payload from public.applications where id=$1", [id]))).rows[0].payload;
+  assert.deepEqual(reopened, p);
+  const beneficiaries = reopened.concept.beneficiaries;
+  reopened.concept.strategic_alignment.objectives[0].contribution = "APORTE_HISTORICO_M15";
+  await rpc("save_application", { application_id: id, expected_revision: 1, payload: reopened }, owner);
+  const prepared = await rpc("prepare_application_documents", { app_id: id, expected_revision: 2 }, owner);
+  const frozen = (await as(owner, () => db.query("select payload from public.prepared_documents where id=$1", [prepared]))).rows[0].payload;
+  assert.equal(frozen.concept.strategic_alignment.objectives[0].contribution, "APORTE_HISTORICO_M15");
+  assert.equal(frozen.concept.strategic_alignment.objectives[0].id, generalId);
+  assert.equal(frozen.concept.beneficiaries, beneficiaries);
+  assert.deepEqual(frozen.activities[0].objective_ids, [specificId]);
+});
+
 test("M08 local migration preserves historical data and stage-one RPCs no longer require administrative costs", async () => {
   // Only this in-memory PostgreSQL fixture is rewound to the pre-M08 schema.
   await db.exec("drop trigger freeze_concept_layout on public.application_versions; drop function private.freeze_concept_layout(); alter table public.prepared_documents drop column concept_layout_version; alter table public.application_versions drop column concept_layout_version;");

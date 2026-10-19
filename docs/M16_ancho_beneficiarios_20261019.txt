@@ -1,0 +1,78 @@
+M16 - Verificación del ancho de Beneficiarios
+Fecha: 19 de octubre de 2026
+
+Alcance y estado
+Revisión exclusivamente de Beneficiarios y contribuciones a los medios de vida.
+No se modificó código de aplicación, CSS, narrativa, datos ni archivos históricos.
+No se publicaron cambios ni se ejecutaron migraciones. Se preservó el trabajo local previo.
+Repositorio: D:\GDRIVE LOCAL\CONSULTORIAS\SALVAGUARDAS GLF\portal-app
+Rama: feat/full-grants-platform. HEAD: 638e177. Árbol de trabajo con cambios previos sin confirmar.
+Se leyeron web/AGENTS.md y las rutas actuales requeridas.
+
+Diagnóstico del código actual
+web/src/lib/fields.ts:162 conserva beneficiaries como textarea.
+web/src/components/application-editor.tsx:1640-1647 usa editor-field full-width narrative-field.
+web/src/app/live.css:207-221 mantiene min-width:0 y textarea width:100%;
+la clase full-width (línea 327) ocupa todas las columnas.
+No se confundió este campo con Contribución o beneficio esperado del objetivo general.
+
+Comprobación publicada, exclusivamente de lectura
+URL: https://glf-postulaciones.vercel.app
+Versión visible en el pie: v0.7.27.
+Formulario abierto en Nota Conceptual. No se pulsaron controles, no se escribió ni se guardó.
+Viewport: 958 x 944; documentElement.clientWidth=943 y scrollWidth=943.
+devicePixelRatio=1 y visualViewport.scale=1; no se cambió el zoom del usuario.
+Contenedor del campo: 845 px. Textarea: 845 px. Formulario padre: 845 px.
+Posición horizontal de contenedor y textarea: x=49 px.
+Estilos calculados: grid-column:1/-1, width:845px, max-width:none,
+box-sizing:border-box, white-space:pre-wrap, padding:10px 12px.
+El valor consultado tiene 1743 caracteres, 32 líneas, línea máxima de 110 caracteres
+y hasta 13 líneas vacías consecutivas. No se copió su contenido a esta evidencia.
+Los saltos explícitos del texto pueden explicar espacio libre a la derecha aunque
+la caja ocupe todo el ancho. No se eliminaron ni se normalizaron automáticamente.
+
+Pruebas locales aisladas, ejecutadas
+Se montó ApplicationEditor real con CSS actual y datos ficticios en una envoltura
+local de 1160 px máximos, padding de 24 px. Servidor y navegación simulados.
+No es una simulación completa de toda la cabecera publicada.
+Resoluciones y ancho de textarea/contendor/formulario, iguales en cada caso:
+1440 px -> 1062 px.
+1280 px -> 1062 px.
+1024 px -> 926 px.
+768 px -> 670 px.
+390 px -> 300 px.
+375 px -> 285 px.
+Ampliación CSS con viewport de 1280 px:
+125 % -> 1158 px; 150 % -> 1134 px; 200 % -> 1084 px.
+Etiqueta artificialmente larga a 390 px -> 300 px; texto se distribuye en varias líneas.
+Los diez casos pasaron: textarea y contenedor de igual ancho; sin scroll horizontal;
+valor ficticio intacto, wrap=soft, cero errores de página y cero intentos de guardado.
+Se inspeccionó visualmente la captura móvil con etiqueta larga.
+La ampliación se comprobó mediante CSS zoom en el entorno aislado, no mediante
+el control nativo de zoom de Chrome. Tampoco se alteró la ventana del usuario.
+
+Evidencia y archivos generados en esta revisión
+scratch/m16-qa/run.cjs: comprobación reproducible; reutiliza el fixture aislado previo
+scratch/m15-qa/build.cjs y fixture.tsx, sin cambiar sus fuentes.
+scratch/m16-qa/results.json: mediciones completas y resultados.
+scratch/m16-qa/beneficiaries-1440-1.png
+scratch/m16-qa/beneficiaries-375-1.png
+scratch/m16-qa/beneficiaries-1280-2.png
+scratch/m16-qa/beneficiaries-390-1-long.png
+La compilación de pruebas regeneró scratch/m15-qa/fixture.js (artefacto de prueba).
+El primer intento del navegador aislado fue bloqueado por acceso local del sandbox;
+se repitió con la autorización correspondiente y terminó correctamente.
+git diff --check detectó espacio final previo en scratch/desktop.ini, ajeno a M16;
+no se modificó ese archivo. También mostró avisos de normalización LF/CRLF.
+
+Conclusión y pendientes
+No se reproduce actualmente una caja de Beneficiarios de media anchura, ni en la
+sesión publicada inspeccionada ni en el editor local bajo los escenarios indicados.
+No hay una brecha CSS confirmada que justifique nueva implementación de M16.
+La mejora local de edición de narrativas realizada previamente sigue sin publicarse;
+la v0.7.27 publicada conserva el control anterior, que ya utiliza todo el ancho.
+No se ejecutaron pruebas de servidor/SQL/PDF: no corresponden a esta comprobación
+de geometría sin modificación de código o datos.
+Si reaparece una caja realmente estrecha, hace falta una captura actual con el paso,
+tamaño de ventana y zoom para reproducir ese caso. Ese síntoma queda sin reproducir;
+no se presenta como un defecto corregido mediante esta revisión.

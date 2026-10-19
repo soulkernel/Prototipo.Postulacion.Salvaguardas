@@ -1,0 +1,117 @@
+M15 — RETIRAR CONTRIBUCIÓN O BENEFICIO ESPERADO DEL OBJETIVO GENERAL
+Fecha: 19/10/2026. Implementación y pruebas exclusivamente locales.
+Repositorio: portal-app. Rama: feat/full-grants-platform. Base: 638e177, versión 0.7.27.
+
+DIAGNÓSTICO Y ALCANCE
+El campo estaba visible en strategic-fields.tsx; se exigía en alignmentIssues,
+completionGuidance y SQL, y aparecía en strategicText y en la presentación compartida
+de revisión/PDF. La petición expresa permite retirarlo sin otra decisión normativa.
+No se retiró ni se relajó Beneficiarios y contribuciones a los medios de vida.
+
+VERSIONADO Y CONSERVACIÓN
+Se introduce currentAlignmentVersion = pg2030-ods-general-v3 para las nuevas versiones
+del formulario. alignmentVersion conserva su valor v2 para leer fielmente las versiones
+anteriores; también se mantiene el formato legacy v1.
+
+La nueva generación de objetivos v3 no crea el campo contribution y el esquema permite
+que esté ausente. Si ya existe, admite su texto histórico (con los límites anteriores)
+y lo conserva como dato inactivo. No se copia a objetivos, resultados, beneficiarios,
+resumen ni otra narrativa. Los UUID de objetivos y sus relaciones no cambian.
+
+Al editar un borrador anterior, el editor lo adapta en memoria al formato v3 para que
+el campo retirado no siga siendo obligatorio. El guardado existente puede persistir
+esta nueva versión del borrador; el texto original de contribution se conserva.
+No se borran tampoco las contribuciones de objetivos específicos de formatos antiguos.
+Los expedientes no editables no se convierten, y las versiones enviadas o documentos
+preparados conservan el payload y la versión originales.
+
+FORMULARIO, VALIDACIÓN Y SALIDAS
+- Se retiró la caja ES/EN y su ayuda. Se conservaron los selectores de Plan Galápagos
+  2030 y ODS, los instrumentos adicionales de M13 y los objetivos específicos.
+- En v3 no se exige contribution en cliente, validación de servidor, paso, progreso o SQL.
+- Se retiraron las referencias al campo en los errores generales y en el manual de uso.
+- El borrador completo puede alcanzar 100% sin contribution. Beneficiarios sigue requerido.
+- strategicText no genera ese apartado para v3; no reutiliza el texto histórico.
+- Revisión externa, consulta interna y PDF usan la presentación compartida y omiten
+  el apartado solo en v3. Los formatos históricos v1/v2 conservan su presentación.
+- Las exportaciones de datos no tienen una columna específica de contribution; el dato
+  histórico del JSON se conserva para respaldo, no se purga.
+
+ARCHIVOS DE APLICACIÓN MODIFICADOS PARA M15
+web/src/components/strategic-fields.tsx
+web/src/components/application-editor.tsx
+web/src/app/applicant/actions.ts
+web/src/lib/strategic-alignment.ts
+web/src/lib/completion-guidance.ts
+web/src/lib/document-language.ts
+web/src/lib/concept-presentation.ts
+web/src/lib/applicant-manual.ts
+supabase/migrations/202610190043_objective_without_contribution.sql (nueva)
+
+domain.ts fue localizado y revisado; no necesitó edición porque integra strategicSchema
+y alignmentIssues por referencia. No se modificaron los campos de beneficiarios.
+Se preservaron los cambios locales anteriores de M13 y las cajas narrativas.
+
+MIGRACIÓN LOCAL
+La migración 043 amplía los validadores existentes para v3, manteniendo las reglas v1/v2.
+Actualiza también la validación M13 para admitir instrumentos adicionales en v3.
+Incluye una comprobación de la cadena de validación esperada y conserva los permisos.
+No contiene UPDATE/DELETE de datos ni reescritura de snapshots. Depende de la migración 042.
+Se aplicó solamente en la base de pruebas aislada PGlite, nunca en Supabase.
+
+PRUEBAS EJECUTADAS
+1. npm test: 175 pruebas aprobadas y 0 fallos (57 SQL/servidor y 118 TypeScript).
+2. npm run lint: aprobado.
+3. npm run build: aprobado, incluida comprobación de tipos y generación de rutas.
+4. Pruebas nuevas del modelo: ausencia del campo en la generación v3; parseo/validación;
+   conservación del dato anterior; presentación v3 sin aporte; presentación v2 con aporte;
+   Plan/ODS todavía obligatorios; Beneficiarios presente.
+5. Progreso y pasos: formulario completo v3 sin contribution alcanza 100%; no aparece
+   pendiente de beneficio esperado; Beneficiarios vacío continúa bloqueando completar.
+   El manual ya no presenta la fila ni el ejemplo de esa caja.
+6. Acción de guardado real con transporte aislado: acepta ausencia; conserva aporte
+   histórico cuando existe; no lo copia a las narrativas activas.
+7. PostgreSQL aislado: migración conserva aplicaciones, versiones, documentos preparados,
+   anexos, eventos y convocatorias de prueba. Valida v3 sin aporte en fases 1 y 2, conserva
+   el requisito de Plan/ODS y los requisitos históricos v2. Guardado/reapertura por RPC
+   conserva UUID, vínculos y Beneficiarios. El documento preparado conserva el aporte
+   histórico en su snapshot aun cuando su presentación v3 ya no lo muestra.
+8. Chrome 155 aislado con editor real y datos ficticios: 6 grupos aprobados, 0 errores JS.
+   Formulario nuevo sin caja ni requisito; guardado y reapertura; etiquetas EN; borrador
+   antiguo con texto preservado; edición sin reubicación del aporte; revisión nueva sin
+   el apartado; Beneficiarios visible; móvil 390px sin desplazamiento horizontal.
+9. PDF reales ES/EN, versión nueva e histórica: se generaron cuatro archivos. Extracción
+   de texto confirmó APORTE_HISTORICO_M15 solo en v2, y BENEFICIARIOS_CONSERVADOS_M15
+   en los cuatro. ES tiene 5 páginas y EN 4, en ambos formatos. La página 3 de las salidas
+   ES y de la nueva EN, así como las capturas del formulario de escritorio y móvil, fueron
+   inspeccionadas visualmente. Sin superposición o pérdida de contenido en el apartado.
+10. git diff --check de las fuentes y pruebas modificadas: correcto.
+
+ARCHIVOS DE PRUEBA MODIFICADOS
+web/tests/strategic-alignment.test.ts
+web/tests/concept-admin-cost.test.ts (prueba de avance completo sin el campo)
+web/tests/database.test.mjs
+web/tests/m05-server.test.mjs
+web/tests/pdf.test.ts
+
+EVIDENCIA
+scratch/m15-tests.log; m15-database.log; m15-lint.log; m15-build.log
+scratch/m15-qa/fixture.tsx; build.cjs; run.cjs; results.json; browser.log
+scratch/m15-qa/objective-desktop.png; objective-mobile.png
+scratch/m15-qa/pdf-new-es-page3.png; pdf-historic-es-page3.png
+scratch/m15-qa/pdf-new-en-page3.png; pdf-historic-en-page3.png
+scratch/m15-qa/pdf-{new,historic}-{es,en}.txt
+web/.test-artifacts/m15-{new,historic}-{es,en}.pdf
+
+LÍMITES Y PENDIENTES
+La prueba de navegador usa Next/router y guardado HTTP simulados; no equivale a una
+prueba autenticada de Vercel/Supabase. La acción de servidor y el guardado SQL se
+verificaron por separado en entornos aislados. No se usaron identificaciones reales,
+firmas ni envíos. Solo se prepararon documentos ficticios en la base local de pruebas.
+La primera compilación señaló dos tipos demasiado amplios en las nuevas pruebas;
+se corrigieron y la compilación final pasó. La captura inicial del navegador necesitó
+un selector más preciso; no se cambió el producto para resolverlo.
+Pendientes: autorización de publicación, aplicación de las migraciones locales pendientes
+en orden y comprobación autenticada del flujo en el entorno desplegado.
+No hubo push, despliegues, migraciones de producción o comunicaciones. Se conservaron
+el trabajo ajeno y los cambios previos del repositorio, incluido scratch/desktop.ini.

@@ -4,7 +4,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { PDFDocument } from "pdf-lib";
 import { applicationPdf } from "../src/lib/pdf";
 import { emptyPayload, newActivity, newRisk } from "../src/lib/domain";
-import { alignmentVersion, newObjective } from "../src/lib/strategic-alignment";
+import { alignmentVersion, currentAlignmentVersion, newObjective } from "../src/lib/strategic-alignment";
 
 test("concept and matrix PDFs embed fonts, paginate and contain a QR image", async () => {
   const payload = emptyPayload();
@@ -160,6 +160,43 @@ test("concept and matrix PDFs embed fonts, paginate and contain a QR image", asy
     ".test-artifacts/concept-individual-identity.pdf",
     individualPdf.bytes,
   );
+});
+
+test("M15 PDF omits contribution only in v3, preserves historic v2 output and never removes beneficiaries", async () => {
+  const p = emptyPayload();
+  p.concept.title = "PRUEBA LOCAL M15 · Compatibilidad histórica";
+  p.concept.beneficiaries = "BENEFICIARIOS_CONSERVADOS_M15";
+  const general = { ...newObjective("general"), text: "Conservar hábitats", plan: ["E1"], ods: [14], contribution: "APORTE_HISTORICO_M15" };
+  p.concept.strategic_alignment = { version: alignmentVersion, objectives: [general, { ...newObjective("specific"), text: "Restaurar hábitats" }] };
+  await mkdir(".test-artifacts", { recursive: true });
+  for (const version of [alignmentVersion, currentAlignmentVersion] as const) {
+    p.concept.strategic_alignment.version = version;
+    const before = JSON.stringify(p);
+    for (const locale of ["es", "en"] as const) {
+      const result = await applicationPdf({ payload: p, reference: "M15-LOCAL", revision: 1, submittedAt: "2026-10-19T18:00:00Z", kind: "concept", locale, downloadUrl: "https://example.test/m15", stage: 1 });
+      assert.ok(result.pages > 0);
+      await writeFile(`.test-artifacts/m15-${version === alignmentVersion ? "historic" : "new"}-${locale}.pdf`, result.bytes);
+    }
+    assert.equal(JSON.stringify(p), before);
+  }
+});
+
+test("M13 concept PDFs include complementary instruments in both languages without changing objective identifiers", async () => {
+  const p = emptyPayload();
+  p.concept.title = "PRUEBA LOCAL M13 · Otros instrumentos";
+  const general = { ...newObjective("general"), text: "Conservar hábitats costeros", plan: ["E1"], ods: [14], contribution: "Conservación comunitaria", other_instruments: [
+    { id: crypto.randomUUID(), name: "Plan ficticio M13", objective: "P1: Restaurar ecosistemas costeros" },
+    { id: crypto.randomUUID(), name: "Plan local de prueba", objective: "O2: Participación comunitaria" },
+  ] };
+  p.concept.strategic_alignment = { version: alignmentVersion, objectives: [general, { ...newObjective("specific"), text: "Restaurar hábitats" }] };
+  const before = JSON.stringify(p);
+  await mkdir(".test-artifacts", { recursive: true });
+  for (const locale of ["es", "en"] as const) {
+    const result = await applicationPdf({ payload: p, reference: "M13-LOCAL", revision: 1, submittedAt: "2026-10-19T16:00:00Z", kind: "concept", locale, downloadUrl: "https://example.test/m13", stage: 1 });
+    assert.ok(result.pages > 0);
+    await writeFile(`.test-artifacts/m13-additional-${locale}.pdf`, result.bytes);
+  }
+  assert.equal(JSON.stringify(p), before);
 });
 
 test("document filenames use the immutable generation time in Galapagos and safe reference", async () => {
