@@ -992,8 +992,8 @@ export function ApplicationEditor({
           <h1 className="application-form-title">
             {application.stage === 1
               ? es
-                ? "Formulario de Nota Conceptual"
-                : "Concept Note Form"
+                ? "Nota conceptual del proyecto"
+                : "Project concept note"
               : es
                 ? "Formulario de Proyecto Completo"
                 : "Full Proposal Form"}
@@ -1087,13 +1087,13 @@ export function ApplicationEditor({
       >
         {(es
           ? [
-              "Datos generales",
+              "Información general",
               application.stage === 1 ? "Nota Conceptual" : "Proyecto completo",
               "Examen Ambiental y Social inicial",
               "Revisar y enviar",
             ]
           : [
-              "Project details",
+              "General information",
               application.stage === 1 ? "Concept Note" : "Full proposal",
               "Initial environmental and social screening",
               "Review and submit",
@@ -2714,7 +2714,7 @@ export function ApplicationEditor({
                     >
                       {
                         [
-                          es ? "Datos generales" : "Project details",
+                          es ? "Información general" : "General information",
                           es ? "Nota conceptual" : "Concept note",
                           es ? "Actividades y riesgos" : "Activities and risks",
                           es ? "Declaraciones" : "Declarations",
