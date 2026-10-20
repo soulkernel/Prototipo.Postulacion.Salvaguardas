@@ -1322,6 +1322,32 @@ dialog.narrative-adjust-dialog {
 .form-card-heading > h3 { min-width: 0; margin: 0; overflow-wrap: anywhere; }
 .form-card-heading h3 label { display: inline; margin: 0; font: inherit; color: inherit; cursor: pointer; }
 .form-card-heading > .button.remove-icon-button { flex: 0 0 auto; margin: 0; }
+.applicant-project-heading { align-items: start; }
+.partner-support-card { border: 1px solid #dce4eb; border-radius: 12px; padding: 16px; margin: 12px 0; min-width: 0; }
+.partner-support-grid { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,2fr) 44px; grid-template-areas: "name-label support-label remove" "name support support"; gap: 9px 20px; align-items: start; }
+.partner-name-label { grid-area: name-label; }
+.partner-support-label { grid-area: support-label; }
+.partner-name-input { grid-area: name; }
+.partner-support-input { grid-area: support; min-height: 88px; }
+.partner-support-grid > .partner-support-remove { grid-area: remove; margin: 0; }
+.partner-support-grid > label { display: block; align-self: center; }
+.partner-support-card > small { display: block; margin-top: 9px; font-size: 12px; line-height: 1.5; }
+.project-duration-card, .funding-summary-card { min-width: 0; }
+.funding-summary-card { background: #fff; }
+.project-date-grid { align-items: start; }
+.project-duration-footer { display: flex; gap: 12px 24px; justify-content: space-between; align-items: baseline; margin-top: 12px; }
+.project-duration-footer > small { flex: 1; margin: 0; }
+.project-duration-value { font-size: 13px; color: #1f3d70; text-align: right; }
+.funding-summary-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 24px; align-items: stretch; }
+.funding-summary-inputs { display: grid; gap: 20px; min-width: 0; }
+.funding-summary-grid > .estimated-total-card { grid-column: auto; margin: 0; display: flex; flex-direction: column; justify-content: center; min-width: 0; }
+.funding-summary-card > .editor-field { margin-top: 20px; }
+@media(max-width: 760px) {
+  .partner-support-grid { grid-template-columns: minmax(0,1fr) 44px; grid-template-areas: "name-label remove" "name name" "support-label support-label" "support support"; }
+  .funding-summary-grid { grid-template-columns: minmax(0,1fr); }
+  .project-duration-footer { flex-direction: column; align-items: stretch; }
+  .project-duration-value { text-align: left; }
+}
 .live-title.module-heading { display: block; }
 .module-heading.application-heading h1 { font-size: 18px; }
 .module-heading.application-heading .application-project-title { font-size: 18px; }

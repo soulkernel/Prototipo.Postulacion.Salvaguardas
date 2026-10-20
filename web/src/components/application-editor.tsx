@@ -66,6 +66,7 @@ import {
   identificationIssues,
   projectDateErrors,
   maxProjectEnd,
+  projectDurationText,
 } from "@/lib/applicant-validation";
 import { currentAlignmentVersion } from "@/lib/strategic-alignment";
 import { strategicText } from "@/lib/strategic-alignment";
@@ -135,6 +136,10 @@ const levels = {
   },
 };
 function message(code: string, es: boolean) {
+  if (code.includes("GLF_REQUIRED:partners"))
+    return es
+      ? "Complete el nombre y describa el apoyo de cada organización asociada en la implementación del proyecto."
+      : "Complete the name and implementation support of each partner organization.";
   if (code.includes("GLF_CALL_THEMES_REQUIRED"))
     return applicationTopicMessage(
       "GLF_CALL_THEMES_REQUIRED",
@@ -975,6 +980,425 @@ export function ApplicationEditor({
     );
     return false;
   }
+  const dateError = financial.start_date || financial.end_date;
+  const durationText = projectDurationText(
+    payload.concept.start_date,
+    payload.concept.end_date,
+    locale,
+  );
+  const renderField = (field: (typeof fields)[number]) =>
+    field.key === "environmental_risks" ? (
+      <PotentialRiskFields
+        key={field.key}
+        payload={payload}
+        locale={locale}
+        onChange={setPayload}
+      />
+    ) : field.key === "social_risks" ? null : field.key === "summary" ? (
+      <SummaryFields
+        key={field.key}
+        value={projectSummary(payload.concept)}
+        invalid={fieldIssue("summary")}
+        limit={rules.summary_word_limit}
+        locale={locale}
+        onChange={(value) =>
+          setPayload((p) => ({
+            ...p,
+            concept: {
+              ...p.concept,
+              summary_parts: { ...emptySummary },
+              summary: value,
+            },
+          }))
+        }
+      />
+    ) : ["province", "city", "project_islands", "other_islands"].includes(
+        field.key,
+      ) ? null : field.key === "address" || field.key === "location" ? (
+      <GeographyFields
+        key={field.key}
+        concept={payload.concept}
+        locale={locale}
+        mode={field.key === "address" ? "address" : "project"}
+        onChange={(patch) =>
+          setPayload((p) => ({
+            ...p,
+            concept: { ...p.concept, ...patch },
+          }))
+        }
+      />
+    ) : field.key === "objectives" ? (
+      <StrategicFields
+        key={field.key}
+        value={payload.concept.strategic_alignment}
+        legacy={payload.concept.objectives + "\n" + payload.concept.alignment}
+        locale={locale}
+        onChange={(value) =>
+          setPayload((p) => {
+            const specificIds = new Set(
+              value.objectives
+                .filter((o) => o.kind === "specific")
+                .map((o) => o.id),
+            );
+            const removedIds = new Set(
+              p.concept.strategic_alignment?.objectives
+                .filter((o) => o.kind === "specific" && !specificIds.has(o.id))
+                .map((o) => o.id),
+            );
+            const concept = {
+              ...p.concept,
+              strategic_alignment: value,
+              project_results: p.concept.project_results?.map((r) => ({
+                ...r,
+                objective_id: removedIds.has(r.objective_id)
+                  ? ""
+                  : r.objective_id,
+              })),
+              ...strategicText(value, locale),
+            };
+            return {
+              ...p,
+              activities: p.activities.map((a) => ({
+                ...a,
+                objective_ids: a.objective_ids?.filter((id) =>
+                  specificIds.has(id),
+                ),
+              })),
+              concept: {
+                ...concept,
+                ...(removedIds.size && concept.project_results
+                  ? { results: resultText(concept, locale) }
+                  : {}),
+              },
+            };
+          })
+        }
+      />
+    ) : field.key === "results" ? (
+      <ProjectResultFields
+        key={field.key}
+        es={es}
+        value={payload.concept.project_results}
+        legacy={payload.concept.results_source ?? payload.concept.results}
+        objectives={payload.concept.strategic_alignment?.objectives || []}
+        onChange={(value) =>
+          setPayload((p) => {
+            const concept = {
+              ...p.concept,
+              project_results: value,
+              results_source: p.concept.results_source ?? p.concept.results,
+            };
+            return {
+              ...p,
+              concept: {
+                ...concept,
+                results: resultText(concept, locale),
+              },
+            };
+          })
+        }
+      />
+    ) : field.key === "partners" ? (
+      <PartnerFields
+        key={field.key}
+        concept={payload.concept}
+        locale={locale}
+        invalid={fieldIssue("partners")}
+        onChange={(rows) =>
+          setPayload((p) => ({
+            ...p,
+            concept: {
+              ...p.concept,
+              ...partnerPatch(rows),
+            },
+          }))
+        }
+      />
+    ) : field.key === "alignment" ||
+      field.key === "email" ||
+      field.key === "phone" ? null : field.key === "contact_name" ? (
+      <section
+        key="contact-details"
+        className="activity-card contact-details-card full-width"
+        aria-labelledby="contact-details-heading"
+      >
+        <h3 id="contact-details-heading" className="section-card-title">
+          {es ? "Datos de contacto" : "Contact details"}
+        </h3>
+        <div className="contact-details-grid">
+          {(["contact_name", "email"] as const).map((key) => (
+            <label
+              key={key}
+              className="editor-field"
+              data-validation-field={key}
+            >
+              <span>
+                {key === "contact_name"
+                  ? es
+                    ? "Persona de contacto"
+                    : "Contact person"
+                  : es
+                    ? "Correo electrónico de contacto"
+                    : "Contact email"}
+                <RequiredMark locale={locale} />
+              </span>
+              <input
+                type={key === "email" ? "email" : "text"}
+                value={payload.concept[key]}
+                maxLength={12000}
+                aria-required="true"
+                aria-invalid={fieldIssue(key)}
+                aria-describedby={
+                  currentIssues.missing.includes(key)
+                    ? `field-required-${key}`
+                    : undefined
+                }
+                onChange={(e) => updateConcept(key, e.target.value)}
+              />
+              {currentIssues.missing.includes(key) && (
+                <small
+                  className="field-warning"
+                  data-field-message="error"
+                  id={`field-required-${key}`}
+                >
+                  {es
+                    ? "Complete este campo obligatorio."
+                    : "Complete this required field."}
+                </small>
+              )}
+            </label>
+          ))}
+          <PhoneField
+            inline
+            locale={locale}
+            value={payload.concept.phone}
+            onChange={(value) => updateConcept("phone", value)}
+          />
+        </div>
+      </section>
+    ) : ["beneficiaries", "sustainability", "monitoring"].includes(
+        field.key,
+      ) ? (
+      <div
+        key={field.key}
+        data-validation-field={field.key}
+        className="editor-field full-width narrative-field"
+      >
+        <label htmlFor={`concept-${field.key}`}>
+          <span>
+            {es ? field.es : field.en}
+            <RequiredMark locale={locale} />
+          </span>
+        </label>
+        <NarrativeTextarea
+          id={`concept-${field.key}`}
+          label={es ? field.es : field.en}
+          locale={locale}
+          invalid={fieldIssue(field.key)}
+          value={narrativeTextForEditing(
+            String(payload.concept[field.key] ?? ""),
+          )}
+          onChange={(value) => updateConcept(field.key, value)}
+        />
+      </div>
+    ) : (
+      <label
+        key={field.key}
+        data-validation-field={field.key}
+        className={`editor-field ${field.type === "textarea" || field.key === "title" ? "full-width" : ""}`}
+      >
+        <span>
+          {es ? field.es : field.en}
+          <RequiredMark locale={locale} />
+        </span>
+        {field.key === "project_type" ? (
+          <ApplicationTopicSelect
+            value={payload.concept.project_type}
+            themes={rules.themes}
+            locale={locale}
+            invalid={fieldIssue(field.key)}
+            onChange={(value) => updateConcept("project_type", value)}
+          />
+        ) : field.type === "textarea" ? (
+          <LimitedTextarea
+            locale={locale}
+            aria-required="true"
+            aria-invalid={fieldIssue(field.key)}
+            rows={4}
+            maxLength={12000}
+            value={narrativeTextForEditing(
+              String(payload.concept[field.key] ?? ""),
+            )}
+            onChange={(e) => updateConcept(field.key, e.target.value)}
+          />
+        ) : field.key === "requested_amount" ||
+          field.key === "cofinance_amount" ? (
+          <MoneyInput
+            id={`money-${field.key}`}
+            locale={locale}
+            value={payload.concept[field.key]}
+            invalid={moneyFeedback[field.key].invalid}
+            describedBy={`field-message-${field.key}`}
+            readOnly={application.stage === 2 && !!payload.budget?.lines.length}
+            onFocus={() => setMoneyFocused(field.key as MoneyField)}
+            onBlur={() => {
+              setMoneyTouched((current) => ({
+                ...current,
+                [field.key]: true,
+              }));
+              setMoneyFocused(null);
+            }}
+            onValidity={(valid, text) => {
+              setMoneyInputText((current) => ({
+                ...current,
+                [field.key]: text,
+              }));
+              setInvalidMoneyEntries((current) => ({
+                ...current,
+                [field.key]: !valid,
+              }));
+              if (valid)
+                setError((current) =>
+                  current === moneyActionError ? "" : current,
+                );
+            }}
+            onChange={(value) => updateConcept(field.key, value)}
+          />
+        ) : (
+          <input
+            aria-required="true"
+            aria-describedby={
+              field.type === "date"
+                ? "project-date-guidance"
+                : financialHelp(field.key)
+                  ? `field-message-${field.key}`
+                  : financial[field.key]
+                    ? `field-error-${field.key}`
+                    : undefined
+            }
+            readOnly={
+              application.stage === 2 &&
+              !!payload.budget?.lines.length &&
+              ["requested_amount", "cofinance_amount", "admin_cost"].includes(
+                field.key,
+              )
+            }
+            type={field.type || "text"}
+            min={
+              field.type === "number"
+                ? 0
+                : field.key === "end_date"
+                  ? payload.concept.start_date || undefined
+                  : undefined
+            }
+            max={
+              field.key === "end_date"
+                ? maxProjectEnd(
+                    payload.concept.start_date,
+                    selectedCategory?.max_months || 36,
+                  )
+                : field.key === "admin_cost"
+                  ? adminLimit
+                  : undefined
+            }
+            aria-invalid={
+              isMoneyField(field.key)
+                ? moneyFeedback[field.key].invalid
+                : Boolean(financial[field.key]) || fieldIssue(field.key)
+            }
+            onFocus={() => {
+              if (isMoneyField(field.key)) setMoneyFocused(field.key);
+            }}
+            onBlur={() => {
+              if (isMoneyField(field.key)) {
+                setMoneyTouched((t) => ({
+                  ...t,
+                  [field.key]: true,
+                }));
+                setMoneyFocused(null);
+              }
+            }}
+            step={field.type === "number" ? "0.01" : undefined}
+            maxLength={
+              field.type === "date" || field.type === "number"
+                ? undefined
+                : 12000
+            }
+            value={String(payload.concept[field.key] ?? "")}
+            onChange={(e) =>
+              updateConcept(
+                field.key,
+                field.type === "number"
+                  ? e.target.value === ""
+                    ? null
+                    : Number(e.target.value)
+                  : e.target.value,
+              )
+            }
+          />
+        )}{" "}
+        {financialHelp(field.key) && (
+          <small
+            id={`field-message-${field.key}`}
+            data-field-message={
+              visibleFinancialError(field.key) ? "error" : undefined
+            }
+            className={
+              visibleFinancialError(field.key) ? "field-warning" : undefined
+            }
+            role={visibleFinancialError(field.key) ? "alert" : undefined}
+          >
+            {financialHelp(field.key)}
+          </small>
+        )}
+        {currentIssues.missing.includes(field.key) &&
+          field.key !== "project_type" &&
+          !isMoneyField(field.key) &&
+          !financial[field.key] && (
+            <small
+              className="field-warning"
+              data-field-message="error"
+              id={`field-required-${field.key}`}
+            >
+              {es
+                ? "Complete este campo obligatorio."
+                : "Complete this required field."}
+            </small>
+          )}
+        {!isMoneyField(field.key) &&
+          field.type !== "date" &&
+          financial[field.key] &&
+          !financialHelp(field.key) && (
+            <small
+              className="field-warning"
+              role="alert"
+              data-field-message="error"
+              id={`field-error-${field.key}`}
+            >
+              {field.key === "end_date" || field.key === "start_date"
+                ? financial[field.key] === "CATEGORY_DURATION"
+                  ? es
+                    ? `La duración del proyecto supera el máximo de ${categoryMonthsEs} meses de la categoría de subvención seleccionada por usted. Corrija las fechas para continuar.`
+                    : `The project duration exceeds the maximum of ${selectedCategory?.max_months} months for the grant category you selected. Correct the dates to continue.`
+                  : es
+                    ? "Ingrese fechas válidas. La finalización debe ser posterior al inicio del proyecto."
+                    : "Enter valid dates. The project end must follow its start."
+                : financial[field.key] === "CATEGORY_AMOUNT"
+                  ? (es
+                      ? "El monto solicitado no corresponde a la categoría seleccionada. "
+                      : "The requested amount is outside the selected category. ") +
+                    financialHelp(field.key)
+                  : message(financial[field.key]!, es)}
+            </small>
+          )}
+      </label>
+    );
+  const renderIdentity = (key: keyof Concept) => {
+    const field = identityFieldsForStage(application.stage).find(
+      (f) => f.key === key,
+    );
+    return field ? renderField(field) : null;
+  };
   const initialTotal = payload.activities
     .flatMap((a) => a.risks)
     .reduce((sum, r) => sum + (riskScore(r.probability, r.severity) || 0), 0);
@@ -1308,640 +1732,272 @@ export function ApplicationEditor({
                   </label>
                 </div>
               )}
-              {step === 0 && (
-                <div
-                  className={`applicant-identification-row ${payload.concept.applicant_type === "individual" ? "individual-identification-row" : ""}`}
-                >
-                  {step === 0 &&
-                    payload.concept.applicant_type === "individual" && (
-                      <label
-                        className="applicant-identification editor-field"
-                        data-validation-field="identity_number"
-                      >
-                        <span>
-                          {es
-                            ? "Número de cédula de identidad"
-                            : "Identity card number"}
-                          <RequiredMark locale={locale} />
-                        </span>
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          autoComplete="off"
-                          spellCheck={false}
-                          aria-required="true"
-                          aria-invalid={identityInvalid}
-                          aria-describedby="identity-number-help"
-                          maxLength={10}
-                          pattern="[0-9]{10}"
-                          placeholder={es ? "10 dígitos" : "10 digits"}
-                          value={payload.concept.identity_number || ""}
-                          onFocus={() => setIdentityFocused(true)}
-                          onBlur={(event) => {
-                            setIdentityFocused(false);
-                            setIdentityTouched(
-                              Boolean(event.currentTarget.value.trim()),
-                            );
-                          }}
-                          onChange={(e) =>
-                            updateConcept("identity_number", e.target.value)
-                          }
-                        />
-                        <small
-                          id="identity-number-help"
-                          className={
-                            identityInvalid ? "field-warning" : undefined
-                          }
-                          role={identityInvalid ? "alert" : undefined}
-                          data-field-message={
-                            identityInvalid ? "error" : undefined
-                          }
-                        >
-                          {es
-                            ? identityInvalid
-                              ? "Ingrese los 10 dígitos de su cédula, sin espacios ni guiones."
-                              : "10 dígitos, sin espacios ni guiones."
-                            : identityInvalid
-                              ? "Enter the 10 digits of your identity card number, without spaces or hyphens."
-                              : "10 digits, without spaces or hyphens."}
-                        </small>
-                      </label>
-                    )}
-                  {step === 0 &&
-                    ["individual", "organization"].includes(
-                      payload.concept.applicant_type,
-                    ) && (
-                      <label className="applicant-identification editor-field">
-                        <span>
-                          {payload.concept.applicant_type === "individual"
-                            ? es
-                              ? "Número de credencial de residencia permanente"
-                              : "Permanent residence card number"
-                            : es
-                              ? "RUC de la organización"
-                              : "Organization RUC"}
-                          <RequiredMark locale={locale} />
-                        </span>
-                        <input
-                          aria-required="true"
-                          data-validation-field={
-                            payload.concept.applicant_type === "individual"
-                              ? "residence_number"
-                              : "ruc"
-                          }
-                          maxLength={
-                            payload.concept.applicant_type === "individual"
-                              ? 50
-                              : 13
-                          }
-                          inputMode={
-                            payload.concept.applicant_type === "organization"
-                              ? "numeric"
-                              : "text"
-                          }
-                          value={
-                            (payload.concept.applicant_type === "individual"
-                              ? payload.concept.residence_number
-                              : payload.concept.ruc) || ""
-                          }
-                          aria-invalid={
-                            identification ===
-                              (payload.concept.applicant_type === "individual"
-                                ? "residence_number"
-                                : "ruc") &&
-                            (showCompletion ||
-                              checkedStep === step ||
-                              !!(payload.concept.applicant_type === "individual"
-                                ? payload.concept.residence_number
-                                : payload.concept.ruc))
-                          }
-                          onChange={(e) =>
-                            updateConcept(
-                              payload.concept.applicant_type === "individual"
-                                ? "residence_number"
-                                : "ruc",
-                              e.target.value,
-                            )
-                          }
-                        />
-                        <small>
-                          {payload.concept.applicant_type === "individual"
-                            ? es
-                              ? "La credencial de residencia permanente que se presente debe estar vigente."
-                              : "The permanent residence card presented must be current."
-                            : es
-                              ? "La organización debe tener domicilio tributario en la provincia de Galápagos. Si no cumple este requisito, su postulación podría ser descalificada."
-                              : "The organization must have its tax domicile in Galápagos province. Failure to meet this requirement could disqualify the application."}
-                        </small>
-                        {identification ===
-                          (payload.concept.applicant_type === "individual"
-                            ? "residence_number"
-                            : "ruc") &&
-                          (showCompletion ||
-                            checkedStep === step ||
-                            !!(payload.concept.applicant_type === "individual"
-                              ? payload.concept.residence_number
-                              : payload.concept.ruc)) && (
-                            <span className="error" role="alert">
-                              {payload.concept.applicant_type === "individual"
-                                ? es
-                                  ? "Ingrese el número de credencial de residencia permanente."
-                                  : "Enter the permanent residence card number."
-                                : es
-                                  ? "Ingrese un RUC de 13 dígitos."
-                                  : "Enter a 13-digit RUC."}
-                            </span>
-                          )}
-                      </label>
-                    )}
-                </div>
-              )}
+
               <div
                 className={step === 0 ? "live-grid form-columns" : "live-form"}
               >
-                {fields.map((field) =>
-                  field.key === "environmental_risks" ? (
-                    <PotentialRiskFields
-                      key={field.key}
-                      payload={payload}
-                      locale={locale}
-                      onChange={setPayload}
-                    />
-                  ) : field.key === "social_risks" ? null : field.key ===
-                    "summary" ? (
-                    <SummaryFields
-                      key={field.key}
-                      value={projectSummary(payload.concept)}
-                      invalid={fieldIssue("summary")}
-                      limit={rules.summary_word_limit}
-                      locale={locale}
-                      onChange={(value) =>
-                        setPayload((p) => ({
-                          ...p,
-                          concept: {
-                            ...p.concept,
-                            summary_parts: { ...emptySummary },
-                            summary: value,
-                          },
-                        }))
-                      }
-                    />
-                  ) : [
-                      "province",
-                      "city",
-                      "project_islands",
-                      "other_islands",
-                    ].includes(field.key) ? null : field.key === "address" ||
-                    field.key === "location" ? (
-                    <GeographyFields
-                      key={field.key}
-                      concept={payload.concept}
-                      locale={locale}
-                      mode={field.key === "address" ? "address" : "project"}
-                      onChange={(patch) =>
-                        setPayload((p) => ({
-                          ...p,
-                          concept: { ...p.concept, ...patch },
-                        }))
-                      }
-                    />
-                  ) : field.key === "objectives" ? (
-                    <StrategicFields
-                      key={field.key}
-                      value={payload.concept.strategic_alignment}
-                      legacy={
-                        payload.concept.objectives +
-                        "\n" +
-                        payload.concept.alignment
-                      }
-                      locale={locale}
-                      onChange={(value) =>
-                        setPayload((p) => {
-                          const specificIds = new Set(
-                            value.objectives
-                              .filter((o) => o.kind === "specific")
-                              .map((o) => o.id),
-                          );
-                          const removedIds = new Set(
-                            p.concept.strategic_alignment?.objectives
-                              .filter(
-                                (o) =>
-                                  o.kind === "specific" &&
-                                  !specificIds.has(o.id),
-                              )
-                              .map((o) => o.id),
-                          );
-                          const concept = {
-                            ...p.concept,
-                            strategic_alignment: value,
-                            project_results: p.concept.project_results?.map(
-                              (r) => ({
-                                ...r,
-                                objective_id: removedIds.has(r.objective_id)
-                                  ? ""
-                                  : r.objective_id,
-                              }),
-                            ),
-                            ...strategicText(value, locale),
-                          };
-                          return {
-                            ...p,
-                            activities: p.activities.map((a) => ({
-                              ...a,
-                              objective_ids: a.objective_ids?.filter((id) =>
-                                specificIds.has(id),
-                              ),
-                            })),
-                            concept: {
-                              ...concept,
-                              ...(removedIds.size && concept.project_results
-                                ? { results: resultText(concept, locale) }
-                                : {}),
-                            },
-                          };
-                        })
-                      }
-                    />
-                  ) : field.key === "results" ? (
-                    <ProjectResultFields
-                      key={field.key}
-                      es={es}
-                      value={payload.concept.project_results}
-                      legacy={
-                        payload.concept.results_source ??
-                        payload.concept.results
-                      }
-                      objectives={
-                        payload.concept.strategic_alignment?.objectives || []
-                      }
-                      onChange={(value) =>
-                        setPayload((p) => {
-                          const concept = {
-                            ...p.concept,
-                            project_results: value,
-                            results_source:
-                              p.concept.results_source ?? p.concept.results,
-                          };
-                          return {
-                            ...p,
-                            concept: {
-                              ...concept,
-                              results: resultText(concept, locale),
-                            },
-                          };
-                        })
-                      }
-                    />
-                  ) : field.key === "partners" ? (
-                    <PartnerFields
-                      key={field.key}
-                      concept={payload.concept}
-                      locale={locale}
-                      invalid={fieldIssue("partners")}
-                      onChange={(rows) =>
-                        setPayload((p) => ({
-                          ...p,
-                          concept: {
-                            ...p.concept,
-                            ...partnerPatch(rows),
-                          },
-                        }))
-                      }
-                    />
-                  ) : field.key === "alignment" ||
-                    field.key === "email" ||
-                    field.key === "phone" ? null : field.key ===
-                    "contact_name" ? (
-                    <section
-                      key="contact-details"
-                      className="activity-card contact-details-card full-width"
-                      aria-labelledby="contact-details-heading"
+                {step === 0 ? (
+                  <>
+                    <div className="live-grid full-width applicant-project-heading">
+                      {renderIdentity("applicant_name")}
+                      {renderIdentity("project_type")}
+                    </div>
+                    {renderIdentity("title")}
+                    <div
+                      className={`applicant-identification-row ${payload.concept.applicant_type === "individual" ? "individual-identification-row" : ""}`}
                     >
-                      <h3
-                        id="contact-details-heading"
-                        className="section-card-title"
-                      >
-                        {es ? "Datos de contacto" : "Contact details"}
-                      </h3>
-                      <div className="contact-details-grid">
-                        {(["contact_name", "email"] as const).map((key) => (
+                      {step === 0 &&
+                        payload.concept.applicant_type === "individual" && (
                           <label
-                            key={key}
-                            className="editor-field"
-                            data-validation-field={key}
+                            className="applicant-identification editor-field"
+                            data-validation-field="identity_number"
                           >
                             <span>
-                              {key === "contact_name"
-                                ? es
-                                  ? "Persona de contacto"
-                                  : "Contact person"
-                                : es
-                                  ? "Correo electrónico de contacto"
-                                  : "Contact email"}
+                              {es
+                                ? "Número de cédula de identidad"
+                                : "Identity card number"}
                               <RequiredMark locale={locale} />
                             </span>
                             <input
-                              type={key === "email" ? "email" : "text"}
-                              value={payload.concept[key]}
-                              maxLength={12000}
+                              type="text"
+                              inputMode="numeric"
+                              autoComplete="off"
+                              spellCheck={false}
                               aria-required="true"
-                              aria-invalid={fieldIssue(key)}
-                              aria-describedby={
-                                currentIssues.missing.includes(key)
-                                  ? `field-required-${key}`
-                                  : undefined
-                              }
+                              aria-invalid={identityInvalid}
+                              aria-describedby="identity-number-help"
+                              maxLength={10}
+                              pattern="[0-9]{10}"
+                              placeholder={es ? "10 dígitos" : "10 digits"}
+                              value={payload.concept.identity_number || ""}
+                              onFocus={() => setIdentityFocused(true)}
+                              onBlur={(event) => {
+                                setIdentityFocused(false);
+                                setIdentityTouched(
+                                  Boolean(event.currentTarget.value.trim()),
+                                );
+                              }}
                               onChange={(e) =>
-                                updateConcept(key, e.target.value)
+                                updateConcept("identity_number", e.target.value)
                               }
                             />
-                            {currentIssues.missing.includes(key) && (
-                              <small
-                                className="field-warning"
-                                data-field-message="error"
-                                id={`field-required-${key}`}
-                              >
-                                {es
-                                  ? "Complete este campo obligatorio."
-                                  : "Complete this required field."}
-                              </small>
-                            )}
+                            <small
+                              id="identity-number-help"
+                              className={
+                                identityInvalid ? "field-warning" : undefined
+                              }
+                              role={identityInvalid ? "alert" : undefined}
+                              data-field-message={
+                                identityInvalid ? "error" : undefined
+                              }
+                            >
+                              {es
+                                ? identityInvalid
+                                  ? "Ingrese los 10 dígitos de su cédula, sin espacios ni guiones."
+                                  : "10 dígitos, sin espacios ni guiones."
+                                : identityInvalid
+                                  ? "Enter the 10 digits of your identity card number, without spaces or hyphens."
+                                  : "10 digits, without spaces or hyphens."}
+                            </small>
                           </label>
-                        ))}
-                        <PhoneField
-                          inline
-                          locale={locale}
-                          value={payload.concept.phone}
-                          onChange={(value) => updateConcept("phone", value)}
-                        />
+                        )}
+                      {step === 0 &&
+                        ["individual", "organization"].includes(
+                          payload.concept.applicant_type,
+                        ) && (
+                          <label className="applicant-identification editor-field">
+                            <span>
+                              {payload.concept.applicant_type === "individual"
+                                ? es
+                                  ? "Número de credencial de residencia permanente"
+                                  : "Permanent residence card number"
+                                : es
+                                  ? "RUC de la organización"
+                                  : "Organization RUC"}
+                              <RequiredMark locale={locale} />
+                            </span>
+                            <input
+                              aria-required="true"
+                              data-validation-field={
+                                payload.concept.applicant_type === "individual"
+                                  ? "residence_number"
+                                  : "ruc"
+                              }
+                              maxLength={
+                                payload.concept.applicant_type === "individual"
+                                  ? 50
+                                  : 13
+                              }
+                              inputMode={
+                                payload.concept.applicant_type ===
+                                "organization"
+                                  ? "numeric"
+                                  : "text"
+                              }
+                              value={
+                                (payload.concept.applicant_type === "individual"
+                                  ? payload.concept.residence_number
+                                  : payload.concept.ruc) || ""
+                              }
+                              aria-invalid={
+                                identification ===
+                                  (payload.concept.applicant_type ===
+                                  "individual"
+                                    ? "residence_number"
+                                    : "ruc") &&
+                                (showCompletion ||
+                                  checkedStep === step ||
+                                  !!(payload.concept.applicant_type ===
+                                  "individual"
+                                    ? payload.concept.residence_number
+                                    : payload.concept.ruc))
+                              }
+                              onChange={(e) =>
+                                updateConcept(
+                                  payload.concept.applicant_type ===
+                                    "individual"
+                                    ? "residence_number"
+                                    : "ruc",
+                                  e.target.value,
+                                )
+                              }
+                            />
+                            <small>
+                              {payload.concept.applicant_type === "individual"
+                                ? es
+                                  ? "La credencial de residencia permanente que se presente debe estar vigente."
+                                  : "The permanent residence card presented must be current."
+                                : es
+                                  ? "La organización debe tener domicilio tributario en la provincia de Galápagos. Si no cumple este requisito, su postulación podría ser descalificada."
+                                  : "The organization must have its tax domicile in Galápagos province. Failure to meet this requirement could disqualify the application."}
+                            </small>
+                            {identification ===
+                              (payload.concept.applicant_type === "individual"
+                                ? "residence_number"
+                                : "ruc") &&
+                              (showCompletion ||
+                                checkedStep === step ||
+                                !!(payload.concept.applicant_type ===
+                                "individual"
+                                  ? payload.concept.residence_number
+                                  : payload.concept.ruc)) && (
+                                <span className="error" role="alert">
+                                  {payload.concept.applicant_type ===
+                                  "individual"
+                                    ? es
+                                      ? "Ingrese el número de credencial de residencia permanente."
+                                      : "Enter the permanent residence card number."
+                                    : es
+                                      ? "Ingrese un RUC de 13 dígitos."
+                                      : "Enter a 13-digit RUC."}
+                                </span>
+                              )}
+                          </label>
+                        )}
+                    </div>
+                    {renderIdentity("contact_name")}
+                    {renderIdentity("address")}
+                    {renderIdentity("partners")}
+                    {renderIdentity("location")}
+                    <section
+                      className="activity-card full-width project-duration-card"
+                      aria-labelledby="project-duration-heading"
+                    >
+                      <h3
+                        className="section-card-title"
+                        id="project-duration-heading"
+                      >
+                        {es ? "Duración del proyecto" : "Project duration"}
+                      </h3>
+                      <div className="live-grid project-date-grid">
+                        {renderIdentity("start_date")}
+                        {renderIdentity("end_date")}
+                      </div>
+                      <div className="project-duration-footer">
+                        <small
+                          id="project-date-guidance"
+                          className={dateError ? "field-warning" : "field-help"}
+                          data-field-message={dateError ? "error" : undefined}
+                          role={dateError ? "alert" : undefined}
+                        >
+                          {dateError === "CATEGORY_DURATION"
+                            ? es
+                              ? `La duración del proyecto supera el máximo de ${categoryMonthsEs} meses de la categoría de subvención seleccionada por usted. Corrija las fechas para continuar.`
+                              : `The project duration exceeds the maximum of ${selectedCategory?.max_months} months for the grant category you selected. Correct the dates to continue.`
+                            : dateError
+                              ? es
+                                ? "Ingrese fechas válidas. La finalización debe ser posterior al inicio del proyecto."
+                                : "Enter valid dates. The project end must follow its start."
+                              : selectedCategory
+                                ? es
+                                  ? `Plazo máximo permitido: ${selectedCategory.max_months} meses, según la categoría de subvención seleccionada.`
+                                  : `Maximum allowed duration: ${selectedCategory.max_months} months for the selected grant category.`
+                                : es
+                                  ? "Seleccione una categoría para consultar el plazo máximo permitido."
+                                  : "Select a category to see the maximum allowed duration."}
+                        </small>
+                        {durationText && (
+                          <output
+                            className="project-duration-value"
+                            aria-live="polite"
+                          >
+                            {es ? "Duración: " : "Duration: "}
+                            {durationText}
+                          </output>
+                        )}
                       </div>
                     </section>
-                  ) : [
-                      "beneficiaries",
-                      "sustainability",
-                      "monitoring",
-                    ].includes(field.key) ? (
-                    <div
-                      key={field.key}
-                      data-validation-field={field.key}
-                      className="editor-field full-width narrative-field"
+                    <section
+                      className="activity-card full-width funding-summary-card"
+                      aria-labelledby="funding-summary-heading"
                     >
-                      <label htmlFor={`concept-${field.key}`}>
-                        <span>
-                          {es ? field.es : field.en}
-                          <RequiredMark locale={locale} />
-                        </span>
-                      </label>
-                      <NarrativeTextarea
-                        id={`concept-${field.key}`}
-                        label={es ? field.es : field.en}
-                        locale={locale}
-                        invalid={fieldIssue(field.key)}
-                        value={narrativeTextForEditing(
-                          String(payload.concept[field.key] ?? ""),
-                        )}
-                        onChange={(value) => updateConcept(field.key, value)}
-                      />
-                    </div>
-                  ) : (
-                    <label
-                      key={field.key}
-                      data-validation-field={field.key}
-                      className={`editor-field ${field.type === "textarea" ? "full-width" : ""}`}
-                    >
-                      <span>
-                        {es ? field.es : field.en}
-                        <RequiredMark locale={locale} />
-                      </span>
-                      {field.key === "project_type" ? (
-                        <ApplicationTopicSelect
-                          value={payload.concept.project_type}
-                          themes={rules.themes}
-                          locale={locale}
-                          invalid={fieldIssue(field.key)}
-                          onChange={(value) =>
-                            updateConcept("project_type", value)
-                          }
-                        />
-                      ) : field.type === "textarea" ? (
-                        <LimitedTextarea
-                          locale={locale}
-                          aria-required="true"
-                          aria-invalid={fieldIssue(field.key)}
-                          rows={4}
-                          maxLength={12000}
-                          value={narrativeTextForEditing(
-                            String(payload.concept[field.key] ?? ""),
-                          )}
-                          onChange={(e) =>
-                            updateConcept(field.key, e.target.value)
-                          }
-                        />
-                      ) : field.key === "requested_amount" ||
-                        field.key === "cofinance_amount" ? (
-                        <MoneyInput
-                          id={`money-${field.key}`}
-                          locale={locale}
-                          value={payload.concept[field.key]}
-                          invalid={moneyFeedback[field.key].invalid}
-                          describedBy={`field-message-${field.key}`}
-                          readOnly={
-                            application.stage === 2 &&
-                            !!payload.budget?.lines.length
-                          }
-                          onFocus={() =>
-                            setMoneyFocused(field.key as MoneyField)
-                          }
-                          onBlur={() => {
-                            setMoneyTouched((current) => ({
-                              ...current,
-                              [field.key]: true,
-                            }));
-                            setMoneyFocused(null);
-                          }}
-                          onValidity={(valid, text) => {
-                            setMoneyInputText((current) => ({
-                              ...current,
-                              [field.key]: text,
-                            }));
-                            setInvalidMoneyEntries((current) => ({
-                              ...current,
-                              [field.key]: !valid,
-                            }));
-                            if (valid)
-                              setError((current) =>
-                                current === moneyActionError ? "" : current,
-                              );
-                          }}
-                          onChange={(value) => updateConcept(field.key, value)}
-                        />
-                      ) : (
-                        <input
-                          aria-required="true"
-                          aria-describedby={
-                            financialHelp(field.key)
-                              ? `field-message-${field.key}`
-                              : financial[field.key]
-                                ? `field-error-${field.key}`
-                                : undefined
-                          }
-                          readOnly={
-                            application.stage === 2 &&
-                            !!payload.budget?.lines.length &&
-                            [
-                              "requested_amount",
-                              "cofinance_amount",
-                              "admin_cost",
-                            ].includes(field.key)
-                          }
-                          type={field.type || "text"}
-                          min={
-                            field.type === "number"
-                              ? 0
-                              : field.key === "end_date"
-                                ? payload.concept.start_date || undefined
-                                : undefined
-                          }
-                          max={
-                            field.key === "end_date"
-                              ? maxProjectEnd(
-                                  payload.concept.start_date,
-                                  selectedCategory?.max_months || 36,
-                                )
-                              : field.key === "admin_cost"
-                                ? adminLimit
-                                : undefined
-                          }
-                          aria-invalid={
-                            isMoneyField(field.key)
-                              ? moneyFeedback[field.key].invalid
-                              : Boolean(financial[field.key]) ||
-                                fieldIssue(field.key)
-                          }
-                          onFocus={() => {
-                            if (isMoneyField(field.key))
-                              setMoneyFocused(field.key);
-                          }}
-                          onBlur={() => {
-                            if (isMoneyField(field.key)) {
-                              setMoneyTouched((t) => ({
-                                ...t,
-                                [field.key]: true,
-                              }));
-                              setMoneyFocused(null);
-                            }
-                          }}
-                          step={field.type === "number" ? "0.01" : undefined}
-                          maxLength={
-                            field.type === "date" || field.type === "number"
-                              ? undefined
-                              : 12000
-                          }
-                          value={String(payload.concept[field.key] ?? "")}
-                          onChange={(e) =>
-                            updateConcept(
-                              field.key,
-                              field.type === "number"
-                                ? e.target.value === ""
-                                  ? null
-                                  : Number(e.target.value)
-                                : e.target.value,
-                            )
-                          }
-                        />
-                      )}{" "}
-                      {financialHelp(field.key) && (
-                        <small
-                          id={`field-message-${field.key}`}
-                          data-field-message={
-                            visibleFinancialError(field.key)
-                              ? "error"
-                              : undefined
-                          }
-                          className={
-                            visibleFinancialError(field.key)
-                              ? "field-warning"
-                              : undefined
-                          }
-                          role={
-                            visibleFinancialError(field.key)
-                              ? "alert"
-                              : undefined
-                          }
+                      <h3
+                        className="section-card-title"
+                        id="funding-summary-heading"
+                      >
+                        {es
+                          ? "Presupuesto total solicitado"
+                          : "Total requested budget"}
+                      </h3>
+                      <div className="funding-summary-grid">
+                        <div className="funding-summary-inputs">
+                          {renderIdentity("requested_amount")}
+                          {renderIdentity("cofinance_amount")}
+                        </div>
+                        <div
+                          className="activity-card estimated-total-card"
+                          aria-live="polite"
                         >
-                          {financialHelp(field.key)}
-                        </small>
-                      )}
-                      {currentIssues.missing.includes(field.key) &&
-                        field.key !== "project_type" &&
-                        !isMoneyField(field.key) &&
-                        !financial[field.key] && (
-                          <small
-                            className="field-warning"
-                            data-field-message="error"
-                            id={`field-required-${field.key}`}
-                          >
+                          <span>
                             {es
-                              ? "Complete este campo obligatorio."
-                              : "Complete this required field."}
-                          </small>
-                        )}
-                      {!isMoneyField(field.key) &&
-                        financial[field.key] &&
-                        !financialHelp(field.key) && (
-                          <small
-                            className="field-warning"
-                            role="alert"
-                            data-field-message="error"
-                            id={`field-error-${field.key}`}
+                              ? "Costo total estimado"
+                              : "Estimated total cost"}
+                          </span>
+                          <strong
+                            style={{
+                              display: "block",
+                              fontSize: "1.8rem",
+                              marginTop: "0.3rem",
+                            }}
                           >
-                            {field.key === "end_date" ||
-                            field.key === "start_date"
-                              ? financial[field.key] === "CATEGORY_DURATION"
-                                ? es
-                                  ? `La duración del proyecto supera el máximo de ${categoryMonthsEs} meses de la categoría de subvención seleccionada por usted. Corrija las fechas para continuar.`
-                                  : `The project duration exceeds the maximum of ${selectedCategory?.max_months} months for the grant category you selected. Correct the dates to continue.`
-                                : es
-                                  ? "Ingrese fechas válidas. La finalización debe ser posterior al inicio del proyecto."
-                                  : "Enter valid dates. The project end must follow its start."
-                              : financial[field.key] === "CATEGORY_AMOUNT"
-                                ? (es
-                                    ? "El monto solicitado no corresponde a la categoría seleccionada. "
-                                    : "The requested amount is outside the selected category. ") +
-                                  financialHelp(field.key)
-                                : message(financial[field.key]!, es)}
+                            {moneyUiValid
+                              ? currency(totalCost)
+                              : es
+                                ? "Revise los importes"
+                                : "Check amounts"}
+                          </strong>
+                          <small>
+                            {es
+                              ? "Monto solicitado al GLF + cofinanciamiento"
+                              : "GLF requested amount + cofinancing"}
                           </small>
-                        )}
-                    </label>
-                  ),
-                )}
-                {step === 0 && (
-                  <div
-                    className={`activity-card estimated-total-card${application.stage === 1 ? " is-inline" : ""}`}
-                    aria-live="polite"
-                  >
-                    <span>
-                      {es ? "Costo total estimado" : "Estimated total cost"}
-                    </span>
-                    <strong
-                      style={{
-                        display: "block",
-                        fontSize: "1.8rem",
-                        marginTop: "0.3rem",
-                      }}
-                    >
-                      {moneyUiValid
-                        ? currency(totalCost)
-                        : es
-                          ? "Revise los importes"
-                          : "Check amounts"}
-                    </strong>
-                    <small>
-                      {es
-                        ? "Monto solicitado al GLF + cofinanciamiento"
-                        : "GLF requested amount + cofinancing"}
-                    </small>
-                  </div>
+                        </div>
+                      </div>
+                      {renderIdentity("admin_cost")}
+                    </section>
+                  </>
+                ) : (
+                  fields.map(renderField)
                 )}
               </div>
               {step === 0 && application.stage === 2 && (

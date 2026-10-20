@@ -1,4 +1,8 @@
-export type PartnerOrganization = { id: string; name: string };
+export type PartnerOrganization = {
+  id: string;
+  name: string;
+  support?: string;
+};
 export type Partners = {
   partners: string;
   associated_organizations?: string[];
@@ -36,7 +40,9 @@ export function partnerText(names: string[]): string {
   return names.map((name, i) => `${i + 1}. ${name.trim()}`).join("\n");
 }
 export function partnerIssues(concept: Partners): string[] {
-  return partnerOrganizations(concept).some((name) => !name.trim())
+  return partnerRecords(concept).some(
+    (p) => !p.name.trim() || !p.support?.trim(),
+  )
     ? ["partners"]
     : [];
 }

@@ -176,8 +176,8 @@ export function GeographyFields({
       <h3 className="section-card-title">
         {label(
           es
-            ? "Islas de ejecución del proyecto"
-            : "Project implementation islands",
+            ? "Ubicación y área de influencia"
+            : "Location and area of influence",
         )}
       </h3>
       <p className="field-help">

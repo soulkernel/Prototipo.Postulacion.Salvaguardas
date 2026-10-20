@@ -168,7 +168,7 @@ test("expanded workbook separates proposed dates, numeric amounts, results and s
     results = strFromU8(files["xl/worksheets/sheet2.xml"]),
     risks = strFromU8(files["xl/worksheets/sheet3.xml"]);
   assert.ok(main.includes('ref="A1:AL2"'));
-  assert.ok(main.includes('r="T2" s="0"><v>31</v>'));
+  assert.ok(main.includes('r="T2" s="0"><v>32</v>')); // Inclusive start and end dates, consistent with the duration card.
   assert.ok(main.includes('r="V2" s="3"><v>100</v>'));
   assert.ok(main.includes('r="Z2" s="4"><v>0</v>'));
   assert.ok(main.includes("11/10/2026"));

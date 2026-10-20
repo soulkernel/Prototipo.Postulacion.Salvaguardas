@@ -6,7 +6,59 @@ import {
   identificationIssues,
   maxProjectEnd,
   projectDateErrors,
+  projectDuration,
+  projectDurationText,
 } from "../src/lib/applicant-validation";
+
+test("inclusive duration uses calendar months, leap days and the same category limit as validation", () => {
+  for (const [start, months, days] of [
+    ["2027-01-01", 12, 365],
+    ["2024-01-01", 12, 366],
+    ["2024-02-29", 12, 365],
+    ["2027-01-31", 1, 28],
+    ["2027-01-01", 24, 731],
+    ["2027-01-01", 36, 1096],
+  ] as const) {
+    const end = maxProjectEnd(start, months)!;
+    assert.deepEqual(projectDuration(start, end), {
+      months,
+      days: 0,
+      totalDays: days,
+    });
+    const c = {
+      ...emptyPayload().concept,
+      category_id: "small",
+      start_date: start,
+      end_date: end,
+    };
+    const r = { categories: [{ id: "small", max_months: months }] } as Rules;
+    assert.deepEqual(projectDateErrors(c, r), {});
+    c.end_date = new Date(new Date(end + "T00:00:00Z").getTime() + 86400000)
+      .toISOString()
+      .slice(0, 10);
+    assert.equal(projectDateErrors(c, r).end_date, "CATEGORY_DURATION");
+  }
+  assert.deepEqual(projectDuration("2027-01-31", "2027-02-28"), {
+    months: 1,
+    days: 1,
+    totalDays: 29,
+  });
+  for (const [a, b] of [
+    ["", ""],
+    ["2027-02-30", "2027-03-01"],
+    ["2027-01-02", "2027-01-01"],
+    ["2027-01-01", "2027-01-01"],
+  ])
+    assert.equal(projectDuration(a, b), null);
+  assert.match(
+    projectDurationText("2027-01-01", "2027-12-31", "es"),
+    /12 meses y 0 días · 365 días/,
+  );
+  assert.match(
+    projectDurationText("2024-01-01", "2024-12-31", "en"),
+    /12 months and 0 days · 366 days/,
+  );
+});
 import { stepIssues } from "../src/lib/step-validation";
 import { financialFeedback, moneyFields } from "../src/lib/financial-feedback";
 import { grantRanges } from "../src/lib/grant-rules";

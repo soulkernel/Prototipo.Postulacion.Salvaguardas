@@ -214,7 +214,7 @@ export const manualChapters: ManualChapter[] = [
   },
   {
     id: "datos",
-    title: ["Paso 1 · Datos del proyecto", "Step 1 · Project details"],
+    title: ["Paso 1 · Información general", "Step 1 · General information"],
     intro: [
       "Identifique al proponente y defina la ubicación, fechas y presupuesto. Los campos con asterisco son obligatorios para enviar; el borrador puede estar incompleto.",
       "Identify the applicant and define location, dates and budget. Asterisked fields are required to submit; drafts may be incomplete.",
@@ -285,7 +285,19 @@ export const manualChapters: ManualChapter[] = [
         "Specify where the applicant is located. This does not replace the project's implementation location.",
       ],
       [
-        "Islas de ejecución / Otras islas",
+        "Organizaciones asociadas (opcional)",
+        "Ingrese por separado el nombre de cada organización y describa su apoyo en la implementación. Ambos campos son obligatorios si registra una organización. La papelera solicita confirmación. Cada organización requiere su propia carta en Revisar y enviar → Anexos. Puede guardar borradores incompletos; complete los apoyos y las cartas antes de enviar.",
+        "Partner organizations (optional)",
+        "Enter each organization's name and describe its implementation support. Both fields are required when a partner is registered. The trash icon asks for confirmation. Each organization requires its own letter under Review and submit → Attachments. Incomplete drafts can be saved; complete support descriptions and letters before submitting.",
+      ],
+      [
+        "Presupuesto total solicitado",
+        "A la izquierda se ingresan el monto GLF y el cofinanciamiento. La tarjeta de la derecha calcula el total; respete los límites de la categoría.",
+        "Total requested budget",
+        "Enter GLF funding and cofinancing on the left. The card on the right calculates the total; respect the category limits.",
+      ],
+      [
+        "Ubicación y área de influencia / Otras islas",
         "Seleccione todas las islas donde actuará. Si marca Otras islas, escriba sus nombres en Indique las otras islas. Para todo Galápagos, utilice la opción que corresponda al alcance real.",
         "Project islands / Other islands",
         "Select all implementation islands. If you select Other islands, enter their names under Specify other islands. For archipelago-wide work, use the option matching the actual scope.",
@@ -303,10 +315,10 @@ export const manualChapters: ManualChapter[] = [
         "Select the call topic that best represents your proposal.",
       ],
       [
-        "Fechas de inicio y finalización del proyecto",
-        "Use los calendarios. La finalización debe ser posterior al inicio. Máximo: pequeña 12 meses, mediana 24 y grande 36. Si lo supera, debe corregir las fechas antes de continuar.",
-        "Project start and end dates",
-        "Use the calendars. End must follow start and comply with the category's maximum duration.",
+        "Duración del proyecto",
+        "Ingrese inicio y finalización. La duración se calcula en meses, días y días totales, incluyendo ambas fechas. Debe respetar el máximo de su categoría; si lo supera, corrija las fechas antes de continuar.",
+        "Project duration",
+        "Enter start and end dates. Calendar months, remaining days and total days include both dates and must respect the selected category maximum.",
       ],
       [
         "Monto solicitado al GLF (USD)",
@@ -436,12 +448,6 @@ export const manualChapters: ManualChapter[] = [
         "Resuma cómo comprobará el avance y los resultados. El plan detallado corresponde a la propuesta completa.",
         "Proposed monitoring and evaluation",
         "Summarise how progress and results will be checked. The detailed plan belongs in the full proposal.",
-      ],
-      [
-        "Organizaciones asociadas (opcional)",
-        "Registre cada organización por separado. Use + para añadir otra y el icono de papelera para retirar una entrada; no incluya organizaciones sin participación prevista. Cada organización registrada necesita su propia carta de apoyo, que debe cargar en Revisar y enviar → Anexos. Puede guardar el borrador aunque falten cartas.",
-        "Partner organizations (optional)",
-        "Register each organization separately. Use + to add another and the trash icon to delete an entry; only include organizations expected to participate. Each registered organization needs its own letter of support under Review and submit → Attachments. You can save a draft while letters are missing.",
       ],
       [
         "Contadores / revisión ortográfica",

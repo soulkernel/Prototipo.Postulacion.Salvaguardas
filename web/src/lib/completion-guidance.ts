@@ -120,6 +120,10 @@ export function completionGuidance(
           ? 2
           : 1;
     let text = f?.[es ? "es" : "en"] || names[key];
+    if (key === "partners")
+      text = es
+        ? "Complete el nombre y el apoyo en la implementación de cada organización asociada."
+        : "Complete the name and implementation support of each partner organization.";
     if (key === "project_type") {
       const issue = applicationTopicIssue(payload.concept.project_type, rules);
       if (issue) text = applicationTopicMessage(issue, locale);

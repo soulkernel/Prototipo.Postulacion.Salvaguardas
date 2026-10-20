@@ -51,6 +51,7 @@ export const conceptSchema = z
           .object({
             id: z.uuid(),
             name: z.string().max(200),
+            support: text.optional(),
           })
           .strict(),
       )

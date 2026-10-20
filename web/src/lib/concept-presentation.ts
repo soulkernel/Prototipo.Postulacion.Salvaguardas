@@ -1,6 +1,8 @@
 import type { Concept, Locale } from "./domain";
 import { identityFields, narrativeFields } from "./fields";
 import { callThemeLabel } from "./call-themes";
+import { partnerRecords } from "./partners";
+import { projectDurationText } from "./applicant-validation";
 import { alignmentNarrative } from "./document-language";
 import {
   generalOnlyAlignment,
@@ -207,10 +209,19 @@ export function conceptSections(
     const v = c[key];
     return Array.isArray(v) ? v.join(", ") || "—" : String(v ?? "") || "—";
   };
+  const partners = partnerRecords(c);
+  const hasPartnerSupport = partners.some((p) => p.support !== undefined);
+  const groupedDates = presentation.layoutVersion === currentConceptLayout;
   const details = identityFields
     .filter(
       (f) =>
-        !["requested_amount", "cofinance_amount", "admin_cost"].includes(f.key),
+        ![
+          "requested_amount",
+          "cofinance_amount",
+          "admin_cost",
+          ...(hasPartnerSupport ? ["partners"] : []),
+          ...(groupedDates ? ["start_date", "end_date"] : []),
+        ].includes(f.key),
     )
     .map((f) => [es ? f.es : f.en, value(f.key)]);
   const categories =
@@ -288,7 +299,7 @@ export function conceptSections(
     },
     {
       id: "financing",
-      title: es ? "Financiamiento estimado" : "Estimated financing",
+      title: es ? "Presupuesto total solicitado" : "Total requested budget",
       introduction: es
         ? "El costo total estimado reúne el monto solicitado al GLF y el cofinanciamiento previsto. En esta fase se presentan estimaciones; el presupuesto detallado corresponde al proyecto completo."
         : "The estimated total combines the amount requested from GLF and planned cofinancing. These are preliminary estimates; the detailed budget belongs to the full proposal.",
@@ -321,6 +332,55 @@ export function conceptSections(
       ],
     },
   ];
+  if (groupedDates)
+    sections.splice(1, 0, {
+      id: "duration",
+      title: es ? "Duración del proyecto" : "Project duration",
+      introduction: es
+        ? "El período propuesto debe respetar el plazo máximo de la categoría de subvención seleccionada. La duración incluye las fechas de inicio y finalización."
+        : "The proposed period must respect the maximum duration of the selected grant category. Duration includes both the start and end dates.",
+      blocks: [
+        table(
+          es ? ["Dato", "Duración propuesta"] : ["Field", "Proposed duration"],
+          [
+            [
+              es ? "Fecha de inicio del proyecto" : "Project start date",
+              date(c.start_date),
+            ],
+            [
+              es ? "Fecha de finalización del proyecto" : "Project end date",
+              date(c.end_date),
+            ],
+            [
+              es ? "Duración calculada" : "Calculated duration",
+              projectDurationText(c.start_date, c.end_date, locale) || "—",
+            ],
+          ],
+        ),
+      ],
+    });
+  if (hasPartnerSupport)
+    sections.splice(1, 0, {
+      id: "partners",
+      title: es ? "Organizaciones asociadas" : "Partner organizations",
+      introduction: es
+        ? "Se indica el apoyo previsto de cada organización en la implementación del proyecto. Cada organización requiere su propia carta de apoyo."
+        : "Each organization's planned support in project implementation is described below. Each organization requires its own letter of support.",
+      blocks: [
+        table(
+          es
+            ? [
+                "Organización asociada",
+                "Apoyo en la implementación del proyecto",
+              ]
+            : ["Partner organization", "Support in project implementation"],
+          partners.map((p) => [
+            p.name || "—",
+            p.support?.trim() || (es ? "Pendiente de completar" : "Incomplete"),
+          ]),
+        ),
+      ],
+    });
   const introductions: Record<string, [string, string]> = {
     summary: [
       "La descripción explica el contexto, el problema y la intervención propuesta, junto con los cambios que se espera lograr.",

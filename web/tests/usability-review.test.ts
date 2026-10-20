@@ -35,6 +35,7 @@ function complete() {
     if (typeof value === "string")
       Object.assign(p.concept, { [key]: "Texto completo" });
   Object.assign(p.concept, {
+    partners: "",
     applicant_type: "ngo",
     project_type: "research",
     category_id: "small",

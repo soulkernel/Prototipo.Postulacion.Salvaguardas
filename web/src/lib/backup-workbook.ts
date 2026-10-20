@@ -264,14 +264,22 @@ export function summaryWorkbook(
       ),
       value(c.location),
       value(
-        Array.isArray(c.associated_organizations)
-          ? c.associated_organizations.join("; ")
-          : c.partners,
+        Array.isArray(c.partner_organizations) &&
+          c.partner_organizations.some((p) => typeof p?.support === "string")
+          ? c.partner_organizations
+              .map(
+                (p) =>
+                  `${p.name}${p.support?.trim() ? ` — ${p.support.trim()}` : ""}`,
+              )
+              .join("; ")
+          : Array.isArray(c.associated_organizations)
+            ? c.associated_organizations.join("; ")
+            : c.partners,
       ),
       date(c.start_date),
       date(c.end_date),
       start !== undefined && end !== undefined && end >= start
-        ? (end - start) / 86400000
+        ? (end - start) / 86400000 + 1
         : missing,
       value(number(category.max_months)),
       value(requested),

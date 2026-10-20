@@ -66,3 +66,38 @@ export function projectDateErrors(
   }
   return errors;
 }
+
+/** Inclusive calendar dates, using the same clamped anniversaries as maxProjectEnd. */
+export function projectDuration(start: string, end: string) {
+  if (!maxProjectEnd(start, 1) || !maxProjectEnd(end, 1) || end <= start)
+    return null;
+  const first = new Date(start + "T00:00:00Z");
+  const after = new Date(new Date(end + "T00:00:00Z").getTime() + 86400000);
+  let months =
+    (after.getUTCFullYear() - first.getUTCFullYear()) * 12 +
+    after.getUTCMonth() -
+    first.getUTCMonth();
+  const anniversary = (n: number) =>
+    n === 0
+      ? first.getTime()
+      : new Date(maxProjectEnd(start, n)! + "T00:00:00Z").getTime() + 86400000;
+  if (anniversary(months) > after.getTime()) months--;
+  return {
+    months,
+    days: (after.getTime() - anniversary(months)) / 86400000,
+    totalDays: (after.getTime() - first.getTime()) / 86400000,
+  };
+}
+
+export function projectDurationText(
+  start: string,
+  end: string,
+  locale: "es" | "en",
+) {
+  const duration = projectDuration(start, end);
+  if (!duration) return "";
+  const { months, days, totalDays } = duration;
+  return locale === "es"
+    ? `${months} ${months === 1 ? "mes" : "meses"} y ${days} ${days === 1 ? "día" : "días"} · ${totalDays} días en total`
+    : `${months} ${months === 1 ? "month" : "months"} and ${days} ${days === 1 ? "day" : "days"} · ${totalDays} days in total`;
+}

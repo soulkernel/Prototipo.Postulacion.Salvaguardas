@@ -433,6 +433,19 @@ test("money entry regression: SQL independently enforces grant maxima and 10/25 
     await assert.rejects(validate(), /GLF_CATEGORY_AMOUNT/);
   }
 });
+test("partner implementation support: SQL accepts incomplete drafts, rejects incomplete completion and preserves support with IDs", async()=>{
+  const p=structuredClone(payload), id=crypto.randomUUID();
+  Object.assign(p.concept,{partner_organizations:[{id,name:"Socio ficticio"}],associated_organizations:["Socio ficticio"],partners:"1. Socio ficticio"});
+  const validate=(complete)=>db.query("select private.validate_payload($1::jsonb,$2::jsonb,$3,1)",[JSON.stringify(p),JSON.stringify(rules),complete]);
+  await validate(false);
+  await assert.rejects(validate(true),/GLF_REQUIRED:partners/);
+  p.concept.partner_organizations[0].support="Asistencia técnica en la ejecución";
+  await validate(true);
+  p.concept.partner_organizations[0].support=" ";await assert.rejects(validate(true),/GLF_REQUIRED:partners/);
+  p.concept.partner_organizations[0].support=15;await assert.rejects(validate(false),/GLF_INVALID_PARTNERS/);
+  p.concept.partner_organizations[0].support="a".repeat(12001);await assert.rejects(validate(false),/GLF_INVALID_PARTNERS/);
+  for(const role of ["anon","authenticated"])assert.equal((await db.query("select has_function_privilege($1,'private.validate_payload_before_call_topics(jsonb,jsonb,boolean,integer)','EXECUTE') allowed",[role])).rows[0].allowed,false);
+});
 let call, app;
 async function temporaryAccount(academic = false) {
   const id = crypto.randomUUID();
@@ -3210,7 +3223,7 @@ test("M05 database: isolated drafts, individual letters, history and direct RPC 
  const owner=await temporaryAccount();
  const c=await rpc("create_call",{details:{code:"M05-LOCAL",title_es:"M05",title_en:"M05",description_es:"QA",description_en:"QA",opens_at:"2020-01-01T00:00:00Z",closes_at:"2099-01-01T00:00:00Z",rules:{...rules,required_attachments:["partner_letters"]}}},"grants");
  await rpc("publish_call",{call_id:c},"grants");
- const a={id:crypto.randomUUID(),name:"Socio A"}, b={id:crypto.randomUUID(),name:"Socio B"};
+ const a={id:crypto.randomUUID(),name:"Socio A",support:"Asistencia técnica"}, b={id:crypto.randomUUID(),name:"Socio B",support:"Coordinación local"};
  const patch=(rows)=>({partner_organizations:rows,associated_organizations:rows.map(r=>r.name),partners:rows.map((r,i)=>`${i+1}. ${r.name}`).join("\n")});
  const kind=p=>"partner_letter_"+p.id.replaceAll("-","");
  const make=async(rows)=>{

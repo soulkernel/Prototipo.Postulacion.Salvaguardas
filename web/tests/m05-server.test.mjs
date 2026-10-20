@@ -67,7 +67,7 @@ function fixture() {
     project_islands: ["Santa Cruz"],
     phone: "+593991234567",
     summary: "Resumen",
-    partner_organizations: [{ id: partnerId, name: "Socio A" }],
+    partner_organizations: [{ id: partnerId, name: "Socio A", support: "Apoyo técnico ficticio" }],
     associated_organizations: ["Socio A"],
     partners: "1. Socio A",
   });
@@ -290,7 +290,7 @@ test("M05 actual submit action blocks missing or unreadable individual letter be
   s.app.payload.concept.partners = "Socio antiguo";
   result = await api.submitDraft(appId, 0);
   assert.equal(result.ok, false);
-  assert.equal(result.error, "GLF_PARTNER_LINK_REQUIRED");
+  assert.equal(result.error, "GLF_REQUIRED:partners");
   assert.equal(s.submitCount, 2);
 });
 

@@ -6,6 +6,7 @@ import {
   partnerPatch,
   partnerRecords,
   partnerIssues,
+  type PartnerOrganization,
 } from "../src/lib/partners";
 import {
   applicationAttachments,
@@ -18,16 +19,61 @@ import {
 } from "../src/lib/attachment-requirements";
 import { validateRequiredDocuments } from "../src/lib/attachment-validation";
 import { uploadSelectionError } from "../src/lib/upload-selection";
+import { conceptSections } from "../src/lib/concept-presentation";
 const a = { id: "11111111-1111-4111-8111-111111111111", name: "Socio A" };
 const b = { id: "22222222-2222-4222-8222-222222222222", name: "Socio B" };
 const rules = {
   required_attachments: ["concept_signed", "matrix_signed", "other_required"],
 };
-const concept = (rows: (typeof a)[]) => ({
+const concept = (rows: PartnerOrganization[]) => ({
   ...emptyPayload().concept,
   ...partnerPatch(rows),
 });
 const pdf = new TextEncoder().encode("%PDF-1.4\nCarta local");
+
+test("partner implementation support remains linked to stable IDs and appears in review/PDF without changing letter requirements", () => {
+  const rows = [
+    { ...a, support: "Personal técnico y seguimiento" },
+    { ...b, support: "Equipos y coordinación comunitaria" },
+  ];
+  const c = concept(rows);
+  assert.deepEqual(partnerIssues(c), []);
+  assert.deepEqual(partnerIssues(concept([{ ...a, support: " " }])), [
+    "partners",
+  ]);
+  assert.deepEqual(partnerIssues(concept([a])), ["partners"]);
+  assert.ok(
+    payloadSchema.safeParse({ ...emptyPayload(), concept: concept([a]) })
+      .success,
+  ); // Legacy drafts remain readable/saveable.
+  assert.ok(payloadSchema.safeParse({ ...emptyPayload(), concept: c }).success);
+  assert.equal(c.partners, "1. Socio A\n2. Socio B"); // Legacy name mirror keeps its existing contract and size.
+  const reopened = JSON.parse(
+    JSON.stringify(
+      concept([rows[1], { ...rows[0], name: "Socio renombrado" }]),
+    ),
+  );
+  assert.equal(reopened.partner_organizations[1].support, rows[0].support);
+  assert.equal(
+    partnerLetterRequirements(reopened, rules)[1].id,
+    partnerLetterKind(a.id),
+  );
+  for (const locale of ["es", "en"] as const) {
+    const section = conceptSections(c, locale).find(
+      (s) => s.id === "partners",
+    )!;
+    assert.equal(section.blocks[0].type, "table");
+    if (section.blocks[0].type === "table")
+      assert.deepEqual(
+        section.blocks[0].rows,
+        rows.map((p) => [p.name, p.support]),
+      );
+  }
+  assert.equal(
+    conceptSections(concept([a]), "es").some((s) => s.id === "partners"),
+    false,
+  ); // No invented historic description.
+});
 
 test("M05 zero/blank/one/many partners: no unnamed or generic duplicate requirements", () => {
   assert.equal(partnerLetterRequirements(concept([]), rules).length, 0);
