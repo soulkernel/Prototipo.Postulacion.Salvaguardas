@@ -1342,6 +1342,14 @@ dialog.narrative-adjust-dialog {
 .funding-summary-inputs { display: grid; gap: 20px; min-width: 0; }
 .funding-summary-grid > .estimated-total-card { grid-column: auto; margin: 0; display: flex; flex-direction: column; justify-content: center; min-width: 0; }
 .funding-summary-card > .editor-field { margin-top: 20px; }
+@media(min-width: 761px) {
+  /* Share the input rows so wrapped labels/help never change the card's anchors. */
+  .funding-summary-grid { grid-template-rows: auto auto auto 2px auto auto auto; row-gap: 9px; }
+  .funding-summary-inputs { grid-column: 1; grid-row: 1 / 8; grid-template-rows: subgrid; row-gap: 9px; }
+  .live-form .funding-summary-inputs > .editor-field { grid-template-rows: subgrid; grid-row: 1 / 4; align-self: stretch; min-width: 0; }
+  .live-form .funding-summary-inputs > .editor-field + .editor-field { grid-row: 5 / 8; }
+  .funding-summary-grid > .estimated-total-card { grid-column: 2; grid-row: 2 / 7; }
+}
 @media(max-width: 760px) {
   .partner-support-grid { grid-template-columns: minmax(0,1fr) 44px; grid-template-areas: "name-label remove" "name name" "support-label support-label" "support support"; }
   .funding-summary-grid { grid-template-columns: minmax(0,1fr); }
