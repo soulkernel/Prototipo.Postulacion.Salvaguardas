@@ -3788,3 +3788,12 @@ test("linked sustainability SQL/RPC: strict drafts, multiple references, actors,
  const inherited=(await as(owner,()=>db.query("select stage,payload from public.applications where id=$1",[app]))).rows[0];assert.equal(inherited.stage,2);assert.deepEqual(inherited.payload.concept.sustainability_plan,p.concept.sustainability_plan);assert.equal(inherited.payload.concept.sustainability,p.concept.sustainability);assert.deepEqual((await db.query("select payload,concept_layout_version from public.application_versions where application_id=$1",[app])).rows[0],frozen);
  for(const role of ["anon","authenticated"])assert.equal((await db.query("select has_function_privilege($1,'private.validate_sustainability_plan(jsonb,boolean)','EXECUTE') allowed",[role])).rows[0].allowed,false);
 });
+
+
+test("ordered description layout changes only new-document defaults and preserves all existing records", async()=>{
+ const sql=await readFile(new URL("../../supabase/migrations/202610200050_project_description_order.sql",import.meta.url),"utf8");
+ const snapshot=async()=>Object.fromEntries(await Promise.all(["applications","application_versions","prepared_documents","application_documents","application_events","calls","activities","risks"].map(async t=>[t,(await db.query(`select to_jsonb(row) value from public.${t} row order by id`)).rows])));
+ const before=await snapshot();await db.exec(sql);await db.exec(sql);assert.deepEqual(await snapshot(),before);
+ const defaults=(await db.query("select table_name,column_default from information_schema.columns where table_schema='public' and table_name in ('prepared_documents','application_versions') and column_name='concept_layout_version' order by table_name")).rows;
+ assert.equal(defaults.length,2);for(const row of defaults)assert.match(row.column_default,/glf-concept-20261020-v6/);
+});

@@ -29,3 +29,7 @@ La nota conceptual sí recoge indicadores propuestos de avance/éxito en Seguimi
 
 ## Sostenibilidad vinculada (decisión del usuario, 20/10/2026)
 Después de Seguimiento y evaluación, usar fichas compactas numeradas por estrategia, vinculadas a resultados/actividades existentes y opcionalmente a un indicador. Mostrar objetivos desde sus referencias. Actor previsto y posibilidad de réplica admiten Por definir; No prevista requiere motivo y no es una incompatibilidad. No exigir una ficha por cada registro ni nuevos compromisos documentales. Conservar textos históricos, UUID y vínculos hacia fase 2; no inferir ni convertir narrativas. Fichas completas plegables, sin guardar por abrir/plegar. Ver `../docs/Decision_sostenibilidad_vinculada_20261020.txt` antes de ampliar el modelo o las exigencias.
+
+
+## Orden de Descripción del proyecto (decisión del usuario, 20/10/2026)
+Mantener resumen, objetivos y alineación, actividades, beneficiarios, resultados, riesgos, seguimiento y evaluación, sostenibilidad y replicabilidad. Usar projectDescriptionOrder para captura, revisión y PDF nuevos. Las actividades aparecen una sola vez y conservan UUID, objetivos, calendarios y riesgos hacia Screening y fase 2. Los formatos v5 y anteriores conservan su orden registrado. Ver `../docs/Decision_orden_descripcion_20261020.txt`.

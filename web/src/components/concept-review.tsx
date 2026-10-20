@@ -3,6 +3,8 @@ import { ActivityReview } from "./activity-review";
 import { conceptSections } from "@/lib/concept-presentation";
 import {
   currentConceptLayout,
+  conceptSectionOrder,
+  usesOrderedProjectDescription,
   usesStructuredMonitoring,
   usesStructuredSustainability,
   type ConceptPresentation,
@@ -89,6 +91,25 @@ export function ConceptReview({
         )}
       </section>
     ));
+  if (usesOrderedProjectDescription(view))
+    return (
+      <div className="concept-review">
+        {conceptSectionOrder.map((id) =>
+          id === "activities" ? (
+            includeActivities ? (
+              <ActivityReview
+                key={id}
+                activities={activities}
+                concept={concept}
+                locale={locale}
+              />
+            ) : null
+          ) : (
+            renderSections(sections.filter((section) => section.id === id))
+          ),
+        )}
+      </div>
+    );
   return (
     <div className="concept-review">
       {renderSections(sections.filter((section) => !deferred(section)))}

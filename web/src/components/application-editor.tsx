@@ -93,7 +93,10 @@ import {
   narrativeFields,
   statusLabel,
 } from "@/lib/fields";
-import { currentConceptLayout } from "@/lib/concept-layout";
+import {
+  currentConceptLayout,
+  projectDescriptionOrder,
+} from "@/lib/concept-layout";
 import {
   newRisk,
   riskScore,
@@ -2210,7 +2213,46 @@ export function ApplicationEditor({
                     </section>
                   </>
                 ) : (
-                  fields.map(renderField)
+                  projectDescriptionOrder.map((key) => {
+                    if (key === "activities")
+                      return (
+                        <ActivityPlanningFields
+                          key={key}
+                          payload={payload}
+                          locale={locale}
+                          checked={checkedStep === 1}
+                          onChange={(activities) =>
+                            setPayload((p) => ({ ...p, activities }))
+                          }
+                        />
+                      );
+                    if (key === "monitoring")
+                      return (
+                        <MonitoringFields
+                          key={key}
+                          payload={payload}
+                          locale={locale}
+                          checked={checkedStep === 1}
+                          onChange={(concept) =>
+                            setPayload((p) => ({ ...p, concept }))
+                          }
+                        />
+                      );
+                    if (key === "sustainability")
+                      return (
+                        <SustainabilityFields
+                          key={key}
+                          payload={payload}
+                          locale={locale}
+                          checked={checkedStep === 1}
+                          onChange={(concept) =>
+                            setPayload((p) => ({ ...p, concept }))
+                          }
+                        />
+                      );
+                    const field = fields.find((item) => item.key === key);
+                    return field ? renderField(field) : null;
+                  })
                 )}
               </div>
               {step === 0 && application.stage === 2 && (
@@ -2247,32 +2289,6 @@ export function ApplicationEditor({
                       };
                     })
                   }
-                />
-              )}
-              {step === 1 && (
-                <ActivityPlanningFields
-                  payload={payload}
-                  locale={locale}
-                  checked={checkedStep === 1}
-                  onChange={(activities) =>
-                    setPayload((p) => ({ ...p, activities }))
-                  }
-                />
-              )}
-              {step === 1 && (
-                <MonitoringFields
-                  payload={payload}
-                  locale={locale}
-                  checked={checkedStep === 1}
-                  onChange={(concept) => setPayload((p) => ({ ...p, concept }))}
-                />
-              )}
-              {step === 1 && (
-                <SustainabilityFields
-                  payload={payload}
-                  locale={locale}
-                  checked={checkedStep === 1}
-                  onChange={(concept) => setPayload((p) => ({ ...p, concept }))}
                 />
               )}
               {step === 1 && application.stage === 2 && (

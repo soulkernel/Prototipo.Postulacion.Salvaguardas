@@ -548,90 +548,6 @@ export const manualChapters: ManualChapter[] = [
     ],
   },
   {
-    id: "resultados",
-    title: [
-      "Resultados e indicadores de impacto",
-      "Outcomes and impact indicators",
-    ],
-    intro: [
-      "En la nota conceptual, seleccione un objetivo específico y describa qué espera conseguir al finalizar el proyecto y qué entregará. El detalle de medición se completa en la fase de proyecto completo.",
-      "In the concept note, select a specific objective and describe the likely outcomes at project end and what will be delivered. Measurement details are completed in the full proposal phase.",
-    ],
-    steps: [
-      [
-        "Seleccione un objetivo específico ya registrado y escriba el resultado esperado. Puede agregar varios resultados para el mismo objetivo.",
-        "Select a specific objective already entered and write the expected outcome. You can add several results for the same objective.",
-      ],
-      [
-        "En fase 2, complete el indicador de impacto, la meta propuesta, la unidad y la evidencia para esos mismos resultados.",
-        "In phase 2, complete the impact indicator, proposed target, unit and evidence for those same results.",
-      ],
-    ],
-    rows: [
-      [
-        "Objetivo específico al que se asocia el resultado",
-        "Seleccione un objetivo ya escrito. Si fue eliminado, elija otro válido.",
-        "Specific objective associated with the result",
-        "Select an objective already entered. If it was deleted, choose another valid one.",
-      ],
-      [
-        "Resultado esperado",
-        "Describa qué conseguirá y qué entregará: elementos físicos, materiales, infraestructura, formación o desarrollo de capacidades. Hasta 2.000 caracteres.",
-        "Expected result",
-        "Describe what will be achieved and delivered: physical items, materials, infrastructure, training or skills development. Up to 2,000 characters.",
-      ],
-      [
-        "Indicador de impacto (fase 2)",
-        "Qué observará o medirá para comprobar el resultado. Hasta 1.000 caracteres.",
-        "Impact indicator (phase 2)",
-        "What you will observe or measure to verify the result. Up to 1,000 characters.",
-      ],
-      [
-        "Meta propuesta (fase 2)",
-        "Cantidad esperada no negativa; si es porcentaje, entre 0 y 100.",
-        "Proposed target (phase 2)",
-        "Expected non-negative quantity; percentages must be between 0 and 100.",
-      ],
-      [
-        "Unidad de medida (fase 2)",
-        "Seleccione una unidad disponible. Si elige Otra, descríbala (hasta 100 caracteres).",
-        "Unit of measure (phase 2)",
-        "Select an available unit. If you choose Other, describe it (up to 100 characters).",
-      ],
-      [
-        "Evidencia prevista (fase 2)",
-        "Documento, registro o producto que comprobará la meta y el resultado. Hasta 1.000 caracteres.",
-        "Expected evidence (phase 2)",
-        "Document, record or product verifying the target and result. Up to 1,000 characters.",
-      ],
-      [
-        "Agregar / Papelera: quitar resultado",
-        "Añade o retira una ficha, con confirmación antes de eliminar. Hasta 30 resultados.",
-        "Add / Trash icon: remove result",
-        "Adds or removes a card, with confirmation before deletion. Up to 30 results.",
-      ],
-      [
-        "Editar texto existente / Organizar en resultados individuales",
-        "Los borradores narrativos antiguos conservan su texto editable. Organizarlo en fichas es opcional y conserva la fuente sin convertirla automáticamente. En formularios nuevos, la primera ficha se guarda cuando empieza a completarla.",
-        "Edit existing text / Organize into individual results",
-        "Older narrative drafts retain their editable text. Organizing it into cards is optional and retains the source without automatic conversion. In new forms, the first card is saved when you start completing it.",
-      ],
-    ],
-    tip: [
-      "Ejemplo ilustrativo de nota conceptual: objetivo: fortalecer capacidades locales; resultado: jóvenes con conocimientos para conservar el entorno marino y materiales de formación disponibles.",
-      "Illustrative concept note example: objective: strengthen local capacities; outcome: young people equipped to conserve the marine environment and training materials available.",
-    ],
-    screen: [
-      ["Objetivo específico * → OE1", "Specific objective * → SO1"],
-      ["Resultado esperado *", "Expected result *"],
-      ["+ Agregar otro resultado", "+ Add another result"],
-      [
-        "Fase 2: indicador · meta · unidad · evidencia",
-        "Phase 2: indicator · target · unit · evidence",
-      ],
-    ],
-  },
-  {
     id: "actividades",
     title: [
       "Registrar actividades y riesgos potenciales",
@@ -721,6 +637,90 @@ export const manualChapters: ManualChapter[] = [
         "Environmental risk 1 | Social risk 1",
       ],
       ["+ Agregar riesgo potencial", "+ Add potential risk"],
+    ],
+  },
+  {
+    id: "resultados",
+    title: [
+      "Resultados e indicadores de impacto",
+      "Outcomes and impact indicators",
+    ],
+    intro: [
+      "En la nota conceptual, seleccione un objetivo específico y describa qué espera conseguir al finalizar el proyecto y qué entregará. El detalle de medición se completa en la fase de proyecto completo.",
+      "In the concept note, select a specific objective and describe the likely outcomes at project end and what will be delivered. Measurement details are completed in the full proposal phase.",
+    ],
+    steps: [
+      [
+        "Seleccione un objetivo específico ya registrado y escriba el resultado esperado. Puede agregar varios resultados para el mismo objetivo.",
+        "Select a specific objective already entered and write the expected outcome. You can add several results for the same objective.",
+      ],
+      [
+        "En fase 2, complete el indicador de impacto, la meta propuesta, la unidad y la evidencia para esos mismos resultados.",
+        "In phase 2, complete the impact indicator, proposed target, unit and evidence for those same results.",
+      ],
+    ],
+    rows: [
+      [
+        "Objetivo específico al que se asocia el resultado",
+        "Seleccione un objetivo ya escrito. Si fue eliminado, elija otro válido.",
+        "Specific objective associated with the result",
+        "Select an objective already entered. If it was deleted, choose another valid one.",
+      ],
+      [
+        "Resultado esperado",
+        "Describa qué conseguirá y qué entregará: elementos físicos, materiales, infraestructura, formación o desarrollo de capacidades. Hasta 2.000 caracteres.",
+        "Expected result",
+        "Describe what will be achieved and delivered: physical items, materials, infrastructure, training or skills development. Up to 2,000 characters.",
+      ],
+      [
+        "Indicador de impacto (fase 2)",
+        "Qué observará o medirá para comprobar el resultado. Hasta 1.000 caracteres.",
+        "Impact indicator (phase 2)",
+        "What you will observe or measure to verify the result. Up to 1,000 characters.",
+      ],
+      [
+        "Meta propuesta (fase 2)",
+        "Cantidad esperada no negativa; si es porcentaje, entre 0 y 100.",
+        "Proposed target (phase 2)",
+        "Expected non-negative quantity; percentages must be between 0 and 100.",
+      ],
+      [
+        "Unidad de medida (fase 2)",
+        "Seleccione una unidad disponible. Si elige Otra, descríbala (hasta 100 caracteres).",
+        "Unit of measure (phase 2)",
+        "Select an available unit. If you choose Other, describe it (up to 100 characters).",
+      ],
+      [
+        "Evidencia prevista (fase 2)",
+        "Documento, registro o producto que comprobará la meta y el resultado. Hasta 1.000 caracteres.",
+        "Expected evidence (phase 2)",
+        "Document, record or product verifying the target and result. Up to 1,000 characters.",
+      ],
+      [
+        "Agregar / Papelera: quitar resultado",
+        "Añade o retira una ficha, con confirmación antes de eliminar. Hasta 30 resultados.",
+        "Add / Trash icon: remove result",
+        "Adds or removes a card, with confirmation before deletion. Up to 30 results.",
+      ],
+      [
+        "Editar texto existente / Organizar en resultados individuales",
+        "Los borradores narrativos antiguos conservan su texto editable. Organizarlo en fichas es opcional y conserva la fuente sin convertirla automáticamente. En formularios nuevos, la primera ficha se guarda cuando empieza a completarla.",
+        "Edit existing text / Organize into individual results",
+        "Older narrative drafts retain their editable text. Organizing it into cards is optional and retains the source without automatic conversion. In new forms, the first card is saved when you start completing it.",
+      ],
+    ],
+    tip: [
+      "Ejemplo ilustrativo de nota conceptual: objetivo: fortalecer capacidades locales; resultado: jóvenes con conocimientos para conservar el entorno marino y materiales de formación disponibles.",
+      "Illustrative concept note example: objective: strengthen local capacities; outcome: young people equipped to conserve the marine environment and training materials available.",
+    ],
+    screen: [
+      ["Objetivo específico * → OE1", "Specific objective * → SO1"],
+      ["Resultado esperado *", "Expected result *"],
+      ["+ Agregar otro resultado", "+ Add another result"],
+      [
+        "Fase 2: indicador · meta · unidad · evidencia",
+        "Phase 2: indicator · target · unit · evidence",
+      ],
     ],
   },
   {

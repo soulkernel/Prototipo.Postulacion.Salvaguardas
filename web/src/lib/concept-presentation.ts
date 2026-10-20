@@ -20,6 +20,8 @@ import { projectSummary } from "./summary";
 import { resultUnits } from "./project-results";
 import {
   currentConceptLayout,
+  conceptSectionOrder,
+  usesOrderedProjectDescription,
   includesAdministrativeCost,
   includesDetailedResults,
   usesStageSpecificResults,
@@ -775,6 +777,10 @@ export function conceptSections(
       blocks,
     });
   }
+  if (usesOrderedProjectDescription(presentation))
+    return conceptSectionOrder.flatMap((id) =>
+      sections.filter((s) => s.id === id),
+    );
   return usesStructuredSustainability(presentation)
     ? [
         ...sections.filter((s) => s.id !== "sustainability"),

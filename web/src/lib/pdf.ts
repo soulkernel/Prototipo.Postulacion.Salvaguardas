@@ -2,6 +2,8 @@ import { conceptSections, narrativeBlocks } from "./concept-presentation";
 import { activityScheduleRows } from "./activity-planning";
 import {
   currentConceptLayout,
+  conceptSectionOrder,
+  usesOrderedProjectDescription,
   usesCurrentGlfForm,
   usesStructuredMonitoring,
   usesStructuredSustainability,
@@ -445,55 +447,86 @@ export async function applicationPdf({
         }
       }
     };
-    sections.filter((section) => !deferred(section)).forEach(renderSection);
-    draw(es ? "3. ACTIVIDADES" : "3. ACTIVITIES", true);
-    payload.activities.forEach((a, i) => {
-      // Keep the activity introduction with its preliminary calendar in new documents.
-      if (
-        usesCurrentGlfForm({ stage, layoutVersion: conceptLayoutVersion }) &&
-        activityScheduleRows(a, locale).length
-      ) {
-        const lead =
-          lines(i + 1 + ". " + a.title, bold, 11).length * 15 +
-          Math.min(lines(a.description, font, 11).length, 8) * 15 +
-          140;
-        if (y < 72 + lead) newPage();
-      }
-      field(i + 1 + ". " + a.title, a.description);
-      if (usesCurrentGlfForm({ stage, layoutVersion: conceptLayoutVersion })) {
-        const rows = activityScheduleRows(a, locale);
-        if (rows.length)
-          table(
+    const renderActivities = () => {
+      const ordered = usesOrderedProjectDescription(presentation);
+      draw(
+        ordered
+          ? es
+            ? "Actividades"
+            : "Activities"
+          : es
+            ? "3. ACTIVIDADES"
+            : "3. ACTIVITIES",
+        true,
+      );
+      if (ordered)
+        draw(
+          es
+            ? "Estas son las actividades propuestas para alcanzar los objetivos específicos. Las fechas que se indiquen son preliminares y se conservarán al avanzar al proyecto completo."
+            : "These are the proposed activities for achieving the specific objectives. Any dates entered are preliminary and will be retained when advancing to the full proposal.",
+        );
+      payload.activities.forEach((a, i) => {
+        // Keep the activity introduction with its preliminary calendar in new documents.
+        if (
+          usesCurrentGlfForm({ stage, layoutVersion: conceptLayoutVersion }) &&
+          activityScheduleRows(a, locale).length
+        ) {
+          const lead =
+            lines(i + 1 + ". " + a.title, bold, 11).length * 15 +
+            Math.min(lines(a.description, font, 11).length, 8) * 15 +
+            140;
+          if (y < 72 + lead) newPage();
+        }
+        field(i + 1 + ". " + a.title, a.description);
+        if (
+          usesCurrentGlfForm({ stage, layoutVersion: conceptLayoutVersion })
+        ) {
+          const rows = activityScheduleRows(a, locale);
+          if (rows.length)
+            table(
+              es
+                ? ["Dato", "Planificación preliminar"]
+                : ["Field", "Preliminary schedule"],
+              rows,
+              [150, 341],
+            );
+        }
+        if (a.objective_ids?.length)
+          field(
             es
-              ? ["Dato", "Planificación preliminar"]
-              : ["Field", "Preliminary schedule"],
-            rows,
-            [150, 341],
+              ? "Esta actividad contribuye a los siguientes objetivos específicos"
+              : "This activity contributes to the following specific objectives",
+            a.objective_ids
+              .map(
+                (id) =>
+                  payload.concept.strategic_alignment?.objectives.find(
+                    (o) => o.id === id,
+                  )?.text || id,
+              )
+              .join("; "),
           );
+        if (!a.risks.length)
+          field(
+            es
+              ? "Justificación de ausencia de riesgos identificados"
+              : "Explanation of no identified risks",
+            a.no_risks_reason,
+          );
+      });
+    };
+    if (usesOrderedProjectDescription(presentation)) {
+      for (const id of conceptSectionOrder) {
+        if (id === "activities") renderActivities();
+        else
+          sections
+            .filter((section) => section.id === id)
+            .forEach(renderSection);
       }
-      if (a.objective_ids?.length)
-        field(
-          es
-            ? "Esta actividad contribuye a los siguientes objetivos específicos"
-            : "This activity contributes to the following specific objectives",
-          a.objective_ids
-            .map(
-              (id) =>
-                payload.concept.strategic_alignment?.objectives.find(
-                  (o) => o.id === id,
-                )?.text || id,
-            )
-            .join("; "),
-        );
-      if (!a.risks.length)
-        field(
-          es
-            ? "Justificación de ausencia de riesgos identificados"
-            : "Explanation of no identified risks",
-          a.no_risks_reason,
-        );
-    });
-    if (afterActivities) sections.filter(deferred).forEach(renderSection);
+    } else {
+      sections.filter((section) => !deferred(section)).forEach(renderSection);
+      renderActivities();
+      if (afterActivities) sections.filter(deferred).forEach(renderSection);
+    }
     if (stage === 2 && Object.keys(payload.phase2 || {}).length) {
       draw(
         es ? "APARTADOS DE PROYECTO COMPLETO" : "FULL PROPOSAL SECTIONS",
