@@ -1,6 +1,10 @@
 import { activityDateErrors, activityDateMessage } from "./activity-planning";
 import { monitoringEntryIssues } from "./monitoring-plan";
 import {
+  sustainabilityEntryIssues,
+  sustainabilityFieldNames,
+} from "./sustainability-plan";
+import {
   generalOnlyAlignment,
   requiresObjectiveContribution,
 } from "./strategic-alignment";
@@ -62,7 +66,7 @@ export function completionGuidance(
       return;
     }
     if (
-      /^(risk_\d|quarters_|activity_\d|activity_dates_|activity_objectives_|result_|monitoring_\d)/.test(
+      /^(risk_\d|quarters_|activity_\d|activity_dates_|activity_objectives_|result_|monitoring_\d|sustainability_\d)/.test(
         key,
       ) ||
       key === "declarations"
@@ -157,6 +161,10 @@ export function completionGuidance(
     if (key === "monitoring") {
       if (payload.concept.monitoring_plan?.length) return;
       selector = "#monitoring-plan";
+    }
+    if (key === "sustainability") {
+      if (payload.concept.sustainability_plan?.length) return;
+      selector = "#sustainability-plan";
     }
     if (text) add(key, step, text, selector);
   });
@@ -472,6 +480,15 @@ export function completionGuidance(
         1,
         `${es ? "Indicador" : "Indicator"} ${i + 1}: ${names[key]}`,
         `[data-validation-monitoring="${i + 1}"] ${field(key)}`,
+      );
+  });
+  payload.concept.sustainability_plan?.forEach((item, i) => {
+    for (const key of sustainabilityEntryIssues(payload, item))
+      add(
+        `sustainability-${i}-${key}`,
+        1,
+        `${es ? "Estrategia de sostenibilidad" : "Sustainability strategy"} ${i + 1}: ${sustainabilityFieldNames[key][es ? 0 : 1]}`,
+        `[data-validation-sustainability="${i + 1}"] ${field(key === "actor_id" ? "actor_type" : key)}`,
       );
   });
   for (const key of ["truthful", "consent"] as const)

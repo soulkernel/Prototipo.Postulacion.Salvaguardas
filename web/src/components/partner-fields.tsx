@@ -5,6 +5,7 @@ import { RequiredMark } from "./required-mark";
 import type { Concept, Locale } from "@/lib/domain";
 import { partnerRecords, type PartnerOrganization } from "@/lib/partners";
 import { partnerLetterKind } from "@/lib/attachment-requirements";
+import { linkedSustainabilityCount } from "@/lib/sustainability-plan";
 export function PartnerFields({
   concept,
   locale,
@@ -78,9 +79,14 @@ export function PartnerFields({
                 className="partner-support-remove"
                 element={`${es ? "Organización asociada" : "Partner organization"} ${i + 1}: ${name || "—"}`}
                 consequence={
-                  es
+                  (es
                     ? `Se eliminarán la información ingresada y la carta de apoyo vinculada a esta organización, si ya fue cargada en Anexos.${removedFiles.length ? ` Archivos: ${removedFiles.join("; ")}.` : ""}${letters.some((d) => d.protected) ? " Los documentos de versiones ya enviadas se conservarán." : ""}`
-                    : `The entered information and this organization's linked letter of support will be deleted, if already uploaded under Attachments.${removedFiles.length ? ` Files: ${removedFiles.join("; ")}.` : ""}${letters.some((d) => d.protected) ? " Documents belonging to previously submitted versions will be preserved." : ""}`
+                    : `The entered information and this organization's linked letter of support will be deleted, if already uploaded under Attachments.${removedFiles.length ? ` Files: ${removedFiles.join("; ")}.` : ""}${letters.some((d) => d.protected) ? " Documents belonging to previously submitted versions will be preserved." : ""}`) +
+                  (linkedSustainabilityCount({ concept }, "partner", id)
+                    ? es
+                      ? " Las estrategias de sostenibilidad se conservarán; deberá revisar el actor previsto para darles continuidad."
+                      : " Sustainability strategies will be kept; review their expected continuity actor."
+                    : "")
                 }
                 aria-label={`${es ? "Quitar organización asociada" : "Remove partner organization"} ${i + 1}`}
                 onConfirm={() => onRemove(id)}

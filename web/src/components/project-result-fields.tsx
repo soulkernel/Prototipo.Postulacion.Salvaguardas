@@ -8,6 +8,7 @@ import { LimitedTextarea } from "./limited-textarea";
 import { NarrativeTextarea } from "./narrative-textarea";
 import { RequiredMark } from "./required-mark";
 import type { MonitoringItem } from "@/lib/monitoring-plan";
+import type { SustainabilityItem } from "@/lib/sustainability-plan";
 import {
   newProjectResult,
   resultUnits,
@@ -20,6 +21,7 @@ export function ProjectResultFields({
   es,
   stage,
   monitoring,
+  sustainability,
   onChange,
   onLegacyChange,
 }: {
@@ -29,6 +31,7 @@ export function ProjectResultFields({
   es: boolean;
   stage: number;
   monitoring?: MonitoringItem[];
+  sustainability?: SustainabilityItem[];
   onChange: (value: ProjectResult[]) => void;
   onLegacyChange: (value: string) => void;
 }) {
@@ -141,6 +144,15 @@ export function ProjectResultFields({
                         ? es
                           ? " Las fichas de seguimiento vinculadas se conservarán y requerirán revisar su referencia."
                           : " Linked monitoring cards will be kept and their reference will need to be reviewed."
+                        : "") +
+                      (sustainability?.some((item) =>
+                        item.references.some(
+                          (ref) => ref.type === "result" && ref.id === r.id,
+                        ),
+                      )
+                        ? es
+                          ? " Las estrategias de sostenibilidad relacionadas se conservarán y requerirán revisar su asociación."
+                          : " Related sustainability strategies will be kept and their association will need review."
                         : "")
                     }
                     onConfirm={() => {

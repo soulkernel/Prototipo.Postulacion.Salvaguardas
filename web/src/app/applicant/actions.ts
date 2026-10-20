@@ -24,6 +24,7 @@ import {
 import { activityPlanningIssues } from "@/lib/activity-planning";
 import { resultIssues, resultText } from "@/lib/project-results";
 import { monitoringIssues } from "@/lib/monitoring-plan";
+import { sustainabilityIssues } from "@/lib/sustainability-plan";
 import { synchronizeRisks } from "@/lib/potential-risks";
 import { geographyIssues, organizationProvinceIssue } from "@/lib/geography";
 import { projectSummary } from "@/lib/summary";
@@ -109,6 +110,7 @@ async function storedPlanningError(db: SupabaseClient, id: string) {
   const issues = [
     ...resultIssues(parsed.data.concept, data.stage),
     ...monitoringIssues(parsed.data),
+    ...sustainabilityIssues(parsed.data),
   ];
   return issues.length ? `GLF_REQUIRED:${issues[0]}` : null;
 }
@@ -176,6 +178,7 @@ export async function createDraft(form: FormData) {
   const payload = emptyPayload();
   payload.concept.project_results = [];
   payload.concept.monitoring_plan = [];
+  payload.concept.sustainability_plan = [];
   payload.concept.risk_register = [];
   payload.concept.strategic_alignment = {
     version: currentAlignmentVersion,

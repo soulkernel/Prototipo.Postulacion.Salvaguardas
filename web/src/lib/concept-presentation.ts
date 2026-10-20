@@ -1,6 +1,12 @@
 import { proposalTitle } from "./proposal-guidance";
 import type { Activity, Concept, Locale } from "./domain";
 import { monitoringReference, monitoringParameter } from "./monitoring-plan";
+import {
+  sustainabilityReference,
+  sustainabilityActor,
+  sustainabilityIndicator,
+  replicationLabel,
+} from "./sustainability-plan";
 import { identityFields, narrativeFields } from "./fields";
 import { callThemeLabel } from "./call-themes";
 import { partnerRecords } from "./partners";
@@ -18,6 +24,7 @@ import {
   includesDetailedResults,
   usesStageSpecificResults,
   usesStructuredMonitoring,
+  usesStructuredSustainability,
   usesCurrentGlfForm,
   groupsProjectDates,
   type ConceptPresentation,
@@ -575,6 +582,82 @@ export function conceptSections(
           })
         : paragraphs("");
     if (
+      f.key === "sustainability" &&
+      usesStructuredSustainability(presentation) &&
+      c.sustainability_plan !== undefined
+    ) {
+      const context = { concept: c, activities };
+      blocks = c.sustainability_plan.flatMap((item, i) => {
+        const references = item.references.map((ref) =>
+          sustainabilityReference(context, ref, locale),
+        );
+        const objectives = [
+          ...new Set(references.flatMap((r) => r.objectives)),
+        ];
+        return [
+          {
+            type: "paragraph" as const,
+            text: es
+              ? `Estrategia de sostenibilidad ${i + 1}. El postulante propone dar continuidad al trabajo o a los beneficios de los registros asociados mediante la estrategia y el actor previstos. La posibilidad de ampliación o réplica y sus condiciones se presentan como una propuesta, sujeta a revisión.`
+              : `Sustainability strategy ${i + 1}. The applicant proposes continuity of the work or benefits of the linked records through the stated strategy and expected actor. The potential for scaling up or replication and its conditions are presented as a proposal subject to review.`,
+          },
+          table(
+            es
+              ? ["Dato", `Propuesta de sostenibilidad · Estrategia ${i + 1}`]
+              : ["Field", `Sustainability proposal · Strategy ${i + 1}`],
+            [
+              [
+                es
+                  ? "Resultados o actividades asociados"
+                  : "Associated outcomes or activities",
+                references.map((r) => r.label).join("\n") || "—",
+              ],
+              [
+                es
+                  ? "Objetivos específicos asociados"
+                  : "Associated specific objectives",
+                objectives.join("; ") || "—",
+              ],
+              [
+                es
+                  ? "Estrategia de sostenibilidad y apropiación"
+                  : "Sustainability and ownership strategy",
+                item.strategy || "—",
+              ],
+              [
+                es
+                  ? "Actor previsto para dar continuidad"
+                  : "Actor expected to ensure continuity",
+                sustainabilityActor(context, item, locale),
+              ],
+              [
+                es
+                  ? "Posibilidad de ampliación o réplica"
+                  : "Potential for scaling up or replication",
+                replicationLabel(item.replication, locale),
+              ],
+              [
+                es
+                  ? "Condiciones o motivo de la respuesta"
+                  : "Conditions or reason for the response",
+                item.replication_details || "—",
+              ],
+              ...(item.monitoring_id
+                ? [
+                    [
+                      es
+                        ? "Indicador de seguimiento relacionado"
+                        : "Related monitoring indicator",
+                      sustainabilityIndicator(context, item, locale),
+                    ],
+                  ]
+                : []),
+            ],
+          ),
+        ];
+      });
+    }
+    if (
       f.key === "monitoring" &&
       usesStructuredMonitoring(presentation) &&
       c.monitoring_plan !== undefined
@@ -662,27 +745,40 @@ export function conceptSections(
             ? f.es
             : f.en,
       introduction:
-        f.key === "monitoring" && usesStructuredMonitoring(presentation)
+        f.key === "sustainability" &&
+        usesStructuredSustainability(presentation) &&
+        c.sustainability_plan !== undefined
           ? es
-            ? "Los indicadores propuestos se vinculan con actividades o resultados ya registrados y con sus objetivos específicos. Las estrategias describen cómo se observará el avance o el éxito; las metas y el método detallado se completarán en el proyecto completo."
-            : "Proposed indicators are linked to existing activities or outcomes and their specific objectives. Strategies describe how progress or success will be observed; targets and detailed measurement methods will be completed in the full proposal."
-          : f.key === "results" && !detailedResults
+            ? "Las estrategias identifican qué actividades o resultados se busca sostener, cómo continuarán y quién podría asumir esa continuidad. También describen las posibilidades de ampliación o réplica y los indicadores relacionados, cuando corresponda."
+            : "Strategies identify the activities or outcomes to be sustained, how they will continue and who could ensure continuity. They also describe the potential for scaling up or replication and related indicators, where applicable."
+          : f.key === "monitoring" && usesStructuredMonitoring(presentation)
             ? es
-              ? "Se presentan los resultados que se espera conseguir al finalizar el proyecto y los productos o entregables previstos, vinculados a sus objetivos específicos. El detalle de indicadores, metas y evidencias se completará en la fase de proyecto completo."
-              : "This section presents the expected outcomes at project end and planned outputs or deliverables, linked to their specific objectives. Detailed indicators, targets and evidence will be completed in the full proposal phase."
-            : f.key === "results" && usesStageSpecificResults(presentation)
+              ? "Los indicadores propuestos se vinculan con actividades o resultados ya registrados y con sus objetivos específicos. Las estrategias describen cómo se observará el avance o el éxito; las metas y el método detallado se completarán en el proyecto completo."
+              : "Proposed indicators are linked to existing activities or outcomes and their specific objectives. Strategies describe how progress or success will be observed; targets and detailed measurement methods will be completed in the full proposal."
+            : f.key === "results" && !detailedResults
               ? es
-                ? "Se presentan los resultados esperados y sus indicadores de impacto, metas propuestas y evidencias para comprobar su cumplimiento en el proyecto completo."
-                : "This section presents expected outcomes and their impact indicators, proposed targets and evidence for verifying achievement in the full proposal."
-              : f.key === "alignment" &&
-                  c.strategic_alignment &&
-                  !requiresObjectiveContribution(c.strategic_alignment.version)
+                ? "Se presentan los resultados que se espera conseguir al finalizar el proyecto y los productos o entregables previstos, vinculados a sus objetivos específicos. El detalle de indicadores, metas y evidencias se completará en la fase de proyecto completo."
+                : "This section presents the expected outcomes at project end and planned outputs or deliverables, linked to their specific objectives. Detailed indicators, targets and evidence will be completed in the full proposal phase."
+              : f.key === "results" && usesStageSpecificResults(presentation)
                 ? es
-                  ? "La alineación relaciona el objetivo general con el Plan Galápagos 2030 y los Objetivos de Desarrollo Sostenible (ODS). También presenta los otros instrumentos de planificación que el postulante haya añadido."
-                  : "Alignment connects the general objective with the Galapagos 2030 Plan and the Sustainable Development Goals (SDGs). It also presents any other planning instruments added by the applicant."
-                : introductions[f.key]?.[es ? 0 : 1] || "",
+                  ? "Se presentan los resultados esperados y sus indicadores de impacto, metas propuestas y evidencias para comprobar su cumplimiento en el proyecto completo."
+                  : "This section presents expected outcomes and their impact indicators, proposed targets and evidence for verifying achievement in the full proposal."
+                : f.key === "alignment" &&
+                    c.strategic_alignment &&
+                    !requiresObjectiveContribution(
+                      c.strategic_alignment.version,
+                    )
+                  ? es
+                    ? "La alineación relaciona el objetivo general con el Plan Galápagos 2030 y los Objetivos de Desarrollo Sostenible (ODS). También presenta los otros instrumentos de planificación que el postulante haya añadido."
+                    : "Alignment connects the general objective with the Galapagos 2030 Plan and the Sustainable Development Goals (SDGs). It also presents any other planning instruments added by the applicant."
+                  : introductions[f.key]?.[es ? 0 : 1] || "",
       blocks,
     });
   }
-  return sections;
+  return usesStructuredSustainability(presentation)
+    ? [
+        ...sections.filter((s) => s.id !== "sustainability"),
+        ...sections.filter((s) => s.id === "sustainability"),
+      ]
+    : sections;
 }

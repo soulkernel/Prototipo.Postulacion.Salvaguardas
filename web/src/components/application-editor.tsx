@@ -2,6 +2,8 @@
 import { narrativeTextForEditing } from "@/lib/concept-presentation";
 import { ConceptReview } from "./concept-review";
 import { MonitoringFields } from "./monitoring-fields";
+import { SustainabilityFields } from "./sustainability-fields";
+import { sustainabilityObjectiveIds } from "@/lib/sustainability-plan";
 import { monitoredObjectiveIds } from "@/lib/monitoring-plan";
 import { ApplicationTopicSelect } from "./application-topic-select";
 import { applicationTopicMessage } from "@/lib/call-themes";
@@ -143,6 +145,14 @@ const levels = {
   },
 };
 function message(code: string, es: boolean) {
+  if (code.includes("GLF_INVALID_SUSTAINABILITY"))
+    return es
+      ? "Revise la estructura de las fichas de sostenibilidad y replicabilidad antes de guardar."
+      : "Review the sustainability and replication cards before saving.";
+  if (code.includes("GLF_REQUIRED:sustainability"))
+    return es
+      ? "Complete los registros asociados, la estrategia, el actor previsto y la respuesta sobre ampliación o réplica. Revise los vínculos pendientes de cada ficha de sostenibilidad."
+      : "Complete the associated records, strategy, expected actor and scaling up or replication response. Review pending links in each sustainability card.";
   if (code.includes("GLF_INVALID_MONITORING"))
     return es
       ? "Revise las fichas de seguimiento y evaluación antes de volver a guardar."
@@ -1130,7 +1140,7 @@ export function ApplicationEditor({
         locale={locale}
         onChange={setPayload}
       />
-    ) : ["social_risks", "monitoring"].includes(
+    ) : ["social_risks", "monitoring", "sustainability"].includes(
         field.key,
       ) ? null : field.key === "summary" ? (
       <SummaryFields
@@ -1168,6 +1178,7 @@ export function ApplicationEditor({
     ) : field.key === "objectives" ? (
       <StrategicFields
         monitoredObjectives={monitoredObjectiveIds(payload)}
+        sustainabilityObjectives={sustainabilityObjectiveIds(payload)}
         key={field.key}
         value={payload.concept.strategic_alignment}
         legacy={payload.concept.objectives + "\n" + payload.concept.alignment}
@@ -1222,6 +1233,7 @@ export function ApplicationEditor({
         legacy={payload.concept.results_source ?? payload.concept.results}
         objectives={payload.concept.strategic_alignment?.objectives || []}
         monitoring={payload.concept.monitoring_plan}
+        sustainability={payload.concept.sustainability_plan}
         onLegacyChange={(text) =>
           setPayload((p) =>
             p.concept.project_results === undefined
@@ -2249,6 +2261,14 @@ export function ApplicationEditor({
               )}
               {step === 1 && (
                 <MonitoringFields
+                  payload={payload}
+                  locale={locale}
+                  checked={checkedStep === 1}
+                  onChange={(concept) => setPayload((p) => ({ ...p, concept }))}
+                />
+              )}
+              {step === 1 && (
+                <SustainabilityFields
                   payload={payload}
                   locale={locale}
                   checked={checkedStep === 1}

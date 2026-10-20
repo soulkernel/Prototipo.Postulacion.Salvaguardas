@@ -4,6 +4,7 @@ import { conceptSections } from "@/lib/concept-presentation";
 import {
   currentConceptLayout,
   usesStructuredMonitoring,
+  usesStructuredSustainability,
   type ConceptPresentation,
 } from "@/lib/concept-layout";
 
@@ -29,11 +30,15 @@ export function ConceptReview({
     presentation,
     activities,
   );
-  const afterActivities =
-    includeActivities &&
-    usesStructuredMonitoring(
-      presentation || { stage: 1, layoutVersion: currentConceptLayout },
-    );
+  const view = presentation || {
+    stage: 1,
+    layoutVersion: currentConceptLayout,
+  };
+  const afterActivities = includeActivities && usesStructuredMonitoring(view);
+  const deferred = (section: (typeof sections)[number]) =>
+    afterActivities &&
+    (section.id === "monitoring" ||
+      (section.id === "sustainability" && usesStructuredSustainability(view)));
   const renderSections = (items: typeof sections) =>
     items.map((section) => (
       <section
@@ -86,11 +91,7 @@ export function ConceptReview({
     ));
   return (
     <div className="concept-review">
-      {renderSections(
-        afterActivities
-          ? sections.filter((s) => s.id !== "monitoring")
-          : sections,
-      )}
+      {renderSections(sections.filter((section) => !deferred(section)))}
       {includeActivities && (
         <ActivityReview
           activities={activities}
@@ -98,8 +99,7 @@ export function ConceptReview({
           locale={locale}
         />
       )}
-      {afterActivities &&
-        renderSections(sections.filter((s) => s.id === "monitoring"))}
+      {afterActivities && renderSections(sections.filter(deferred))}
     </div>
   );
 }

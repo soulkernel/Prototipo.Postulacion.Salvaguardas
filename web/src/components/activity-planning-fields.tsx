@@ -13,6 +13,7 @@ import type { Payload, Locale } from "@/lib/domain";
 import { newActivity } from "@/lib/domain";
 import { RequiredMark } from "./required-mark";
 import { linkedMonitoringCount } from "@/lib/monitoring-plan";
+import { linkedSustainabilityCount } from "@/lib/sustainability-plan";
 export function ActivityPlanningFields({
   payload,
   locale,
@@ -68,6 +69,11 @@ export function ActivityPlanningFields({
                     ? es
                       ? " Las fichas de seguimiento vinculadas se conservarán y requerirán revisar su referencia."
                       : " Linked monitoring cards will be kept and their reference will need to be reviewed."
+                    : "") +
+                  (linkedSustainabilityCount(payload, "activity", activity.id)
+                    ? es
+                      ? " Las estrategias de sostenibilidad relacionadas se conservarán y requerirán revisar su asociación."
+                      : " Related sustainability strategies will be kept and their association will need review."
                     : "")
                 }
                 disabled={activity.risks.length > 0}

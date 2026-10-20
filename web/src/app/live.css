@@ -1461,6 +1461,43 @@ input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="
 }
 
 .project-location-fields { display: grid; gap: 24px; margin-top: 24px; }
+.sustainability-fields { display: grid; gap: 12px; min-width: 0; }
+.sustainability-section-heading, .sustainability-card-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; }
+.sustainability-section-heading h2, .sustainability-card-heading h3 { margin: 0; overflow-wrap: anywhere; }
+.sustainability-section-heading > span { color: #526673; font-size: 13px; white-space: nowrap; }
+.sustainability-fields > .field-help { margin: 0; font-size: 14px; line-height: 1.55; }
+.sustainability-fields small.field-help { font-size: 12px; line-height: 1.5; }
+.sustainability-fields > label, .sustainability-reference-field > label { display: block; }
+.sustainability-card { padding: 16px; border: 1px solid #b9d7d7; border-left: 4px solid #087780; border-radius: 10px; background: #f0f8f7; min-width: 0; }
+.sustainability-card-heading { margin-bottom: 12px; align-items: flex-start; }
+.sustainability-card-heading h3 { font-size: 17px; line-height: 1.45; padding-top: 8px; }
+.sustainability-card-actions { display: flex; align-items: center; flex: 0 0 auto; gap: 8px; }
+.sustainability-card-actions .button { margin: 0; }
+.sustainability-fold { display: inline-flex; align-items: center; gap: 5px; padding: 8px 10px; font-size: 13px; }
+.sustainability-card-summary { margin: 0; font-size: 13px; color: #36535a; overflow-wrap: anywhere; }
+.sustainability-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 18px; min-width: 0; }
+.sustainability-grid[hidden] { display: none; }
+.sustainability-grid > *, .sustainability-grid label { min-width: 0; }
+.sustainability-grid label { gap: 6px; align-content: start; align-self: start; }
+.sustainability-grid textarea { min-height: 92px; }
+.sustainability-wide { grid-column: 1 / -1; }
+.sustainability-reference-field { display: grid; gap: 6px; }
+.sustainability-fields .sustainability-selected-records { list-style: none; margin: 2px 0; padding: 0; display: grid; gap: 6px; }
+.sustainability-selected-records .check-row { font-weight: 400; gap: 8px; }
+.sustainability-selected-records span { overflow-wrap: anywhere; min-width: 0; }
+.sustainability-pending { color: #a3332b; font-size: 13px; }
+.sustainability-fields .sustainability-objectives, .sustainability-fields .sustainability-indicator { padding: 6px 0; }
+.sustainability-objectives summary, .sustainability-indicator summary { font-size: 13px; color: #075d66; }
+.sustainability-objectives ul { margin: 6px 0; padding-left: 20px; }
+.sustainability-indicator label { margin-top: 8px; }
+@media(max-width: 760px) {
+  .sustainability-grid { grid-template-columns: minmax(0, 1fr); }
+  .sustainability-card { padding: 14px; }
+  .sustainability-card-heading { flex-wrap: wrap; }
+  .sustainability-card-heading h3 { flex: 1 1 160px; }
+  .sustainability-card-actions { margin-left: auto; }
+  .sustainability-section-heading { flex-wrap: wrap; gap: 4px; }
+}
 .project-location-field { display: grid; gap: 8px; min-width: 0; }
 .live-form .project-location-field > label { display: block; margin: 0; }
 .live-form .project-location-field > small { margin: 0; font-size: 12px; font-weight: 400; line-height: 1.5; }

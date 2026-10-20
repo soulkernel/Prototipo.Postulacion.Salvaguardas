@@ -120,6 +120,7 @@ function fixture() {
     phone: "+593991234567",
     summary: "Resumen",
     monitoring: "Seguimiento narrativo ficticio",
+    sustainability: "Sostenibilidad narrativa ficticia",
     partner_organizations: [{ id: partnerId, name: "Socio A", support: "Apoyo técnico ficticio" }],
     associated_organizations: ["Socio A"],
     partners: "1. Socio A",
@@ -350,6 +351,16 @@ test("M05 actual submit action blocks missing or unreadable individual letter be
   assert.equal(result.ok, false);
   assert.equal(result.error, "GLF_REQUIRED:partners");
   assert.equal(s.submitCount, 2);
+});
+
+test("Sustainability actual actions preserve historical text and reject incomplete associations before completion RPC", async()=>{
+ const state=fixture(),p=state.app.payload,oid=crypto.randomUUID();state.app.stage=1;
+ p.concept.strategic_alignment={version:"pg2030-ods-general-v3",objectives:[{id:crypto.randomUUID(),kind:"general",text:"Propósito",plan:["E1"],ods:[14],glf:[]},{id:oid,kind:"specific",text:"Objetivo medible",plan:[],ods:[],glf:[]}]};p.activities[0].objective_ids=[oid];
+ p.concept.sustainability="Narrativa histórica QA";p.concept.sustainability_plan=[{id:crypto.randomUUID(),references:[{type:"activity",id:p.activities[0].id}],strategy:"Continuidad local",actor_type:"undecided",actor_id:"",actor_name:"",replication:"none",replication_details:"No prevista en esta fase",monitoring_id:""}];
+ assert.equal((await api.saveDraft(appId,0,p)).ok,true);assert.deepEqual(state.savedPayload.concept.sustainability_plan,p.concept.sustainability_plan);assert.equal(state.savedPayload.concept.sustainability,"Narrativa histórica QA");
+ p.concept.sustainability="";assert.equal((await api.saveDraft(appId,0,p)).ok,true);assert.ok((await api.prepareDocuments(appId,0)).id);
+ p.concept.sustainability_plan[0].references[0].id=crypto.randomUUID();assert.equal((await api.saveDraft(appId,0,p)).ok,true);assert.deepEqual(await api.prepareDocuments(appId,0),{error:"GLF_REQUIRED:sustainability_1"});assert.deepEqual(await api.submitDraft(appId,0),{ok:false,error:"GLF_REQUIRED:sustainability_1"});
+ p.concept.sustainability_plan[0].unknown=true;assert.deepEqual(await api.saveDraft(appId,0,p),{ok:false,error:"GLF_INVALID_PAYLOAD"});
 });
 
 test("M07 actual server actions block missing catalogues and foreign or historical topics before preparation/submission RPC", async () => {

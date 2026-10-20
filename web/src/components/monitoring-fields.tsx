@@ -13,6 +13,7 @@ import { NarrativeTextarea } from "./narrative-textarea";
 import { RequiredMark } from "./required-mark";
 import { ConfirmRemoveButton } from "./confirm-remove-button";
 import { ProposalFieldGuidance } from "./proposal-field-guidance";
+import { linkedSustainabilityCount } from "@/lib/sustainability-plan";
 
 export function MonitoringFields({
   payload,
@@ -122,9 +123,18 @@ export function MonitoringFields({
                       locale={locale}
                       element={`${es ? "Indicador" : "Indicator"} ${i + 1}: ${item.indicator || "—"}`}
                       consequence={
-                        es
+                        (es
                           ? "Se eliminarán este indicador, su estrategia de seguimiento y su vínculo. La actividad, el resultado y los objetivos asociados se conservarán."
-                          : "This indicator, its monitoring strategy and its link will be removed. The activity, result and associated objectives will be kept."
+                          : "This indicator, its monitoring strategy and its link will be removed. The activity, result and associated objectives will be kept.") +
+                        (linkedSustainabilityCount(
+                          payload,
+                          "monitoring",
+                          item.id,
+                        )
+                          ? es
+                            ? " Las estrategias de sostenibilidad relacionadas se conservarán; deberá revisar su vínculo opcional con este indicador."
+                            : " Related sustainability strategies will be kept; review their optional link to this indicator."
+                          : "")
                       }
                       aria-label={`${es ? "Eliminar indicador" : "Delete indicator"} ${i + 1}`}
                       onConfirm={() => {

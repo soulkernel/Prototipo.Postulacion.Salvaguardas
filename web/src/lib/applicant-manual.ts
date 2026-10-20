@@ -794,6 +794,67 @@ export const manualChapters: ManualChapter[] = [
     ],
   },
   {
+    id: "sostenibilidad",
+    title: [
+      "Sostenibilidad y replicabilidad",
+      "Sustainability and replication",
+    ],
+    intro: [
+      "Después de Seguimiento y evaluación, registre estrategias breves para dar continuidad al trabajo o sus beneficios. Cada ficha numerada puede asociarse a varios resultados o actividades.",
+      "After Monitoring and evaluation, enter brief strategies for continuity of the work or its benefits. Each numbered card can link to several outcomes or activities.",
+    ],
+    steps: [
+      [
+        "Seleccione los registros existentes a los que aplica la estrategia. Consulte sus objetivos asociados sin volver a escribirlos.",
+        "Select the existing records to which the strategy applies. View their associated objectives without entering them again.",
+      ],
+      [
+        "Explique cómo se mantendrán los beneficios, el actor previsto y las condiciones de ampliación o réplica. Puede indicar No prevista o Por definir, explicando el motivo.",
+        "Explain how benefits will be sustained, the expected actor and conditions for scaling up or replication. You may select Not planned or To be defined and explain why.",
+      ],
+      [
+        "Puede vincular un indicador ya registrado, si corresponde. Las fichas completas se pueden plegar; la papelera siempre solicita confirmación.",
+        "You may link an existing indicator where appropriate. Complete cards can be collapsed; deletion always requires confirmation.",
+      ],
+    ],
+    rows: [
+      [
+        "Actor previsto",
+        "Proponente, organización asociada, otro actor con nombre o Por definir en el proyecto completo. No implica un compromiso confirmado.",
+        "Expected actor",
+        "Applicant, partner organization, another named actor or To be defined in the full proposal. This does not imply a confirmed commitment.",
+      ],
+      [
+        "Asociaciones",
+        "Los nombres se actualizan desde los registros originales. Si se elimina un referente, la estrategia se conserva y pide revisar el vínculo.",
+        "Links",
+        "Names update from their original records. If a referenced record is removed, the strategy is kept and its link needs review.",
+      ],
+      [
+        "Borradores anteriores",
+        "El texto previo permanece editable. Organizarlo en fichas es opcional y conserva el original sin conversión automática.",
+        "Older drafts",
+        "Existing text remains editable. Organizing it into cards is optional and preserves the original without automatic conversion.",
+      ],
+    ],
+    tip: [
+      "No necesita una ficha por cada resultado. Una estrategia puede cubrir varios registros. Los borradores incompletos se guardan; complete las fichas y revise sus vínculos antes de enviar.",
+      "One card per outcome is not required. One strategy can cover several records. Incomplete drafts can be saved; complete the cards and review their links before submission.",
+    ],
+    screen: [
+      [
+        "Estrategia de sostenibilidad 1 | Plegar | Papelera",
+        "Sustainability strategy 1 | Collapse | Trash",
+      ],
+      [
+        "Registros asociados → Estrategia → Actor y réplica → Condiciones",
+        "Linked records → Strategy → Actor and replication → Conditions",
+      ],
+      ["Vincular indicador (opcional)", "Link indicator (optional)"],
+      ["+ Agregar otra estrategia", "+ Add another strategy"],
+    ],
+  },
+  {
     id: "screening",
     title: ["Paso 3 · Evaluar riesgos A&S", "Step 3 · Assess E&S risks"],
     intro: [

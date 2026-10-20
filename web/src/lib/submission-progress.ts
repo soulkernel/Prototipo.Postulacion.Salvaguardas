@@ -48,6 +48,8 @@ export function submissionProgress(
       copy.concept.results = "structured";
     if (copy.concept.monitoring_plan !== undefined)
       copy.concept.monitoring = "structured";
+    if (copy.concept.sustainability_plan !== undefined)
+      copy.concept.sustainability = "structured";
     if (copy.concept.associated_organizations !== undefined)
       copy.concept.partners = "";
     if (copy.concept.risk_register !== undefined) {

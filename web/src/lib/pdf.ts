@@ -4,6 +4,7 @@ import {
   currentConceptLayout,
   usesCurrentGlfForm,
   usesStructuredMonitoring,
+  usesStructuredSustainability,
 } from "./concept-layout";
 import { budgetText } from "./budget";
 import { submissionNotice } from "./grant-rules";
@@ -357,6 +358,11 @@ export async function applicationPdf({
       payload.activities,
     );
     const afterActivities = usesStructuredMonitoring(presentation);
+    const deferred = (section: (typeof sections)[number]) =>
+      afterActivities &&
+      (section.id === "monitoring" ||
+        (section.id === "sustainability" &&
+          usesStructuredSustainability(presentation)));
     const renderSection = (section: (typeof sections)[number]) => {
       // Keep the section explanation with the start of its content. Reserve
       // only a few table lines, rather than moving an entire long table.
@@ -395,8 +401,11 @@ export async function applicationPdf({
         const next = section.blocks[blockIndex + 1];
         if (
           afterActivities &&
-          payload.concept.monitoring_plan !== undefined &&
-          section.id === "monitoring" &&
+          ((payload.concept.monitoring_plan !== undefined &&
+            section.id === "monitoring") ||
+            (usesStructuredSustainability(presentation) &&
+              payload.concept.sustainability_plan !== undefined &&
+              section.id === "sustainability")) &&
           block.type === "paragraph" &&
           next?.type === "table"
         ) {
@@ -436,9 +445,7 @@ export async function applicationPdf({
         }
       }
     };
-    sections
-      .filter((section) => !afterActivities || section.id !== "monitoring")
-      .forEach(renderSection);
+    sections.filter((section) => !deferred(section)).forEach(renderSection);
     draw(es ? "3. ACTIVIDADES" : "3. ACTIVITIES", true);
     payload.activities.forEach((a, i) => {
       // Keep the activity introduction with its preliminary calendar in new documents.
@@ -486,10 +493,7 @@ export async function applicationPdf({
           a.no_risks_reason,
         );
     });
-    if (afterActivities)
-      sections
-        .filter((section) => section.id === "monitoring")
-        .forEach(renderSection);
+    if (afterActivities) sections.filter(deferred).forEach(renderSection);
     if (stage === 2 && Object.keys(payload.phase2 || {}).length) {
       draw(
         es ? "APARTADOS DE PROYECTO COMPLETO" : "FULL PROPOSAL SECTIONS",

@@ -24,6 +24,7 @@ import { unzipSync, strFromU8 } from "fflate";
 import { manualChapters } from "../src/lib/applicant-manual";
 import { newProjectResult, resultText } from "../src/lib/project-results";
 import { newMonitoringItem } from "../src/lib/monitoring-plan";
+import { newSustainabilityItem } from "../src/lib/sustainability-plan";
 import {
   currentAlignmentVersion,
   newObjective,
@@ -103,6 +104,17 @@ test("concept note reaches 100% with objective and outcome only, without silentl
     objectives: [general, specific],
   };
   p.activities[0].objective_ids = [specific.id];
+  p.concept.sustainability = "";
+  p.concept.sustainability_plan = [
+    {
+      ...newSustainabilityItem(),
+      references: [{ type: "activity", id: p.activities[0].id }],
+      strategy: "Continuidad mediante capacidades locales",
+      actor_type: "undecided",
+      replication: "none",
+      replication_details: "Sin ampliación prevista en esta etapa",
+    },
+  ];
   p.concept.project_results = [
     {
       ...newProjectResult(),

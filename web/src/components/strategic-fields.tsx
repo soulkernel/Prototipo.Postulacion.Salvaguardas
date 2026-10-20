@@ -24,12 +24,14 @@ export function StrategicFields({
   locale,
   onChange,
   monitoredObjectives = [],
+  sustainabilityObjectives = [],
 }: {
   value: StrategicAlignment | undefined;
   legacy: string;
   locale: "es" | "en";
   onChange: (value: StrategicAlignment) => void;
   monitoredObjectives?: string[];
+  sustainabilityObjectives?: string[];
 }) {
   const es = locale === "es";
   const update = (id: string, patch: Partial<ProjectObjective>) =>
@@ -221,6 +223,11 @@ export function StrategicFields({
                       ? es
                         ? " Las fichas de seguimiento relacionadas se conservarán y requerirán revisar los objetivos de sus referencias."
                         : " Related monitoring cards will be kept and the objectives of their references will need review."
+                      : "") +
+                    (sustainabilityObjectives.includes(o.id)
+                      ? es
+                        ? " Las estrategias de sostenibilidad relacionadas se conservarán; deberá revisar los objetivos de sus registros asociados."
+                        : " Related sustainability strategies will be kept; review the objectives of their associated records."
                       : "")
                   }
                   onConfirm={() =>
