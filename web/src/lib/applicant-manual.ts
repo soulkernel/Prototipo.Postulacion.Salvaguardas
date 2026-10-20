@@ -345,8 +345,8 @@ export const manualChapters: ManualChapter[] = [
     ],
     screen: [
       [
-        "1 Datos → 2 Nota conceptual → 3 Screening → 4 Revisar y enviar",
-        "1 Details → 2 Concept note → 3 Screening → 4 Review and submit",
+        "1 Información general → 2 Descripción del proyecto → 3 Examen Ambiental y Social inicial → 4 Revisar y enviar",
+        "1 General information → 2 Project description → 3 Initial environmental and social screening → 4 Review and submit",
       ],
       ["Título del proyecto *", "Project title *"],
       ["Contacto · teléfono · ubicación *", "Contact · phone · location *"],
@@ -409,7 +409,10 @@ export const manualChapters: ManualChapter[] = [
   },
   {
     id: "descripcion",
-    title: ["Paso 2 · Explicar la propuesta", "Step 2 · Describe the proposal"],
+    title: [
+      "Paso 2 · Descripción del proyecto",
+      "Step 2 · Project description",
+    ],
     intro: [
       "Escriba de forma concreta y comprensible. El resumen del proyecto se redacta en una sola caja, con párrafos si los necesita. Su contador muestra el límite total de palabras establecido para la convocatoria.",
       "Write clearly and concisely. Write the project summary in a single box, using paragraphs if needed. Its counter shows the total word limit set for the call.",
@@ -418,6 +421,10 @@ export const manualChapters: ManualChapter[] = [
       [
         "Integre en el resumen el contexto, el problema, las amenazas, la justificación, la solución propuesta y los resultados esperados. Si supera el límite, puede guardar el borrador, pero debe reducir el texto antes de continuar.",
         "Include the context, problem, threats, rationale, proposed solution and expected results in the summary. If you exceed the limit, you can save the draft, but must shorten the text before continuing.",
+      ],
+      [
+        "Si hay solapamiento o duplicación con actividades de un proyecto anterior o en curso financiado por el Fondo u otro donante, explique por qué esta propuesta es diferente y/o necesaria; de lo contrario, será automáticamente rechazada. Indique también si forma parte de una propuesta coordinada a varios donantes simultáneamente.",
+        "If activities overlap with or duplicate a previous or ongoing project funded by the Fund or another donor, explain why this proposal is different and/or necessary; otherwise, it will be automatically rejected. Also state whether it is part of a coordinated proposal submitted to several donors simultaneously.",
       ],
       [
         "Complete beneficiarios, sostenibilidad y seguimiento, y registre las organizaciones asociadas si las hay.",
@@ -728,7 +735,7 @@ export const manualChapters: ManualChapter[] = [
     rows: [
       [
         "Actividad y objetivos asociados",
-        "Se muestran desde la nota conceptual. Use Editar actividad y objetivos en Nota conceptual para corregirlos allí.",
+        "Se muestran desde la nota conceptual. Use Editar actividad y objetivos en Descripción del proyecto para corregirlos allí.",
         "Activity and associated objectives",
         "Displayed from the concept note. Use Edit activity and objectives in project description to correct them there.",
       ],

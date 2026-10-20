@@ -1610,13 +1610,15 @@ export function ApplicationEditor({
         {(es
           ? [
               "Información general",
-              application.stage === 1 ? "Nota Conceptual" : "Proyecto completo",
+              application.stage === 1
+                ? "Descripción del proyecto"
+                : "Proyecto completo",
               "Examen Ambiental y Social inicial",
               "Revisar y enviar",
             ]
           : [
               "General information",
-              application.stage === 1 ? "Concept Note" : "Full proposal",
+              application.stage === 1 ? "Project description" : "Full proposal",
               "Initial environmental and social screening",
               "Review and submit",
             ]
@@ -1798,20 +1800,20 @@ export function ApplicationEditor({
         <div className="live-card">
           {step <= 1 && (
             <div className="live-form">
-              <h2>
-                {step === 0
-                  ? es
-                    ? "Información general y financiamiento"
-                    : "Project details and funding"
-                  : es
-                    ? "Descripción del proyecto"
-                    : "Project narrative"}
-              </h2>
-              <p>
-                {es
-                  ? "Guarde su borrador para retomarlo desde su cuenta. Complete todos los apartados aplicables antes de enviar."
-                  : "Save your draft to resume it from your account. Complete all applicable sections before submitting."}
-              </p>
+              {step === 0 && (
+                <>
+                  <h2>
+                    {es
+                      ? "Información general y financiamiento"
+                      : "Project details and funding"}
+                  </h2>
+                  <p>
+                    {es
+                      ? "Guarde su borrador para retomarlo desde su cuenta. Complete todos los apartados aplicables antes de enviar."
+                      : "Save your draft to resume it from your account. Complete all applicable sections before submitting."}
+                  </p>
+                </>
+              )}
               {step === 0 && (
                 <div className="live-grid applicant-category-fields">
                   <label>
@@ -2281,7 +2283,7 @@ export function ApplicationEditor({
                     }}
                   >
                     {es
-                      ? "Editar actividad y objetivos en Nota conceptual"
+                      ? "Editar actividad y objetivos en Descripción del proyecto"
                       : "Edit activity and objectives in project description"}
                   </button>
                   {activity.risks.length === 0 && (
@@ -2769,7 +2771,7 @@ export function ApplicationEditor({
                 }}
               >
                 {es
-                  ? "Editar o agregar actividades en Nota conceptual"
+                  ? "Editar o agregar actividades en Descripción del proyecto"
                   : "Edit or add activities in project description"}
               </button>
               <div className="live-notice">
@@ -2897,7 +2899,9 @@ export function ApplicationEditor({
                       {
                         [
                           es ? "Información general" : "General information",
-                          es ? "Nota conceptual" : "Concept note",
+                          es
+                            ? "Descripción del proyecto"
+                            : "Project description",
                           es ? "Actividades y riesgos" : "Activities and risks",
                           es ? "Declaraciones" : "Declarations",
                         ][issue.step]
