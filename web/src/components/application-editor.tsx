@@ -76,6 +76,7 @@ import { useRouter } from "next/navigation";
 import { Plus, Save, Send, ShieldCheck, LockKeyhole } from "lucide-react";
 import {
   saveDraft,
+  removePartner,
   submitDraft,
   prepareDocuments,
 } from "@/app/applicant/actions";
@@ -118,6 +119,7 @@ type DocumentRow = {
   file_name: string;
   kind: string;
   created_at: string;
+  protected?: boolean;
 };
 const levels = {
   es: {
@@ -291,6 +293,8 @@ export function ApplicationEditor({
   documents: initialDocuments,
   initialPrepared = null,
   saveAction = saveDraft,
+  removePartnerAction = removePartner,
+  initialPendingPartner = null,
 }: {
   application: Application;
   call: Call;
@@ -304,6 +308,8 @@ export function ApplicationEditor({
   documents: DocumentRow[];
   initialPrepared?: { id: string; revision: number; created_at: string } | null;
   saveAction?: typeof saveDraft;
+  removePartnerAction?: typeof removePartner;
+  initialPendingPartner?: string | null;
 }) {
   const es = locale === "es";
   const router = useRouter();
@@ -359,9 +365,11 @@ export function ApplicationEditor({
   const [lastSaved, setLastSaved] = useState(application.updated_at);
   const [step, setStep] = useState(editable || academicReadOnly ? 0 : 3);
   const [busy, setBusy] = useState(false);
+  const [pendingPartner, setPendingPartner] = useState(initialPendingPartner);
+  const removalFlight = useRef(false);
   const [budgetUiValid, setBudgetUiValid] = useState(true);
   const [operation, setOperation] = useState<
-    "save" | "submit" | "upload" | "prepare"
+    "save" | "submit" | "upload" | "prepare" | "remove-partner"
   >("save");
   const [feedback, setFeedback] = useState("");
   const [error, setError] = useState("");
@@ -422,7 +430,15 @@ export function ApplicationEditor({
       ),
     );
   useEffect(() => {
-    if (!editable || !dirty || !moneyUiValid || busy || autoSaving || autoError)
+    if (
+      !editable ||
+      !dirty ||
+      !moneyUiValid ||
+      busy ||
+      autoSaving ||
+      autoError ||
+      pendingPartner
+    )
       return;
     const timer = setTimeout(() => {
       const snapshot = payload,
@@ -464,7 +480,76 @@ export function ApplicationEditor({
     editable,
     application.id,
     saveAction,
+    pendingPartner,
   ]);
+  async function removePartnerRow(partnerId: string) {
+    if ((!editable && !pendingPartner) || removalFlight.current) return;
+    if (!pendingPartner && (!checkMoneyEntries() || !budgetUiValid))
+      throw new Error(moneyActionError);
+    removalFlight.current = true;
+    setOperation("remove-partner");
+    setBusy(true);
+    setError("");
+    setFeedback("");
+    try {
+      if (autoFlight.current) await autoFlight.current;
+      if (!pendingPartner && dirty) {
+        const savedResult = await saveAction(
+          application.id,
+          revisionRef.current,
+          payload,
+        );
+        if (!savedResult.ok) throw new Error(message(savedResult.error, es));
+        revisionRef.current = savedResult.revision;
+        setRevision(savedResult.revision);
+        setSaved(JSON.stringify(payload));
+        setAutoError("");
+      }
+      setPendingPartner(partnerId);
+      const result = await removePartnerAction(
+        application.id,
+        revisionRef.current,
+        partnerId,
+      );
+      if (!result.ok) {
+        if (!result.pending) setPendingPartner(null);
+        throw new Error(
+          result.pending
+            ? es
+              ? "La eliminación está pendiente. Reinténtela para completar el retiro de la organización y su carta."
+              : "Deletion is pending. Retry to finish removing the organization and its letter."
+            : message(result.error, es),
+        );
+      }
+      revisionRef.current = result.revision;
+      setRevision(result.revision);
+      setPayload(result.payload);
+      setSaved(JSON.stringify(result.payload));
+      setDocuments((rows) =>
+        rows.filter(
+          (d) =>
+            d.protected ||
+            d.kind !==
+              partnerLetterPrefix + partnerId.replaceAll("-", "").toLowerCase(),
+        ),
+      );
+      setPendingPartner(null);
+      setAutoError("");
+      setLastSaved(new Date().toISOString());
+    } catch (cause) {
+      const explanation =
+        cause instanceof Error
+          ? cause.message
+          : es
+            ? "No se pudo completar la eliminación. Reinténtela."
+            : "Deletion could not be completed. Please retry.";
+      setError(explanation);
+      throw new Error(explanation);
+    } finally {
+      removalFlight.current = false;
+      setBusy(false);
+    }
+  }
   useEffect(() => {
     if (!dirty) return;
     const warn = (e: BeforeUnloadEvent) => {
@@ -609,6 +694,14 @@ export function ApplicationEditor({
   );
   async function persist(submit = false) {
     if (busy || !editable) return;
+    if (pendingPartner) {
+      setError(
+        es
+          ? "Complete la eliminación pendiente antes de guardar o enviar."
+          : "Complete the pending deletion before saving or submitting.",
+      );
+      return;
+    }
     if (!checkMoneyEntries()) return;
     if (!budgetUiValid) {
       setError(
@@ -1104,6 +1197,8 @@ export function ApplicationEditor({
         concept={payload.concept}
         locale={locale}
         invalid={fieldIssue("partners")}
+        documents={documents}
+        onRemove={removePartnerRow}
         onChange={(rows) =>
           setPayload((p) => ({
             ...p,
@@ -1668,7 +1763,35 @@ export function ApplicationEditor({
             : "This draft is pending deletion. Complete deletion from My applications."}
         </p>
       )}
-      <fieldset disabled={!editable || busy} className="live-fieldset">
+      {pendingPartner && (
+        <aside className="live-notice" role="alert">
+          <p>
+            {es
+              ? "Hay una eliminación de organización pendiente. Complétela antes de seguir editando."
+              : "A partner organization deletion is pending. Complete it before continuing to edit."}
+          </p>
+          <button
+            type="button"
+            className="button danger"
+            disabled={busy}
+            aria-busy={busy && operation === "remove-partner"}
+            onClick={() => {
+              void removePartnerRow(pendingPartner).catch(() => {});
+            }}
+          >
+            <ActionLabel
+              busy={busy && operation === "remove-partner"}
+              pendingLabel={es ? "Eliminando…" : "Deleting…"}
+            >
+              {es ? "Reintentar eliminación" : "Retry deletion"}
+            </ActionLabel>
+          </button>
+        </aside>
+      )}
+      <fieldset
+        disabled={!editable || busy || !!pendingPartner}
+        className="live-fieldset"
+      >
         <div className="live-card">
           {step <= 1 && (
             <div className="live-form">

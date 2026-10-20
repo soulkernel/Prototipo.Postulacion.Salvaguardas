@@ -371,9 +371,12 @@ export function conceptSections(
           es
             ? [
                 "Organización asociada",
-                "Apoyo en la implementación del proyecto",
+                "Descripción del apoyo en la implementación del proyecto",
               ]
-            : ["Partner organization", "Support in project implementation"],
+            : [
+                "Partner organization",
+                "Description of support in project implementation",
+              ],
           partners.map((p) => [
             p.name || "—",
             p.support?.trim() || (es ? "Pendiente de completar" : "Incomplete"),

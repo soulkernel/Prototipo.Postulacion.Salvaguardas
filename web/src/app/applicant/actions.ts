@@ -36,6 +36,10 @@ import {
   newObjective,
 } from "@/lib/strategic-alignment";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  removePartnerAndFiles,
+  type PartnerRemovalResult,
+} from "@/lib/partner-removal";
 async function validStoredPhone(db: SupabaseClient, id: string) {
   const { data, error } = await db
     .from("applications")
@@ -263,6 +267,23 @@ export async function deleteDraft(
   revalidatePath("/applicant/applications");
   revalidatePath("/applicant");
   return { ok: true };
+}
+export async function removePartner(
+  id: string,
+  revision: number,
+  partnerId: string,
+): Promise<PartnerRemovalResult> {
+  const { db } = await requireViewer(["applicant"]);
+  if (
+    !z.uuid().safeParse(id).success ||
+    !z.uuid().safeParse(partnerId).success ||
+    !Number.isSafeInteger(revision) ||
+    revision < 0
+  )
+    return { ok: false, error: "GLF_INVALID_PAYLOAD", pending: false };
+  const result = await removePartnerAndFiles(db, id, revision, partnerId);
+  if (result.ok) revalidatePath("/applicant/applications");
+  return result;
 }
 export async function prepareDocuments(
   id: string,

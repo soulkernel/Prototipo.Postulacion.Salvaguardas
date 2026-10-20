@@ -4,16 +4,21 @@ import { ConfirmRemoveButton } from "./confirm-remove-button";
 import { RequiredMark } from "./required-mark";
 import type { Concept, Locale } from "@/lib/domain";
 import { partnerRecords, type PartnerOrganization } from "@/lib/partners";
+import { partnerLetterKind } from "@/lib/attachment-requirements";
 export function PartnerFields({
   concept,
   locale,
   invalid,
   onChange,
+  documents,
+  onRemove,
 }: {
   concept: Concept;
   locale: Locale;
   invalid: boolean;
   onChange: (rows: PartnerOrganization[]) => void;
+  documents: { kind: string; file_name: string; protected?: boolean }[];
+  onRemove: (id: string) => Promise<void>;
 }) {
   const noticeId = useId(),
     es = locale === "es",
@@ -40,6 +45,12 @@ export function PartnerFields({
       </h3>
       {rows.map(({ id, name, support }, i) => {
         const prefix = `${noticeId}-partner-${i}`;
+        const letters = documents.filter(
+          (d) => d.kind === partnerLetterKind(id),
+        );
+        const removedFiles = letters
+          .filter((d) => !d.protected)
+          .map((d) => d.file_name);
         return (
           <section
             className="partner-support-card"
@@ -58,8 +69,8 @@ export function PartnerFields({
                 htmlFor={`${prefix}-support`}
               >
                 {es
-                  ? "Apoyo en la implementación del proyecto"
-                  : "Support in project implementation"}
+                  ? "Descripción del apoyo en la implementación del proyecto"
+                  : "Description of support in project implementation"}
                 <RequiredMark locale={locale} />
               </label>
               <ConfirmRemoveButton
@@ -68,13 +79,11 @@ export function PartnerFields({
                 element={`${es ? "Organización asociada" : "Partner organization"} ${i + 1}: ${name || "—"}`}
                 consequence={
                   es
-                    ? "Se eliminarán esta organización y la descripción de su apoyo; dejará de exigirse su carta de apoyo. Los archivos ya cargados se conservarán en el historial documental y no se asignarán a otra organización."
-                    : "This organization and its support description will be removed; its letter of support will no longer be required. Uploaded files will remain in the document history and will not be assigned to another organization."
+                    ? `Se eliminarán la información ingresada y la carta de apoyo vinculada a esta organización, si ya fue cargada en Anexos.${removedFiles.length ? ` Archivos: ${removedFiles.join("; ")}.` : ""}${letters.some((d) => d.protected) ? " Los documentos de versiones ya enviadas se conservarán." : ""}`
+                    : `The entered information and this organization's linked letter of support will be deleted, if already uploaded under Attachments.${removedFiles.length ? ` Files: ${removedFiles.join("; ")}.` : ""}${letters.some((d) => d.protected) ? " Documents belonging to previously submitted versions will be preserved." : ""}`
                 }
                 aria-label={`${es ? "Quitar organización asociada" : "Remove partner organization"} ${i + 1}`}
-                onConfirm={() =>
-                  onChange(rows.filter((_, index) => index !== i))
-                }
+                onConfirm={() => onRemove(id)}
               />
               <input
                 className="partner-name-input"

@@ -4,16 +4,17 @@ import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Trash2 } from "lucide-react";
 import { RemoveButton } from "./remove-button";
+import { ActionLabel } from "./submit-button";
 import type { ComponentProps } from "react";
 
 type Props = Omit<ComponentProps<typeof RemoveButton>, "onClick" | "type"> & {
   locale: "es" | "en";
   element: string;
   consequence?: string;
-  onConfirm: () => void;
+  onConfirm: () => void | Promise<void>;
 };
 
-/** Opt-in confirmation for local application fields. Opening never changes form data. */
+/** Opening never changes data; confirmed asynchronous removals finish before closing. */
 export function ConfirmRemoveButton({
   locale,
   element,
@@ -27,7 +28,8 @@ export function ConfirmRemoveButton({
   const trigger = useRef<HTMLButtonElement | null>(null);
   const locked = useRef(false);
   const [open, setOpen] = useState(false);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState("");
+  const [pending, setPending] = useState(false);
   useEffect(() => {
     if (open) dialog.current?.showModal();
   }, [open]);
@@ -45,7 +47,7 @@ export function ConfirmRemoveButton({
           event.preventDefault();
           trigger.current = event.currentTarget;
           locked.current = false;
-          setError(false);
+          setError("");
           setOpen(true);
         }}
       />
@@ -58,7 +60,7 @@ export function ConfirmRemoveButton({
             aria-describedby={`${id}-element ${id}-description`}
             onCancel={(event) => {
               event.preventDefault();
-              close();
+              if (!locked.current) close();
             }}
             onClose={() => setOpen(false)}
           >
@@ -79,9 +81,7 @@ export function ConfirmRemoveButton({
             </p>
             {error && (
               <p role="alert" className="error">
-                {es
-                  ? "No se pudo completar la eliminación. Revise los datos e inténtelo de nuevo."
-                  : "Deletion could not be completed. Check the data and try again."}
+                {error}
               </p>
             )}
             <div className="live-actions">
@@ -89,6 +89,7 @@ export function ConfirmRemoveButton({
                 type="button"
                 className="button secondary"
                 autoFocus
+                disabled={pending}
                 onClick={close}
               >
                 {es ? "Cancelar" : "Cancel"}
@@ -96,20 +97,46 @@ export function ConfirmRemoveButton({
               <button
                 type="button"
                 className="button danger"
-                onClick={() => {
+                disabled={pending}
+                aria-busy={pending}
+                aria-label={
+                  pending
+                    ? es
+                      ? "Eliminando…"
+                      : "Deleting…"
+                    : es
+                      ? "Eliminar"
+                      : "Delete"
+                }
+                onClick={async () => {
                   if (locked.current || props.disabled) return;
                   locked.current = true;
+                  setPending(true);
+                  setError("");
                   try {
-                    onConfirm();
+                    await onConfirm();
                     close();
-                  } catch {
+                  } catch (cause) {
                     locked.current = false;
-                    setError(true);
+                    setError(
+                      cause instanceof Error
+                        ? cause.message
+                        : es
+                          ? "No se pudo completar la eliminación. Inténtelo de nuevo."
+                          : "Deletion could not be completed. Please try again.",
+                    );
+                  } finally {
+                    setPending(false);
                   }
                 }}
               >
-                <Trash2 size={16} aria-hidden="true" />
-                {es ? "Eliminar" : "Delete"}
+                <ActionLabel
+                  busy={pending}
+                  pendingLabel={es ? "Eliminando…" : "Deleting…"}
+                >
+                  <Trash2 size={16} aria-hidden="true" />
+                  {es ? "Eliminar" : "Delete"}
+                </ActionLabel>
               </button>
             </div>
           </dialog>,

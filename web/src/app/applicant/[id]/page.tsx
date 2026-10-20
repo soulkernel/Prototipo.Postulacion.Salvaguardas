@@ -28,6 +28,7 @@ export default async function ApplicationPage({
     { data: versions, error: versionError },
     { data: documents, error: documentError },
     { data: prepared, error: preparedError },
+    { data: pendingPartner, error: pendingPartnerError },
   ] = await Promise.all([
     viewer.db.from("calls").select("*").eq("id", application.call_id).single(),
     viewer.db
@@ -41,7 +42,7 @@ export default async function ApplicationPage({
       .order("revision", { ascending: false }),
     viewer.db
       .from("application_documents")
-      .select("id,file_name,kind,created_at")
+      .select("id,file_name,kind,created_at,version_id,storage_path")
       .eq("application_id", id)
       .order("created_at", { ascending: false }),
     viewer.db
@@ -53,6 +54,7 @@ export default async function ApplicationPage({
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle(),
+    viewer.db.rpc("pending_partner_removal", { app_id: id }),
   ]);
   if (
     callError ||
@@ -60,6 +62,7 @@ export default async function ApplicationPage({
     versionError ||
     documentError ||
     preparedError ||
+    pendingPartnerError ||
     !call
   )
     throw new Error("Cannot load the complete application");
@@ -126,7 +129,22 @@ export default async function ApplicationPage({
               ? payload.concept.title
               : undefined,
         }))}
-        documents={documents || []}
+        documents={(documents || []).map(
+          ({ version_id, storage_path, ...d }) => ({
+            ...d,
+            protected:
+              !!version_id ||
+              (versions || []).some(
+                (v) =>
+                  Array.isArray(v.payload?.attachments) &&
+                  v.payload.attachments.some(
+                    (f: { id?: string; storage_path?: string }) =>
+                      f.id === d.id || f.storage_path === storage_path,
+                  ),
+              ),
+          }),
+        )}
+        initialPendingPartner={pendingPartner}
         initialPrepared={prepared}
       />
     </Shell>

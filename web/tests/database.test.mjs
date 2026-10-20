@@ -14,6 +14,85 @@ const ids = {
   committee: "00000000-0000-4000-8000-000000000006",
   admin: "00000000-0000-4000-8000-000000000007",
 };
+test("partner removal deletes only confirmed draft letters, resumes failures and protects sent snapshots and permissions", async () => {
+ const owner=await temporaryAccount(), stranger=await temporaryAccount();
+ const a={id:crypto.randomUUID(),name:"Socio QA A",support:"Apoyo A"},b={id:crypto.randomUUID(),name:"Socio QA B",support:"Apoyo B"};
+ const app=await rpc("create_application",{call_id:call},owner);
+ const p=structuredClone(payload);
+ Object.assign(p.concept,{partner_organizations:[a,b],associated_organizations:[a.name,b.name],partners:`1. ${a.name}\n2. ${b.name}`});
+ p.activities=p.activities.map(a=>({...a,id:crypto.randomUUID(),risks:a.risks.map(r=>({...r,id:crypto.randomUUID()}))}));
+ await rpc("save_application",{application_id:app,expected_revision:0,payload:p},owner);
+ const upload=async(partner)=>{
+  const path=`${app}/${owner}/attachment/${crypto.randomUUID()}.pdf`;
+  await as(owner,()=>db.query("insert into storage.objects(bucket_id,name,metadata) values('application-files',$1,$2)",[path,{size:100}]));
+  const id=await rpc("register_document",{app_id:app,object_path:path,original_name:"carta-qa.pdf",mime:"application/pdf",bytes:100,checksum:"a".repeat(64),document_kind:"partner_letter_"+partner.id.replaceAll("-","")},owner);
+  return {id,path};
+ };
+ const historical=await upload(a),draft1=await upload(a),draft2=await upload(a),other=await upload(b);
+ // Synthetic prior receipt, confined to this in-memory DB, no real submission.
+ const snapshot={...structuredClone(p),attachments:[{id:historical.id,kind:"partner_letter_"+a.id.replaceAll("-","")}]};
+ await db.query("insert into public.application_versions(application_id,revision,stage,payload,rules_snapshot,actor_id) values($1,0,1,$2,$3,$4)",[app,snapshot,rules,owner]);
+ const args={app_id:app,expected_revision:1,partner_id:a.id};
+ await assert.rejects(rpc("begin_remove_partner",args,stranger),/GLF_DELETE_FORBIDDEN/);
+ await assert.rejects(rpc("begin_remove_partner",args,"reviewer"),/GLF_FORBIDDEN/);
+ await assert.rejects(rpc("begin_remove_partner",{...args,expected_revision:0},owner),/GLF_VERSION_CONFLICT/);
+ assert.equal(await rpc("pending_partner_removal",{app_id:app},owner),null);
+ assert.equal((await as(owner,()=>db.query("delete from storage.objects where name=$1 returning name",[draft1.path]))).rows.length,0);
+ const started=await rpc("begin_remove_partner",args,owner);
+ assert.deepEqual(new Set(started.paths),new Set([draft1.path,draft2.path]));
+ assert.equal(await rpc("pending_partner_removal",{app_id:app},owner),a.id);
+ assert.deepEqual((await rpc("begin_remove_partner",args,owner)).paths,started.paths);
+ await assert.rejects(rpc("begin_remove_partner",{...args,partner_id:b.id},owner),/GLF_PARTNER_DELETE_PENDING/);
+ await assert.rejects(rpc("save_application",{application_id:app,expected_revision:1,payload:p},owner),/GLF_APPLICATION_LOCKED/);
+ await assert.rejects(upload(b),/row-level security/);
+ await assert.rejects(db.query("insert into public.application_documents(application_id,kind,storage_path,file_name,content_type,size_bytes,sha256,uploaded_by) values($1,$2,$3,'late-letter.pdf','application/pdf',100,$4,$5)",[app,"partner_letter_"+a.id.replaceAll('-',''),`${app}/${owner}/attachment/late-qa.pdf`,'a'.repeat(64),owner]),/GLF_PARTNER_DELETE_PENDING/);
+ await assert.rejects(rpc("submit_application",{application_id:app,expected_revision:1},owner),/GLF_APPLICATION_LOCKED/);
+ await assert.rejects(rpc("finish_remove_partner",args,owner),/GLF_DELETE_FILES_PENDING/);
+ await assert.rejects(db.query("update public.applications set revision=revision+1 where id=$1",[app]),/GLF_PARTNER_DELETE_PENDING/);
+ assert.deepEqual((await db.query("select payload from public.applications where id=$1",[app])).rows[0].payload,p);
+ assert.equal((await as(stranger,()=>db.query("delete from storage.objects where name=$1 returning name",[draft1.path]))).rows.length,0);
+ assert.equal((await as(owner,()=>db.query("delete from storage.objects where name=$1 returning name",[historical.path]))).rows.length,0);
+ assert.equal((await as(owner,()=>db.query("delete from storage.objects where name=$1 returning name",[other.path]))).rows.length,0);
+ // Simulate a partial Storage API failure, then reload/retry the persisted job.
+ assert.equal((await as(owner,()=>db.query("delete from storage.objects where name=$1 returning name",[draft1.path]))).rows.length,1);
+ await assert.rejects(rpc("finish_remove_partner",args,owner),/GLF_DELETE_FILES_PENDING/);
+ assert.equal(await rpc("pending_partner_removal",{app_id:app},owner),a.id);
+ assert.deepEqual((await rpc("begin_remove_partner",args,owner)).paths,started.paths);
+ await as(owner,()=>db.query("delete from storage.objects where name=$1",[draft2.path]));
+ const finished=await rpc("finish_remove_partner",args,owner);
+ assert.equal(finished.revision,2);
+ assert.deepEqual(finished.payload.concept.partner_organizations,[b]);
+ assert.deepEqual(finished.payload.concept.associated_organizations,[b.name]);
+ assert.equal(finished.payload.concept.partners,"1. "+b.name);
+ assert.deepEqual(finished.payload.activities,p.activities);
+ assert.equal(finished.payload.concept.title,p.concept.title);
+ assert.deepEqual((await db.query("select payload from public.application_versions where application_id=$1",[app])).rows[0].payload,snapshot);
+ assert.deepEqual(new Set((await db.query("select id from public.application_documents where application_id=$1",[app])).rows.map(d=>d.id)),new Set([historical.id,other.id]));
+ assert.equal(await rpc("pending_partner_removal",{app_id:app},owner),null);
+ assert.equal((await rpc("begin_remove_partner",args,owner)).done,true); // Lost response / duplicate confirmation.
+ assert.equal((await db.query("select count(*)::int n from public.application_events where application_id=$1 and event_type='partner_removed'",[app])).rows[0].n,1);
+ // The remaining partner with no letter can also be removed, without inventing files.
+ const blank={...b,id:crypto.randomUUID()};
+ const next=structuredClone(finished.payload);next.concept.partner_organizations.push(blank);next.concept.associated_organizations.push(blank.name);next.concept.partners+="\n2. "+blank.name;
+ await rpc("save_application",{application_id:app,expected_revision:2,payload:next},owner);
+ const noFile={app_id:app,expected_revision:3,partner_id:blank.id};
+ assert.deepEqual((await rpc("begin_remove_partner",noFile,owner)).paths,[]);
+ assert.equal((await rpc("finish_remove_partner",noFile,owner)).revision,4);
+ // Read-only submitted state is protected; an editable phase-two draft can
+ // remove its partner without deleting even a version_id-only historic file.
+ await db.query("update public.applications set status='under_review' where id=$1",[app]);
+ await assert.rejects(rpc("begin_remove_partner",{app_id:app,expected_revision:4,partner_id:b.id},owner),/GLF_APPLICATION_LOCKED/);
+ await db.query("update public.applications set stage=2,status='phase2_draft',phase2_deadline='2099-01-01' where id=$1",[app]);
+ await db.query("update public.application_documents set version_id=(select id from public.application_versions where application_id=$1 limit 1) where id=$2",[app,other.id]);
+ const phase2={app_id:app,expected_revision:4,partner_id:b.id};
+ assert.deepEqual((await rpc("begin_remove_partner",phase2,owner)).paths,[]);
+ assert.equal((await rpc("finish_remove_partner",phase2,owner)).payload.concept.partner_organizations.length,0);
+ assert.equal((await db.query("select count(*)::int n from public.application_documents where id=any($1::uuid[])",[[historical.id,other.id]])).rows[0].n,2);
+ for(const role of ['anon','authenticated']){
+  assert.equal((await db.query("select has_table_privilege($1,'private.partner_removals','DELETE') allowed",[role])).rows[0].allowed,false);
+  assert.equal((await db.query("select has_function_privilege($1,'private.can_edit_before_partner_removal(uuid)','EXECUTE') allowed",[role])).rows[0].allowed,false);
+ }
+});
 test("submission core repair restores a missing dependency without exposing a bypass RPC", async () => {
   currentPayloadValidator = (await db.query("select pg_get_functiondef('private.validate_payload(jsonb,jsonb,boolean,integer)'::regprocedure) as definition")).rows[0].definition;
   const currentCore = (await db.query("select pg_get_functiondef('public.submit_application_core(uuid,integer)'::regprocedure) as definition")).rows[0].definition;

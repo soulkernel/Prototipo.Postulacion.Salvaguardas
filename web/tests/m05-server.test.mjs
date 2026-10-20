@@ -22,7 +22,7 @@ before(async () => {
   };
   await build({
     stdin: {
-      contents: `export {POST} from './src/app/api/files/route'; export {saveDraft,submitDraft,prepareDocuments} from './src/app/applicant/actions'; export {emptyPayload,newActivity} from './src/lib/domain';`,
+      contents: `export {POST} from './src/app/api/files/route'; export {saveDraft,submitDraft,prepareDocuments,removePartner} from './src/app/applicant/actions'; export {emptyPayload,newActivity} from './src/lib/domain';`,
       resolveDir: web,
       loader: "ts",
     },
@@ -57,6 +57,19 @@ after(async () => {
 const appId = "00000000-0000-4000-8000-000000000601",
   partnerId = "11111111-1111-4111-8111-111111111111";
 const letter = "partner_letter_" + partnerId.replaceAll("-", "");
+test("actual partner-removal action validates IDs and reports Storage failure before finalization", async()=>{
+ const state=fixture(),calls=[];
+ assert.deepEqual(await api.removePartner('bad',0,partnerId),{ok:false,error:'GLF_INVALID_PAYLOAD',pending:false});
+ assert.deepEqual(await api.removePartner(appId,-1,partnerId),{ok:false,error:'GLF_INVALID_PAYLOAD',pending:false});
+ assert.equal(state.registerCount,0);
+ let fail=true;
+ state.viewer.db.rpc=async(name)=>{calls.push(name);return {data:name==='begin_remove_partner'?{done:false,paths:['confirmed-letter.pdf']}:{revision:1,payload:state.app.payload},error:null}};
+ state.viewer.db.storage.from=()=>({remove:async paths=>{assert.deepEqual(paths,['confirmed-letter.pdf']);return {error:fail?{message:'offline'}:null}}});
+ assert.deepEqual(await api.removePartner(appId,0,partnerId),{ok:false,error:'GLF_DELETE_FILES_PENDING',pending:true});
+ assert.deepEqual(calls,['begin_remove_partner']);
+ fail=false;assert.equal((await api.removePartner(appId,0,partnerId)).ok,true);
+ assert.deepEqual(calls,['begin_remove_partner','begin_remove_partner','finish_remove_partner']);
+});
 function fixture() {
   const payload = api.emptyPayload();
   Object.assign(payload.concept, {
