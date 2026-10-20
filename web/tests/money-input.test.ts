@@ -46,6 +46,78 @@ const rules = {
   max_admin_percent: 10,
 } as Rules;
 
+test("zero-minimum cofinancing explains the zero declaration without calling the contribution mandatory in ES/EN", () => {
+  const c = {
+    ...emptyPayload().concept,
+    applicant_type: "organization",
+    category_id: "small",
+    requested_amount: 100000,
+    cofinance_amount: null,
+  };
+  const before = JSON.stringify(c);
+  for (const locale of ["es", "en"] as const) {
+    const untouched = financialFeedback(
+      c,
+      rules,
+      locale,
+      {},
+      null,
+      false,
+      1,
+    ).cofinance_amount;
+    assert.equal(untouched.invalid, false);
+    assert.match(
+      untouched.text,
+      locale === "es"
+        ? /Esta categoría no exige cofinanciamiento/
+        : /This category does not require cofinancing/,
+    );
+    const empty = financialFeedback(
+      c,
+      rules,
+      locale,
+      {},
+      null,
+      true,
+      1,
+    ).cofinance_amount;
+    assert.equal(empty.invalid, true);
+    assert.equal(
+      empty.text,
+      locale === "es"
+        ? "Indique el aporte previsto o ingrese 0 si no habrá cofinanciamiento."
+        : "Enter the planned contribution or enter 0 if there will be no cofinancing.",
+    );
+    assert.doesNotMatch(empty.text, /obligatorio|required field/);
+    assert.equal(
+      financialFeedback(
+        { ...c, cofinance_amount: 0 },
+        rules,
+        locale,
+        {},
+        null,
+        true,
+        1,
+      ).cofinance_amount.invalid,
+      false,
+    );
+    // The call's configured percentage governs the copy; the category ID is not hard-coded.
+    const configured = {
+      ...rules,
+      categories: rules.categories.map((r) => ({
+        ...r,
+        cofinance_percent: 10,
+      })),
+    };
+    assert.match(
+      financialFeedback(c, configured, locale, {}, null, true, 1)
+        .cofinance_amount.text,
+      locale === "es" ? /campo obligatorio/ : /required field/,
+    );
+  }
+  assert.equal(JSON.stringify(c), before); // No automatic zero or amount changes.
+});
+
 test("The screenshot's huge integer prioritizes the category maximum, not a decimal error or a stale stored amount", () => {
   const c = {
     ...emptyPayload().concept,

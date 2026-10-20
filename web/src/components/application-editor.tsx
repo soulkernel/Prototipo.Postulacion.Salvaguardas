@@ -1304,7 +1304,10 @@ export function ApplicationEditor({
       >
         <span>
           {es ? field.es : field.en}
-          <RequiredMark locale={locale} />
+          {(field.key !== "cofinance_amount" ||
+            selectedCategory?.cofinance_percent !== 0) && (
+            <RequiredMark locale={locale} />
+          )}
         </span>
         {field.key === "project_type" ? (
           <ApplicationTopicSelect

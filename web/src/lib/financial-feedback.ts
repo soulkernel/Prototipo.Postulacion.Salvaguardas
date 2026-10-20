@@ -75,8 +75,8 @@ export function financialFeedback(
     cofinance_amount: category
       ? category.cofinance_percent === 0
         ? es
-          ? "Cofinanciamiento no obligatorio. Ingrese 0 si no contempla aportes adicionales."
-          : "Cofinancing is optional. Enter 0 if no additional contributions are planned."
+          ? "Esta categoría no exige cofinanciamiento. Si no contempla aportes adicionales, ingrese 0."
+          : "This category does not require cofinancing. If no additional contributions are planned, enter 0."
         : requested
           ? (es ? "Cofinanciamiento mínimo: " : "Minimum cofinancing: ") +
             currency((c.requested_amount! * category.cofinance_percent) / 100) +
@@ -149,7 +149,15 @@ export function financialFeedback(
       const invalid = eligible && (missing || Boolean(errors[key]));
       let text = hints[key];
       if (invalid) {
-        if (missing)
+        if (
+          missing &&
+          key === "cofinance_amount" &&
+          category?.cofinance_percent === 0
+        )
+          text = es
+            ? "Indique el aporte previsto o ingrese 0 si no habrá cofinanciamiento."
+            : "Enter the planned contribution or enter 0 if there will be no cofinancing.";
+        else if (missing)
           text =
             (es
               ? "Complete este campo obligatorio. "
