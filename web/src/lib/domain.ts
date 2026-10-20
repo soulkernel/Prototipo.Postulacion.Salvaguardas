@@ -473,7 +473,7 @@ export function validateComplete(
   if (applicationTopicIssue(c.project_type, rules))
     missing.push("project_type");
   missing.push(...partnerIssues(c));
-  missing.push(...resultIssues(c));
+  missing.push(...resultIssues(c, stage));
   missing.push(...activityPlanningIssues(payload));
   missing.push(...potentialRiskIssues(payload));
   missing.push(...alignmentIssues(c.strategic_alignment));

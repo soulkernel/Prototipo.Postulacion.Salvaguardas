@@ -41,7 +41,9 @@ export function newProjectResult(): ProjectResult {
     evidence: "",
   };
 }
-export function resultIssues(c: ResultConcept): string[] {
+// Stage comes from the application, never from a field supplied by the applicant.
+// Keep full-proposal checks for callers that do not explicitly select a stage.
+export function resultIssues(c: ResultConcept, stage = 2): string[] {
   if (c.project_results === undefined) return [];
   if (!c.project_results.length) return ["results"];
   const ids = new Set<string>();
@@ -49,16 +51,17 @@ export function resultIssues(c: ResultConcept): string[] {
     const valid =
       !ids.has(r.id) &&
       !!r.result.trim() &&
-      !!r.indicator.trim() &&
-      r.target !== null &&
-      !!r.unit &&
-      (r.unit !== "other" || !!r.other_unit.trim()) &&
-      !!r.evidence.trim() &&
       !!c.strategic_alignment?.objectives.some(
         (o) =>
           o.id === r.objective_id && o.kind === "specific" && o.text.trim(),
       ) &&
-      (r.unit !== "percent" || r.target <= 100);
+      (stage === 1 ||
+        (!!r.indicator.trim() &&
+          r.target !== null &&
+          !!r.unit &&
+          (r.unit !== "other" || !!r.other_unit.trim()) &&
+          !!r.evidence.trim() &&
+          (r.unit !== "percent" || r.target <= 100)));
     ids.add(r.id);
     return valid ? [] : [`result_${i + 1}`];
   });
@@ -66,6 +69,7 @@ export function resultIssues(c: ResultConcept): string[] {
 export function resultText(
   c: ResultConcept,
   locale: "es" | "en" = "es",
+  stage = 2,
 ): string {
   if (c.project_results === undefined) return c.results;
   const es = locale === "es";
@@ -79,7 +83,10 @@ export function resultText(
         r.unit === "other"
           ? r.other_unit
           : resultUnits.find((u) => u[0] === r.unit)?.[es ? 1 : 2] || "—";
-      return `${es ? "Resultado" : "Result"} ${i + 1}: ${r.result}\n${es ? "Objetivo específico" : "Specific objective"}: ${index < 0 ? "—" : `OE${index + 1}: ${objectives[index].text}`}\n${es ? "Indicador" : "Indicator"}: ${r.indicator}\n${es ? "Meta preliminar" : "Preliminary target"}: ${r.target ?? "—"} ${unit}\n${es ? "Evidencia prevista" : "Expected evidence"}: ${r.evidence}`;
+      const outcome = `${es ? "Objetivo específico" : "Specific objective"}: ${index < 0 ? "—" : `OE${index + 1}: ${objectives[index].text}`}\n${es ? "Resultado" : "Result"} ${i + 1}: ${r.result}`;
+      return stage === 1
+        ? outcome
+        : `${outcome}\n${es ? "Indicador de impacto" : "Impact indicator"}: ${r.indicator}\n${es ? "Meta propuesta" : "Proposed target"}: ${r.target ?? "—"} ${unit}\n${es ? "Evidencia prevista" : "Expected evidence"}: ${r.evidence}`;
     })
     .join("\n\n");
 }

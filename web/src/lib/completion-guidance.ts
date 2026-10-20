@@ -392,13 +392,17 @@ export function completionGuidance(
   payload.concept.project_results?.forEach((r, i) => {
     const scope = `[data-validation-result="${i + 1}"]`;
     for (const key of [
-      "result",
       "objective_id",
-      "indicator",
-      "target",
-      "unit",
-      "evidence",
-      ...(r.unit === "other" ? ["other_unit"] : []),
+      "result",
+      ...(stage === 2
+        ? [
+            "indicator",
+            "target",
+            "unit",
+            "evidence",
+            ...(r.unit === "other" ? ["other_unit"] : []),
+          ]
+        : []),
     ] as const) {
       const value = r[key as keyof typeof r];
       const bad =
@@ -416,17 +420,17 @@ export function completionGuidance(
         const names: Record<string, string[]> = {
           result: ["resultado esperado", "expected result"],
           objective_id: [
-            "objetivo específico asociado",
-            "associated specific objective",
+            "objetivo específico al que se asocia el resultado",
+            "specific objective associated with the result",
           ],
-          indicator: ["indicador", "indicator"],
+          indicator: ["indicador de impacto", "impact indicator"],
           target: [
             r.unit === "percent"
-              ? "meta preliminar (porcentaje entre 0 y 100)"
-              : "meta preliminar",
+              ? "meta propuesta (porcentaje entre 0 y 100)"
+              : "meta propuesta",
             r.unit === "percent"
-              ? "preliminary target (percentage from 0 to 100)"
-              : "preliminary target",
+              ? "proposed target (percentage from 0 to 100)"
+              : "proposed target",
           ],
           unit: ["unidad", "unit"],
           evidence: ["evidencia prevista", "expected evidence"],

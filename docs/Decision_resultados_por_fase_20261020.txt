@@ -1,0 +1,43 @@
+GLF — Decisión confirmada: resultados por fase
+Fecha de aprobación del usuario: 20 de octubre de 2026.
+Alcance: Resultados e indicadores de impacto; captura, validación y presentación.
+
+DECISIÓN VIGENTE
+La fase 1 es una nota conceptual. Cada ficha pide únicamente:
+1. Objetivo específico al que se asocia el resultado (de los ya registrados).
+2. Resultado esperado: qué se conseguirá al finalizar el proyecto y qué se
+   entregará: elementos físicos, materiales, infraestructura, formación o
+   desarrollo de capacidades, según corresponda.
+Un objetivo puede tener varios resultados. Se mantiene el título del formato GLF.
+Se retira Consultar texto anterior de las fichas y se conservan los datos fuente.
+Los borradores narrativos antiguos siguen siendo editables; organizarlos en
+fichas requiere una acción explícita. No se infieren resultados ni vínculos.
+
+CONTINUIDAD HACIA LA FASE 2
+Solo quienes sean invitados presentan el proyecto completo. Se reutilizan los
+UUID de objetivos y resultados y sus asociaciones. Allí se completan indicador
+de impacto, meta propuesta, unidad de medida y evidencia prevista. Los valores
+detallados que ya existan se conservan sin vaciarlos al trabajar en fase 1.
+No se inventan metas ni se calculan indicadores a partir del texto.
+La fase 2 mantiene las restricciones vigentes (porcentajes entre 0 y 100,
+cantidad no negativa, unidad Otra con descripción, evidencias, etc.).
+Esta decisión sustituye la propuesta anterior que mantenía esos campos
+detallados como obligatorios en la nota conceptual.
+
+CRITERIOS TRANSVERSALES
+Cliente, servidor, avance y base de datos deben utilizar la etapa real del
+expediente; el solicitante no puede elegirla para eludir las validaciones.
+Fase 1: objetivo y resultado. Fase 2: esos campos y el detalle de medición.
+La revisión externa, interna y los PDF nuevos deben coincidir por etapa.
+El formato nuevo de presentación es glf-concept-20261020-v3. Los documentos
+preparados y las versiones históricas mantienen su formato registrado.
+No actualizar masivamente expedientes enviados, snapshots ni documentos firmados.
+Mantener la captura en fichas/cajas de texto y las tablas en revisión/PDF.
+Mantener ayudas naturales, ES/EN, contadores y confirmación de eliminación.
+
+CONTEXTO PARA TRABAJO FUTURO
+Esta decisión aplaza el detalle de medición a la fase de proyecto completo.
+No crea requisitos adicionales en la nota conceptual ni cambia la selección
+para fase 2, las reglas de convocatoria, presupuesto, actividades o riesgos.
+Cualquier ampliación futura de seguimiento debe partir de estos mismos
+resultados y objetivos, sin pedir su recaptura ni generar registros duplicados.

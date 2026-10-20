@@ -174,7 +174,10 @@ test("shared presentation explains objective/result relationships without fabric
   ];
   const before = JSON.stringify(c);
   for (const locale of ["es", "en"] as const) {
-    const sections = conceptSections(c, locale);
+    const sections = conceptSections(c, locale, undefined, {
+      stage: 1,
+      layoutVersion: "glf-concept-20261020-v2",
+    });
     assert.ok(sections.every((s) => s.introduction.length > 40));
     const results = sections.find((s) => s.id === "results")!;
     assert.match(

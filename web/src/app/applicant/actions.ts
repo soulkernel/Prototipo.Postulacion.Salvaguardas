@@ -94,19 +94,19 @@ async function validStoredPartners(db: SupabaseClient, id: string) {
     !error && parsed.success && partnerIssues(parsed.data.concept).length === 0
   );
 }
-async function validStoredActivities(db: SupabaseClient, id: string) {
+async function storedPlanningError(db: SupabaseClient, id: string) {
   const { data, error } = await db
     .from("applications")
-    .select("payload")
+    .select("payload,stage")
     .eq("id", id)
     .maybeSingle();
   const parsed = payloadSchema.safeParse(data?.payload);
-  return (
-    !error &&
-    parsed.success &&
-    activityPlanningIssues(parsed.data).length === 0 &&
-    resultIssues(parsed.data.concept).length === 0
-  );
+  if (error || !data || !parsed.success || ![1, 2].includes(data.stage))
+    return "GLF_INVALID_PAYLOAD";
+  if (activityPlanningIssues(parsed.data).length)
+    return "GLF_REQUIRED:activities";
+  const issues = resultIssues(parsed.data.concept, data.stage);
+  return issues.length ? `GLF_REQUIRED:${issues[0]}` : null;
 }
 async function validStoredSummary(db: SupabaseClient, id: string) {
   const { data, error } = await db
@@ -211,6 +211,13 @@ export async function saveDraft(
     return { ok: false, error: "GLF_INVALID_PAYLOAD" };
   if (organizationProvinceIssue(parsed.data.concept))
     return { ok: false, error: "GLF_ORGANIZATION_PROVINCE" };
+  const { data: stored, error: readError } = await db
+    .from("applications")
+    .select("stage")
+    .eq("id", id)
+    .maybeSingle();
+  if (readError || !stored || ![1, 2].includes(stored.stage))
+    return { ok: false, error: "GLF_INVALID_PAYLOAD" };
   const { data, error } = await db.rpc("save_application", {
     application_id: id,
     expected_revision: revision,
@@ -218,7 +225,7 @@ export async function saveDraft(
       ...synchronizeRisks(parsed.data),
       concept: {
         ...synchronizeRisks(parsed.data).concept,
-        results: resultText(parsed.data.concept),
+        results: resultText(parsed.data.concept, "es", stored.stage),
         ...(parsed.data.concept.associated_organizations
           ? {
               partners: partnerText(
@@ -296,8 +303,8 @@ export async function prepareDocuments(
   if (eligibilityError) return { error: eligibilityError };
   if (!(await validStoredPartners(db, id)))
     return { error: "GLF_REQUIRED:partners" };
-  if (!(await validStoredActivities(db, id)))
-    return { error: "GLF_REQUIRED:activities" };
+  const planningError = await storedPlanningError(db, id);
+  if (planningError) return { error: planningError };
   if (!(await validStoredPhone(db, id))) return { error: "GLF_INVALID_PHONE" };
   if (!(await validStoredSummary(db, id)))
     return { error: "GLF_INVALID_SUMMARY" };
@@ -328,8 +335,8 @@ export async function submitDraft(
   if (eligibilityError) return { ok: false, error: eligibilityError };
   if (!(await validStoredPartners(db, id)))
     return { ok: false, error: "GLF_REQUIRED:partners" };
-  if (!(await validStoredActivities(db, id)))
-    return { ok: false, error: "GLF_REQUIRED:activities" };
+  const planningError = await storedPlanningError(db, id);
+  if (planningError) return { ok: false, error: planningError };
   if (!(await validStoredPhone(db, id)))
     return { ok: false, error: "GLF_INVALID_PHONE" };
   if (!(await validStoredSummary(db, id)))

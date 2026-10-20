@@ -3670,3 +3670,51 @@ test("optional activity calendars validate direct SQL/RPC, preserve drafts, phas
  assert.equal((await db.query("select concept_layout_version from public.application_versions where application_id=$1",[fixtureApp])).rows[0].concept_layout_version,"glf-concept-m08-v1");
  for(const role of ['anon','authenticated'])assert.equal((await db.query("select has_function_privilege($1,'private.validate_activity_dates(jsonb,boolean)','EXECUTE') allowed",[role])).rows[0].allowed,false);
 });
+
+test("result stages: SQL/RPC completion, continuity, historical values and document versions", async()=>{
+ const migration=await readFile(new URL("../../supabase/migrations/202610200047_results_by_application_stage.sql",import.meta.url),"utf8");
+ const snapshot=async()=>Object.fromEntries(await Promise.all(["applications","application_versions","prepared_documents","application_documents","application_events","calls"].map(async t=>[t,(await db.query(`select to_jsonb(row) value from public.${t} row order by id`)).rows])));
+ const before=await snapshot();await db.exec(migration);await db.exec(migration);assert.deepEqual(await snapshot(),before);
+ const oid=crypto.randomUUID(),rid=crypto.randomUUID();
+ const simple={id:rid,objective_id:oid,result:"Productos y formación QA",indicator:"",target:null,unit:"",other_unit:"",evidence:""};
+ const p=structuredClone(payload);
+ p.concept.strategic_alignment={version:"pg2030-ods-general-v3",objectives:[
+  {id:crypto.randomUUID(),kind:"general",text:"Conservar hábitats QA",plan:["E1"],ods:[14],glf:[]},
+  {id:oid,kind:"specific",text:"Fortalecer capacidades QA",plan:[],ods:[],glf:[]}
+ ]};
+ p.concept.project_results=[simple];p.concept.results="Objetivo específico: Fortalecer capacidades QA\nResultado 1: Productos y formación QA";p.concept.results_source="Texto fuente conservado";
+ p.activities=p.activities.map(a=>({...a,id:crypto.randomUUID(),objective_ids:[oid],risks:a.risks.map(r=>({...r,id:crypto.randomUUID()}))}));
+ const validate=(value,complete=true,stage=1)=>db.query("select private.validate_payload($1::jsonb,$2::jsonb,$3,$4)",[JSON.stringify(value),JSON.stringify(rules),complete,stage]);
+ await validate(p);
+ for(const patch of [{result:" "},{objective_id:""},{objective_id:p.concept.strategic_alignment.objectives[0].id},{objective_id:crypto.randomUUID()}]){
+  const bad=structuredClone(p);Object.assign(bad.concept.project_results[0],patch);await validate(bad,false);await assert.rejects(validate(bad),/GLF_REQUIRED:result_1/);
+ }
+ const dup=structuredClone(p);dup.concept.project_results.push(simple);await assert.rejects(validate(dup,false),/GLF_INVALID_RESULTS/);
+ const empty=structuredClone(p);empty.concept.project_results=[];await validate(empty,false);await assert.rejects(validate(empty),/GLF_REQUIRED:results/);
+ const phase2=structuredClone(fullPayload);Object.assign(phase2.concept,{project_results:[simple],strategic_alignment:p.concept.strategic_alignment});
+ await validate(phase2,false,2);await assert.rejects(validate(phase2,true,2),/GLF_REQUIRED:result_1/);
+ const detail={...simple,indicator:"Número de materiales QA",target:10,unit:"products",evidence:"Registro de materiales QA"};
+ phase2.concept.project_results=[detail];await validate(phase2,true,2);
+ for(const patch of [{indicator:""},{target:null},{unit:""},{unit:"other",other_unit:""},{evidence:""},{unit:"percent",target:101}]){
+  const bad=structuredClone(phase2);Object.assign(bad.concept.project_results[0],patch);await assert.rejects(validate(bad,true,2),/GLF_REQUIRED:result_1/);
+ }
+ const historic=structuredClone(p);historic.concept.project_results=[{...detail,target:101,unit:"percent"}];await validate(historic); // Hidden details do not block phase 1.
+ const topicCall=await rpc("create_call",{details:{code:"RESULTS-STAGES-QA",title_es:"Resultados ficticios",title_en:"Fictional results",description_es:"QA",description_en:"QA",opens_at:"2020-01-01T00:00:00Z",closes_at:"2099-01-01T00:00:00Z",rules,phase2_schema:[{id:"proposal",label_es:"Proyecto completo",label_en:"Full proposal",required:true}]}},"grants");await rpc("publish_call",{call_id:topicCall},"grants");
+ const owner=await temporaryAccount(),app=await rpc("create_application",{call_id:topicCall},owner);
+ await rpc("save_application",{application_id:app,expected_revision:0,payload:historic},owner);
+ assert.deepEqual((await as(owner,()=>db.query("select payload from public.applications where id=$1",[app]))).rows[0].payload,historic);
+ await rpc("save_application",{application_id:app,expected_revision:1,payload:p},owner);
+ const prepared=await rpc("prepare_application_documents",{app_id:app,expected_revision:2},owner);
+ assert.equal((await db.query("select concept_layout_version from public.prepared_documents where id=$1",[prepared])).rows[0].concept_layout_version,"glf-concept-20261020-v3");
+ for(const kind of ["concept_signed","matrix_signed"]){const path=`${app}/${owner}/attachment/${crypto.randomUUID()}.pdf`;await as(owner,()=>db.query("insert into storage.objects(bucket_id,name,metadata) values('application-files',$1,$2)",[path,{size:100}]));await rpc("register_document",{app_id:app,object_path:path,original_name:kind+".pdf",mime:"application/pdf",bytes:100,checksum:"a".repeat(64),document_kind:kind},owner);}
+ await rpc("submit_application",{application_id:app,expected_revision:2},owner);
+ const frozen=(await db.query("select payload,concept_layout_version from public.application_versions where application_id=$1",[app])).rows[0];
+ assert.equal(frozen.concept_layout_version,"glf-concept-20261020-v3");
+ await rpc("record_review",{application_id:app,expected_revision:3,review_type:"safeguards",findings:"Revisión aislada de resultados",recommendation:"Continuar",category:"B"},"reviewer");
+ await rpc("record_decision",{application_id:app,expected_revision:3,body:"committee",decision:"invite",reference:"RESULTS-QA",rationale:"Prueba local",invitation_deadline:"2099-01-01"},"committee");
+ const inherited=(await as(owner,()=>db.query("select stage,payload,revision from public.applications where id=$1",[app]))).rows[0];assert.equal(inherited.stage,2);assert.deepEqual(inherited.payload.concept.project_results,p.concept.project_results);assert.equal(inherited.payload.concept.results_source,p.concept.results_source);
+ assert.deepEqual((await db.query("select payload,concept_layout_version from public.application_versions where application_id=$1",[app])).rows[0],frozen);
+ await assert.rejects(rpc("prepare_application_documents",{app_id:app,expected_revision:inherited.revision},owner),/GLF_REQUIRED:result_1/);
+ assert.equal((await db.query("select count(*)::int n from public.application_versions where application_id=$1",[app])).rows[0].n,1);
+ for(const role of ["anon","authenticated"])assert.equal((await db.query("select has_function_privilege($1,'private.validate_project_results(jsonb,boolean,integer)','EXECUTE') allowed",[role])).rows[0].allowed,false);
+});

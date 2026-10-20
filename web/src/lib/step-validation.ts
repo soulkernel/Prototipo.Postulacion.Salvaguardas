@@ -77,7 +77,7 @@ export function stepIssues(
         ...Object.keys(financialErrors(payload.concept, rules, stage)),
       );
     } else {
-      missing.push(...resultIssues(payload.concept));
+      missing.push(...resultIssues(payload.concept, stage));
       missing.push(...activityPlanningIssues(payload));
       missing.push(
         ...potentialRiskIssues(payload).filter(

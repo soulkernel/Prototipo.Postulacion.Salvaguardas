@@ -14,6 +14,7 @@ import { resultUnits } from "./project-results";
 import {
   currentConceptLayout,
   includesAdministrativeCost,
+  includesDetailedResults,
   usesCurrentGlfForm,
   groupsProjectDates,
   type ConceptPresentation,
@@ -177,6 +178,7 @@ export function conceptSections(
   },
 ): ConceptSection[] {
   const es = locale === "es";
+  const detailedResults = includesDetailedResults(presentation);
   const table = (headers: string[], rows: string[][]): ContentBlock => ({
     type: "table",
     headers,
@@ -503,6 +505,26 @@ export function conceptSections(
                 : es
                   ? "un objetivo específico pendiente de identificar"
                   : "a specific objective yet to be identified";
+            if (!detailedResults)
+              return [
+                {
+                  type: "paragraph" as const,
+                  text: es
+                    ? `Resultado ${i + 1}. El resultado previsto contribuye al ${relation}.`
+                    : `Result ${i + 1}. The expected outcome contributes to ${relation}.`,
+                },
+                table(
+                  es
+                    ? ["Objetivo específico", "Resultado esperado"]
+                    : ["Specific objective", "Expected result"],
+                  [
+                    [
+                      index >= 0 ? objectives[index].text : "—",
+                      r.result || "—",
+                    ],
+                  ],
+                ),
+              ];
             const unit =
               r.unit === "other"
                 ? r.other_unit
@@ -518,14 +540,22 @@ export function conceptSections(
                 es
                   ? [
                       "Resultado esperado",
-                      "Indicador",
-                      "Meta preliminar",
+                      presentation.layoutVersion === currentConceptLayout
+                        ? "Indicador de impacto"
+                        : "Indicador",
+                      presentation.layoutVersion === currentConceptLayout
+                        ? "Meta propuesta"
+                        : "Meta preliminar",
                       "Evidencia prevista",
                     ]
                   : [
                       "Expected result",
-                      "Indicator",
-                      "Preliminary target",
+                      presentation.layoutVersion === currentConceptLayout
+                        ? "Impact indicator"
+                        : "Indicator",
+                      presentation.layoutVersion === currentConceptLayout
+                        ? "Proposed target"
+                        : "Preliminary target",
                       "Planned evidence",
                     ],
                 [
@@ -572,13 +602,22 @@ export function conceptSections(
             ? f.es
             : f.en,
       introduction:
-        f.key === "alignment" &&
-        c.strategic_alignment &&
-        !requiresObjectiveContribution(c.strategic_alignment.version)
+        f.key === "results" && !detailedResults
           ? es
-            ? "La alineación relaciona el objetivo general con el Plan Galápagos 2030 y los Objetivos de Desarrollo Sostenible (ODS). También presenta los otros instrumentos de planificación que el postulante haya añadido."
-            : "Alignment connects the general objective with the Galapagos 2030 Plan and the Sustainable Development Goals (SDGs). It also presents any other planning instruments added by the applicant."
-          : introductions[f.key]?.[es ? 0 : 1] || "",
+            ? "Se presentan los resultados que se espera conseguir al finalizar el proyecto y los productos o entregables previstos, vinculados a sus objetivos específicos. El detalle de indicadores, metas y evidencias se completará en la fase de proyecto completo."
+            : "This section presents the expected outcomes at project end and planned outputs or deliverables, linked to their specific objectives. Detailed indicators, targets and evidence will be completed in the full proposal phase."
+          : f.key === "results" &&
+              presentation.layoutVersion === currentConceptLayout
+            ? es
+              ? "Se presentan los resultados esperados y sus indicadores de impacto, metas propuestas y evidencias para comprobar su cumplimiento en el proyecto completo."
+              : "This section presents expected outcomes and their impact indicators, proposed targets and evidence for verifying achievement in the full proposal."
+            : f.key === "alignment" &&
+                c.strategic_alignment &&
+                !requiresObjectiveContribution(c.strategic_alignment.version)
+              ? es
+                ? "La alineación relaciona el objetivo general con el Plan Galápagos 2030 y los Objetivos de Desarrollo Sostenible (ODS). También presenta los otros instrumentos de planificación que el postulante haya añadido."
+                : "Alignment connects the general objective with the Galapagos 2030 Plan and the Sustainable Development Goals (SDGs). It also presents any other planning instruments added by the applicant."
+              : introductions[f.key]?.[es ? 0 : 1] || "",
       blocks,
     });
   }

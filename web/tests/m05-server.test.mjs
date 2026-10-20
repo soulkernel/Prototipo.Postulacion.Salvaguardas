@@ -57,6 +57,31 @@ after(async () => {
 const appId = "00000000-0000-4000-8000-000000000601",
   partnerId = "11111111-1111-4111-8111-111111111111";
 const letter = "partner_letter_" + partnerId.replaceAll("-", "");
+
+test("result save/prepare/submit use the stored application stage and retain detailed values", async()=>{
+ const state=fixture(); state.app.stage=1;
+ const id=crypto.randomUUID(),objective=crypto.randomUUID();
+ Object.assign(state.app.payload.concept,{strategic_alignment:{version:"pg2030-ods-general-v3",objectives:[{id:crypto.randomUUID(),kind:"general",text:"Objetivo general QA",plan:["E1"],ods:[14],glf:[]},{id:objective,kind:"specific",text:"Objetivo local",plan:[],ods:[],glf:[]}]},project_results:[{id,objective_id:objective,result:"Entregables QA",indicator:"",target:null,unit:"",other_unit:"",evidence:""}]});
+ const p=state.app.payload;
+ p.activities[0].objective_ids=[objective];
+ assert.equal((await api.saveDraft(appId,0,p)).ok,true);
+ assert.doesNotMatch(state.savedPayload.concept.results,/Indicador|Meta|Evidencia/);
+ const first=await api.prepareDocuments(appId,0);
+ assert.notEqual(first.error,"GLF_REQUIRED:result_1");
+ await api.submitDraft(appId,0);
+ state.app.stage=2;
+ assert.deepEqual(await api.prepareDocuments(appId,0),{error:"GLF_REQUIRED:result_1"});
+ assert.deepEqual(await api.submitDraft(appId,0),{ok:false,error:"GLF_REQUIRED:result_1"});
+ assert.equal((await api.saveDraft(appId,0,p)).ok,true); // Incomplete phase-two drafts remain saveable.
+ assert.match(state.savedPayload.concept.results,/Meta propuesta/);
+ Object.assign(p.concept.project_results[0],{indicator:"Indicador conservado",target:15,unit:"products",evidence:"Registro conservado"});
+ state.app.stage=1;
+ assert.equal((await api.saveDraft(appId,0,p)).ok,true);
+ assert.deepEqual(state.savedPayload.concept.project_results,p.concept.project_results);
+ assert.doesNotMatch(state.savedPayload.concept.results,/Indicador conservado|Registro conservado/);
+ p.concept.project_results[0].objective_id="";
+ assert.deepEqual(await api.prepareDocuments(appId,0),{error:"GLF_REQUIRED:result_1"});
+});
 test("actual partner-removal action validates IDs and reports Storage failure before finalization", async()=>{
  const state=fixture(),calls=[];
  assert.deepEqual(await api.removePartner('bad',0,partnerId),{ok:false,error:'GLF_INVALID_PAYLOAD',pending:false});
@@ -140,6 +165,11 @@ function fixture() {
           error: null,
         };
       return { data: null, error: null };
+    }
+    async single() {
+      if (this.table === "prepared_documents")
+        return {data:{id:this.filters.find(([k])=>k==="id")[1],created_at:"2026-10-20T00:00:00Z"},error:null};
+      return this.maybeSingle();
     }
     then(resolve, reject) {
       return Promise.resolve({

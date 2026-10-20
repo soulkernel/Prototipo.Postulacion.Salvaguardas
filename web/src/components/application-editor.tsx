@@ -142,6 +142,14 @@ const levels = {
   },
 };
 function message(code: string, es: boolean) {
+  if (code.includes("GLF_INVALID_RESULTS"))
+    return es
+      ? "Revise los resultados y sus datos guardados antes de volver a guardar el borrador."
+      : "Check the results and their saved data before saving the draft again.";
+  if (code.includes("GLF_REQUIRED:result"))
+    return es
+      ? "Complete los campos de resultados requeridos en esta fase y seleccione un objetivo específico válido para cada resultado."
+      : "Complete the result fields required in this phase and select a valid specific objective for each result.";
   if (code.includes("GLF_REQUIRED:partners"))
     return es
       ? "Complete el nombre y describa el apoyo de cada organización asociada en la implementación del proyecto."
@@ -1186,7 +1194,7 @@ export function ApplicationEditor({
               concept: {
                 ...concept,
                 ...(removedIds.size && concept.project_results
-                  ? { results: resultText(concept, locale) }
+                  ? { results: resultText(concept, locale, application.stage) }
                   : {}),
               },
             };
@@ -1195,6 +1203,7 @@ export function ApplicationEditor({
       />
     ) : field.key === "results" ? (
       <ProjectResultFields
+        stage={application.stage}
         key={field.key}
         es={es}
         value={payload.concept.project_results}
@@ -1205,7 +1214,11 @@ export function ApplicationEditor({
             p.concept.project_results === undefined
               ? {
                   ...p,
-                  concept: { ...p.concept, results: text, results_source: text },
+                  concept: {
+                    ...p.concept,
+                    results: text,
+                    results_source: text,
+                  },
                 }
               : p,
           )
@@ -1221,7 +1234,7 @@ export function ApplicationEditor({
               ...p,
               concept: {
                 ...concept,
-                results: resultText(concept, locale),
+                results: resultText(concept, locale, application.stage),
               },
             };
           })

@@ -43,11 +43,11 @@ const guidance: Record<string, [string[], string[]]> = {
   results: [
     [
       "Describa los cambios que espera conseguir al finalizar el proyecto y lo que entregará: elementos físicos, materiales, infraestructura, formación o capacidades desarrolladas.",
-      "Indique cómo comprobará esos resultados. Las metas son preliminares; la fórmula de cálculo y los detalles de medición se completarán en el proyecto completo.",
+      "Complete el indicador de impacto, la meta propuesta, su unidad de medida y la evidencia que permitirá comprobar cada resultado.",
     ],
     [
       "Describe the likely outcomes at project end and what will be delivered: physical items, materials or infrastructure, training or skills development.",
-      "Indicate how you will verify those outcomes. Targets are preliminary; calculation formulas and measurement details will be completed in the full proposal.",
+      "Complete the impact indicator, proposed target, unit of measure and evidence that will verify each result.",
     ],
   ],
   activities: [
@@ -104,7 +104,15 @@ const guidance: Record<string, [string[], string[]]> = {
 export function proposalTitle(key: string, locale: Locale) {
   return proposalTitles[key][locale === "es" ? 0 : 1];
 }
-export function proposalGuidance(key: string, locale: Locale) {
+export function proposalGuidance(key: string, locale: Locale, stage = 1) {
+  if (key === "results" && stage === 1)
+    return locale === "es"
+      ? [
+          "Seleccione un objetivo específico y describa qué espera conseguir al finalizar el proyecto y qué entregará: elementos físicos, materiales, infraestructura, formación o desarrollo de capacidades, según corresponda. Puede agregar varios resultados para un mismo objetivo.",
+        ]
+      : [
+          "Select a specific objective and describe the likely outcomes at project end and what will be delivered: physical items, materials or infrastructure, training or skills development, as applicable. You can add several results for the same objective.",
+        ];
   return guidance[key]?.[locale === "es" ? 0 : 1] || [];
 }
 

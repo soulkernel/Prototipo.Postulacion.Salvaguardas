@@ -22,6 +22,7 @@ import { ConceptReview } from "../src/components/concept-review";
 import { summaryWorkbook } from "../src/lib/backup-workbook";
 import { unzipSync, strFromU8 } from "fflate";
 import { manualChapters } from "../src/lib/applicant-manual";
+import { newProjectResult, resultText } from "../src/lib/project-results";
 import {
   currentAlignmentVersion,
   newObjective,
@@ -84,6 +85,50 @@ function complete() {
   return p;
 }
 
+test("concept note reaches 100% with objective and outcome only, without silently requiring phase-two measurements", () => {
+  const p = complete(),
+    general = {
+      ...newObjective("general", currentAlignmentVersion),
+      text: "Conservar",
+      plan: ["E1"],
+      ods: [14],
+    },
+    specific = {
+      ...newObjective("specific", currentAlignmentVersion),
+      text: "Fortalecer capacidades",
+    };
+  p.concept.strategic_alignment = {
+    version: currentAlignmentVersion,
+    objectives: [general, specific],
+  };
+  p.activities[0].objective_ids = [specific.id];
+  p.concept.project_results = [
+    {
+      ...newProjectResult(),
+      objective_id: specific.id,
+      result: "Capacidades fortalecidas y materiales disponibles",
+    },
+  ];
+  p.concept.results = resultText(p.concept, "es", 1);
+  assert.deepEqual(validateComplete(p, rules, 1), []);
+  assert.deepEqual(stepIssues(p, rules, 1, 1), { missing: [], invalid: [] });
+  for (const locale of ["es", "en"] as const)
+    assert.deepEqual(completionGuidance(p, rules, 1, [], locale), []);
+  assert.equal(
+    submissionProgress(
+      p,
+      rules,
+      1,
+      [],
+      [{ kind: "concept_signed" }, { kind: "matrix_signed" }],
+      true,
+      true,
+    ).percent,
+    100,
+  );
+  assert.ok(validateComplete(p, rules, 2).includes("result_1"));
+});
+
 test("M15 complete v3 reaches 100% without a contribution field and keeps beneficiaries required", () => {
   const p = complete();
   const general = {
@@ -102,8 +147,16 @@ test("M15 complete v3 reaches 100% without a contribution field and keeps benefi
   };
   p.activities[0].objective_ids = [specific.id];
   assert.equal(payloadSchema.safeParse(p).success, true);
-  assert.ok(!manualChapters.flatMap(chapter => chapter.rows).some(row => row[0] === "Contribución o beneficio esperado"));
-  assert.ok(!manualChapters.flatMap(chapter => chapter.screen).some(row => row[0] === "Contribución o beneficio esperado *"));
+  assert.ok(
+    !manualChapters
+      .flatMap((chapter) => chapter.rows)
+      .some((row) => row[0] === "Contribución o beneficio esperado"),
+  );
+  assert.ok(
+    !manualChapters
+      .flatMap((chapter) => chapter.screen)
+      .some((row) => row[0] === "Contribución o beneficio esperado *"),
+  );
   assert.deepEqual(validateComplete(p, rules, 1), []);
   assert.deepEqual(stepIssues(p, rules, 1, 1), { missing: [], invalid: [] });
   for (const locale of ["es", "en"] as const)
