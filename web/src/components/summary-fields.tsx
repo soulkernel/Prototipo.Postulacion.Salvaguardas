@@ -2,6 +2,7 @@
 import { useId } from "react";
 import { words, type Locale } from "@/lib/domain";
 import { RequiredMark } from "./required-mark";
+import { proposalEntryPrompt } from "@/lib/proposal-guidance";
 
 export function SummaryFields({
   value,
@@ -131,6 +132,7 @@ export function SummaryFields({
         spellCheck
         lang={locale}
         value={value}
+        placeholder={proposalEntryPrompt("summary", locale)}
         onChange={(e) => onChange(e.target.value)}
       />
       <div className="summary-counter-row">

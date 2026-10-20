@@ -98,6 +98,11 @@ export function ActivityPlanningFields({
                 <LimitedTextarea
                   locale={locale}
                   data-validation-field="description"
+                  placeholder={
+                    es
+                      ? "Describa qué hará, sus fases y los períodos previstos."
+                      : "Describe what you will do, its phases and the planned schedule."
+                  }
                   rows={3}
                   value={activity.description}
                   maxLength={12000}

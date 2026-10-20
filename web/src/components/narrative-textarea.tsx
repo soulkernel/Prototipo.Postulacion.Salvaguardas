@@ -13,6 +13,7 @@ export function NarrativeTextarea({
   locale,
   invalid,
   descriptionId,
+  placeholder,
   disabled = false,
 }: {
   id: string;
@@ -22,6 +23,7 @@ export function NarrativeTextarea({
   locale: "es" | "en";
   invalid?: boolean;
   descriptionId?: string;
+  placeholder?: string;
   disabled?: boolean;
 }) {
   const es = locale === "es";
@@ -79,6 +81,7 @@ export function NarrativeTextarea({
         ref={textarea}
         id={id}
         value={value}
+        placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
         className="narrative-entry-text"
         rows={7}

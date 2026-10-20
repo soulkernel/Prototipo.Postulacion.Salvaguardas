@@ -109,3 +109,46 @@ export function proposalTitle(key: string, locale: Locale) {
 export function proposalGuidance(key: string, locale: Locale) {
   return guidance[key]?.[locale === "es" ? 0 : 1] || [];
 }
+
+const entryPrompts: Record<string, [string, string]> = {
+  summary: [
+    "Escriba aquí el resumen de su proyecto.",
+    "Write your project summary here.",
+  ],
+  objectives: [
+    "Escriba aquí los objetivos de su proyecto.",
+    "Write your project objectives here.",
+  ],
+  beneficiaries: [
+    "Describa quiénes se beneficiarán y de qué manera.",
+    "Describe who or what will benefit and how.",
+  ],
+  results: [
+    "Describa los resultados que espera lograr y cómo los comprobará.",
+    "Describe the expected outcomes and how you will verify them.",
+  ],
+  sustainability: [
+    "Explique cómo se mantendrán los beneficios del proyecto y cómo podría replicarse.",
+    "Explain how project benefits will be sustained and how the project could be replicated.",
+  ],
+  alignment: [
+    "Describa con qué instrumentos de planificación se alinea el proyecto.",
+    "Describe which planning instruments the project aligns with.",
+  ],
+  monitoring: [
+    "Describa cómo comprobará el avance y los resultados del proyecto.",
+    "Describe how you will monitor project progress and results.",
+  ],
+  environmental_risks: [
+    "Describa los riesgos ambientales que podría generar el proyecto.",
+    "Describe the environmental risks the project could generate.",
+  ],
+  social_risks: [
+    "Describa los riesgos sociales que podría generar el proyecto.",
+    "Describe the social risks the project could generate.",
+  ],
+};
+
+export function proposalEntryPrompt(key: string, locale: Locale) {
+  return entryPrompts[key]?.[locale === "es" ? 0 : 1];
+}

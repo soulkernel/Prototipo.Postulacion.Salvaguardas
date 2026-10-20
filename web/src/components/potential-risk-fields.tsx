@@ -112,6 +112,11 @@ export function PotentialRiskFields({
               <LimitedTextarea
                 locale={locale}
                 rows={3}
+                placeholder={
+                  es
+                    ? "Describa los riesgos que podría generar el proyecto."
+                    : "Describe the risks the project could generate."
+                }
                 maxLength={12000}
                 value={payload.concept[key]}
                 onChange={(e) =>
@@ -166,6 +171,11 @@ export function PotentialRiskFields({
                     <LimitedTextarea
                       locale={locale}
                       id={"potential-" + r.id}
+                      placeholder={
+                        es
+                          ? "Describa aquí este riesgo potencial."
+                          : "Describe this potential risk here."
+                      }
                       rows={2}
                       value={r.name}
                       maxLength={2000}
@@ -234,6 +244,11 @@ export function PotentialRiskFields({
               <LimitedTextarea
                 locale={locale}
                 rows={2}
+                placeholder={
+                  es
+                    ? "Explique por qué no identifica riesgos en esta dimensión."
+                    : "Explain why no risks are identified in this dimension."
+                }
                 maxLength={12000}
                 value={
                   payload.concept[

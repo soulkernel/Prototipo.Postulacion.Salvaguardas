@@ -242,6 +242,11 @@ export function GeographyFields({
           </small>
           <textarea
             id={`${id}-location`}
+            placeholder={
+              es
+                ? "Describa los sitios de intervención y el área que abarcará el proyecto."
+                : "Describe the intervention sites and the area the project will cover."
+            }
             data-validation-field="location"
             aria-required="true"
             aria-describedby={`${id}-location-help`}

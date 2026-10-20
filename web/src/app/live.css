@@ -204,6 +204,13 @@ a {
   line-height: 1.65;
   min-height: 92px;
 }
+.application-entry-fields textarea::placeholder {
+  color: #6b7280;
+  opacity: 1;
+}
+.application-entry-fields textarea:focus::placeholder {
+  color: transparent;
+}
 .narrative-field,
 .narrative-entry {
   display: grid;

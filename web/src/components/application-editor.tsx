@@ -20,7 +20,7 @@ import { MoneyInput } from "./money-input";
 import { DeadlineCountdown } from "./deadline-countdown";
 import { DocumentDownload } from "./document-download";
 import { useEffect, useState, useRef } from "react";
-import { proposalTitle } from "@/lib/proposal-guidance";
+import { proposalEntryPrompt, proposalTitle } from "@/lib/proposal-guidance";
 import { ProposalFieldGuidance } from "./proposal-field-guidance";
 import { applicationStepUrl } from "@/lib/application-navigation";
 import Link from "@/components/feedback-link";
@@ -1317,6 +1317,7 @@ export function ApplicationEditor({
           id={`concept-${field.key}-help`}
         />
         <NarrativeTextarea
+          placeholder={proposalEntryPrompt(field.key, locale)}
           descriptionId={`concept-${field.key}-help`}
           id={`concept-${field.key}`}
           label={es ? field.es : field.en}
@@ -1351,6 +1352,7 @@ export function ApplicationEditor({
           />
         ) : field.type === "textarea" ? (
           <LimitedTextarea
+            placeholder={proposalEntryPrompt(field.key, locale)}
             locale={locale}
             aria-required="true"
             aria-invalid={fieldIssue(field.key)}
@@ -1829,7 +1831,7 @@ export function ApplicationEditor({
       )}
       <fieldset
         disabled={!editable || busy || !!pendingPartner}
-        className="live-fieldset"
+        className="live-fieldset application-entry-fields"
       >
         <div className="live-card">
           {step <= 1 && (
@@ -2234,6 +2236,11 @@ export function ApplicationEditor({
                       <LimitedTextarea
                         locale={locale}
                         aria-required={f.required}
+                        placeholder={
+                          es
+                            ? "Escriba aquí su respuesta."
+                            : "Write your response here."
+                        }
                         value={payload.phase2[f.id] || ""}
                         onChange={(e) =>
                           setPayload((p) => ({
@@ -2333,6 +2340,11 @@ export function ApplicationEditor({
                         locale={locale}
                         aria-required="true"
                         value={activity.no_risks_reason}
+                        placeholder={
+                          es
+                            ? "Explique por qué no identifica riesgos en esta actividad."
+                            : "Explain why no risks are identified for this activity."
+                        }
                         maxLength={12000}
                         onChange={(e) =>
                           updateActivity(ai, {
@@ -2508,6 +2520,11 @@ export function ApplicationEditor({
                             <LimitedTextarea
                               locale={locale}
                               data-validation-field="description"
+                              placeholder={
+                                es
+                                  ? "Describa el riesgo y cómo podría ocurrir."
+                                  : "Describe the risk and how it could occur."
+                              }
                               aria-required="true"
                               rows={2}
                               value={risk.description}
@@ -2585,6 +2602,11 @@ export function ApplicationEditor({
                                       <LimitedTextarea
                                         locale={locale}
                                         aria-required="true"
+                                        placeholder={
+                                          es
+                                            ? "Describa la medida que propone para gestionar este riesgo."
+                                            : "Describe the proposed measure to manage this risk."
+                                        }
                                         rows={2}
                                         value={m.text || ""}
                                         onChange={(e) =>

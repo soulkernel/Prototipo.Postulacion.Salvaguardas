@@ -81,6 +81,15 @@ export function OtherPlanningInstruments({
                 </label>
                 <textarea
                   id={id}
+                  placeholder={
+                    field === "name"
+                      ? es
+                        ? "Escriba el nombre del instrumento de planificación."
+                        : "Enter the planning instrument name."
+                      : es
+                        ? "Escriba el objetivo de ese instrumento con el que se alinea su proyecto."
+                        : "Enter the instrument objective your project aligns with."
+                  }
                   rows={field === "name" ? 2 : 3}
                   maxLength={2000}
                   aria-required="true"
