@@ -243,17 +243,23 @@ export function StrategicFields({
                   maxLength={2000}
                   value={o.text}
                   placeholder={
-                    es
-                      ? "Escriba aquí este objetivo"
-                      : "Write this objective here"
+                    o.kind === "general"
+                      ? es
+                        ? "Escriba aquí el objetivo general."
+                        : "Write the general objective here."
+                      : es
+                        ? "Escriba aquí este objetivo"
+                        : "Write this objective here"
                   }
                   onChange={(e) => update(o.id, { text: e.target.value })}
                 />
               </div>
               {o.kind === "general" && (
                 <div className="strategic-objective-selectors">
-                  <h4>{proposalTitle("alignment", locale)}</h4>
-                  <ProposalFieldGuidance field="alignment" locale={locale} />
+                  <div className="strategic-alignment-guidance">
+                    <h4>{proposalTitle("alignment", locale)}</h4>
+                    <ProposalFieldGuidance field="alignment" locale={locale} />
+                  </div>
                   {selector(
                     "plan",
                     es

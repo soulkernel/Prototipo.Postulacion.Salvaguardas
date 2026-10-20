@@ -2819,6 +2819,8 @@ select {
 .application-save-time { font-size: 13px; color: var(--navy); }
 .strategic-objective-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: start; }
 .strategic-objective-selectors { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 24px; align-items: start; min-width: 0; }
+.strategic-alignment-guidance { grid-column: 1 / -1; display: grid; gap: 8px; min-width: 0; }
+.strategic-alignment-guidance > h4 { margin: 0; }
 .strategic-objective-selectors > small { grid-column: 1 / -1; }
 .strategic-objective-text { min-width: 0; }
 .alignment-selector label { margin-bottom: 8px; }

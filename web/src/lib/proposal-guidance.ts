@@ -24,10 +24,10 @@ export const proposalTitles: Record<string, [string, string]> = {
 const guidance: Record<string, [string[], string[]]> = {
   objectives: [
     [
-      "Indique el objetivo general y los objetivos específicos del proyecto: qué problema o cuestión abordará y qué busca lograr.",
+      "Indique el objetivo general del proyecto: qué problema o cuestión abordará y qué busca lograr.",
     ],
     [
-      "State the general objective and specific objectives of the project: what problem or issue will be addressed and what you aim to achieve.",
+      "State the general objective of the project: what problem or issue it will address and what it aims to achieve.",
     ],
   ],
   beneficiaries: [
@@ -84,12 +84,10 @@ const guidance: Record<string, [string[], string[]]> = {
   ],
   alignment: [
     [
-      "Alinee únicamente el objetivo general con el Plan Galápagos 2030 y los ODS (Objetivos de Desarrollo Sostenible). Los objetivos específicos no requieren alineación.",
-      "Si corresponde, agregue otro instrumento de planificación e indique su nombre y el objetivo con el que se alinea. La convocatoria y el tema de aplicación ya establecen la relación con las prioridades del GLF.",
+      "Seleccione los objetivos del Plan Galápagos 2030 y los ODS (Objetivos de Desarrollo Sostenible) a los que contribuye el objetivo general de su proyecto. Si corresponde, agregue otro instrumento de planificación e indique su nombre y el objetivo con el que se alinea.",
     ],
     [
-      "Align only the general objective with Galapagos Plan 2030 and the UN-SDGs (United Nations Sustainable Development Goals). Specific objectives do not require alignment.",
-      "Where relevant, add another planning instrument and state its name and the objective it aligns with. The call for proposals and application topic already establish the link to GLF priorities.",
+      "Select the objectives of Galapagos Plan 2030 and the SDGs (Sustainable Development Goals) to which your project's general objective contributes. If applicable, add another planning instrument and specify its name and the objective it aligns with.",
     ],
   ],
   monitoring: [
