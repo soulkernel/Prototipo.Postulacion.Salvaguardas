@@ -1,5 +1,6 @@
 import { proposalTitle } from "./proposal-guidance";
-import type { Concept, Locale } from "./domain";
+import type { Activity, Concept, Locale } from "./domain";
+import { monitoringReference, monitoringParameter } from "./monitoring-plan";
 import { identityFields, narrativeFields } from "./fields";
 import { callThemeLabel } from "./call-themes";
 import { partnerRecords } from "./partners";
@@ -15,6 +16,8 @@ import {
   currentConceptLayout,
   includesAdministrativeCost,
   includesDetailedResults,
+  usesStageSpecificResults,
+  usesStructuredMonitoring,
   usesCurrentGlfForm,
   groupsProjectDates,
   type ConceptPresentation,
@@ -176,6 +179,7 @@ export function conceptSections(
     stage: 1,
     layoutVersion: currentConceptLayout,
   },
+  activities: Activity[] = [],
 ): ConceptSection[] {
   const es = locale === "es";
   const detailedResults = includesDetailedResults(presentation);
@@ -540,20 +544,20 @@ export function conceptSections(
                 es
                   ? [
                       "Resultado esperado",
-                      presentation.layoutVersion === currentConceptLayout
+                      usesStageSpecificResults(presentation)
                         ? "Indicador de impacto"
                         : "Indicador",
-                      presentation.layoutVersion === currentConceptLayout
+                      usesStageSpecificResults(presentation)
                         ? "Meta propuesta"
                         : "Meta preliminar",
                       "Evidencia prevista",
                     ]
                   : [
                       "Expected result",
-                      presentation.layoutVersion === currentConceptLayout
+                      usesStageSpecificResults(presentation)
                         ? "Impact indicator"
                         : "Indicator",
-                      presentation.layoutVersion === currentConceptLayout
+                      usesStageSpecificResults(presentation)
                         ? "Proposed target"
                         : "Preliminary target",
                       "Planned evidence",
@@ -570,6 +574,62 @@ export function conceptSections(
             ];
           })
         : paragraphs("");
+    if (
+      f.key === "monitoring" &&
+      usesStructuredMonitoring(presentation) &&
+      c.monitoring_plan !== undefined
+    ) {
+      blocks = c.monitoring_plan.flatMap((item, i) => {
+        const ref = monitoringReference(
+          { concept: c, activities },
+          item,
+          locale,
+        );
+        return [
+          {
+            type: "paragraph" as const,
+            text: es
+              ? `Indicador propuesto ${i + 1}. Se propone comprobar ${item.parameter === "activity" ? "el avance de la actividad" : "el logro del resultado"} indicado a continuación, mediante el indicador y la estrategia descritos por el postulante.`
+              : `Proposed indicator ${i + 1}. The applicant proposes to assess ${item.parameter === "activity" ? "progress of the activity" : "achievement of the outcome"} identified below, using the stated indicator and monitoring strategy.`,
+          },
+          table(
+            es
+              ? ["Dato", `Propuesta de seguimiento · Indicador ${i + 1}`]
+              : ["Field", `Monitoring proposal · Indicator ${i + 1}`],
+            [
+              [
+                es
+                  ? "Parámetro de evaluación que propone"
+                  : "Proposed evaluation parameter",
+                monitoringParameter(item.parameter, locale),
+              ],
+              [
+                es
+                  ? "Actividad o resultado asociado"
+                  : "Associated activity or outcome",
+                ref.label,
+              ],
+              [
+                es
+                  ? "Objetivos específicos asociados"
+                  : "Associated specific objectives",
+                ref.objectives.join("; ") || "—",
+              ],
+              [
+                es ? "Indicador propuesto" : "Proposed indicator",
+                item.indicator || "—",
+              ],
+              [
+                es
+                  ? "Estrategia y actividades de seguimiento"
+                  : "Monitoring strategy and activities",
+                item.strategy || "—",
+              ],
+            ],
+          ),
+        ];
+      });
+    }
     if (
       (f.key === "environmental_risks" || f.key === "social_risks") &&
       c.risk_register
@@ -602,22 +662,25 @@ export function conceptSections(
             ? f.es
             : f.en,
       introduction:
-        f.key === "results" && !detailedResults
+        f.key === "monitoring" && usesStructuredMonitoring(presentation)
           ? es
-            ? "Se presentan los resultados que se espera conseguir al finalizar el proyecto y los productos o entregables previstos, vinculados a sus objetivos específicos. El detalle de indicadores, metas y evidencias se completará en la fase de proyecto completo."
-            : "This section presents the expected outcomes at project end and planned outputs or deliverables, linked to their specific objectives. Detailed indicators, targets and evidence will be completed in the full proposal phase."
-          : f.key === "results" &&
-              presentation.layoutVersion === currentConceptLayout
+            ? "Los indicadores propuestos se vinculan con actividades o resultados ya registrados y con sus objetivos específicos. Las estrategias describen cómo se observará el avance o el éxito; las metas y el método detallado se completarán en el proyecto completo."
+            : "Proposed indicators are linked to existing activities or outcomes and their specific objectives. Strategies describe how progress or success will be observed; targets and detailed measurement methods will be completed in the full proposal."
+          : f.key === "results" && !detailedResults
             ? es
-              ? "Se presentan los resultados esperados y sus indicadores de impacto, metas propuestas y evidencias para comprobar su cumplimiento en el proyecto completo."
-              : "This section presents expected outcomes and their impact indicators, proposed targets and evidence for verifying achievement in the full proposal."
-            : f.key === "alignment" &&
-                c.strategic_alignment &&
-                !requiresObjectiveContribution(c.strategic_alignment.version)
+              ? "Se presentan los resultados que se espera conseguir al finalizar el proyecto y los productos o entregables previstos, vinculados a sus objetivos específicos. El detalle de indicadores, metas y evidencias se completará en la fase de proyecto completo."
+              : "This section presents the expected outcomes at project end and planned outputs or deliverables, linked to their specific objectives. Detailed indicators, targets and evidence will be completed in the full proposal phase."
+            : f.key === "results" && usesStageSpecificResults(presentation)
               ? es
-                ? "La alineación relaciona el objetivo general con el Plan Galápagos 2030 y los Objetivos de Desarrollo Sostenible (ODS). También presenta los otros instrumentos de planificación que el postulante haya añadido."
-                : "Alignment connects the general objective with the Galapagos 2030 Plan and the Sustainable Development Goals (SDGs). It also presents any other planning instruments added by the applicant."
-              : introductions[f.key]?.[es ? 0 : 1] || "",
+                ? "Se presentan los resultados esperados y sus indicadores de impacto, metas propuestas y evidencias para comprobar su cumplimiento en el proyecto completo."
+                : "This section presents expected outcomes and their impact indicators, proposed targets and evidence for verifying achievement in the full proposal."
+              : f.key === "alignment" &&
+                  c.strategic_alignment &&
+                  !requiresObjectiveContribution(c.strategic_alignment.version)
+                ? es
+                  ? "La alineación relaciona el objetivo general con el Plan Galápagos 2030 y los Objetivos de Desarrollo Sostenible (ODS). También presenta los otros instrumentos de planificación que el postulante haya añadido."
+                  : "Alignment connects the general objective with the Galapagos 2030 Plan and the Sustainable Development Goals (SDGs). It also presents any other planning instruments added by the applicant."
+                : introductions[f.key]?.[es ? 0 : 1] || "",
       blocks,
     });
   }

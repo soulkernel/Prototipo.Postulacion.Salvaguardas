@@ -14,6 +14,7 @@ import { potentialRiskIssues } from "./potential-risks";
 import { partnerIssues } from "./partners";
 import { activityPlanningIssues, isActivityDate } from "./activity-planning";
 import { projectResultSchema, resultIssues } from "./project-results";
+import { monitoringPlanSchema, monitoringIssues } from "./monitoring-plan";
 export const roles = [
   "applicant",
   "grants_manager",
@@ -89,7 +90,8 @@ export const conceptSchema = z
     sustainability: text,
     alignment: text,
     strategic_alignment: strategicSchema.optional(),
-    monitoring: text,
+    monitoring: text.default(""),
+    monitoring_plan: monitoringPlanSchema.optional(),
     environmental_risks: text,
     social_risks: text,
     risk_register: z
@@ -474,6 +476,7 @@ export function validateComplete(
     missing.push("project_type");
   missing.push(...partnerIssues(c));
   missing.push(...resultIssues(c, stage));
+  missing.push(...monitoringIssues(payload));
   missing.push(...activityPlanningIssues(payload));
   missing.push(...potentialRiskIssues(payload));
   missing.push(...alignmentIssues(c.strategic_alignment));
@@ -488,6 +491,7 @@ export function validateComplete(
       key !== "partners" &&
       key !== "results_source" &&
       key !== "summary" &&
+      !(key === "monitoring" && c.monitoring_plan !== undefined) &&
       key !== "other_islands" &&
       !(stage === 1 && key === "admin_cost") &&
       (value === null || (typeof value === "string" && !value.trim()))

@@ -12,6 +12,7 @@ import { LimitedTextarea } from "./limited-textarea";
 import type { Payload, Locale } from "@/lib/domain";
 import { newActivity } from "@/lib/domain";
 import { RequiredMark } from "./required-mark";
+import { linkedMonitoringCount } from "@/lib/monitoring-plan";
 export function ActivityPlanningFields({
   payload,
   locale,
@@ -60,9 +61,14 @@ export function ActivityPlanningFields({
                 locale={locale}
                 element={`${es ? "Actividad" : "Activity"} ${i + 1}: ${activity.title || "—"}`}
                 consequence={
-                  es
+                  (es
                     ? "Se eliminarán esta actividad, su descripción y sus vínculos con objetivos. Los objetivos se conservarán."
-                    : "This activity, its description and its objective links will be removed. Objectives will be kept."
+                    : "This activity, its description and its objective links will be removed. Objectives will be kept.") +
+                  (linkedMonitoringCount(payload, "activity", activity.id)
+                    ? es
+                      ? " Las fichas de seguimiento vinculadas se conservarán y requerirán revisar su referencia."
+                      : " Linked monitoring cards will be kept and their reference will need to be reviewed."
+                    : "")
                 }
                 disabled={activity.risks.length > 0}
                 onConfirm={() =>

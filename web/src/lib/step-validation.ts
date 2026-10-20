@@ -21,6 +21,7 @@ import { potentialRiskIssues } from "./potential-risks";
 import { partnerIssues } from "./partners";
 import { activityPlanningIssues } from "./activity-planning";
 import { resultIssues } from "./project-results";
+import { monitoringIssues } from "./monitoring-plan";
 import { applicationTopicIssue } from "./call-themes";
 export function stepIssues(
   payload: Payload,
@@ -42,6 +43,8 @@ export function stepIssues(
         : narrativeFields.map((f) => f.key);
     for (const key of keys) {
       if (["partners", "other_islands", "project_islands"].includes(key))
+        continue;
+      if (key === "monitoring" && payload.concept.monitoring_plan !== undefined)
         continue;
       const value =
         key === "summary"
@@ -78,6 +81,7 @@ export function stepIssues(
       );
     } else {
       missing.push(...resultIssues(payload.concept, stage));
+      missing.push(...monitoringIssues(payload));
       missing.push(...activityPlanningIssues(payload));
       missing.push(
         ...potentialRiskIssues(payload).filter(

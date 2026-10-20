@@ -23,6 +23,7 @@ import { summaryWorkbook } from "../src/lib/backup-workbook";
 import { unzipSync, strFromU8 } from "fflate";
 import { manualChapters } from "../src/lib/applicant-manual";
 import { newProjectResult, resultText } from "../src/lib/project-results";
+import { newMonitoringItem } from "../src/lib/monitoring-plan";
 import {
   currentAlignmentVersion,
   newObjective,
@@ -127,6 +128,65 @@ test("concept note reaches 100% with objective and outcome only, without silentl
     100,
   );
   assert.ok(validateComplete(p, rules, 2).includes("result_1"));
+});
+
+test("linked monitoring replaces the legacy text requirement and reaches 100% without phase-two measurement fields", () => {
+  const p = complete(),
+    general = {
+      ...newObjective("general", currentAlignmentVersion),
+      text: "Conservar",
+      plan: ["E1"],
+      ods: [14],
+    },
+    specific = {
+      ...newObjective("specific", currentAlignmentVersion),
+      text: "Restaurar",
+    };
+  p.concept.strategic_alignment = {
+    version: currentAlignmentVersion,
+    objectives: [general, specific],
+  };
+  p.activities[0].objective_ids = [specific.id];
+  p.concept.monitoring = "";
+  p.concept.monitoring_plan = [
+    {
+      ...newMonitoringItem(),
+      parameter: "activity",
+      reference_id: p.activities[0].id,
+      indicator: "Número de documentos revisados",
+      strategy: "Revisar los registros de trabajo",
+    },
+  ];
+  assert.equal(payloadSchema.safeParse(p).success, true);
+  assert.deepEqual(validateComplete(p, rules, 1), []);
+  assert.deepEqual(stepIssues(p, rules, 1, 1), { missing: [], invalid: [] });
+  for (const locale of ["es", "en"] as const)
+    assert.deepEqual(completionGuidance(p, rules, 1, [], locale), []);
+  assert.equal(
+    submissionProgress(
+      p,
+      rules,
+      1,
+      [],
+      [{ kind: "concept_signed" }, { kind: "matrix_signed" }],
+      true,
+      true,
+    ).percent,
+    100,
+  );
+  p.concept.monitoring_plan[0].indicator = "";
+  assert.ok(validateComplete(p, rules, 1).includes("monitoring_1"));
+  assert.ok(
+    submissionProgress(
+      p,
+      rules,
+      1,
+      [],
+      [{ kind: "concept_signed" }, { kind: "matrix_signed" }],
+      true,
+      true,
+    ).percent < 100,
+  );
 });
 
 test("M15 complete v3 reaches 100% without a contribution field and keeps beneficiaries required", () => {

@@ -46,6 +46,8 @@ export function submissionProgress(
     }
     if (copy.concept.project_results !== undefined)
       copy.concept.results = "structured";
+    if (copy.concept.monitoring_plan !== undefined)
+      copy.concept.monitoring = "structured";
     if (copy.concept.associated_organizations !== undefined)
       copy.concept.partners = "";
     if (copy.concept.risk_register !== undefined) {

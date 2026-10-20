@@ -95,6 +95,20 @@ test("actual partner-removal action validates IDs and reports Storage failure be
  fail=false;assert.equal((await api.removePartner(appId,0,partnerId)).ok,true);
  assert.deepEqual(calls,['begin_remove_partner','begin_remove_partner','finish_remove_partner']);
 });
+
+test("actual monitoring save/prepare/submit preserve structured/legacy data and block broken links",async()=>{
+ const state=fixture(),p=state.app.payload,oid=crypto.randomUUID();state.app.stage=1;
+ p.concept.strategic_alignment={version:"pg2030-ods-general-v3",objectives:[{id:crypto.randomUUID(),kind:"general",text:"Propósito",plan:["E1"],ods:[14],glf:[]},{id:oid,kind:"specific",text:"Objetivo medible",plan:[],ods:[],glf:[]}]};
+ p.activities[0].objective_ids=[oid];
+ p.concept.monitoring_plan=[{id:crypto.randomUUID(),parameter:"activity",reference_id:p.activities[0].id,indicator:"Número de revisiones",strategy:"Revisar registros"}];
+ const raw=p.concept.monitoring;
+ assert.equal((await api.saveDraft(appId,0,p)).ok,true);assert.deepEqual(state.savedPayload.concept.monitoring_plan,p.concept.monitoring_plan);assert.equal(state.savedPayload.concept.monitoring,raw);
+ p.concept.monitoring="";assert.equal((await api.saveDraft(appId,0,p)).ok,true);assert.equal(state.savedPayload.concept.monitoring,"");assert.ok((await api.prepareDocuments(appId,0)).id);
+ p.concept.monitoring_plan[0].reference_id=crypto.randomUUID();
+ assert.equal((await api.saveDraft(appId,0,p)).ok,true);assert.deepEqual(await api.prepareDocuments(appId,0),{error:"GLF_REQUIRED:monitoring_1"});assert.deepEqual(await api.submitDraft(appId,0),{ok:false,error:"GLF_REQUIRED:monitoring_1"});
+ p.concept.monitoring_plan[0].indicator="";assert.equal((await api.saveDraft(appId,0,p)).ok,true);
+ p.concept.monitoring_plan[0].target=42;assert.deepEqual(await api.saveDraft(appId,0,p),{ok:false,error:"GLF_INVALID_PAYLOAD"});
+});
 function fixture() {
   const payload = api.emptyPayload();
   Object.assign(payload.concept, {
@@ -105,6 +119,7 @@ function fixture() {
     project_islands: ["Santa Cruz"],
     phone: "+593991234567",
     summary: "Resumen",
+    monitoring: "Seguimiento narrativo ficticio",
     partner_organizations: [{ id: partnerId, name: "Socio A", support: "Apoyo técnico ficticio" }],
     associated_organizations: ["Socio A"],
     partners: "1. Socio A",

@@ -7,6 +7,7 @@ import { ConfirmRemoveButton } from "./confirm-remove-button";
 import { LimitedTextarea } from "./limited-textarea";
 import { NarrativeTextarea } from "./narrative-textarea";
 import { RequiredMark } from "./required-mark";
+import type { MonitoringItem } from "@/lib/monitoring-plan";
 import {
   newProjectResult,
   resultUnits,
@@ -18,6 +19,7 @@ export function ProjectResultFields({
   objectives,
   es,
   stage,
+  monitoring,
   onChange,
   onLegacyChange,
 }: {
@@ -26,6 +28,7 @@ export function ProjectResultFields({
   objectives: { id: string; kind: string; text: string }[];
   es: boolean;
   stage: number;
+  monitoring?: MonitoringItem[];
   onChange: (value: ProjectResult[]) => void;
   onLegacyChange: (value: string) => void;
 }) {
@@ -120,17 +123,25 @@ export function ProjectResultFields({
                     locale={es ? "es" : "en"}
                     element={`${es ? "Resultado" : "Result"} ${i + 1}: ${r.result || "—"}`}
                     consequence={
-                      stage === 2 ||
+                      (stage === 2 ||
                       r.indicator ||
                       r.target !== null ||
                       r.unit ||
                       r.evidence
                         ? es
-                          ? "Se eliminarán este resultado, su indicador, meta, unidad, evidencia prevista y vínculo con el objetivo. El objetivo se conservará. Esta acción no se puede deshacer."
-                          : "This result, its indicator, target, unit, expected evidence and objective link will be removed. The objective will be kept. This action cannot be undone."
+                          ? "Se eliminarán este resultado, su indicador, meta, unidad, evidencia prevista y vínculo con el objetivo. El objetivo se conservará."
+                          : "This result, its indicator, target, unit, expected evidence and objective link will be removed. The objective will be kept."
                         : es
-                          ? "Se eliminarán la información ingresada en este resultado y su vínculo con el objetivo. El objetivo se conservará. Esta acción no se puede deshacer."
-                          : "The information entered for this result and its objective link will be removed. The objective will be kept. This action cannot be undone."
+                          ? "Se eliminarán la información ingresada en este resultado y su vínculo con el objetivo. El objetivo se conservará."
+                          : "The information entered for this result and its objective link will be removed. The objective will be kept.") +
+                      (monitoring?.some(
+                        (m) =>
+                          m.parameter === "result" && m.reference_id === r.id,
+                      )
+                        ? es
+                          ? " Las fichas de seguimiento vinculadas se conservarán y requerirán revisar su referencia."
+                          : " Linked monitoring cards will be kept and their reference will need to be reviewed."
+                        : "")
                     }
                     onConfirm={() => {
                       const remaining = value.filter((_, j) => i !== j);

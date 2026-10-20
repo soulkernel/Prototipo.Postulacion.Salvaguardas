@@ -3718,3 +3718,35 @@ test("result stages: SQL/RPC completion, continuity, historical values and docum
  assert.equal((await db.query("select count(*)::int n from public.application_versions where application_id=$1",[app])).rows[0].n,1);
  for(const role of ["anon","authenticated"])assert.equal((await db.query("select has_function_privilege($1,'private.validate_project_results(jsonb,boolean,integer)','EXECUTE') allowed",[role])).rows[0].allowed,false);
 });
+
+test("linked monitoring SQL/RPC: valid targets, incomplete drafts, history and phase-two continuity", async()=>{
+ const sql=await readFile(new URL("../../supabase/migrations/202610200048_linked_monitoring_plan.sql",import.meta.url),"utf8");
+ const snapshot=async()=>Object.fromEntries(await Promise.all(["applications","application_versions","prepared_documents","application_events","calls","activities","risks"].map(async t=>[t,(await db.query(`select to_jsonb(row) value from public.${t} row order by id`)).rows])));
+ const before=await snapshot();await db.exec(sql);await db.exec(sql);assert.deepEqual(await snapshot(),before);
+ const p=structuredClone(payload),oid=crypto.randomUUID(),rid=crypto.randomUUID();
+ p.concept.strategic_alignment={version:"pg2030-ods-general-v3",objectives:[{id:crypto.randomUUID(),kind:"general",text:"Conservar QA",plan:["E1"],ods:[14],glf:[]},{id:oid,kind:"specific",text:"Restaurar QA",plan:[],ods:[],glf:[]}]};
+ p.activities=p.activities.map(a=>({...a,id:crypto.randomUUID(),objective_ids:[oid],risks:a.risks.map(r=>({...r,id:crypto.randomUUID()}))}));
+ p.concept.project_results=[{id:rid,objective_id:oid,result:"Resultado medible QA",indicator:"",target:null,unit:"",other_unit:"",evidence:""}];
+ p.concept.monitoring="";p.concept.monitoring_plan=[{id:crypto.randomUUID(),parameter:"activity",reference_id:p.activities[0].id,indicator:"Número de actividades realizadas",strategy:"Revisar registros"},{id:crypto.randomUUID(),parameter:"result",reference_id:rid,indicator:"Número de productos disponibles",strategy:"Revisar entregables"}];
+ const validate=(value,complete=true)=>db.query("select private.validate_payload($1::jsonb,$2::jsonb,$3,1)",[JSON.stringify(value),JSON.stringify(rules),complete]);
+ await validate(p);
+ for(const patch of [{parameter:""},{reference_id:""},{reference_id:crypto.randomUUID()},{reference_id:rid},{indicator:" "},{strategy:""}]){const bad=structuredClone(p);Object.assign(bad.concept.monitoring_plan[0],patch);await validate(bad,false);await assert.rejects(validate(bad),/GLF_REQUIRED:monitoring_1/);}
+ const noObjectives=structuredClone(p);noObjectives.activities[0].objective_ids=[];await validate(noObjectives,false);await assert.rejects(validate(noObjectives),/GLF_REQUIRED:monitoring_1/);
+ const extraInvalid=structuredClone(p);extraInvalid.activities[0].objective_ids.push(crypto.randomUUID());await assert.rejects(validate(extraInvalid),/GLF_INVALID_ALIGNMENT/);await assert.rejects(db.query("select private.validate_monitoring_plan($1::jsonb,true)",[JSON.stringify(extraInvalid)]),/GLF_REQUIRED:monitoring_1/);
+ for(const patch of [{id:"11111111-1111-4111-1111-111111111111"},{reference_id:"letters"},{parameter:"invented"},{indicator:"x".repeat(1001)},{strategy:"x".repeat(2001)},{target:42}]){const bad=structuredClone(p);Object.assign(bad.concept.monitoring_plan[0],patch);await assert.rejects(validate(bad,false),/GLF_INVALID_MONITORING/);}
+ const duplicate=structuredClone(p);duplicate.concept.monitoring_plan.push(duplicate.concept.monitoring_plan[0]);await assert.rejects(validate(duplicate,false),/GLF_INVALID_MONITORING/);
+ const empty=structuredClone(p);empty.concept.monitoring_plan=[];await validate(empty,false);await assert.rejects(validate(empty),/GLF_REQUIRED:monitoring/);
+ const legacy=structuredClone(p);delete legacy.concept.monitoring_plan;legacy.concept.monitoring="Texto heredado conservado";await validate(legacy);
+ const monitoringCall=await rpc("create_call",{details:{code:"MONITORING-QA",title_es:"Seguimiento ficticio",title_en:"Fictional monitoring",description_es:"QA",description_en:"QA",opens_at:"2020-01-01T00:00:00Z",closes_at:"2099-01-01T00:00:00Z",rules,phase2_schema:[{id:"proposal",label_es:"Proyecto completo",label_en:"Full proposal",required:true}]}},"grants");await rpc("publish_call",{call_id:monitoringCall},"grants");
+ const owner=await temporaryAccount(),app=await rpc("create_application",{call_id:monitoringCall},owner);
+ await rpc("save_application",{application_id:app,expected_revision:0,payload:empty},owner);await assert.rejects(rpc("prepare_application_documents",{app_id:app,expected_revision:1},owner),/GLF_REQUIRED:monitoring/);
+ p.concept.monitoring="Texto heredado conservado";await rpc("save_application",{application_id:app,expected_revision:1,payload:p},owner);
+ assert.deepEqual((await as(owner,()=>db.query("select payload from public.applications where id=$1",[app]))).rows[0].payload,p);
+ const prepared=await rpc("prepare_application_documents",{app_id:app,expected_revision:2},owner);assert.equal((await db.query("select concept_layout_version from public.prepared_documents where id=$1",[prepared])).rows[0].concept_layout_version,"glf-concept-20261020-v4");
+ for(const kind of ["concept_signed","matrix_signed"]){const path=`${app}/${owner}/attachment/${crypto.randomUUID()}.pdf`;await as(owner,()=>db.query("insert into storage.objects(bucket_id,name,metadata) values('application-files',$1,$2)",[path,{size:100}]));await rpc("register_document",{app_id:app,object_path:path,original_name:kind+".pdf",mime:"application/pdf",bytes:100,checksum:"a".repeat(64),document_kind:kind},owner);}
+ await rpc("submit_application",{application_id:app,expected_revision:2},owner);const frozen=(await db.query("select payload,concept_layout_version from public.application_versions where application_id=$1",[app])).rows[0];assert.equal(frozen.concept_layout_version,"glf-concept-20261020-v4");
+ await rpc("record_review",{application_id:app,expected_revision:3,review_type:"safeguards",findings:"QA local",recommendation:"Continuar",category:"B"},"reviewer");await rpc("record_decision",{application_id:app,expected_revision:3,body:"committee",decision:"invite",reference:"MONITORING-QA",rationale:"Prueba local",invitation_deadline:"2099-01-01"},"committee");
+ const inherited=(await as(owner,()=>db.query("select stage,payload from public.applications where id=$1",[app]))).rows[0];assert.equal(inherited.stage,2);assert.deepEqual(inherited.payload.concept.monitoring_plan,p.concept.monitoring_plan);assert.equal(inherited.payload.concept.monitoring,p.concept.monitoring);
+ assert.deepEqual((await db.query("select payload,concept_layout_version from public.application_versions where application_id=$1",[app])).rows[0],frozen);
+ for(const role of ["anon","authenticated"])assert.equal((await db.query("select has_function_privilege($1,'private.validate_monitoring_plan(jsonb,boolean)','EXECUTE') allowed",[role])).rows[0].allowed,false);
+});

@@ -92,12 +92,12 @@ const guidance: Record<string, [string[], string[]]> = {
   ],
   monitoring: [
     [
-      "Describa las estrategias y actividades de seguimiento que realizará para comprobar el avance y apoyar el éxito del proyecto.",
-      "Incluya los principales indicadores con los que evaluará el progreso y el éxito del proyecto.",
+      "Seleccione una actividad o un resultado ya registrado e indique qué observará o medirá para comprobar su avance o su logro. Sus objetivos específicos asociados se mostrarán automáticamente.",
+      "Describa brevemente la estrategia y las actividades de seguimiento para ese indicador. Puede agregar otros indicadores; las metas y el método detallado de medición se completarán en la fase de proyecto completo.",
     ],
     [
-      "Describe the strategies and monitoring activities to track progress and support the success of the project.",
-      "Include the main indicators for evaluating project progress and success.",
+      "Select an activity or outcome already entered and state what you will observe or measure to assess progress or achievement. Its associated specific objectives will be shown automatically.",
+      "Briefly describe the monitoring strategy and activities for that indicator. You can add other indicators; targets and the detailed measurement method will be completed in the full proposal phase.",
     ],
   ],
 };

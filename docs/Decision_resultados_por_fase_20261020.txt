@@ -41,3 +41,11 @@ No crea requisitos adicionales en la nota conceptual ni cambia la selección
 para fase 2, las reglas de convocatoria, presupuesto, actividades o riesgos.
 Cualquier ampliación futura de seguimiento debe partir de estos mismos
 resultados y objetivos, sin pedir su recaptura ni generar registros duplicados.
+
+PRECISIÓN POSTERIOR APROBADA EL MISMO DÍA
+La sección Seguimiento y evaluación sí debe recoger los principales indicadores
+propuestos de avance/éxito en la nota conceptual, vinculados explícitamente a
+actividades o resultados existentes y a sus objetivos. Esto no vuelve a exigir
+la ficha detallada de medición dentro de Resultados: las metas y la metodología
+siguen correspondiendo al proyecto completo. Ver la decisión complementaria
+docs/Decision_seguimiento_vinculado_20261020.txt antes de ampliar estas funciones.

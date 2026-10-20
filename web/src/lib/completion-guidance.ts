@@ -1,4 +1,5 @@
 import { activityDateErrors, activityDateMessage } from "./activity-planning";
+import { monitoringEntryIssues } from "./monitoring-plan";
 import {
   generalOnlyAlignment,
   requiresObjectiveContribution,
@@ -61,7 +62,7 @@ export function completionGuidance(
       return;
     }
     if (
-      /^(risk_\d|quarters_|activity_\d|activity_dates_|activity_objectives_|result_)/.test(
+      /^(risk_\d|quarters_|activity_\d|activity_dates_|activity_objectives_|result_|monitoring_\d)/.test(
         key,
       ) ||
       key === "declarations"
@@ -153,6 +154,10 @@ export function completionGuidance(
     if (key === "environmental_risks" || key === "social_risks")
       selector = ".potential-risk-row";
     if (key === "results" && payload.concept.project_results?.length) return;
+    if (key === "monitoring") {
+      if (payload.concept.monitoring_plan?.length) return;
+      selector = "#monitoring-plan";
+    }
     if (text) add(key, step, text, selector);
   });
   if (alignment) {
@@ -447,6 +452,27 @@ export function completionGuidance(
         );
       }
     }
+  });
+  payload.concept.monitoring_plan?.forEach((item, i) => {
+    const names = {
+      parameter: es
+        ? "parámetro de evaluación que propone"
+        : "proposed evaluation parameter",
+      reference_id: es
+        ? "seleccione una actividad o resultado con objetivos asociados válidos"
+        : "select an activity or outcome with valid associated objectives",
+      indicator: es ? "indicador propuesto" : "proposed indicator",
+      strategy: es
+        ? "estrategia y actividades de seguimiento"
+        : "monitoring strategy and activities",
+    };
+    for (const key of monitoringEntryIssues(payload, item))
+      add(
+        `monitoring-${i}-${key}`,
+        1,
+        `${es ? "Indicador" : "Indicator"} ${i + 1}: ${names[key]}`,
+        `[data-validation-monitoring="${i + 1}"] ${field(key)}`,
+      );
   });
   for (const key of ["truthful", "consent"] as const)
     if (!payload[key])

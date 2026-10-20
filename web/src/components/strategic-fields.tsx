@@ -23,11 +23,13 @@ export function StrategicFields({
   legacy,
   locale,
   onChange,
+  monitoredObjectives = [],
 }: {
   value: StrategicAlignment | undefined;
   legacy: string;
   locale: "es" | "en";
   onChange: (value: StrategicAlignment) => void;
+  monitoredObjectives?: string[];
 }) {
   const es = locale === "es";
   const update = (id: string, patch: Partial<ProjectObjective>) =>
@@ -212,9 +214,14 @@ export function StrategicFields({
                   locale={locale}
                   element={`${title}: ${o.text || "—"}`}
                   consequence={
-                    es
+                    (es
                       ? "Se eliminará este objetivo y se retirarán sus vínculos con actividades y resultados. Las actividades y los resultados se conservarán; revise su asociación con otro objetivo."
-                      : "This objective and its links to activities and results will be removed. Activities and results will be kept; review their links to another objective."
+                      : "This objective and its links to activities and results will be removed. Activities and results will be kept; review their links to another objective.") +
+                    (monitoredObjectives.includes(o.id)
+                      ? es
+                        ? " Las fichas de seguimiento relacionadas se conservarán y requerirán revisar los objetivos de sus referencias."
+                        : " Related monitoring cards will be kept and the objectives of their references will need review."
+                      : "")
                   }
                   onConfirm={() =>
                     onChange({

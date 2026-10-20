@@ -1,6 +1,10 @@
 import { conceptSections, narrativeBlocks } from "./concept-presentation";
 import { activityScheduleRows } from "./activity-planning";
-import { currentConceptLayout, usesCurrentGlfForm } from "./concept-layout";
+import {
+  currentConceptLayout,
+  usesCurrentGlfForm,
+  usesStructuredMonitoring,
+} from "./concept-layout";
 import { budgetText } from "./budget";
 import { submissionNotice } from "./grant-rules";
 import { riskNarrative } from "./document-language";
@@ -344,10 +348,16 @@ export async function applicationPdf({
         ? `Se solicita al GLF un financiamiento de ${payload.concept.requested_amount === null ? "monto no consignado" : money(payload.concept.requested_amount)} y se prevé un cofinanciamiento de ${payload.concept.cofinance_amount === null ? "monto no consignado" : money(payload.concept.cofinance_amount)}.`
         : `The applicant requests ${payload.concept.requested_amount === null ? "an unspecified amount" : money(payload.concept.requested_amount)} from GLF and plans cofinancing of ${payload.concept.cofinance_amount === null ? "an unspecified amount" : money(payload.concept.cofinance_amount)}.`,
     );
-    for (const section of conceptSections(payload.concept, locale, rules, {
-      stage,
-      layoutVersion: conceptLayoutVersion,
-    })) {
+    const presentation = { stage, layoutVersion: conceptLayoutVersion };
+    const sections = conceptSections(
+      payload.concept,
+      locale,
+      rules,
+      presentation,
+      payload.activities,
+    );
+    const afterActivities = usesStructuredMonitoring(presentation);
+    const renderSection = (section: (typeof sections)[number]) => {
       // Keep the section explanation with the start of its content. Reserve
       // only a few table lines, rather than moving an entire long table.
       const first = section.blocks[0];
@@ -379,7 +389,39 @@ export async function applicationPdf({
       if (y < 72 + sectionStart) newPage();
       draw(section.title, true);
       draw(section.introduction);
-      for (const block of section.blocks) {
+      for (const [blockIndex, block] of section.blocks.entries()) {
+        // Keep a new monitoring card's explanation with the first table row.
+        // Frozen layouts retain their previous pagination.
+        const next = section.blocks[blockIndex + 1];
+        if (
+          afterActivities &&
+          payload.concept.monitoring_plan !== undefined &&
+          section.id === "monitoring" &&
+          block.type === "paragraph" &&
+          next?.type === "table"
+        ) {
+          const header =
+            Math.max(
+              ...next.headers.map(
+                (text, i) => lines(text, bold, 10, [150, 341][i] - 16).length,
+              ),
+            ) *
+              14 +
+            16;
+          const firstRow =
+            Math.max(
+              ...(next.rows[0] || []).map(
+                (text, i) => lines(text, font, 10, [150, 341][i] - 16).length,
+              ),
+            ) *
+              14 +
+            16;
+          if (
+            y <
+            72 + lines(block.text, font, 11).length * 15 + 9 + header + firstRow
+          )
+            newPage();
+        }
         if (block.type === "paragraph") draw(block.text);
         else {
           const widths =
@@ -393,7 +435,10 @@ export async function applicationPdf({
           table(block.headers, block.rows, widths);
         }
       }
-    }
+    };
+    sections
+      .filter((section) => !afterActivities || section.id !== "monitoring")
+      .forEach(renderSection);
     draw(es ? "3. ACTIVIDADES" : "3. ACTIVITIES", true);
     payload.activities.forEach((a, i) => {
       // Keep the activity introduction with its preliminary calendar in new documents.
@@ -441,6 +486,10 @@ export async function applicationPdf({
           a.no_risks_reason,
         );
     });
+    if (afterActivities)
+      sections
+        .filter((section) => section.id === "monitoring")
+        .forEach(renderSection);
     if (stage === 2 && Object.keys(payload.phase2 || {}).length) {
       draw(
         es ? "APARTADOS DE PROYECTO COMPLETO" : "FULL PROPOSAL SECTIONS",

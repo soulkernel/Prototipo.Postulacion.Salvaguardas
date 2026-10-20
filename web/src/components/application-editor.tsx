@@ -1,7 +1,8 @@
 "use client";
 import { narrativeTextForEditing } from "@/lib/concept-presentation";
-import { ActivityReview } from "./activity-review";
 import { ConceptReview } from "./concept-review";
+import { MonitoringFields } from "./monitoring-fields";
+import { monitoredObjectiveIds } from "@/lib/monitoring-plan";
 import { ApplicationTopicSelect } from "./application-topic-select";
 import { applicationTopicMessage } from "@/lib/call-themes";
 import { ConfirmRemoveButton } from "./confirm-remove-button";
@@ -142,6 +143,14 @@ const levels = {
   },
 };
 function message(code: string, es: boolean) {
+  if (code.includes("GLF_INVALID_MONITORING"))
+    return es
+      ? "Revise las fichas de seguimiento y evaluación antes de volver a guardar."
+      : "Review the monitoring and evaluation cards before saving again.";
+  if (code.includes("GLF_REQUIRED:monitoring"))
+    return es
+      ? "Complete el parámetro, el registro asociado, el indicador y la estrategia de cada ficha de seguimiento y evaluación. Revise sus vínculos con los objetivos."
+      : "Complete the parameter, associated record, indicator and strategy for each monitoring and evaluation card. Check their objective links.";
   if (code.includes("GLF_INVALID_RESULTS"))
     return es
       ? "Revise los resultados y sus datos guardados antes de volver a guardar el borrador."
@@ -1121,7 +1130,9 @@ export function ApplicationEditor({
         locale={locale}
         onChange={setPayload}
       />
-    ) : field.key === "social_risks" ? null : field.key === "summary" ? (
+    ) : ["social_risks", "monitoring"].includes(
+        field.key,
+      ) ? null : field.key === "summary" ? (
       <SummaryFields
         key={field.key}
         value={projectSummary(payload.concept)}
@@ -1156,6 +1167,7 @@ export function ApplicationEditor({
       />
     ) : field.key === "objectives" ? (
       <StrategicFields
+        monitoredObjectives={monitoredObjectiveIds(payload)}
         key={field.key}
         value={payload.concept.strategic_alignment}
         legacy={payload.concept.objectives + "\n" + payload.concept.alignment}
@@ -1209,6 +1221,7 @@ export function ApplicationEditor({
         value={payload.concept.project_results}
         legacy={payload.concept.results_source ?? payload.concept.results}
         objectives={payload.concept.strategic_alignment?.objectives || []}
+        monitoring={payload.concept.monitoring_plan}
         onLegacyChange={(text) =>
           setPayload((p) =>
             p.concept.project_results === undefined
@@ -2234,6 +2247,14 @@ export function ApplicationEditor({
                   }
                 />
               )}
+              {step === 1 && (
+                <MonitoringFields
+                  payload={payload}
+                  locale={locale}
+                  checked={checkedStep === 1}
+                  onChange={(concept) => setPayload((p) => ({ ...p, concept }))}
+                />
+              )}
               {step === 1 && application.stage === 2 && (
                 <section>
                   <h2>
@@ -2872,6 +2893,8 @@ export function ApplicationEditor({
               <h2>{es ? "Revisión del expediente" : "Application review"}</h2>
               <ConceptReview
                 concept={payload.concept}
+                activities={payload.activities}
+                includeActivities
                 locale={locale}
                 rules={rules}
                 presentation={{
@@ -2881,11 +2904,6 @@ export function ApplicationEditor({
                       ? currentConceptLayout
                       : (versions[0].concept_layout_version ?? null),
                 }}
-              />
-              <ActivityReview
-                activities={payload.activities}
-                concept={payload.concept}
-                locale={locale}
               />
               <p>
                 {payload.activities.length} {es ? "actividades" : "activities"}{" "}

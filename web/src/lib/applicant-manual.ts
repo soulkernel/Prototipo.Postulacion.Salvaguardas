@@ -724,6 +724,76 @@ export const manualChapters: ManualChapter[] = [
     ],
   },
   {
+    id: "seguimiento",
+    title: ["Seguimiento y evaluación", "Monitoring and evaluation"],
+    intro: [
+      "Después de registrar las actividades, proponga indicadores para comprobar su avance o el logro de sus resultados. Las metas y el método detallado se desarrollarán en fase 2.",
+      "After entering activities, propose indicators to assess their progress or achievement of outcomes. Targets and detailed methods are developed in phase 2.",
+    ],
+    steps: [
+      [
+        "Seleccione el parámetro y una actividad o resultado ya ingresado. Se mostrarán sus objetivos específicos asociados.",
+        "Select the parameter and an activity or outcome already entered. Its associated specific objectives will be displayed.",
+      ],
+      [
+        "Describa el indicador y la estrategia de seguimiento. Puede agregar otros para el mismo registro; no se exige uno para cada actividad o resultado.",
+        "Describe the indicator and monitoring strategy. You can add others for the same record; one is not required for every activity or outcome.",
+      ],
+    ],
+    rows: [
+      [
+        "Parámetro de evaluación que propone",
+        "Avance de una actividad o logro de un resultado.",
+        "Proposed evaluation parameter",
+        "Progress of an activity or achievement of an outcome.",
+      ],
+      [
+        "Actividad o resultado al que dará seguimiento",
+        "Seleccione entre los registros previos con objetivos específicos válidos. Si elimina el registro, la ficha se conserva y requiere revisar el vínculo.",
+        "Activity or outcome to monitor",
+        "Choose an existing record with valid specific objectives. If the record is deleted, the card is kept and its link must be reviewed.",
+      ],
+      [
+        "Indicador propuesto",
+        "Qué observará o medirá. Hasta 1.000 caracteres.",
+        "Proposed indicator",
+        "What you will observe or measure. Up to 1,000 characters.",
+      ],
+      [
+        "Estrategia y actividades de seguimiento",
+        "Cómo observará o comprobará el indicador. Hasta 2.000 caracteres.",
+        "Monitoring strategy and activities",
+        "How you will observe or verify the indicator. Up to 2,000 characters.",
+      ],
+      [
+        "Agregar / Papelera",
+        "Hasta 30 fichas. La papelera pide confirmación y conserva la actividad, el resultado y los objetivos.",
+        "Add / Trash icon",
+        "Up to 30 cards. Deletion requires confirmation and retains the activity, outcome and objectives.",
+      ],
+      [
+        "Borradores anteriores",
+        "El texto guardado sigue siendo editable. Organizarlo en fichas es opcional y conserva la narrativa original sin conversión automática.",
+        "Older drafts",
+        "Saved text remains editable. Organizing it into cards is optional and preserves the original narrative without automatic conversion.",
+      ],
+    ],
+    tip: [
+      "Ejemplo: actividad: talleres; indicador: número de talleres realizados; seguimiento: revisión de registros después de cada taller.",
+      "Example: activity: workshops; indicator: number of workshops delivered; monitoring: review records after each workshop.",
+    ],
+    screen: [
+      ["Parámetro → Actividad / Resultado", "Parameter → Activity / Outcome"],
+      ["Objetivos asociados (automático)", "Associated objectives (automatic)"],
+      ["Indicador propuesto *", "Proposed indicator *"],
+      [
+        "Estrategia y actividades de seguimiento *",
+        "Monitoring strategy and activities *",
+      ],
+      ["+ Agregar otro indicador", "+ Add another indicator"],
+    ],
+  },
+  {
     id: "screening",
     title: ["Paso 3 · Evaluar riesgos A&S", "Step 3 · Assess E&S risks"],
     intro: [

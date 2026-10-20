@@ -1,5 +1,6 @@
 import { ActivityDatesTable } from "@/components/activity-review";
 import { ConceptReview } from "@/components/concept-review";
+import { usesStructuredMonitoring } from "@/lib/concept-layout";
 import { attachmentLabel } from "@/lib/attachment-requirements";
 import { DocumentDownload } from "@/components/document-download";
 import { budgetText } from "@/lib/budget";
@@ -252,6 +253,11 @@ export default async function ReviewPage({
           </summary>
           <ConceptReview
             concept={a.payload.concept}
+            activities={a.payload.activities}
+            includeActivities={usesStructuredMonitoring({
+              stage: submittedStage,
+              layoutVersion: versions?.[0]?.concept_layout_version ?? null,
+            })}
             locale={locale}
             rules={a.rules_snapshot}
             presentation={{
