@@ -82,8 +82,8 @@ export function GeographyFields({
                     ? "Este borrador conserva una provincia incompatible. Seleccione Galápagos y revise la ciudad o localidad para poder guardar."
                     : "This draft retains an incompatible province. Select Galápagos and review the city or locality before saving."
                   : es
-                    ? "Para organizaciones, la provincia del domicilio es Galápagos."
-                    : "For organizations, the address province is Galápagos."}
+                    ? "Las organizaciones deben tener domicilio en Galápagos."
+                    : "Organizations must be based in Galápagos."}
               </small>
             )}
           </label>

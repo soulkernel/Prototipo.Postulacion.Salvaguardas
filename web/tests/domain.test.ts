@@ -330,6 +330,8 @@ test("M03 restricts organization province, preserves compatible locality and nev
   assert.match(provinceSelect, /disabled=""/);
   assert.match(provinceSelect, /selected="">Galápagos/);
   assert.doesNotMatch(provinceSelect, /Pichincha|Guayas/);
+  assert.match(markup, /Las organizaciones deben tener domicilio en Galápagos\./);
+  assert.match(renderToStaticMarkup(createElement(GeographyFields, { concept: org, locale: "en", mode: "address", onChange: () => {} })), /Organizations must be based in Galápagos\./);
   const citySelect =
     markup.match(
       /<select[^>]*data-validation-field="city"[\s\S]*?<\/select>/,
