@@ -3,6 +3,7 @@ import { useId } from "react";
 import { words, type Locale } from "@/lib/domain";
 import { RequiredMark } from "./required-mark";
 import { proposalEntryPrompt } from "@/lib/proposal-guidance";
+import { TextLimitCounter } from "./text-limit-counter";
 
 export function SummaryFields({
   value,
@@ -136,9 +137,14 @@ export function SummaryFields({
         onChange={(e) => onChange(e.target.value)}
       />
       <div className="summary-counter-row">
-        <small id={`${id}-count`} aria-live="polite">
-          {total} / {limit} {es ? "palabras" : "words"}
-        </small>
+        <TextLimitCounter
+          id={`${id}-count`}
+          count={total}
+          limit={limit}
+          locale={locale}
+          unit="words"
+          live="polite"
+        />
       </div>
       {overLimit && (
         <small className="danger-text" id={`${id}-error`} role="alert">

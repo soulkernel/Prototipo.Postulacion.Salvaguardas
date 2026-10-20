@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { adjustNarrativeLineBreaks } from "../lib/narrative-editing";
+import { TextLimitCounter } from "./text-limit-counter";
 
 /** Plain-text entry. Previewing never calls onChange or starts an autosave. */
 export function NarrativeTextarea({
@@ -27,6 +28,7 @@ export function NarrativeTextarea({
   disabled?: boolean;
 }) {
   const es = locale === "es";
+  const maxLength = 12000;
   const uid = useId();
   const textarea = useRef<HTMLTextAreaElement>(null);
   const autoHeight = useRef("");
@@ -86,7 +88,7 @@ export function NarrativeTextarea({
         className="narrative-entry-text"
         rows={7}
         wrap="soft"
-        maxLength={12000}
+        maxLength={maxLength}
         spellCheck
         lang={locale}
         aria-required="true"
@@ -95,10 +97,12 @@ export function NarrativeTextarea({
         disabled={disabled}
       />
       <div className="narrative-entry-tools">
-        <small id={`${uid}-count`} className="text-limit">
-          {value.length.toLocaleString(locale)}{" "}
-          {es ? "caracteres" : "characters"}
-        </small>
+        <TextLimitCounter
+          id={`${uid}-count`}
+          count={value.length}
+          limit={maxLength}
+          locale={locale}
+        />
         {adjusted !== value && value.trim() && (
           <button
             ref={trigger}
