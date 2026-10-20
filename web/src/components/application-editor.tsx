@@ -1728,41 +1728,43 @@ export function ApplicationEditor({
           {feedback}
         </p>
       )}
-      {editable && (
+      {editable && (step === 0 || autoError) && (
         <aside className="live-card draft-save-status">
-          <p>
-            {es ? (
-              <>
-                Su avance se guarda automáticamente después de dejar de
-                escribir. Puede salir y postergar la consignación de los datos
-                de{" "}
-                {application.stage === 1
-                  ? "su nota conceptual"
-                  : "su proyecto completo"}
-                , y continuar después desde este o cualquier dispositivo,
-                accediendo desde la opción del menú:{" "}
-                <strong>Mis postulaciones</strong> →{" "}
-                <strong>Continuar borrador</strong>. Solo se enviará{" "}
-                {application.stage === 1
-                  ? "la nota conceptual final"
-                  : "el proyecto completo"}
-                , cuando pulse Enviar al GLF.
-              </>
-            ) : (
-              <>
-                Your progress is saved automatically after you stop typing. You
-                can leave and postpone entering your{" "}
-                {application.stage === 1 ? "concept note" : "full proposal"}{" "}
-                information, then continue later from this or any other device
-                using the menu option: <strong>My applications</strong> →{" "}
-                <strong>Continue draft</strong>. Your{" "}
-                {application.stage === 1
-                  ? "final concept note"
-                  : "full proposal"}{" "}
-                will only be submitted when you select Submit to GLF.
-              </>
-            )}
-          </p>
+          {step === 0 && (
+            <p>
+              {es ? (
+                <>
+                  Su avance se guarda automáticamente después de dejar de
+                  escribir. Puede salir y postergar la consignación de los datos
+                  de{" "}
+                  {application.stage === 1
+                    ? "su nota conceptual"
+                    : "su proyecto completo"}
+                  , y continuar después desde este o cualquier dispositivo,
+                  accediendo desde la opción del menú:{" "}
+                  <strong>Mis postulaciones</strong> →{" "}
+                  <strong>Continuar borrador</strong>. Solo se enviará{" "}
+                  {application.stage === 1
+                    ? "la nota conceptual final"
+                    : "el proyecto completo"}
+                  , cuando pulse Enviar al GLF.
+                </>
+              ) : (
+                <>
+                  Your progress is saved automatically after you stop typing.
+                  You can leave and postpone entering your{" "}
+                  {application.stage === 1 ? "concept note" : "full proposal"}{" "}
+                  information, then continue later from this or any other device
+                  using the menu option: <strong>My applications</strong> →{" "}
+                  <strong>Continue draft</strong>. Your{" "}
+                  {application.stage === 1
+                    ? "final concept note"
+                    : "full proposal"}{" "}
+                  will only be submitted when you select Submit to GLF.
+                </>
+              )}
+            </p>
+          )}
           {autoError && (
             <p role="alert">
               <ActionLabel
