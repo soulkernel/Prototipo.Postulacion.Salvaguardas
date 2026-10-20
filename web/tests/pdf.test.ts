@@ -4,7 +4,11 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { PDFDocument } from "pdf-lib";
 import { applicationPdf } from "../src/lib/pdf";
 import { emptyPayload, newActivity, newRisk } from "../src/lib/domain";
-import { alignmentVersion, currentAlignmentVersion, newObjective } from "../src/lib/strategic-alignment";
+import {
+  alignmentVersion,
+  currentAlignmentVersion,
+  newObjective,
+} from "../src/lib/strategic-alignment";
 
 test("concept and matrix PDFs embed fonts, paginate and contain a QR image", async () => {
   const payload = emptyPayload();
@@ -166,16 +170,40 @@ test("M15 PDF omits contribution only in v3, preserves historic v2 output and ne
   const p = emptyPayload();
   p.concept.title = "PRUEBA LOCAL M15 · Compatibilidad histórica";
   p.concept.beneficiaries = "BENEFICIARIOS_CONSERVADOS_M15";
-  const general = { ...newObjective("general"), text: "Conservar hábitats", plan: ["E1"], ods: [14], contribution: "APORTE_HISTORICO_M15" };
-  p.concept.strategic_alignment = { version: alignmentVersion, objectives: [general, { ...newObjective("specific"), text: "Restaurar hábitats" }] };
+  const general = {
+    ...newObjective("general"),
+    text: "Conservar hábitats",
+    plan: ["E1"],
+    ods: [14],
+    contribution: "APORTE_HISTORICO_M15",
+  };
+  p.concept.strategic_alignment = {
+    version: alignmentVersion,
+    objectives: [
+      general,
+      { ...newObjective("specific"), text: "Restaurar hábitats" },
+    ],
+  };
   await mkdir(".test-artifacts", { recursive: true });
   for (const version of [alignmentVersion, currentAlignmentVersion] as const) {
     p.concept.strategic_alignment.version = version;
     const before = JSON.stringify(p);
     for (const locale of ["es", "en"] as const) {
-      const result = await applicationPdf({ payload: p, reference: "M15-LOCAL", revision: 1, submittedAt: "2026-10-19T18:00:00Z", kind: "concept", locale, downloadUrl: "https://example.test/m15", stage: 1 });
+      const result = await applicationPdf({
+        payload: p,
+        reference: "M15-LOCAL",
+        revision: 1,
+        submittedAt: "2026-10-19T18:00:00Z",
+        kind: "concept",
+        locale,
+        downloadUrl: "https://example.test/m15",
+        stage: 1,
+      });
       assert.ok(result.pages > 0);
-      await writeFile(`.test-artifacts/m15-${version === alignmentVersion ? "historic" : "new"}-${locale}.pdf`, result.bytes);
+      await writeFile(
+        `.test-artifacts/m15-${version === alignmentVersion ? "historic" : "new"}-${locale}.pdf`,
+        result.bytes,
+      );
     }
     assert.equal(JSON.stringify(p), before);
   }
@@ -184,17 +212,50 @@ test("M15 PDF omits contribution only in v3, preserves historic v2 output and ne
 test("M13 concept PDFs include complementary instruments in both languages without changing objective identifiers", async () => {
   const p = emptyPayload();
   p.concept.title = "PRUEBA LOCAL M13 · Otros instrumentos";
-  const general = { ...newObjective("general"), text: "Conservar hábitats costeros", plan: ["E1"], ods: [14], contribution: "Conservación comunitaria", other_instruments: [
-    { id: crypto.randomUUID(), name: "Plan ficticio M13", objective: "P1: Restaurar ecosistemas costeros" },
-    { id: crypto.randomUUID(), name: "Plan local de prueba", objective: "O2: Participación comunitaria" },
-  ] };
-  p.concept.strategic_alignment = { version: alignmentVersion, objectives: [general, { ...newObjective("specific"), text: "Restaurar hábitats" }] };
+  const general = {
+    ...newObjective("general"),
+    text: "Conservar hábitats costeros",
+    plan: ["E1"],
+    ods: [14],
+    contribution: "Conservación comunitaria",
+    other_instruments: [
+      {
+        id: crypto.randomUUID(),
+        name: "Plan ficticio M13",
+        objective: "P1: Restaurar ecosistemas costeros",
+      },
+      {
+        id: crypto.randomUUID(),
+        name: "Plan local de prueba",
+        objective: "O2: Participación comunitaria",
+      },
+    ],
+  };
+  p.concept.strategic_alignment = {
+    version: alignmentVersion,
+    objectives: [
+      general,
+      { ...newObjective("specific"), text: "Restaurar hábitats" },
+    ],
+  };
   const before = JSON.stringify(p);
   await mkdir(".test-artifacts", { recursive: true });
   for (const locale of ["es", "en"] as const) {
-    const result = await applicationPdf({ payload: p, reference: "M13-LOCAL", revision: 1, submittedAt: "2026-10-19T16:00:00Z", kind: "concept", locale, downloadUrl: "https://example.test/m13", stage: 1 });
+    const result = await applicationPdf({
+      payload: p,
+      reference: "M13-LOCAL",
+      revision: 1,
+      submittedAt: "2026-10-19T16:00:00Z",
+      kind: "concept",
+      locale,
+      downloadUrl: "https://example.test/m13",
+      stage: 1,
+    });
     assert.ok(result.pages > 0);
-    await writeFile(`.test-artifacts/m13-additional-${locale}.pdf`, result.bytes);
+    await writeFile(
+      `.test-artifacts/m13-additional-${locale}.pdf`,
+      result.bytes,
+    );
   }
   assert.equal(JSON.stringify(p), before);
 });
@@ -313,4 +374,103 @@ test("result tables paginate long cells and redundant blank lines do not inflate
       "Blank pasted lines must not create empty pages",
     );
   }
+});
+
+test("GLF activity calendars appear in new concept and screening PDFs in ES/EN", async () => {
+  const p = emptyPayload();
+  Object.assign(p.concept, {
+    title: "PRUEBA FICTICIA · Calendarios de actividades",
+    applicant_type: "individual",
+    applicant_name: "Persona ficticia QA",
+    category_id: "small",
+    requested_amount: 50000,
+    cofinance_amount: 0,
+    start_date: "2027-01-01",
+    end_date: "2027-12-31",
+    summary:
+      "El proyecto ficticio propone restaurar un área de prueba mediante trabajo comunitario y seguimiento. Los resultados y fechas se utilizan exclusivamente para verificar el formulario.",
+    beneficiaries:
+      "La comunidad ficticia y los ecosistemas del sitio de prueba se beneficiarían de las actividades de conservación y capacitación.",
+    sustainability:
+      "La organización comunitaria ficticia dará continuidad a las acciones y compartirá la experiencia para facilitar su réplica.",
+    monitoring:
+      "Se realizarán visitas y registros de participación para comprobar el avance. Se evaluarán los resultados mediante reportes de prueba.",
+  });
+  const general = {
+    ...newObjective("general", currentAlignmentVersion),
+    text: "Conservar un hábitat ficticio mediante participación comunitaria",
+    plan: ["E1"],
+    ods: [14],
+    glf: [],
+  };
+  const specific = {
+    ...newObjective("specific", currentAlignmentVersion),
+    text: "Restaurar el sitio ficticio de intervención",
+    plan: [],
+    ods: [],
+    glf: [],
+  };
+  p.concept.strategic_alignment = {
+    version: currentAlignmentVersion,
+    objectives: [general, specific],
+  };
+  p.concept.project_results = [
+    {
+      id: crypto.randomUUID(),
+      objective_id: specific.id,
+      result: "Área de prueba con acciones iniciales de restauración",
+      indicator: "Número de sitios con intervención documentada",
+      target: 1,
+      unit: "sites",
+      other_unit: "",
+      evidence: "Registro fotográfico ficticio y reporte de visita",
+    },
+  ];
+  const source = {
+    id: crypto.randomUUID(),
+    dimension: "environmental" as const,
+    name: "Perturbación temporal del hábitat ficticio",
+  };
+  p.concept.risk_register = [source];
+  p.activities = [0, 1].map((i) => ({
+    ...newActivity(),
+    title: i
+      ? "Monitoreo comunitario ficticio"
+      : "Preparación del sitio ficticio",
+    description:
+      "Actividad de prueba para comprobar que el calendario preliminar se presenta de forma clara junto a su objetivo específico.",
+    objective_ids: [specific.id],
+    start_date: i ? "2027-03-01" : "2027-02-01",
+    end_date: i ? "2027-06-30" : "2027-02-01",
+    risks: [
+      {
+        ...newRisk(),
+        source_id: source.id,
+        name: source.name,
+        dimension: source.dimension,
+        description: "Perturbación temporal durante la actividad ficticia",
+        probability: 1,
+        severity: 2,
+      },
+    ],
+  }));
+  await mkdir("../scratch/glf-form-qa", { recursive: true });
+  for (const locale of ["es", "en"] as const)
+    for (const kind of ["concept", "matrix"] as const) {
+      const bytes = await applicationPdf({
+        payload: p,
+        reference: "QA-CALENDARIOS",
+        revision: 1,
+        submittedAt: "2026-10-20T03:00:00Z",
+        kind,
+        locale,
+        downloadUrl: "https://example.invalid/qa",
+        stage: 1,
+      });
+      assert.ok((await PDFDocument.load(bytes.bytes)).getPageCount() >= 1);
+      await writeFile(
+        `../scratch/glf-form-qa/${kind}-${locale}.pdf`,
+        bytes.bytes,
+      );
+    }
 });

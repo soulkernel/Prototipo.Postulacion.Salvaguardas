@@ -3057,3 +3057,20 @@ select {
   font-size: 13px;
   font-weight: 400;
 }
+
+/* GLF form instructions and optional activity calendars. */
+.proposal-field-guidance { color: #546c80; font-size: 13px; line-height: 1.6; }
+.proposal-field-guidance p { margin: 0; }
+.proposal-field-guidance ul { list-style: disc outside; padding-inline-start: 1.3rem; margin: 6px 0 12px; display: grid; gap: 6px; }
+.proposal-field-guidance li::marker { color: #087e84; }
+.activity-date-section { padding: 14px; border: 1px solid #d7e3eb; border-radius: 10px; }
+.activity-date-section h4 { margin: 0 0 8px; }
+.activity-date-section .field-help { font-size: 13px; margin: 0 0 12px; }
+.activity-date-grid > div { min-width: 0; }
+.activity-date-grid input { width: 100%; min-width: 0; }
+.activity-date-grid .field-warning { display: block; margin-top: 6px; }
+.activity-review-item + .activity-review-item { border-top: 1px solid #d7e3eb; padding-top: 14px; margin-top: 14px; }
+.activity-schedule-table { width: 100%; table-layout: fixed; margin: 12px 0; }
+.activity-schedule-table caption { text-align: start; margin-bottom: 6px; font-size: 13px; }
+.activity-schedule-table th, .activity-schedule-table td { overflow-wrap: anywhere; }
+@media (max-width: 760px) { .activity-date-grid { grid-template-columns: minmax(0,1fr); } }

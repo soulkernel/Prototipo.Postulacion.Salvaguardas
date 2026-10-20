@@ -14,6 +14,8 @@ const ids = {
   committee: "00000000-0000-4000-8000-000000000006",
   admin: "00000000-0000-4000-8000-000000000007",
 };
+
+
 test("partner removal deletes only confirmed draft letters, resumes failures and protects sent snapshots and permissions", async () => {
  const owner=await temporaryAccount(), stranger=await temporaryAccount();
  const a={id:crypto.randomUUID(),name:"Socio QA A",support:"Apoyo A"},b={id:crypto.randomUUID(),name:"Socio QA B",support:"Apoyo B"};
@@ -3633,4 +3635,38 @@ test("M08 local migration preserves historical data and stage-one RPCs no longer
   for(const role of ["anon","authenticated"])
     for(const signature of ["private.validate_payload_before_phone(jsonb,jsonb,boolean,integer)","private.freeze_concept_layout()"])
       assert.equal((await db.query("select has_function_privilege($1,$2,'EXECUTE') allowed",[role,signature])).rows[0].allowed,false);
+});
+
+test("optional activity calendars validate direct SQL/RPC, preserve drafts, phase transitions and historical document formats", async () => {
+ const snapshot=async()=>Object.fromEntries(await Promise.all(["applications","application_versions","prepared_documents","application_documents","application_events","calls"].map(async t=>[t,(await db.query(`select to_jsonb(row) value from public.${t} row order by id`)).rows])));
+ const before=await snapshot();await db.exec(await readFile(new URL("../../supabase/migrations/202610200046_activity_dates_and_glf_presentation.sql",import.meta.url),"utf8"));assert.deepEqual(await snapshot(),before);
+ const datesCall=await rpc("create_call",{details:{code:"DATES-ISOLATED",title_es:"Fechas ficticias",title_en:"Fictional dates",description_es:"QA",description_en:"QA",opens_at:"2020-01-01T00:00:00Z",closes_at:"2099-01-01T00:00:00Z",rules,phase2_schema:[{id:"proposal",label_es:"Proyecto completo",label_en:"Full proposal",required:true}]}},"grants");await rpc("publish_call",{call_id:datesCall},"grants");
+ const p=structuredClone(payload);p.activities=p.activities.map(a=>({...a,id:crypto.randomUUID(),risks:a.risks.map(r=>({...r,id:crypto.randomUUID()}))}));
+ const validate=(value,complete=true,stage=1)=>db.query("select private.validate_payload($1::jsonb,$2::jsonb,$3,$4)",[JSON.stringify(value),JSON.stringify(rules),complete,stage]);
+ await validate(p); // Existing applications do not acquire a new mandatory requirement.
+ for(const [start,end,code] of [["2027-02-01","","REQUIRED"],["2027-03-01","2027-02-01","ORDER"],["2026-12-31","2027-02-01","RANGE"],["2027-02-01","2027-07-01","RANGE"]]){
+  Object.assign(p.activities[0],{start_date:start,end_date:end});await validate(p,false);await assert.rejects(validate(p),new RegExp("GLF_ACTIVITY_DATE_"+code));
+ }
+ for(const start of ["2027-02-30","garbage",null,123]){p.activities[0].start_date=start;await assert.rejects(validate(p,false),/GLF_ACTIVITY_DATE_INVALID/);}
+ Object.assign(p.activities[0],{start_date:"2027-02-01",end_date:"2027-02-01"});await validate(p);
+ const overlapping=structuredClone(p);overlapping.activities.push({...structuredClone(p.activities[0]),id:crypto.randomUUID(),risks:p.activities[0].risks.map(r=>({...r,id:crypto.randomUUID()}))});await validate(overlapping);
+ const owner=await temporaryAccount(),id=await rpc("create_application",{call_id:datesCall},owner);
+ p.activities[0].end_date="";await rpc("save_application",{application_id:id,expected_revision:0,payload:p},owner);
+ const reopened=(await as(owner,()=>db.query("select payload from public.applications where id=$1",[id]))).rows[0].payload;assert.deepEqual(reopened,p);
+ await assert.rejects(rpc("prepare_application_documents",{app_id:id,expected_revision:1},owner),/GLF_ACTIVITY_DATE_REQUIRED/);
+ p.activities[0].end_date="2027-02-01";await rpc("save_application",{application_id:id,expected_revision:1,payload:p},owner);
+ const prepared=await rpc("prepare_application_documents",{app_id:id,expected_revision:2},owner);
+ assert.equal((await db.query("select concept_layout_version from public.prepared_documents where id=$1",[prepared])).rows[0].concept_layout_version,"glf-concept-20261020-v2");
+ for(const kind of ["concept_signed","matrix_signed"]){const path=`${id}/${owner}/attachment/${crypto.randomUUID()}.pdf`;await as(owner,()=>db.query("insert into storage.objects(bucket_id,name,metadata) values('application-files',$1,$2)",[path,{size:100}]));await rpc("register_document",{app_id:id,object_path:path,original_name:kind+".pdf",mime:"application/pdf",bytes:100,checksum:"a".repeat(64),document_kind:kind},owner);}
+ await rpc("submit_application",{application_id:id,expected_revision:2},owner);
+ await rpc("record_review",{application_id:id,expected_revision:3,review_type:"safeguards",findings:"Revisión aislada de fechas",recommendation:"Continuar",category:"B"},"reviewer");
+ await rpc("record_decision",{application_id:id,expected_revision:3,body:"committee",decision:"invite",reference:"DATES-QA",rationale:"Prueba local",invitation_deadline:"2099-01-01"},"committee");
+ const inherited=(await as(owner,()=>db.query("select stage,payload from public.applications where id=$1",[id]))).rows[0];assert.equal(inherited.stage,2);assert.deepEqual(inherited.payload.activities,p.activities);
+ const phase2=structuredClone(fullPayload);phase2.activities[0].start_date="2027-02-01";phase2.activities[0].end_date="2027-02-01";await validate(phase2,true,2);
+ // The freeze trigger also preserves a previously prepared phase-two layout.
+ const fixtureApp=await rpc("create_application",{call_id:datesCall},owner);const legacy=structuredClone(fullPayload);
+ await db.query("insert into public.prepared_documents(application_id,revision,stage,payload,concept_layout_version) values($1,0,2,$2,'glf-concept-m08-v1')",[fixtureApp,legacy]);
+ await db.query("insert into public.application_versions(application_id,revision,stage,payload,rules_snapshot,actor_id) values($1,1,2,$2,$3,$4)",[fixtureApp,legacy,rules,owner]);
+ assert.equal((await db.query("select concept_layout_version from public.application_versions where application_id=$1",[fixtureApp])).rows[0].concept_layout_version,"glf-concept-m08-v1");
+ for(const role of ['anon','authenticated'])assert.equal((await db.query("select has_function_privilege($1,'private.validate_activity_dates(jsonb,boolean)','EXECUTE') allowed",[role])).rows[0].allowed,false);
 });

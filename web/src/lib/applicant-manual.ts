@@ -439,7 +439,7 @@ export const manualChapters: ManualChapter[] = [
         "Describe the situation and location, the need to address, threats, why intervention is needed, how you will act and the changes you expect. Separate sections are not required. Detail results and indicators in their own section. Previously saved summary parts appear together in their original order.",
       ],
       [
-        "Beneficiarios y contribuciones a los medios de vida",
+        "Beneficiarios y contribuciones a medios de vida",
         "Identifique a quién beneficia y cómo; use cantidades justificadas cuando sea posible.",
         "Beneficiaries and contributions to livelihoods",
         "Identify who benefits and how; use justified numbers where possible.",
@@ -447,13 +447,13 @@ export const manualChapters: ManualChapter[] = [
       [
         "Sostenibilidad y replicabilidad",
         "Explique cómo se mantendrán los beneficios y si el enfoque puede replicarse.",
-        "Sustainability and replicability",
+        "Sustainability and replication",
         "Explain how benefits will be sustained and whether the approach can be replicated.",
       ],
       [
-        "Seguimiento y evaluación propuestos",
+        "Seguimiento y evaluación",
         "Resuma cómo comprobará el avance y los resultados. El plan detallado corresponde a la propuesta completa.",
-        "Proposed monitoring and evaluation",
+        "Monitoring and evaluation",
         "Summarise how progress and results will be checked. The detailed plan belongs in the full proposal.",
       ],
       [
@@ -485,8 +485,8 @@ export const manualChapters: ManualChapter[] = [
   {
     id: "objetivos",
     title: [
-      "Objetivos y alineación estratégica",
-      "Objectives and strategic alignment",
+      "Objetivos del proyecto y alineación estratégica",
+      "Objective/s and strategic alignment",
     ],
     intro: [
       "Cada objetivo se escribe por separado. Solo el objetivo general se alinea con el Plan Galápagos 2030 y los ODS. Los objetivos específicos no requieren alineación. La selección expresa su aporte previsto; no es una certificación de impacto.",
@@ -498,8 +498,8 @@ export const manualChapters: ManualChapter[] = [
         "Write the general objective and add the specific objectives you need.",
       ],
       [
-        "Para el objetivo general, seleccione la alineación pertinente y explique el beneficio esperado. Revise las sugerencias de ODS antes de elegir.",
-        "For the general objective, select relevant alignments and explain the expected benefit. Review suggested SDGs before choosing.",
+        "Para el objetivo general, seleccione la alineación pertinente. Revise las sugerencias de ODS antes de elegir.",
+        "For the general objective, select relevant alignments. Review suggested SDGs before choosing.",
       ],
     ],
     rows: [
@@ -647,6 +647,13 @@ export const manualChapters: ManualChapter[] = [
       ],
     ],
     rows: [
+      [
+        "Fechas preliminares de la actividad (opcionales)",
+        "Puede dejar ambas vacías. Si completa una fecha, complete también la otra antes de continuar o enviar. Se permite que una actividad dure un solo día y que distintas actividades coincidan. Las fechas deben estar dentro del período general; cambiarlo no reescribe las fechas de las actividades. Puede guardar un borrador incompleto y corregirlo después. Estas fechas se conservan al pasar a fase 2 y no sustituyen la planificación de medidas de salvaguardas.",
+        "Preliminary activity dates (optional)",
+        "You may leave both blank. If you enter one date, complete the other before continuing or submitting. An activity may last one day and activities may overlap. Dates must fall within the overall project period; changing it does not rewrite activity dates. You may save an incomplete draft and correct it later. These dates are retained in phase 2 and do not replace safeguard measure planning.",
+      ],
+
       [
         "Nombre de la actividad",
         "Acción concreta que ejecutará; no sustituye al objetivo.",

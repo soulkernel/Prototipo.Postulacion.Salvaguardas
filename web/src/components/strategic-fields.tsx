@@ -1,4 +1,6 @@
 "use client";
+import { proposalTitle } from "@/lib/proposal-guidance";
+import { ProposalFieldGuidance } from "./proposal-field-guidance";
 import { ConfirmRemoveButton } from "./confirm-remove-button";
 import { RequiredMark } from "./required-mark";
 import { LimitedTextarea } from "./limited-textarea";
@@ -40,8 +42,8 @@ export function StrategicFields({
       <section className="full-width strategic-fields">
         <h3>
           {es
-            ? "Objetivos y alineación estratégica"
-            : "Objectives and strategic alignment"}
+            ? proposalTitle("objectives", "es")
+            : proposalTitle("objectives", "en")}
         </h3>
         <details>
           <summary>
@@ -74,14 +76,10 @@ export function StrategicFields({
     <section className="full-width strategic-fields">
       <h3>
         {es
-          ? "Objetivos y alineación estratégica"
-          : "Objectives and strategic alignment"}
+          ? proposalTitle("objectives", "es")
+          : proposalTitle("objectives", "en")}
       </h3>
-      <p>
-        {es
-          ? "Alinee únicamente el objetivo general con el Plan Galápagos 2030 y los ODS. Ingrese los objetivos específicos por separado, sin alineación."
-          : "Align only the general objective with Plan Galápagos 2030 and the SDGs. Enter specific objectives separately, without alignment."}
-      </p>
+      <ProposalFieldGuidance field="objectives" locale={locale} />
       {value.legacy_text && (
         <details>
           <summary>
@@ -254,6 +252,8 @@ export function StrategicFields({
               </div>
               {o.kind === "general" && (
                 <div className="strategic-objective-selectors">
+                  <h4>{proposalTitle("alignment", locale)}</h4>
+                  <ProposalFieldGuidance field="alignment" locale={locale} />
                   {selector(
                     "plan",
                     es

@@ -363,8 +363,21 @@ test("M03 restricts organization province, preserves compatible locality and nev
   assert.match(provinceSelect, /disabled=""/);
   assert.match(provinceSelect, /selected="">Galápagos/);
   assert.doesNotMatch(provinceSelect, /Pichincha|Guayas/);
-  assert.match(markup, /Las organizaciones deben tener domicilio en Galápagos\./);
-  assert.match(renderToStaticMarkup(createElement(GeographyFields, { concept: org, locale: "en", mode: "address", onChange: () => {} })), /Organizations must be based in Galápagos\./);
+  assert.match(
+    markup,
+    /Las organizaciones deben tener domicilio en Galápagos\./,
+  );
+  assert.match(
+    renderToStaticMarkup(
+      createElement(GeographyFields, {
+        concept: org,
+        locale: "en",
+        mode: "address",
+        onChange: () => {},
+      }),
+    ),
+    /Organizations must be based in Galápagos\./,
+  );
   const citySelect =
     markup.match(
       /<select[^>]*data-validation-field="city"[\s\S]*?<\/select>/,
@@ -798,4 +811,127 @@ test("activity planning validates links without requiring screening early or los
   assert.equal(a.risks[0].severity, 4);
   p.concept.strategic_alignment.objectives = [];
   assert.deepEqual(activityPlanningIssues(p), ["activity_objectives_1"]);
+});
+
+import { completionGuidance } from "../src/lib/completion-guidance";
+import {
+  activityDateErrors,
+  activityDateMessage,
+  activityScheduleRows,
+} from "../src/lib/activity-planning";
+import { proposalTitles } from "../src/lib/proposal-guidance";
+import {
+  currentConceptLayout,
+  previousConceptLayout,
+} from "../src/lib/concept-layout";
+import { conceptSections } from "../src/lib/concept-presentation";
+test("optional preliminary activity dates preserve legacy drafts, links and risks; validate paired dates within project in both phases", () => {
+  const rules: Rules = {
+    categories: [],
+    applicant_types: [],
+    summary_word_limit: 500,
+    max_admin_percent: 10,
+    required_attachments: [],
+    privacy_es: "",
+    privacy_en: "",
+  };
+  const p = emptyPayload();
+  Object.assign(p.concept, {
+    start_date: "2027-01-01",
+    end_date: "2027-12-31",
+  });
+  const a = newActivity();
+  a.title = "Prueba ficticia";
+  a.description = "Actividad aislada";
+  a.risks = [newRisk()];
+  p.activities = [a];
+  const original = structuredClone(p);
+  assert.deepEqual(activityDateErrors(a, p.concept), {});
+  assert.equal(payloadSchema.parse(p).activities[0].start_date, undefined);
+  for (const [start, end, issue] of [
+    ["2027-01-01", "", "required"],
+    ["", "2027-01-01", "required"],
+    ["2027-02-02", "2027-02-01", "order"],
+    ["2026-12-31", "2027-01-02", "range"],
+    ["2027-12-31", "2028-01-01", "range"],
+    ["2027-02-30", "2027-03-01", "invalid"],
+  ]) {
+    Object.assign(a, { start_date: start, end_date: end });
+    const errors = activityDateErrors(a, p.concept);
+    assert.ok(Object.values(errors).includes(issue as never));
+    assert.ok(
+      activityPlanningIssues(p).some((k) => k.startsWith("activity_dates_")),
+    );
+    for (const locale of ["es", "en"] as const) {
+      const guidance = completionGuidance(p, rules, 1, [], locale).filter(
+        (x) =>
+          x.id.startsWith("activity-0-") && x.selector.includes("activity_"),
+      );
+      assert.ok(
+        guidance.some((x) =>
+          x.text.includes(activityDateMessage(issue as never, locale)),
+        ),
+      );
+    }
+  }
+  Object.assign(a, { start_date: "2027-02-15", end_date: "2027-02-15" });
+  assert.deepEqual(activityDateErrors(a, p.concept), {});
+  const reopened = payloadSchema.parse(JSON.parse(JSON.stringify(p)));
+  assert.deepEqual(reopened.activities[0], a);
+  assert.equal(a.id, original.activities[0].id);
+  assert.deepEqual(a.risks, original.activities[0].risks);
+  p.activities.push({ ...a, id: crypto.randomUUID() });
+  assert.ok(
+    !activityPlanningIssues(p).some((k) => k.startsWith("activity_dates_")),
+  );
+  p.concept.end_date = "2027-02-01";
+  assert.equal(activityDateErrors(a, p.concept).end_date, "range");
+  assert.equal(a.end_date, "2027-02-15");
+  for (const date of ["garbage", "2027-02-30", "2027-13-01"]) {
+    a.start_date = date;
+    assert.equal(payloadSchema.safeParse(p).success, false);
+  }
+  assert.ok(
+    activityScheduleRows(
+      { start_date: "2027-01-02", end_date: "2027-01-03" },
+      "en",
+    )[0][1].includes("2027"),
+  );
+});
+test("GLF section terminology matches supplied ES/EN form while prior PDF layouts keep headings and omit concept administrative expenses", () => {
+  const p = emptyPayload();
+  for (const locale of ["es", "en"] as const) {
+    const current = conceptSections(p.concept, locale, undefined, {
+      stage: 1,
+      layoutVersion: currentConceptLayout,
+    });
+    for (const key of [
+      "objectives",
+      "beneficiaries",
+      "results",
+      "sustainability",
+      "alignment",
+      "monitoring",
+    ]) {
+      assert.equal(
+        current.find((x) => x.id === key)?.title,
+        proposalTitles[key][locale === "es" ? 0 : 1],
+      );
+    }
+    const legacy = conceptSections(p.concept, locale, undefined, {
+      stage: 1,
+      layoutVersion: previousConceptLayout,
+    });
+    assert.equal(
+      legacy.find((x) => x.id === "results")?.title,
+      locale === "es"
+        ? "Resultados e indicadores esperados"
+        : "Expected results and indicators",
+    );
+    assert.ok(
+      !JSON.stringify(legacy).includes(
+        locale === "es" ? "Gastos administrativos" : "Administrative expenses",
+      ),
+    );
+  }
 });

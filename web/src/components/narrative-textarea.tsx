@@ -12,6 +12,7 @@ export function NarrativeTextarea({
   onChange,
   locale,
   invalid,
+  descriptionId,
   disabled = false,
 }: {
   id: string;
@@ -20,6 +21,7 @@ export function NarrativeTextarea({
   onChange: (value: string) => void;
   locale: "es" | "en";
   invalid?: boolean;
+  descriptionId?: string;
   disabled?: boolean;
 }) {
   const es = locale === "es";
@@ -86,7 +88,7 @@ export function NarrativeTextarea({
         lang={locale}
         aria-required="true"
         aria-invalid={invalid}
-        aria-describedby={`${uid}-count`}
+        aria-describedby={`${uid}-count${descriptionId ? ` ${descriptionId}` : ""}`}
         disabled={disabled}
       />
       <div className="narrative-entry-tools">

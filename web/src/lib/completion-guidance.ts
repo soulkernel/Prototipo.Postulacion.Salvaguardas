@@ -1,3 +1,4 @@
+import { activityDateErrors, activityDateMessage } from "./activity-planning";
 import {
   generalOnlyAlignment,
   requiresObjectiveContribution,
@@ -60,7 +61,7 @@ export function completionGuidance(
       return;
     }
     if (
-      /^(risk_\d|quarters_|activity_\d|activity_objectives_|result_)/.test(
+      /^(risk_\d|quarters_|activity_\d|activity_dates_|activity_objectives_|result_)/.test(
         key,
       ) ||
       key === "declarations"
@@ -255,6 +256,15 @@ export function completionGuidance(
   payload.activities.forEach((a, ai) => {
     const prefix = (es ? "Actividad " : "Activity ") + (ai + 1),
       scope = `[data-validation-activity="${ai + 1}"]`;
+    for (const [key, issue] of Object.entries(
+      activityDateErrors(a, payload.concept),
+    ))
+      add(
+        `activity-${ai}-${key}`,
+        1,
+        `${prefix}: ${activityDateMessage(issue!, locale)}`,
+        `#activity-planning ${scope} ${field(`activity_${key}`)}`,
+      );
     for (const key of ["title", "description"] as const)
       if (!a[key].trim())
         add(

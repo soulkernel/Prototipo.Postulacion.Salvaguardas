@@ -1,3 +1,4 @@
+import { proposalTitles } from "./proposal-guidance";
 import { riskLevel, type Concept, type Locale } from "./domain";
 
 export function riskLevelLabel(score: number | null, locale: Locale) {
@@ -154,38 +155,38 @@ export const narrativeFields: Field[] = [
   },
   {
     key: "objectives",
-    es: "Objetivo general y objetivos específicos",
-    en: "General and specific objectives",
+    es: proposalTitles.objectives[0],
+    en: proposalTitles.objectives[1],
     type: "textarea",
   },
   {
     key: "beneficiaries",
-    es: "Beneficiarios y contribuciones a los medios de vida",
-    en: "Beneficiaries and contributions to livelihoods",
+    es: proposalTitles.beneficiaries[0],
+    en: proposalTitles.beneficiaries[1],
     type: "textarea",
   },
   {
     key: "results",
-    es: "Resultados e indicadores esperados",
-    en: "Expected results and indicators",
+    es: proposalTitles.results[0],
+    en: proposalTitles.results[1],
     type: "textarea",
   },
   {
     key: "sustainability",
-    es: "Sostenibilidad y replicabilidad",
-    en: "Sustainability and replicability",
+    es: proposalTitles.sustainability[0],
+    en: proposalTitles.sustainability[1],
     type: "textarea",
   },
   {
     key: "alignment",
-    es: "Alineación estratégica: Plan Galápagos 2030 y ODS",
-    en: "Strategic alignment: Galápagos 2030 Plan and SDGs",
+    es: proposalTitles.alignment[0],
+    en: proposalTitles.alignment[1],
     type: "textarea",
   },
   {
     key: "monitoring",
-    es: "Seguimiento y evaluación propuestos",
-    en: "Proposed monitoring and evaluation",
+    es: proposalTitles.monitoring[0],
+    en: proposalTitles.monitoring[1],
     type: "textarea",
   },
   {

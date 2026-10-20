@@ -1,4 +1,6 @@
 "use client";
+import { proposalTitle } from "@/lib/proposal-guidance";
+import { ProposalFieldGuidance } from "./proposal-field-guidance";
 import { narrativeTextForEditing } from "@/lib/concept-presentation";
 import { ConfirmRemoveButton } from "./confirm-remove-button";
 import { LimitedTextarea } from "./limited-textarea";
@@ -27,16 +29,8 @@ export function ProjectResultFields({
     );
   return (
     <section className="result-fields" data-validation-field="results">
-      <h3>
-        {es
-          ? "Resultados e indicadores esperados"
-          : "Expected results and indicators"}
-      </h3>
-      <p>
-        {es
-          ? "Indique qué espera lograr y cómo lo comprobará. Las metas son preliminares; la fórmula de cálculo y los detalles de medición se completarán en el proyecto completo."
-          : "Describe what you expect to achieve and how you will verify it. Targets are preliminary; calculation formulas and measurement details will be completed in the full proposal."}
-      </p>
+      <h3>{proposalTitle("results", es ? "es" : "en")}</h3>
+      <ProposalFieldGuidance field="results" locale={es ? "es" : "en"} />
       {value === undefined ? (
         <>
           <details>

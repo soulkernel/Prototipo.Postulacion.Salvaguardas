@@ -1,3 +1,4 @@
+import { ActivityDatesTable } from "@/components/activity-review";
 import { ConceptReview } from "@/components/concept-review";
 import { attachmentLabel } from "@/lib/attachment-requirements";
 import { DocumentDownload } from "@/components/document-download";
@@ -292,6 +293,7 @@ export default async function ReviewPage({
           <article key={activity.id}>
             <h3>{activity.title}</h3>
             <p>{activity.description}</p>
+            <ActivityDatesTable activity={activity} locale={locale} />
             {!activity.risks.length && <p>{activity.no_risks_reason}</p>}
             {activity.risks.map((r) => (
               <div className="live-risk" key={r.id}>

@@ -1,3 +1,4 @@
+import { proposalTitle } from "./proposal-guidance";
 import type { Concept, Locale } from "./domain";
 import { identityFields, narrativeFields } from "./fields";
 import { callThemeLabel } from "./call-themes";
@@ -13,6 +14,8 @@ import { resultUnits } from "./project-results";
 import {
   currentConceptLayout,
   includesAdministrativeCost,
+  usesCurrentGlfForm,
+  groupsProjectDates,
   type ConceptPresentation,
 } from "./concept-layout";
 
@@ -211,7 +214,8 @@ export function conceptSections(
   };
   const partners = partnerRecords(c);
   const hasPartnerSupport = partners.some((p) => p.support !== undefined);
-  const groupedDates = presentation.layoutVersion === currentConceptLayout;
+  const groupedDates = groupsProjectDates(presentation);
+  const glfForm = usesCurrentGlfForm(presentation);
   const details = identityFields
     .filter(
       (f) =>
@@ -335,7 +339,11 @@ export function conceptSections(
   if (groupedDates)
     sections.splice(1, 0, {
       id: "duration",
-      title: es ? "Duración del proyecto" : "Project duration",
+      title: glfForm
+        ? proposalTitle("duration", locale)
+        : es
+          ? "Duración del proyecto"
+          : "Project duration",
       introduction: es
         ? "El período propuesto debe respetar el plazo máximo de la categoría de subvención seleccionada. La duración incluye las fechas de inicio y finalización."
         : "The proposed period must respect the maximum duration of the selected grant category. Duration includes both the start and end dates.",
@@ -420,6 +428,32 @@ export function conceptSections(
     social_risks: [
       "Se presentan los posibles efectos sociales identificados por el proponente. Su valoración por actividad se detalla en la evaluación ambiental y social.",
       "These are the potential social effects identified by the applicant. Their activity-level assessment is detailed in the environmental and social evaluation.",
+    ],
+  };
+  const legacyTitles: Record<string, [string, string]> = {
+    objectives: [
+      "Objetivo general y objetivos específicos",
+      "General and specific objectives",
+    ],
+    beneficiaries: [
+      "Beneficiarios y contribuciones a los medios de vida",
+      "Beneficiaries and contributions to livelihoods",
+    ],
+    results: [
+      "Resultados e indicadores esperados",
+      "Expected results and indicators",
+    ],
+    sustainability: [
+      "Sostenibilidad y replicabilidad",
+      "Sustainability and replicability",
+    ],
+    alignment: [
+      "Alineación estratégica: Plan Galápagos 2030 y ODS",
+      "Strategic alignment: Galápagos 2030 Plan and SDGs",
+    ],
+    monitoring: [
+      "Seguimiento y evaluación propuestos",
+      "Proposed monitoring and evaluation",
     ],
   };
   for (const f of narrativeFields) {
@@ -531,7 +565,12 @@ export function conceptSections(
     }
     sections.push({
       id: f.key,
-      title: es ? f.es : f.en,
+      title:
+        !glfForm && legacyTitles[f.key]
+          ? legacyTitles[f.key][es ? 0 : 1]
+          : es
+            ? f.es
+            : f.en,
       introduction:
         f.key === "alignment" &&
         c.strategic_alignment &&

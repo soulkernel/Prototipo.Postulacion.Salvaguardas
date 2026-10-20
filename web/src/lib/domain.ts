@@ -12,7 +12,7 @@ import { emptySummary, projectSummary } from "./summary";
 import { strategicSchema, alignmentIssues } from "./strategic-alignment";
 import { potentialRiskIssues } from "./potential-risks";
 import { partnerIssues } from "./partners";
-import { activityPlanningIssues } from "./activity-planning";
+import { activityPlanningIssues, isActivityDate } from "./activity-planning";
 import { projectResultSchema, resultIssues } from "./project-results";
 export const roles = [
   "applicant",
@@ -145,6 +145,16 @@ export const activitySchema = z
     description: text,
     no_risks_reason: text,
     objective_ids: z.array(z.uuid()).max(10).optional(),
+    start_date: z
+      .string()
+      .max(10)
+      .refine((value) => !value || isActivityDate(value))
+      .optional(),
+    end_date: z
+      .string()
+      .max(10)
+      .refine((value) => !value || isActivityDate(value))
+      .optional(),
     risks: z.array(riskSchema).max(100),
   })
   .strict();

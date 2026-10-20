@@ -1,5 +1,6 @@
 "use client";
 import { narrativeTextForEditing } from "@/lib/concept-presentation";
+import { ActivityReview } from "./activity-review";
 import { ConceptReview } from "./concept-review";
 import { ApplicationTopicSelect } from "./application-topic-select";
 import { applicationTopicMessage } from "@/lib/call-themes";
@@ -19,6 +20,8 @@ import { MoneyInput } from "./money-input";
 import { DeadlineCountdown } from "./deadline-countdown";
 import { DocumentDownload } from "./document-download";
 import { useEffect, useState, useRef } from "react";
+import { proposalTitle } from "@/lib/proposal-guidance";
+import { ProposalFieldGuidance } from "./proposal-field-guidance";
 import { applicationStepUrl } from "@/lib/application-navigation";
 import Link from "@/components/feedback-link";
 import { SignedDocumentUpload } from "./signed-document-upload";
@@ -269,6 +272,10 @@ function message(code: string, es: boolean) {
     return es
       ? "Revise los trimestres: deben estar en orden y dentro de la duración del proyecto."
       : "Check the quarters: they must be ordered and within the project duration.";
+  if (code.includes("ACTIVITY_DATE"))
+    return es
+      ? "Revise las fechas de las actividades: complete ambas o deje ambas vacías; deben estar ordenadas y dentro del período del proyecto."
+      : "Review activity dates: complete both or leave both blank; dates must be in order and within the project period.";
   if (
     code.includes("REQUIRED") ||
     code.includes("INVALID") ||
@@ -1009,6 +1016,12 @@ export function ApplicationEditor({
       const f = call.phase2_schema.find((f) => f.id === key.slice(7));
       return f ? (es ? f.label_es : f.label_en) : key;
     }
+    if (key.startsWith("activity_dates_"))
+      return (
+        (es
+          ? "Revise las fechas de la actividad "
+          : "Review dates for activity ") + key.split("_").at(-1)
+      );
     if (key.startsWith("activity_objectives_"))
       return (
         (es
@@ -1298,7 +1311,13 @@ export function ApplicationEditor({
             <RequiredMark locale={locale} />
           </span>
         </label>
+        <ProposalFieldGuidance
+          field={field.key}
+          locale={locale}
+          id={`concept-${field.key}-help`}
+        />
         <NarrativeTextarea
+          descriptionId={`concept-${field.key}-help`}
           id={`concept-${field.key}`}
           label={es ? field.es : field.en}
           locale={locale}
@@ -2048,8 +2067,9 @@ export function ApplicationEditor({
                         className="section-card-title"
                         id="project-duration-heading"
                       >
-                        {es ? "Duración del proyecto" : "Project duration"}
+                        {proposalTitle("duration", locale)}
                       </h3>
+                      <ProposalFieldGuidance field="duration" locale={locale} />
                       <div className="live-grid project-date-grid">
                         {renderIdentity("start_date")}
                         {renderIdentity("end_date")}
@@ -2814,6 +2834,11 @@ export function ApplicationEditor({
                       ? currentConceptLayout
                       : (versions[0].concept_layout_version ?? null),
                 }}
+              />
+              <ActivityReview
+                activities={payload.activities}
+                concept={payload.concept}
+                locale={locale}
               />
               <p>
                 {payload.activities.length} {es ? "actividades" : "activities"}{" "}

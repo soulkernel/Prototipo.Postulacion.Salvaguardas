@@ -1,5 +1,6 @@
 import { conceptSections, narrativeBlocks } from "./concept-presentation";
-import { currentConceptLayout } from "./concept-layout";
+import { activityScheduleRows } from "./activity-planning";
+import { currentConceptLayout, usesCurrentGlfForm } from "./concept-layout";
 import { budgetText } from "./budget";
 import { submissionNotice } from "./grant-rules";
 import { riskNarrative } from "./document-language";
@@ -395,7 +396,29 @@ export async function applicationPdf({
     }
     draw(es ? "3. ACTIVIDADES" : "3. ACTIVITIES", true);
     payload.activities.forEach((a, i) => {
+      // Keep the activity introduction with its preliminary calendar in new documents.
+      if (
+        usesCurrentGlfForm({ stage, layoutVersion: conceptLayoutVersion }) &&
+        activityScheduleRows(a, locale).length
+      ) {
+        const lead =
+          lines(i + 1 + ". " + a.title, bold, 11).length * 15 +
+          Math.min(lines(a.description, font, 11).length, 8) * 15 +
+          140;
+        if (y < 72 + lead) newPage();
+      }
       field(i + 1 + ". " + a.title, a.description);
+      if (usesCurrentGlfForm({ stage, layoutVersion: conceptLayoutVersion })) {
+        const rows = activityScheduleRows(a, locale);
+        if (rows.length)
+          table(
+            es
+              ? ["Dato", "Planificación preliminar"]
+              : ["Field", "Preliminary schedule"],
+            rows,
+            [150, 341],
+          );
+      }
       if (a.objective_ids?.length)
         field(
           es
@@ -582,6 +605,17 @@ export async function applicationPdf({
           : "The following entries identify the risks associated with this activity and explain their ratings.",
       );
       if (a.description.trim()) text(a.description);
+      if (usesCurrentGlfForm({ stage, layoutVersion: conceptLayoutVersion })) {
+        const rows = activityScheduleRows(a, locale);
+        if (rows.length)
+          table(
+            es
+              ? ["Dato", "Planificación preliminar"]
+              : ["Field", "Preliminary schedule"],
+            rows,
+            [150, 341],
+          );
+      }
       if (a.objective_ids?.length) {
         const objectives =
           payload.concept.strategic_alignment?.objectives.filter(

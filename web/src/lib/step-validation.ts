@@ -97,7 +97,8 @@ export function stepIssues(
       ...validateComplete(payload, rules, stage).filter(
         (k) =>
           k === "activities" ||
-          /^(risk|quarters|activity|no_risks_reason)_/.test(k),
+          (!k.startsWith("activity_dates_") &&
+            /^(risk|quarters|activity|no_risks_reason)_/.test(k)),
       ),
     );
   }
