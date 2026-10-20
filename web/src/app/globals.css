@@ -2994,6 +2994,51 @@ select {
   font-size: 13px;
   margin: 6px 0 12px;
 }
+.unified-summary .summary-guidance {
+  display: grid;
+  gap: 16px;
+}
+.unified-summary .summary-guidance-content {
+  display: grid;
+  gap: 8px;
+}
+.unified-summary .summary-guidance-heading {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+}
+.unified-summary .summary-guidance h4 {
+  margin: 0;
+  color: #19335f;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.unified-summary .summary-guidance p {
+  margin: 0;
+}
+.unified-summary .summary-guidance-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-inline-start: 1.3rem;
+  list-style: disc outside;
+}
+.unified-summary .summary-guidance-list li::marker {
+  color: #087e84;
+}
+.unified-summary .summary-guidance-list strong {
+  font-weight: 600;
+}
+.unified-summary .summary-guidance-notices {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid #c7dfe1;
+  border-radius: 10px;
+  background: #eef6f6;
+}
 .unified-summary textarea {
   display: block;
   width: 100%;
