@@ -1,6 +1,39 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  applicationStepFromQuery,
+  applicationStepUrl,
+} from "../src/lib/application-navigation";
+
+test("application step survives refresh via a bounded query without changing other URL context", () => {
+  for (let step = 0; step < 4; step++) {
+    const next = new URL(
+      applicationStepUrl(
+        "https://example.invalid/applicant/fake?receipt=test#main-content",
+        step,
+      ),
+      "https://example.invalid",
+    );
+    assert.equal(applicationStepFromQuery(next.searchParams.get("step")), step);
+    assert.equal(next.searchParams.get("receipt"), "test");
+    assert.equal(next.hash, "#main-content");
+    assert.equal(next.pathname, "/applicant/fake");
+  }
+  for (const value of [
+    undefined,
+    null,
+    "",
+    "0",
+    "5",
+    "-1",
+    "2.5",
+    "02",
+    "oops",
+    ["2", "3"],
+  ])
+    assert.equal(applicationStepFromQuery(value), 0);
+});
+import {
   privacyNotice,
   submissionConfirmation,
   submissionPhase,

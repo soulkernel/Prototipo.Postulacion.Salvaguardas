@@ -7,13 +7,14 @@ import { ApplicationEditor } from "@/components/application-editor";
 import { ReceiptDownload } from "@/components/receipt-download";
 import { receiptDate } from "@/lib/receipt";
 import type { Call } from "@/lib/domain";
+import { applicationStepFromQuery } from "@/lib/application-navigation";
 export const maxDuration = 60;
 export default async function ApplicationPage({
   params,
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ receipt?: string }>;
+  searchParams: Promise<{ receipt?: string; step?: string | string[] }>;
 }) {
   const requestTime = await getRequestTime();
   const { id } = await params;
@@ -118,6 +119,7 @@ export default async function ApplicationPage({
         call={call as Call}
         locale={locale}
         editable={editable}
+        initialStep={applicationStepFromQuery(query.step)}
         academicReadOnly={viewer.profile.access_kind === "academic"}
         serverNow={requestTime}
         accountEmail={viewer.user.email || ""}

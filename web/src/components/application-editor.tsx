@@ -19,6 +19,7 @@ import { MoneyInput } from "./money-input";
 import { DeadlineCountdown } from "./deadline-countdown";
 import { DocumentDownload } from "./document-download";
 import { useEffect, useState, useRef } from "react";
+import { applicationStepUrl } from "@/lib/application-navigation";
 import Link from "@/components/feedback-link";
 import { SignedDocumentUpload } from "./signed-document-upload";
 import { ReceiptDownload } from "./receipt-download";
@@ -295,6 +296,7 @@ export function ApplicationEditor({
   saveAction = saveDraft,
   removePartnerAction = removePartner,
   initialPendingPartner = null,
+  initialStep = 0,
 }: {
   application: Application;
   call: Call;
@@ -310,6 +312,7 @@ export function ApplicationEditor({
   saveAction?: typeof saveDraft;
   removePartnerAction?: typeof removePartner;
   initialPendingPartner?: string | null;
+  initialStep?: number;
 }) {
   const es = locale === "es";
   const router = useRouter();
@@ -363,7 +366,17 @@ export function ApplicationEditor({
   const [autoSaving, setAutoSaving] = useState(false);
   const [autoError, setAutoError] = useState("");
   const [lastSaved, setLastSaved] = useState(application.updated_at);
-  const [step, setStep] = useState(editable || academicReadOnly ? 0 : 3);
+  const [step, setStepState] = useState(
+    editable || academicReadOnly ? initialStep : 3,
+  );
+  function setStep(next: number) {
+    setStepState(next);
+    window.history.replaceState(
+      null,
+      "",
+      applicationStepUrl(window.location.href, next),
+    );
+  }
   const [busy, setBusy] = useState(false);
   const [pendingPartner, setPendingPartner] = useState(initialPendingPartner);
   const removalFlight = useRef(false);
@@ -3309,7 +3322,7 @@ export function ApplicationEditor({
                       return;
                     }
                     setError("");
-                    setStep((s) => Math.min(s + 1, 3));
+                    setStep(Math.min(step + 1, 3));
                   }}
                 >
                   {es ? "Continuar" : "Continue"} →
