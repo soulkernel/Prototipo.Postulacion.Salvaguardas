@@ -1200,6 +1200,16 @@ export function ApplicationEditor({
         value={payload.concept.project_results}
         legacy={payload.concept.results_source ?? payload.concept.results}
         objectives={payload.concept.strategic_alignment?.objectives || []}
+        onLegacyChange={(text) =>
+          setPayload((p) =>
+            p.concept.project_results === undefined
+              ? {
+                  ...p,
+                  concept: { ...p.concept, results: text, results_source: text },
+                }
+              : p,
+          )
+        }
         onChange={(value) =>
           setPayload((p) => {
             const concept = {

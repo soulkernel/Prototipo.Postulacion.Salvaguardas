@@ -217,6 +217,11 @@ a {
   gap: 9px;
   min-width: 0;
 }
+.result-fields > .button {
+  max-width: 100%;
+  white-space: normal;
+  margin-top: 12px;
+}
 .live-form .narrative-entry-text {
   display: block;
   width: 100%;

@@ -608,10 +608,10 @@ export const manualChapters: ManualChapter[] = [
         "Adds or removes a block. The form supports up to 30 results.",
       ],
       [
-        "Organizar resultados / Consultar texto anterior",
-        "Si aparece en un borrador anterior, permite estructurar los resultados conservando el texto previo como referencia.",
-        "Organise results / View previous text",
-        "When shown in an older draft, lets you structure results while keeping previous text for reference.",
+        "Editar texto existente / Organizar en resultados individuales",
+        "En borradores anteriores, el texto se puede editar directamente. Organizarlo en fichas es opcional y conserva el texto como referencia. En formularios nuevos, la primera ficha está visible y se guarda al empezar a completarla.",
+        "Edit existing text / Organize into individual results",
+        "In older drafts, the text can be edited directly. Organizing it into cards is optional and keeps the text for reference. In new forms, the first card is visible and is saved when you start completing it.",
       ],
     ],
     tip: [
@@ -623,7 +623,7 @@ export const manualChapters: ManualChapter[] = [
       ["Indicador *", "Indicator *"],
       ["Meta: 60 | Unidad: personas", "Target: 60 | Unit: people"],
       ["Evidencia prevista *", "Expected evidence *"],
-      ["+ Agregar resultado", "+ Add result"],
+      ["+ Agregar otro resultado", "+ Add another result"],
     ],
   },
   {

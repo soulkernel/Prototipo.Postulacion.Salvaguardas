@@ -1,9 +1,12 @@
 "use client";
+import { useId, useState } from "react";
 import { proposalTitle } from "@/lib/proposal-guidance";
 import { ProposalFieldGuidance } from "./proposal-field-guidance";
 import { narrativeTextForEditing } from "@/lib/concept-presentation";
 import { ConfirmRemoveButton } from "./confirm-remove-button";
 import { LimitedTextarea } from "./limited-textarea";
+import { NarrativeTextarea } from "./narrative-textarea";
+import { RequiredMark } from "./required-mark";
 import {
   newProjectResult,
   resultUnits,
@@ -15,34 +18,78 @@ export function ProjectResultFields({
   objectives,
   es,
   onChange,
+  onLegacyChange,
 }: {
   value?: ProjectResult[];
   legacy: string;
   objectives: { id: string; kind: string; text: string }[];
   es: boolean;
   onChange: (value: ProjectResult[]) => void;
+  onLegacyChange: (value: string) => void;
 }) {
+  const id = useId();
+  const [emptyResult, setEmptyResult] = useState(newProjectResult);
+  // The first empty card is a view only; it is persisted after an explicit edit.
+  const rows = value === undefined ? [] : value.length ? value : [emptyResult];
   const specific = objectives.filter((o) => o.kind === "specific");
   const update = (index: number, patch: Partial<ProjectResult>) =>
-    onChange(
-      (value || []).map((r, i) => (i === index ? { ...r, ...patch } : r)),
-    );
+    onChange(rows.map((r, i) => (i === index ? { ...r, ...patch } : r)));
   return (
-    <section className="result-fields" data-validation-field="results">
+    <section
+      className="result-fields full-width"
+      data-validation-field="results"
+    >
       <h3>{proposalTitle("results", es ? "es" : "en")}</h3>
       <ProposalFieldGuidance field="results" locale={es ? "es" : "en"} />
       {value === undefined ? (
         <>
-          <details>
-            <summary>
-              {es ? "Consultar texto existente" : "View existing text"}
-            </summary>
-            <p className="preserve-text">
-              {narrativeTextForEditing(legacy) || "—"}
+          <div className="narrative-field">
+            <label htmlFor={`${id}-results`}>
+              <span className="field-label">
+                {es
+                  ? "Resultados previstos y entregables"
+                  : "Expected outcomes and deliverables"}
+                <RequiredMark locale={es ? "es" : "en"} />
+              </span>
+            </label>
+            <small className="field-help" id={`${id}-results-help`}>
+              {es
+                ? "Puede corregir o ampliar este texto. Describa qué espera conseguir al finalizar el proyecto, qué entregará y cómo comprobará esos resultados."
+                : "You can edit or expand this text. Describe what you expect to achieve by project end, what you will deliver and how you will verify the outcomes."}
+            </small>
+            <NarrativeTextarea
+              id={`${id}-results`}
+              label={
+                es
+                  ? "Resultados previstos y entregables"
+                  : "Expected outcomes and deliverables"
+              }
+              value={narrativeTextForEditing(legacy)}
+              onChange={onLegacyChange}
+              locale={es ? "es" : "en"}
+              descriptionId={`${id}-results-help`}
+              placeholder={
+                es
+                  ? "Escriba aquí los resultados que espera conseguir y lo que entregará el proyecto."
+                  : "Write the expected project outcomes and deliverables here."
+              }
+            />
+          </div>
+          <div className="field-help">
+            <p>
+              {es
+                ? "Si desea registrar cada resultado con su objetivo, indicador y meta, puede organizarlo en fichas. El texto actual se conservará como referencia; complete las fichas con la información correspondiente."
+                : "To record each outcome with its objective, indicator and target, you can organize it into individual cards. The current text will be kept for reference; complete the cards with the relevant information."}
             </p>
-          </details>
-          <button type="button" onClick={() => onChange([newProjectResult()])}>
-            {es ? "Organizar resultados" : "Organise results"}
+          </div>
+          <button
+            type="button"
+            className="button secondary"
+            onClick={() => onChange([emptyResult])}
+          >
+            {es
+              ? "Organizar en resultados individuales (opcional)"
+              : "Organize into individual results (optional)"}
           </button>
         </>
       ) : (
@@ -55,7 +102,7 @@ export function ProjectResultFields({
               <p className="preserve-text">{narrativeTextForEditing(legacy)}</p>
             </details>
           )}
-          {value.map((r, i) => (
+          {rows.map((r, i) => (
             <section
               role="group"
               className="activity-card"
@@ -66,17 +113,23 @@ export function ProjectResultFields({
                 <h3 className="section-card-title">
                   {es ? "Resultado" : "Result"} {i + 1}
                 </h3>
-                <ConfirmRemoveButton
-                  locale={es ? "es" : "en"}
-                  element={`${es ? "Resultado" : "Result"} ${i + 1}: ${r.result || "—"}`}
-                  consequence={
-                    es
-                      ? "Se eliminarán este resultado, su indicador, meta, unidad, evidencia prevista y vínculo con el objetivo. El objetivo se conservará. El texto anterior, si existe, seguirá disponible para consulta."
-                      : "This result, its indicator, target, unit, expected evidence and objective link will be removed. The objective will be kept. Previous text, if any, will remain available for reference."
-                  }
-                  onConfirm={() => onChange(value.filter((_, j) => i !== j))}
-                  aria-label={`${es ? "Quitar resultado" : "Remove result"} ${i + 1}`}
-                />
+                {value.length > 0 && (
+                  <ConfirmRemoveButton
+                    locale={es ? "es" : "en"}
+                    element={`${es ? "Resultado" : "Result"} ${i + 1}: ${r.result || "—"}`}
+                    consequence={
+                      es
+                        ? "Se eliminarán este resultado, su indicador, meta, unidad, evidencia prevista y vínculo con el objetivo. El objetivo se conservará. El texto anterior, si existe, seguirá disponible para consulta."
+                        : "This result, its indicator, target, unit, expected evidence and objective link will be removed. The objective will be kept. Previous text, if any, will remain available for reference."
+                    }
+                    onConfirm={() => {
+                      const remaining = value.filter((_, j) => i !== j);
+                      if (!remaining.length) setEmptyResult(newProjectResult());
+                      onChange(remaining);
+                    }}
+                    aria-label={`${es ? "Quitar resultado" : "Remove result"} ${i + 1}`}
+                  />
+                )}
               </div>
               <label>
                 <span className="field-label">
@@ -94,6 +147,11 @@ export function ProjectResultFields({
                   }
                   onChange={(e) => update(i, { result: e.target.value })}
                 />
+                <small className="field-help">
+                  {es
+                    ? "Describa qué cambiará o qué producto, material, infraestructura o capacidad quedará al finalizar el proyecto."
+                    : "Describe what will change or what product, material, infrastructure or capacity will be in place at project end."}
+                </small>
               </label>
               <label>
                 <span className="field-label">
@@ -128,6 +186,11 @@ export function ProjectResultFields({
                     </option>
                   ))}
                 </select>
+                <small className="field-help">
+                  {es
+                    ? "Seleccione el objetivo específico al que contribuye este resultado."
+                    : "Select the specific objective this result contributes to."}
+                </small>
               </label>
               <label>
                 <span className="field-label">
@@ -144,6 +207,11 @@ export function ProjectResultFields({
                   }
                   onChange={(e) => update(i, { indicator: e.target.value })}
                 />
+                <small className="field-help">
+                  {es
+                    ? "Indique qué observará o medirá para comprobar el resultado."
+                    : "State what you will observe or measure to verify the result."}
+                </small>
               </label>
               <div className="form-grid">
                 <label>
@@ -165,6 +233,11 @@ export function ProjectResultFields({
                       })
                     }
                   />
+                  <small className="field-help">
+                    {es
+                      ? "Indique una cantidad preliminar y seleccione su unidad de medida."
+                      : "Enter a preliminary quantity and select its unit of measure."}
+                  </small>
                 </label>
                 <label>
                   <span className="field-label">
@@ -223,15 +296,21 @@ export function ProjectResultFields({
                   }
                   onChange={(e) => update(i, { evidence: e.target.value })}
                 />
+                <small className="field-help">
+                  {es
+                    ? "Indique el documento, registro o producto que permitirá comprobar el resultado."
+                    : "State which document, record or product will provide evidence of the result."}
+                </small>
               </label>
             </section>
           ))}
           <button
             type="button"
+            className="button secondary"
             disabled={value.length >= 30}
-            onClick={() => onChange([...value, newProjectResult()])}
+            onClick={() => onChange([...rows, newProjectResult()])}
           >
-            {es ? "+ Agregar resultado" : "+ Add result"}
+            {es ? "+ Agregar otro resultado" : "+ Add another result"}
           </button>
         </>
       )}
