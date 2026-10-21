@@ -9,11 +9,13 @@ export function DocumentDownload({
   locale,
   children,
   className = "button secondary",
+  fileName,
 }: {
   href: string;
   locale: Locale;
   children: React.ReactNode;
   className?: string;
+  fileName?: string;
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
@@ -39,7 +41,7 @@ export function DocumentDownload({
       anchor.download =
         response.headers
           .get("content-disposition")
-          ?.match(/filename="([^"]+)"/)?.[1] || "GLF.pdf";
+          ?.match(/filename="([^"]+)"/)?.[1] || fileName || "GLF.pdf";
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();

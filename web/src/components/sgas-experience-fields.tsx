@@ -273,7 +273,11 @@ export function GeneratedSgasAttachment({
               : "PDF automatically attached · No signature or manual upload required."}
           </p>
           <p>{document.file_name}</p>
-          <DocumentDownload href={"/files/" + document.id} locale={locale}>
+          <DocumentDownload
+            href={"/files/" + document.id}
+            locale={locale}
+            fileName={document.file_name}
+          >
             {es ? "Consultar Experiencia SGAS" : "View ESMS experience"}
           </DocumentDownload>
         </>

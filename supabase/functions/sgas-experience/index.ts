@@ -174,7 +174,7 @@ async function sgasPdf(input) {
   }
   function wrap(text, face, size) {
     const rows = [];
-    for (const paragraph of text.replace(/\r/g, "").split("\n")) {
+    for (const paragraph of text.replace(/\r/g, "").replace(/[\u00a0\u202f]/g, " ").split("\n")) {
       let line = "";
       for (const char of paragraph) {
         if (line && face.widthOfTextAtSize(line + char, size) > 491) {

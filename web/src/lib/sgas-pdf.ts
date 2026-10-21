@@ -61,7 +61,11 @@ export async function sgasPdf(input: {
   }
   function wrap(text: string, face: PDFFont, size: number) {
     const rows: string[] = [];
-    for (const paragraph of text.replace(/\r/g, "").split("\n")) {
+    // Edge Runtime's Intl may emit narrow no-break spaces absent in the Latin font.
+    for (const paragraph of text
+      .replace(/\r/g, "")
+      .replace(/[\u00a0\u202f]/g, " ")
+      .split("\n")) {
       let line = "";
       for (const char of paragraph) {
         if (line && face.widthOfTextAtSize(line + char, size) > 491) {
@@ -131,7 +135,9 @@ export async function sgasPdf(input: {
     // Keep each question and its answer together; long optional details may flow.
     const answer = (es ? "Respuesta: " : "Answer: ") + row.answer;
     const requiredHeight =
-      (wrap(row.question, bold, 11).length + wrap(answer, font, 10).length) * 15 + 14;
+      (wrap(row.question, bold, 11).length + wrap(answer, font, 10).length) *
+        15 +
+      14;
     if (y - requiredHeight < 65) next();
     draw(row.question, true);
     draw(answer);
