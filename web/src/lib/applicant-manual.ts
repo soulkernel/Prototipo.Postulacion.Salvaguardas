@@ -510,9 +510,9 @@ export const manualChapters: ManualChapter[] = [
         "One objective per box, up to 2,000 characters. State the change you intend to achieve.",
       ],
       [
-        "Añadir objetivo específico",
+        "Agregar objetivo específico de su proyecto",
         "Crea otra caja numerada OE1, OE2, etc. Los códigos permiten vincular actividades y resultados.",
-        "Add specific objective",
+        "Add a specific objective for your project",
         "Creates another numbered box, SO1, SO2, etc. Codes link activities and results.",
       ],
       [
@@ -544,7 +544,10 @@ export const manualChapters: ManualChapter[] = [
         "OE1: objetivo específico (sin alineación)",
         "SO1: specific objective (no alignment)",
       ],
-      ["+ Añadir objetivo específico", "+ Add specific objective"],
+      [
+        "+ Agregar objetivo específico de su proyecto",
+        "+ Add a specific objective for your project",
+      ],
     ],
   },
   {

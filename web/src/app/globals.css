@@ -2828,6 +2828,12 @@ select {
 .alignment-chips > span { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; background: #edf5f4; color: #155f61; padding: 6px 8px; border-radius: 8px; font-size: 12px; overflow-wrap: anywhere; }
 .alignment-chips button { display: inline-flex; flex: 0 0 auto; padding: 4px; min-height: 24px; border: 0; background: transparent; color: inherit; }
 .objective-add, .objective-remove { display: inline-flex; gap: 7px; align-items: center; }
+.specific-objectives-heading { display: grid; gap: 10px; margin-bottom: 18px; }
+.specific-objectives-heading > h3, .specific-objectives-heading > p { margin: 0; }
+.specific-objectives-heading > p { font-size: 13px; color: #61717f; line-height: 1.55; }
+.specific-objectives-heading > .objective-add { justify-self: start; max-width: 100%; min-height: 44px; margin: 0; white-space: normal; text-align: left; }
+.specific-objectives-heading > .objective-add svg { flex-shrink: 0; }
+
 .objective-remove { margin-top: 12px; }
 @media(max-width: 760px) {
   .strategic-objective-row { gap: 16px; }
