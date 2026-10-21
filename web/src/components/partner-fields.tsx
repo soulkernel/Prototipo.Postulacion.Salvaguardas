@@ -38,7 +38,7 @@ export function PartnerFields({
       className="full-width partner-fields"
       aria-labelledby="partner-heading"
     >
-      <h3 id="partner-heading">
+      <h3 id="partner-heading" className="application-section-title">
         {es
           ? "Organizaciones asociadas (si aplica)"
           : "Partner organizations (if applicable)"}{" "}

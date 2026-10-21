@@ -70,7 +70,7 @@ export function BudgetFields({
   if (!value)
     return (
       <section className="live-card">
-        <h3>
+        <h3 className="application-section-title">
           {es ? "Presupuesto anual GLF y Otros" : "Annual GLF and Other budget"}
         </h3>
         <p>
@@ -108,7 +108,7 @@ export function BudgetFields({
   };
   return (
     <section className="live-card budget-fields" data-validation-field="budget">
-      <h3>
+      <h3 className="application-section-title">
         {es
           ? "Presupuesto anual GLF y Otros (USD)"
           : "Annual GLF and Other budget (USD)"}

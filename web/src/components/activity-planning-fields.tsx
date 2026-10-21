@@ -40,7 +40,9 @@ export function ActivityPlanningFields({
     );
   return (
     <section className="full-width activity-planning" id="activity-planning">
-      <h2>{proposalTitle("activities", locale)}</h2>
+      <h2 className="application-section-title">
+        {proposalTitle("activities", locale)}
+      </h2>
       <ProposalFieldGuidance field="activities" locale={locale} />
       {payload.activities.map((activity, i) => {
         const errors = activityDateErrors(activity, payload.concept);

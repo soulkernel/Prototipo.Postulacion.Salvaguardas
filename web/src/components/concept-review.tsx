@@ -48,7 +48,7 @@ export function ConceptReview({
         className="concept-review-section"
         aria-label={section.title}
       >
-        <h3>{section.title}</h3>
+        <h3 className="application-section-title">{section.title}</h3>
         <p className="concept-review-introduction">{section.introduction}</p>
         {section.blocks.map((block, index) =>
           block.type === "paragraph" ? (

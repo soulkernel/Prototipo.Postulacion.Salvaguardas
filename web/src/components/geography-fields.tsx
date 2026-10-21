@@ -37,7 +37,7 @@ export function GeographyFields({
     const custom = Boolean(c.city && !options.includes(c.city));
     return (
       <section role="group" className="activity-card full-width">
-        <h3 className="section-card-title">
+        <h3 className="section-card-title application-section-title">
           {es ? "Domicilio del proponente" : "Applicant address"}
         </h3>
         <div className="live-grid applicant-address-fields">
@@ -173,7 +173,7 @@ export function GeographyFields({
       className="activity-card full-width"
       data-validation-field="project_islands"
     >
-      <h3 className="section-card-title">
+      <h3 className="section-card-title application-section-title">
         {label(
           es
             ? "Ubicación y área de influencia"

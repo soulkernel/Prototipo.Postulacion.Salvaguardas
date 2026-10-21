@@ -42,7 +42,7 @@ export function PotentialRiskFields({
   if (!rows)
     return (
       <section>
-        <h3>
+        <h3 className="application-section-title">
           {es
             ? "Riesgos ambientales y sociales potenciales"
             : "Potential environmental and social risks"}
@@ -139,7 +139,9 @@ export function PotentialRiskFields({
     );
   return (
     <section>
-      <h3>{es ? "Riesgos potenciales" : "Potential risks"}</h3>
+      <h3 className="application-section-title">
+        {es ? "Riesgos potenciales" : "Potential risks"}
+      </h3>
       <p>
         {es
           ? "Registre un riesgo por caja. Se vinculará con las actividades donde corresponda y se calificará allí. Si no identifica riesgos de una dimensión, explique por qué."

@@ -66,7 +66,9 @@ export function RequiredAttachmentUploads({
   if (!requirements.length && !unlinked.length) return null;
   return (
     <section className="required-attachment-uploads">
-      <h3>{es ? "Anexos" : "Attachments"}</h3>
+      <h3 className="application-section-title">
+        {es ? "Anexos" : "Attachments"}
+      </h3>
       {stage !== 1 &&
         documents.some((d) => d.kind === "other") &&
         requirements.some((r) => r.id.startsWith(partnerLetterPrefix)) && (

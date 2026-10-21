@@ -47,7 +47,9 @@ export function ProjectResultFields({
       className="result-fields full-width"
       data-validation-field="results"
     >
-      <h3>{proposalTitle("results", es ? "es" : "en")}</h3>
+      <h3 className="application-section-title">
+        {proposalTitle("results", es ? "es" : "en")}
+      </h3>
       <ProposalFieldGuidance
         field="results"
         locale={es ? "es" : "en"}

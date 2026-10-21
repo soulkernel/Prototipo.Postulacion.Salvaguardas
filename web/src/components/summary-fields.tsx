@@ -27,7 +27,7 @@ export function SummaryFields({
       className="activity-card unified-summary"
       data-validation-field="summary"
     >
-      <h3 id={`${id}-label`}>
+      <h3 className="application-section-title" id={`${id}-label`}>
         {es ? "Resumen del proyecto" : "Project summary"}
         <RequiredMark locale={locale} />
       </h3>

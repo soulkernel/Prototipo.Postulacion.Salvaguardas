@@ -63,7 +63,7 @@ export function SustainabilityFields({
       className="sustainability-fields full-width"
       data-validation-field="sustainability"
     >
-      <div className="sustainability-section-heading">
+      <div className="sustainability-section-heading application-section-title">
         <h2>
           {es
             ? "Sostenibilidad y replicabilidad"

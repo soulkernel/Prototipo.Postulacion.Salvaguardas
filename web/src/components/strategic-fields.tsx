@@ -45,7 +45,7 @@ export function StrategicFields({
   if (!value)
     return (
       <section className="full-width strategic-fields">
-        <h3>
+        <h3 className="application-section-title">
           {es
             ? proposalTitle("objectives", "es")
             : proposalTitle("objectives", "en")}
@@ -287,7 +287,7 @@ export function StrategicFields({
   };
   return (
     <section className="full-width strategic-fields">
-      <h3>
+      <h3 className="application-section-title">
         {es
           ? proposalTitle("objectives", "es")
           : proposalTitle("objectives", "en")}

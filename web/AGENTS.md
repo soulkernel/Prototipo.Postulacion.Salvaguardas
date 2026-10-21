@@ -33,3 +33,6 @@ Después de Seguimiento y evaluación, usar fichas compactas numeradas por estra
 
 ## Orden de Descripción del proyecto (decisión del usuario, 20/10/2026)
 Mantener resumen, objetivos y alineación, actividades, beneficiarios, resultados, riesgos, seguimiento y evaluación, sostenibilidad y replicabilidad. Usar projectDescriptionOrder para captura, revisión y PDF nuevos. Las actividades aparecen una sola vez y conservan UUID, objetivos, calendarios y riesgos hacia Screening y fase 2. Los formatos v5 y anteriores conservan su orden registrado. Ver `../docs/Decision_orden_descripcion_20261020.txt`.
+
+## Títulos de sección del formulario (decisión del usuario, 20/10/2026)
+Usar application-section-title en los títulos principales de los cuatro pasos de la postulación, ambas fases y revisión: franja azul muy clara, título azul oscuro en negrita, borde izquierdo turquesa y esquinas redondeadas. Los encabezados son estáticos; las fichas y subtítulos internos conservan una jerarquía más discreta. Mantener las etiquetas asociadas a sus controles, asteriscos, explicaciones, UUID y validaciones. Reutilizar el título existente sin duplicarlo.

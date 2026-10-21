@@ -1294,7 +1294,10 @@ export function ApplicationEditor({
         className="activity-card contact-details-card full-width"
         aria-labelledby="contact-details-heading"
       >
-        <h3 id="contact-details-heading" className="section-card-title">
+        <h3
+          id="contact-details-heading"
+          className="section-card-title application-section-title"
+        >
           {es ? "Datos de contacto" : "Contact details"}
         </h3>
         <div className="contact-details-grid">
@@ -1356,12 +1359,14 @@ export function ApplicationEditor({
         data-validation-field={field.key}
         className="editor-field full-width narrative-field"
       >
-        <label htmlFor={`concept-${field.key}`}>
-          <span>
-            {es ? field.es : field.en}
-            <RequiredMark locale={locale} />
-          </span>
-        </label>
+        <h3 className="application-section-title">
+          <label htmlFor={`concept-${field.key}`}>
+            <span>
+              {es ? field.es : field.en}
+              <RequiredMark locale={locale} />
+            </span>
+          </label>
+        </h3>
         <ProposalFieldGuidance
           field={field.key}
           locale={locale}
@@ -1889,7 +1894,7 @@ export function ApplicationEditor({
             <div className="live-form">
               {step === 0 && (
                 <>
-                  <h2>
+                  <h2 className="application-section-title">
                     {es
                       ? "Información general y financiamiento"
                       : "Project details and funding"}
@@ -2119,7 +2124,7 @@ export function ApplicationEditor({
                       aria-labelledby="project-duration-heading"
                     >
                       <h3
-                        className="section-card-title"
+                        className="section-card-title application-section-title"
                         id="project-duration-heading"
                       >
                         {proposalTitle("duration", locale)}
@@ -2168,7 +2173,7 @@ export function ApplicationEditor({
                       aria-labelledby="funding-summary-heading"
                     >
                       <h3
-                        className="section-card-title"
+                        className="section-card-title application-section-title"
                         id="funding-summary-heading"
                       >
                         {es
@@ -2293,7 +2298,7 @@ export function ApplicationEditor({
               )}
               {step === 1 && application.stage === 2 && (
                 <section>
-                  <h2>
+                  <h2 className="application-section-title">
                     {es
                       ? "Proyecto completo: campos oficiales de la convocatoria"
                       : "Full proposal: official call fields"}
@@ -2338,7 +2343,7 @@ export function ApplicationEditor({
           )}
           {step === 2 && (
             <div className="live-form">
-              <h2>
+              <h2 className="application-section-title">
                 {es
                   ? application.stage === 1
                     ? "Screening: actividades y riesgos A&S"
@@ -2926,7 +2931,9 @@ export function ApplicationEditor({
           )}
           {step === 3 && (
             <div className="live-form">
-              <h2>{es ? "Revisión del expediente" : "Application review"}</h2>
+              <h2 className="application-section-title">
+                {es ? "Revisión del expediente" : "Application review"}
+              </h2>
               <ConceptReview
                 concept={payload.concept}
                 activities={payload.activities}
@@ -2946,7 +2953,7 @@ export function ApplicationEditor({
                 · {payload.activities.flatMap((a) => a.risks).length}{" "}
                 {es ? "riesgos" : "risks"}
               </p>
-              <h3>
+              <h3 className="application-section-title">
                 {es
                   ? "Aviso de privacidad de la convocatoria"
                   : "Call privacy notice"}
@@ -2997,7 +3004,7 @@ export function ApplicationEditor({
       </fieldset>
       {step === 3 && editable && (
         <section className="live-card">
-          <h2>
+          <h2 className="application-section-title">
             {application.stage === 1
               ? es
                 ? "Preparar, firmar y adjuntar"
@@ -3140,7 +3147,9 @@ export function ApplicationEditor({
       )}
       {step === 3 && application.stage === 1 && (
         <section className="live-card">
-          <h2>{es ? "Documentos firmados" : "Signed documents"}</h2>
+          <h2 className="application-section-title">
+            {es ? "Documentos firmados" : "Signed documents"}
+          </h2>
           <p className="field-help">
             {!editable
               ? es
@@ -3203,7 +3212,9 @@ export function ApplicationEditor({
       )}
       {step === 3 && application.stage !== 1 && (
         <section className="live-card">
-          <h2>{es ? "Anexos del proyecto" : "Project attachments"}</h2>
+          <h2 className="application-section-title">
+            {es ? "Anexos del proyecto" : "Project attachments"}
+          </h2>
           <p className="field-help">
             {es ? "Anexos obligatorios: " : "Required attachments: "}
             {[
@@ -3460,7 +3471,9 @@ export function ApplicationEditor({
       )}
       {versions.length > 0 && (
         <section className="live-card">
-          <h2>{es ? "Versiones presentadas" : "Submitted versions"}</h2>
+          <h2 className="application-section-title">
+            {es ? "Versiones presentadas" : "Submitted versions"}
+          </h2>
           {versions.map((v) => (
             <div className="document-row submission-history-row" key={v.id}>
               <div>

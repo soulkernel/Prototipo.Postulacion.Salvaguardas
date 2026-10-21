@@ -46,7 +46,9 @@ export function MonitoringFields({
       className="monitoring-fields full-width"
       data-validation-field="monitoring"
     >
-      <h2>{es ? "Seguimiento y evaluación" : "Monitoring and evaluation"}</h2>
+      <h2 className="application-section-title">
+        {es ? "Seguimiento y evaluación" : "Monitoring and evaluation"}
+      </h2>
       <ProposalFieldGuidance field="monitoring" locale={locale} />
       {legacyOnly ? (
         <>

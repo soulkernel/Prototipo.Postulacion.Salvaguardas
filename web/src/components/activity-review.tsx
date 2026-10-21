@@ -43,7 +43,9 @@ export function ActivityReview({
       className="concept-review-section"
       aria-label={proposalTitle("activities", locale)}
     >
-      <h3>{proposalTitle("activities", locale)}</h3>
+      <h3 className="application-section-title">
+        {proposalTitle("activities", locale)}
+      </h3>
       <p>
         {es
           ? "Estas son las actividades propuestas para alcanzar los objetivos específicos. Las fechas que se indiquen son preliminares y se conservarán al avanzar al proyecto completo."
