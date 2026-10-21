@@ -12,8 +12,13 @@ import {
   Send,
   UserRound,
   ListChecks,
+  Wallet,
 } from "lucide-react";
-import { manualChapters } from "@/lib/applicant-manual";
+import {
+  manualChapters,
+  manualFormSteps,
+  manualUpdatedDate,
+} from "@/lib/applicant-manual";
 import type { Locale } from "@/lib/domain";
 import { version } from "../../package.json";
 export function ApplicantManual({ locale }: { locale: Locale }) {
@@ -32,26 +37,12 @@ export function ApplicantManual({ locale }: { locale: Locale }) {
         c.intro[i],
         ...c.steps.map((s) => s[i]),
         ...c.rows.flatMap((r) => [r[i * 2], r[i * 2 + 1]]),
+        ...c.screen.map((s) => s[i]),
         c.tip[i],
       ].join(" "),
     ).includes(normalize(query.trim())),
   );
-  const journey = es
-    ? [
-        "Cree su cuenta",
-        "Prepare la nota",
-        "Evalúe los riesgos",
-        "Firme los dos PDF",
-        "Envíe y guarde el comprobante",
-      ]
-    : [
-        "Create your account",
-        "Prepare the note",
-        "Assess risks",
-        "Sign both PDFs",
-        "Submit and keep the receipt",
-      ];
-  const icons = [UserRound, BookOpen, ListChecks, FileCheck2, Send];
+  const icons = [UserRound, BookOpen, Wallet, ListChecks, FileCheck2, Send];
   return (
     <div className="manual">
       <header className="module-heading">
@@ -63,17 +54,19 @@ export function ApplicantManual({ locale }: { locale: Locale }) {
             <BookOpen size={18} />
             {es ? "GUÍA DEL APLICANTE" : "APPLICANT GUIDE"}
           </span>
-          <h2>{es ? "Su proyecto, paso a paso." : "Your project, step by step."}</h2>
+          <h2>
+            {es ? "Su proyecto, paso a paso." : "Your project, step by step."}
+          </h2>
           <div className="manual-lead">
             {es
-              ? "Desde la creación de su cuenta hasta la recepción de su nota conceptual. Conozca qué completar, qué revisar y qué ocurre después de cada acción."
-              : "From creating your account to receipt of your concept note. Learn what to complete, what to check and what happens after each action."}
+              ? "Guía de los seis pasos de la nota conceptual, sus documentos y anexos, y de la propuesta completa cuando GLF la habilite. Conozca qué completar, qué revisar y qué ocurre después de cada acción."
+              : "A guide to the six concept-note steps, documents and attachments, and the full proposal when enabled by GLF. Learn what to complete, what to check and what happens after each action."}
           </div>
           <div className="manual-meta">
             {es
-              ? "Usuario externo · Actualizado: 14 de octubre de 2026"
-              : "External applicant · Updated: 14 October 2026"}{" "}
-            · v{version}
+              ? "Usuario externo · Actualizado: "
+              : "External applicant · Updated: "}
+            {manualUpdatedDate[i]} · v{version}
           </div>
         </div>
         <div className="manual-hero-art" aria-hidden="true">
@@ -82,15 +75,17 @@ export function ApplicantManual({ locale }: { locale: Locale }) {
         </div>
       </section>
       <ol className="manual-journey">
-        {journey.map((text, n) => {
+        {manualFormSteps.map((step, n) => {
           const Icon = icons[n];
           return (
-            <li key={text}>
-              <Icon size={23} />
-              <span>
-                <small>0{n + 1}</small>
-                {text}
-              </span>
+            <li key={step[2]}>
+              <a href={`#${step[2]}`} onClick={() => setQuery("")}>
+                <Icon size={23} aria-hidden="true" />
+                <span>
+                  <small>{n + 1}</small>
+                  {step[i]}
+                </span>
+              </a>
             </li>
           );
         })}
