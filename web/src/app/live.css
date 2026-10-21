@@ -1174,6 +1174,7 @@ dialog.narrative-adjust-dialog {
 
 /* Compact account controls remain distinct from the primary navigation. */
 .live-header nav { gap: 8px; justify-content: flex-start; min-width: 0; }
+.live-header .reference-link-icon { margin-left: 5px; flex-shrink: 0; }
 .live-header nav a {
   display: inline-flex;
   align-items: center;

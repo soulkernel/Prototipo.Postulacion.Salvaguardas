@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "@/components/feedback-link";
 import { MenuLink } from "./menu-link";
+import { ExclusionMenuLink } from "./exclusion-menu-link";
 import { LanguageSwitch } from "./language-switch";
 import { SubmitButton } from "./submit-button";
 import { signOut } from "@/app/auth/actions";
@@ -70,6 +71,7 @@ export async function Shell({
               <MenuLink href="/internal/reports">
                 {locale === "es" ? "Reportes" : "Reports"}
               </MenuLink>
+              <ExclusionMenuLink locale={locale} />
               <MenuLink href="/manual">
                 {locale === "es" ? "Manual de uso" : "User manual"}
               </MenuLink>
@@ -92,11 +94,20 @@ export async function Shell({
                 <MenuLink href="/applicant/guide">
                   {locale === "es" ? "Cómo postular" : "How to apply"}
                 </MenuLink>
+                <ExclusionMenuLink locale={locale} />
                 <MenuLink href="/manual">
                   {locale === "es" ? "Manual de uso" : "User manual"}
                 </MenuLink>
               </>
             )}
+          {!viewer && (
+            <>
+              <ExclusionMenuLink locale={locale} />
+              <MenuLink href="/manual">
+                {locale === "es" ? "Manual de uso" : "User manual"}
+              </MenuLink>
+            </>
+          )}
           {viewer && viewer.profile.role !== "applicant" && (
             <>
               <MenuLink href="/internal">
