@@ -22,7 +22,7 @@ before(async () => {
   };
   await build({
     stdin: {
-      contents: `export {POST} from './src/app/api/files/route'; export {saveDraft,submitDraft,prepareDocuments,removePartner} from './src/app/applicant/actions'; export {emptyPayload,newActivity} from './src/lib/domain';`,
+      contents: `export {POST} from './src/app/api/files/route'; export {saveDraft,submitDraft,prepareDocuments,removePartner} from './src/app/applicant/actions'; export {emptyPayload,newActivity} from './src/lib/domain'; export {emptySgasExperience,sgasSource} from './src/lib/sgas-experience'; export {finalizeSgasExperience} from './src/app/applicant/sgas-actions';`,
       resolveDir: web,
       loader: "ts",
     },
@@ -140,6 +140,7 @@ function fixture() {
   ]};
   activity.objective_ids = [objective];
   payload.concept.monitoring_plan = [{id:crypto.randomUUID(),parameter:"activity",reference_id:activity.id,indicator:"Avance ficticio",strategy:"Revisar registros ficticios"}];
+  payload.concept.sgas_experience={...api.emptySgasExperience(),...Object.fromEntries(["manual_reviewed","exclusions_confirmed","human_rights_involved","international_standards","environmental_assessments","environmental_social_experts","gender_experts","internal_staff","external_staff","external_expertise"].map(k=>[k,false]))};
   const state = {
     app: {
       payload,
@@ -156,6 +157,7 @@ function fixture() {
     failLoad: false,
     viewer: null,
   };
+  state.sgasDoc={id:crypto.randomUUID(),kind:"sgas_experience",file_name:"QA-SGAS.pdf",created_at:new Date().toISOString(),generation_source:api.sgasSource(payload.concept),generated_locale:"es"};
   class Query {
     constructor(table) {
       this.table = table;
@@ -198,7 +200,7 @@ function fixture() {
     }
     then(resolve, reject) {
       return Promise.resolve({
-        data: state.docs.filter(
+        data: (this.kinds?.includes("sgas_experience") && state.sgasDoc ? [state.sgasDoc,...state.docs] : state.docs).filter(
           (d) => !this.kinds || this.kinds.includes(d.kind),
         ),
         error: null,
@@ -423,4 +425,26 @@ test("summary budget actual actions retain incomplete drafts and refuse preparat
  assert.equal((await api.saveDraft(appId,0,p)).ok,true);assert.deepEqual(await api.prepareDocuments(appId,0),{error:"GLF_REQUIRED:summary_budget_totals"});assert.deepEqual(await api.submitDraft(appId,0),{ok:false,error:"GLF_REQUIRED:summary_budget_totals"});
  p.concept.summary_budget.entries[0].goods=1000000;assert.equal((await api.saveDraft(appId,0,p)).ok,true);assert.ok((await api.prepareDocuments(appId,0)).id);
  assert.equal(state.savedPayload.concept.requested_amount,10000);assert.deepEqual(state.savedPayload.concept.summary_budget,p.concept.summary_budget);
+});
+
+test("SGAS actual actions require matching generated attachment and reject manual replacement",async()=>{
+ const state=fixture();state.app.stage=1;
+ assert.ok((await api.prepareDocuments(appId,0)).id);
+ state.sgasDoc=null;
+ assert.deepEqual(await api.prepareDocuments(appId,0),{error:'GLF_REQUIRED:sgas_document'});
+ assert.deepEqual(await api.submitDraft(appId,0),{ok:false,error:'GLF_REQUIRED:sgas_document'});
+ const response=await api.POST(request('sgas_experience'));assert.equal(response.status,403);assert.equal(state.uploadCount,0);
+ state.app.payload.concept.sgas_experience.human_rights_involved=true;
+ assert.equal((await api.saveDraft(appId,0,state.app.payload)).ok,true);
+ assert.deepEqual(await api.prepareDocuments(appId,0),{error:'GLF_REQUIRED:sgas_investigation_status'});
+});
+test("SGAS actual finalization action invokes only the authenticated generator and returns explicit failures without sending the proposal",async()=>{
+ const state=fixture();const calls=[];
+ state.viewer.db.functions={invoke:async(name,args)=>{calls.push({name,args});return {data:state.sgasDoc,error:null};}};
+ let result=await api.finalizeSgasExperience(appId,0,'es');assert.equal(result.document.id,state.sgasDoc.id);assert.equal(calls.length,1);assert.equal(calls[0].name,'sgas-experience');assert.deepEqual(calls[0].args.body,{id:appId,revision:0,locale:'es'});assert.equal(state.submitCount,0);
+ result=await api.finalizeSgasExperience(appId,-1,'es');assert.deepEqual(result,{error:'GLF_INVALID_SGAS'});assert.equal(calls.length,1);
+ state.viewer.db.functions.invoke=async()=>({data:null,error:{context:Response.json({error:'GLF_VERSION_CONFLICT'})}});
+ assert.deepEqual(await api.finalizeSgasExperience(appId,0,'es'),{error:'GLF_VERSION_CONFLICT'});
+ state.viewer.db.functions.invoke=async()=>{throw Error('offline')};assert.deepEqual(await api.finalizeSgasExperience(appId,0,'es'),{error:'GLF_SGAS_GENERATION_FAILED'});
+ assert.equal(state.submitCount,0);
 });

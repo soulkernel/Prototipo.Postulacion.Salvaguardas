@@ -1,5 +1,6 @@
 import { stepIssues } from "./step-validation";
 import { applicationAttachments } from "./attachment-requirements";
+import { currentSgasDocument, emptySgasExperience, type SgasDocument } from "./sgas-experience";
 import {
   validateComplete,
   type Payload,
@@ -7,6 +8,7 @@ import {
   type Call,
 } from "./domain";
 function blank(value: unknown, key = ""): unknown {
+  if(key === "sgas_experience") return emptySgasExperience();
   if (
     [
       "id",
@@ -34,9 +36,10 @@ export function submissionProgress(
   rules: Rules,
   stage: number,
   phase2: Call["phase2_schema"],
-  documents: { kind: string }[],
+  documents: ({ kind: string } & Partial<SgasDocument>)[],
   signedReady: boolean,
   _saved: boolean,
+  legacySnapshot = false,
 ) {
   void _saved;
   const applicable = (p: Payload) => {
@@ -62,10 +65,10 @@ export function submissionProgress(
   const issues = (raw: Payload) => {
     const p = applicable(raw);
     return new Set([
-      ...validateComplete(p, rules, stage),
-      ...[0, 1, 2, 3].flatMap((i) => {
+      ...validateComplete(p, rules, stage).filter(k=>!legacySnapshot||!k.startsWith("sgas_")),
+      ...[0, 1, 2, 3, 4].flatMap((i) => {
         const s = stepIssues(p, rules, stage, i, phase2);
-        return [...s.missing, ...s.invalid];
+        return [...s.missing, ...s.invalid].filter(k=>!legacySnapshot||!k.startsWith("sgas_"));
       }),
     ]);
   };
@@ -73,12 +76,14 @@ export function submissionProgress(
     expected = issues(blank(payload) as Payload);
   pending.forEach((k) => expected.add(k));
   const required = new Set([
-    ...applicationAttachments(rules, payload.concept).map((r) => r.id),
+    ...applicationAttachments(rules, payload.concept, legacySnapshot ? 2 : stage).map((r) => r.id),
     ...(stage === 1 ? ["concept_signed", "matrix_signed"] : []),
   ]);
+  if(stage===1 && !legacySnapshot) required.add("sgas_experience");
   const missingDocs = [...required].filter(
     (k) =>
       !documents.some((d) => d.kind === k) ||
+      (k === "sgas_experience" && !currentSgasDocument(payload.concept,documents as SgasDocument[])) ||
       (stage === 1 &&
         ["concept_signed", "matrix_signed"].includes(k) &&
         !signedReady),

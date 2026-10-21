@@ -27,6 +27,7 @@ export function RequiredAttachmentUploads({
   concept,
   ready = true,
   uploadError = "",
+  legacyRequirements = false,
 }: {
   rules: AttachmentRules;
   stage: number;
@@ -37,13 +38,14 @@ export function RequiredAttachmentUploads({
   concept: Partners;
   ready?: boolean;
   uploadError?: string;
+  legacyRequirements?: boolean;
 }) {
   const es = locale === "es";
   const [activeKind, setActiveKind] = useState("");
   const [pending, setPending] = useState(false);
   const locked = useRef(false);
   const [localError, setLocalError] = useState("");
-  const requirements = applicationAttachments(rules, concept).filter(
+  const requirements = applicationAttachments(rules, concept, legacyRequirements ? 2 : stage).filter(
     (r) => stage !== 1 || !["concept_signed", "matrix_signed"].includes(r.id),
   );
   const genericIds = requiredAttachments(rules)
@@ -66,9 +68,7 @@ export function RequiredAttachmentUploads({
   if (!requirements.length && !unlinked.length) return null;
   return (
     <section className="required-attachment-uploads">
-      <h3 className="application-section-title">
-        {es ? "Anexos" : "Attachments"}
-      </h3>
+      <h3>{es ? "Documentos que debe cargar" : "Documents to upload"}</h3>
       {stage !== 1 &&
         documents.some((d) => d.kind === "other") &&
         requirements.some((r) => r.id.startsWith(partnerLetterPrefix)) && (
@@ -119,6 +119,7 @@ export function RequiredAttachmentUploads({
           }}
         >
           <h4 id={`attachment-title-${r.id}`}>
+            {r.id.startsWith(partnerLetterPrefix) && (es ? "Anexo 3. " : "Annex 3. ")}
             {es ? r.label_es : r.label_en}
           </h4>
           <p role="status">

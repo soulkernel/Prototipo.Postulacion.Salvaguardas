@@ -1,3 +1,4 @@
+import {completedSgas, generatedSgasDocs} from "./sgas-fixture";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { submissionProgress } from "../src/lib/submission-progress";
@@ -72,12 +73,13 @@ function complete() {
   p.consent = true;
   p.truthful = true;
   p.concept.summary_budget = {version:"glf-summary-v1",currency:"USD",entries:p.activities.map((a,i)=>({activity_id:a.id,goods:i===0?Math.round(((p.concept.requested_amount??0)+(p.concept.cofinance_amount??0))*100):0,services:0,consultancies:0,fees:0})),administrative:0,other_remuneration:0,sgas:0};
+  p.concept.sgas_experience=completedSgas();
   return p;
 }
 test("progress requires all content, current signed files, declarations; saving is independent; never mutates the payload", () => {
   const p = complete();
   const before = JSON.stringify(p);
-  const docs = [{ kind: "concept_signed" }, { kind: "matrix_signed" }];
+  const docs = [{ kind: "concept_signed" }, { kind: "matrix_signed" }, ...generatedSgasDocs(p)];
   assert.equal(
     submissionProgress(p, rules, 1, [], docs, true, true).percent,
     100,
@@ -145,7 +147,7 @@ test("progress counts a single summary, reads legacy parts and excludes future p
     results: "Resultados",
   };
   p.concept.summary = "";
-  const docs = [{ kind: "concept_signed" }, { kind: "matrix_signed" }];
+  const docs = [{ kind: "concept_signed" }, { kind: "matrix_signed" }, ...generatedSgasDocs(p)];
   const fields = [
     {
       id: "future",

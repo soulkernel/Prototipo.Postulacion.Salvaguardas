@@ -1,6 +1,9 @@
 "use client";
 import { narrativeTextForEditing } from "@/lib/concept-presentation";
 import { ConceptReview } from "./concept-review";
+import { SgasExperienceFields, GeneratedSgasAttachment, SgasReview } from "./sgas-experience-fields";
+import { finalizeSgasExperience } from "@/app/applicant/sgas-actions";
+import { currentSgasDocument, sgasIssues, sgasIssueMessage, sgasKind, sgasSource } from "@/lib/sgas-experience";
 import { MonitoringFields } from "./monitoring-fields";
 import { SustainabilityFields } from "./sustainability-fields";
 import { sustainabilityObjectiveIds } from "@/lib/sustainability-plan";
@@ -140,8 +143,12 @@ type DocumentRow = {
   kind: string;
   created_at: string;
   protected?: boolean;
+  generation_source?: unknown;
+  generated_locale?: string | null;
 };
 function message(code: string, es: boolean) {
+  if(code.includes("GLF_REQUIRED:sgas")) return sgasIssueMessage(code.split(":")[1] || "sgas_experience", es ? "es" : "en");
+  if(code.includes("GLF_SGAS") || code.includes("GLF_INVALID_SGAS")) return es ? "No se pudo generar o anexar Experiencia SGAS. Sus respuestas se conservan. Reintente Finalizar y anexar; si persiste, vuelva a abrir el borrador." : "ESMS experience could not be generated or attached. Your answers are preserved. Retry Complete and attach; if needed, reopen the draft.";
   if (code.includes("GLF_INVALID_SUSTAINABILITY"))
     return es
       ? "Revise la estructura de las fichas de sostenibilidad y replicabilidad antes de guardar."
@@ -328,6 +335,7 @@ export function ApplicationEditor({
   removePartnerAction = removePartner,
   initialPendingPartner = null,
   initialStep = 0,
+  finalizeSgasAction = finalizeSgasExperience,
 }: {
   application: Application;
   call: Call;
@@ -344,6 +352,7 @@ export function ApplicationEditor({
   removePartnerAction?: typeof removePartner;
   initialPendingPartner?: string | null;
   initialStep?: number;
+  finalizeSgasAction?: typeof finalizeSgasExperience;
 }) {
   const es = locale === "es";
   const router = useRouter();
@@ -398,7 +407,7 @@ export function ApplicationEditor({
   const [autoError, setAutoError] = useState("");
   const [lastSaved, setLastSaved] = useState(application.updated_at);
   const [step, setStepState] = useState(
-    editable || academicReadOnly ? initialStep : 4,
+    editable || academicReadOnly ? initialStep : 5,
   );
   function setStep(next: number) {
     setStepState(next);
@@ -413,7 +422,7 @@ export function ApplicationEditor({
   const removalFlight = useRef(false);
   const [budgetUiValid, setBudgetUiValid] = useState(true);
   const [operation, setOperation] = useState<
-    "save" | "submit" | "upload" | "prepare" | "remove-partner"
+    "save" | "submit" | "upload" | "prepare" | "remove-partner" | "sgas"
   >("save");
   const [feedback, setFeedback] = useState("");
   const [error, setError] = useState("");
@@ -459,6 +468,35 @@ export function ApplicationEditor({
     created_at: string;
   } | null>(initialPrepared);
   const dirty = JSON.stringify(payload) !== saved || !moneyTextValid;
+  const legacySubmitted = !editable && Boolean(application.submitted_at) && !payload.concept.sgas_experience;
+  const [sgasChecked,setSgasChecked] = useState(false);
+  const sgasFlight=useRef(false);
+  const sgasDocument=currentSgasDocument(payload.concept,documents);
+  const hasPreviousSgas=documents.some(d=>d.kind===sgasKind);
+  async function finalizeSgas(){
+    if(sgasFlight.current||busy)return;
+    setSgasChecked(true);setCheckedStep(4);setError("");setFeedback("");
+    if(sgasIssues(payload.concept.sgas_experience).length){
+      setError(es?"Complete las respuestas marcadas antes de finalizar Experiencia SGAS.":"Complete the highlighted answers before finalizing ESMS experience.");
+      requestAnimationFrame(()=>document.querySelector<HTMLElement>('#sgas-experience [aria-invalid="true"] input, #sgas-experience textarea[aria-invalid="true"]')?.focus());return;
+    }
+    if(!moneyTextValid||!budgetUiValid){setError(moneyActionError);return;}
+    sgasFlight.current=true;setBusy(true);setOperation("sgas");
+    try{
+      if(autoFlight.current)await autoFlight.current;
+      if(dirty){
+        const result=await saveAction(application.id,revisionRef.current,payload);
+        if(!result.ok){setAutoError(result.error);setError(message(result.error,es));return;}
+        revisionRef.current=result.revision;setRevision(result.revision);setSaved(JSON.stringify(payload));setLastSaved(new Date().toISOString());setAutoError("");
+      }
+      const result=await finalizeSgasAction(application.id,revisionRef.current,locale);
+      if("error" in result){setError(message(result.error,es));return;}
+      if(!currentSgasDocument(payload.concept,[result.document])){setError(message("GLF_SGAS_GENERATION_FAILED",es));return;}
+      setDocuments(rows=>[result.document,...rows.filter(d=>d.id!==result.document.id)]);
+      requestAnimationFrame(()=>{const note=document.getElementById("sgas-completion");note?.scrollIntoView({block:"center",behavior:"smooth"});note?.focus({preventScroll:true});});
+    }catch{setError(message("GLF_SGAS_GENERATION_FAILED",es));}
+    finally{sgasFlight.current=false;setBusy(false);}
+  }
   const signedDocumentsReady =
     application.stage !== 1 ||
     Boolean(
@@ -712,6 +750,9 @@ export function ApplicationEditor({
       setStep(2);
       return;
     }
+    if (submit && application.stage === 1 && !sgasDocument) {
+      setStep(4);setSgasChecked(true);setError(sgasIssueMessage("sgas_document",locale));return;
+    }
     if (submit) {
       const missingLetters = missingPartnerLetters(
         payload.concept,
@@ -719,7 +760,7 @@ export function ApplicationEditor({
         documents,
       );
       if (missingLetters.length) {
-        setStep(4);
+        setStep(5);
         setError(
           (es ? "Falta cargar: " : "Upload: ") +
             missingLetters
@@ -739,7 +780,7 @@ export function ApplicationEditor({
           locale,
         ).length
       ) {
-        setStep(4);
+        setStep(5);
         return;
       }
       const missing = validateComplete(
@@ -925,6 +966,7 @@ export function ApplicationEditor({
     documents,
     signedDocumentsReady,
     !dirty,
+    legacySubmitted,
   );
   const completion = showCompletion
     ? completionGuidance(
@@ -935,6 +977,7 @@ export function ApplicationEditor({
         locale,
       )
     : [];
+  if(showCompletion && application.stage===1 && !sgasDocument) completion.push({id:"sgas_document",step:4,text:sgasIssueMessage("sgas_document",locale),selector:"#sgas-experience"});
   const goToIssue = (issue: CompletionIssue) => {
     if (!checkMoneyEntries()) return;
     setStep(issue.step);
@@ -949,6 +992,7 @@ export function ApplicationEditor({
   const fieldIssue = (key: string) =>
     currentIssues.missing.includes(key) || currentIssues.invalid.includes(key);
   const issueLabel = (key: string) => {
+    if(key.startsWith("sgas_"))return sgasIssueMessage(key,locale);
     if (key === "other_instruments")
       return es
         ? "Otros instrumentos: complete el nombre y el objetivo de cada instrumento añadido"
@@ -1553,6 +1597,7 @@ export function ApplicationEditor({
             {application.reference_code} · {es ? "Fase" : "Phase"}{" "}
             {application.stage}
           </p>
+          <div className="application-section-title application-heading-band">
           <h1 className="application-form-title">
             {application.stage === 1
               ? es
@@ -1568,6 +1613,7 @@ export function ApplicationEditor({
               {payload.concept.title}
             </p>
           )}
+          </div>
           <p>{es ? call.title_es : call.title_en}</p>
           <div className="application-status-grid">
             <DeadlineCountdown
@@ -1652,18 +1698,18 @@ export function ApplicationEditor({
         {(es
           ? [
               "Información general",
-              application.stage === 1
-                ? "Descripción del proyecto"
-                : "Proyecto completo",
+              application.stage === 1 ? "Descripción" : "Proyecto completo",
               "Presupuesto",
-              "Actividades y Riesgos A&S",
+              "Actividades y riesgos",
+              "Experiencia SGAS",
               "Revisar y enviar",
             ]
           : [
               "General information",
-              application.stage === 1 ? "Project description" : "Full proposal",
+              application.stage === 1 ? "Description" : "Full proposal",
               "Budget",
-              "Activities and E&S Risks",
+              "Activities and risks",
+              "ESMS experience",
               "Review and submit",
             ]
         ).map((label, i) => (
@@ -2933,7 +2979,9 @@ export function ApplicationEditor({
               </div>
             </div>
           )}
-          {step === 4 && (
+          {step === 4 && application.stage === 1 && !legacySubmitted && <SgasExperienceFields value={payload.concept.sgas_experience} individual={payload.concept.applicant_type === "individual"} locale={locale} checked={sgasChecked || showCompletion || checkedStep===4} document={sgasDocument} hasPrevious={hasPreviousSgas} onViewAttachments={()=>{setStep(5);requestAnimationFrame(()=>document.getElementById("sgas-attachment")?.scrollIntoView({block:"center"}));}} onChange={value=>{setError("");setPayload(p=>({...p,concept:{...p.concept,sgas_experience:value}}));}}/>}
+          {step === 4 && (application.stage !== 1 || legacySubmitted) && <section><h2 className="application-section-title">{es?"Experiencia SGAS de la nota conceptual":"Concept-note ESMS experience"}</h2><p>{es?"Esta información se conserva como referencia de la nota conceptual. Los documentos de esa fase permanecen en el historial.":"This information is retained as a concept-note reference. Documents from that phase remain in the history."}</p>{payload.concept.sgas_experience?<SgasReview source={sgasSource(payload.concept)} locale={locale}/>:<p>{es?"La nota conceptual histórica no contiene este cuestionario estructurado.":"The historical concept note does not contain this structured questionnaire."}</p>}</section>}
+          {step === 5 && (
             <div className="live-form">
               <h2 className="application-section-title">
                 {es ? "Revisión del expediente" : "Application review"}
@@ -3006,7 +3054,7 @@ export function ApplicationEditor({
           )}
         </div>
       </fieldset>
-      {step === 4 && editable && (
+      {step === 5 && editable && (
         <section className="live-card">
           <h2 className="application-section-title">
             {application.stage === 1
@@ -3054,6 +3102,7 @@ export function ApplicationEditor({
                             : "Project description",
                           es ? "Presupuesto" : "Budget",
                           es ? "Actividades y riesgos" : "Activities and risks",
+                          es ? "Experiencia SGAS" : "ESMS experience",
                           es ? "Declaraciones" : "Declarations",
                         ][issue.step]
                       }{" "}
@@ -3090,6 +3139,7 @@ export function ApplicationEditor({
                   ).length
                 )
                   return;
+                if(application.stage===1 && !sgasDocument){setStep(4);setSgasChecked(true);setError(sgasIssueMessage("sgas_document",locale));return;}
                 setOperation("prepare");
                 setBusy(true);
                 setError("");
@@ -3150,7 +3200,7 @@ export function ApplicationEditor({
           </div>
         </section>
       )}
-      {step === 4 && application.stage === 1 && (
+      {step === 5 && application.stage === 1 && (
         <section className="live-card">
           <h2 className="application-section-title">
             {es ? "Documentos firmados" : "Signed documents"}
@@ -3174,8 +3224,8 @@ export function ApplicationEditor({
             [
               "matrix_signed",
               es
-                ? "Evaluación de riesgos ambientales y sociales firmada electrónicamente"
-                : "Electronically signed environmental and social risk assessment",
+                ? "Anexo 2. Resultados del examen ambiental y social — PDF firmado"
+                : "Annex 2. Environmental and social screening results — signed PDF",
             ],
           ].map(([kind, title]) => {
             const doc = documents.find((d) => d.kind === kind);
@@ -3202,24 +3252,19 @@ export function ApplicationEditor({
               />
             );
           })}
-          <RequiredAttachmentUploads
-            rules={rules}
-            concept={payload.concept}
-            ready={!dirty && !autoSaving}
-            uploadError={operation === "upload" ? error : ""}
-            stage={application.stage}
-            locale={locale}
-            documents={documents}
-            busy={busy || !editable}
-            onUpload={uploadForm}
-          />
+
         </section>
       )}
-      {step === 4 && application.stage !== 1 && (
+      {step === 5 && application.stage === 1 && <section className="live-card" id="application-attachments"><h2 className="application-section-title">{es?"Anexos":"Attachments"}</h2>
+        {!legacySubmitted && <GeneratedSgasAttachment document={sgasDocument} hasPrevious={hasPreviousSgas} locale={locale} editable={editable} onEdit={()=>setStep(4)}/>}
+        <RequiredAttachmentUploads legacyRequirements={legacySubmitted} rules={rules} concept={payload.concept} ready={!dirty && !autoSaving} uploadError={operation === "upload" ? error : ""} stage={application.stage} locale={locale} documents={documents} busy={busy || !editable} onUpload={uploadForm}/>
+      </section>}
+      {step === 5 && application.stage !== 1 && (
         <section className="live-card">
           <h2 className="application-section-title">
             {es ? "Anexos del proyecto" : "Project attachments"}
           </h2>
+          {hasPreviousSgas && <GeneratedSgasAttachment document={documents.find(d=>d.kind===sgasKind)} hasPrevious={hasPreviousSgas} locale={locale} editable={editable} onEdit={()=>setStep(4)}/>}
           <p className="field-help">
             {es ? "Anexos obligatorios: " : "Required attachments: "}
             {[
@@ -3230,7 +3275,7 @@ export function ApplicationEditor({
                       : "Signed Concept Note (PDF)",
                   ]
                 : []),
-              ...applicationAttachments(rules, payload.concept).map((r) =>
+              ...applicationAttachments(rules, payload.concept, application.stage).map((r) =>
                 es ? r.label_es : r.label_en,
               ),
             ].join(", ") || (es ? "Ninguno adicional" : "None additional")}
@@ -3249,9 +3294,9 @@ export function ApplicationEditor({
           {documents
             .filter(
               (d) =>
-                !applicationAttachments(rules, payload.concept).some(
+                !applicationAttachments(rules, payload.concept, application.stage).some(
                   (r) => r.id === d.kind,
-                ) && !isPartnerLetterDocument(rules, d.kind),
+                ) && !isPartnerLetterDocument(rules, d.kind) && d.kind !== sgasKind,
             )
             .map((d) => (
               <div className="document-row" key={d.id}>
@@ -3330,7 +3375,7 @@ export function ApplicationEditor({
                 : "All changes saved"}
           </span>
           <div className="editor-action-feedback">
-            {step === 4 && !!missingLetters.length && (
+            {step === 5 && !!missingLetters.length && (
               <p className="field-warning" role="status">
                 {es
                   ? "Cartas de apoyo pendientes: "
@@ -3340,7 +3385,7 @@ export function ApplicationEditor({
                   .join("; ")}
               </p>
             )}
-            {step === 4 && application.stage === 1 && !signedDocumentsReady && (
+            {step === 5 && application.stage === 1 && !signedDocumentsReady && (
               <p className="field-help" role="status">
                 {es
                   ? "Para enviar al GLF, cargue ambos PDF firmados de la versión vigente."
@@ -3372,6 +3417,10 @@ export function ApplicationEditor({
                 </ActionLabel>
               </button>
               {step === 4 ? (
+                <button className="button primary" disabled={busy} aria-busy={busy && operation==="sgas"} aria-describedby={error?"application-action-error":undefined} onClick={()=>application.stage!==1||sgasDocument?setStep(5):void finalizeSgas()}>
+                  <ActionLabel busy={busy && operation==="sgas"} pendingLabel={es?"Guardando y anexando…":"Saving and attaching…"}>{application.stage!==1||sgasDocument?(es?"Continuar a Revisar y enviar":"Continue to Review and submit"):hasPreviousSgas?(es?"Actualizar anexo":"Update attachment"):(es?"Finalizar y anexar":"Complete and attach")}</ActionLabel>
+                </button>
+              ) : step === 5 ? (
                 <button
                   className="button primary"
                   disabled={
@@ -3464,7 +3513,7 @@ export function ApplicationEditor({
                       return;
                     }
                     setError("");
-                    setStep(Math.min(step + 1, 4));
+                    setStep(Math.min(step + 1, 5));
                   }}
                 >
                   {es ? "Continuar" : "Continue"} →

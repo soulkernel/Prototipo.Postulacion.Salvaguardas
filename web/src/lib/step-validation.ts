@@ -4,6 +4,7 @@ import {
 } from "./applicant-validation";
 import { budgetIssues } from "./budget";
 import { summaryBudgetIssues } from "./summary-budget";
+import { sgasIssues } from "./sgas-experience";
 import { z } from "zod";
 import { normalizePhone } from "./phone";
 import { geographyIssues } from "./geography";
@@ -117,5 +118,6 @@ export function stepIssues(
       ),
     );
   }
+  if (step === 4 && stage === 1) missing.push(...sgasIssues(payload.concept.sgas_experience));
   return { missing: [...new Set(missing)], invalid: [...new Set(invalid)] };
 }

@@ -5,3 +5,6 @@ verify_jwt = true
 
 [functions.user-administration]
 verify_jwt = true
+
+[functions.sgas-experience]
+verify_jwt = true

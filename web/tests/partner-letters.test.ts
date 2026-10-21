@@ -93,7 +93,7 @@ test("M05 zero/blank/one/many partners: no unnamed or generic duplicate requirem
     ...rules,
     required_attachments: [...rules.required_attachments, "partner_letters"],
   };
-  assert.equal(applicationAttachments(generic, concept([a, b])).length, 5);
+  assert.equal(applicationAttachments(generic, concept([a, b])).length, 6);
   assert.ok(
     !applicationAttachments(generic, concept([])).some(
       (r) => r.id === "partner_letters",
@@ -101,7 +101,7 @@ test("M05 zero/blank/one/many partners: no unnamed or generic duplicate requirem
   );
   assert.deepEqual(
     applicationAttachments(rules, concept([])).map((r) => r.id),
-    rules.required_attachments,
+    ["experience_capacity", ...rules.required_attachments],
   );
 });
 

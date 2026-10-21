@@ -26,6 +26,7 @@ import { resultIssues, resultText } from "@/lib/project-results";
 import { monitoringIssues } from "@/lib/monitoring-plan";
 import { sustainabilityIssues } from "@/lib/sustainability-plan";
 import { summaryBudgetIssues } from "@/lib/summary-budget";
+import { sgasIssues, currentSgasDocument } from "@/lib/sgas-experience";
 import { synchronizeRisks } from "@/lib/potential-risks";
 import { geographyIssues, organizationProvinceIssue } from "@/lib/geography";
 import { projectSummary } from "@/lib/summary";
@@ -114,7 +115,15 @@ async function storedPlanningError(db: SupabaseClient, id: string) {
     ...monitoringIssues(parsed.data),
     ...sustainabilityIssues(parsed.data),
   ];
-  return issues.length ? `GLF_REQUIRED:${issues[0]}` : null;
+  if (issues.length) return `GLF_REQUIRED:${issues[0]}`;
+  if(data.stage===1){
+    const pending=sgasIssues(parsed.data.concept.sgas_experience);
+    if(pending.length)return `GLF_REQUIRED:${pending[0]}`;
+    const {data:files,error:documentError}=await db.from("application_documents").select("id,kind,file_name,created_at,generation_source").eq("application_id",id).in("kind",["sgas_experience"]).order("created_at",{ascending:false});
+    if(documentError)return "GLF_SGAS_GENERATION_FAILED";
+    if(!currentSgasDocument(parsed.data.concept,files??[]))return "GLF_REQUIRED:sgas_document";
+  }
+  return null;
 }
 async function validStoredSummary(db: SupabaseClient, id: string) {
   const { data, error } = await db
@@ -377,6 +386,7 @@ export async function submitDraft(
     const requirements = applicationAttachments(
       attachmentApp.rules_snapshot,
       attachmentApp.payload.concept,
+      attachmentApp.stage,
     ).filter(
       (r) =>
         attachmentApp.stage !== 1 ||

@@ -52,14 +52,14 @@ test("separates declarations and phase two requirements", () => {
   a.risks = [r];
   p.activities = [a];
   const first = completionGuidance(p, rules, 1, [], "en");
-  assert.equal(first.filter((i) => i.step === 4).length, 2);
+  assert.equal(first.filter((i) => i.step === 5).length, 2);
   assert.ok(!first.some((i) => i.id.includes("residual_probability")));
   const second = completionGuidance(p, rules, 2, [], "en");
   assert.ok(second.some((i) => i.id === "risk-0-0-residual_probability"));
   p.consent = true;
   p.truthful = true;
   assert.equal(
-    completionGuidance(p, rules, 1, [], "en").filter((i) => i.step === 4)
+    completionGuidance(p, rules, 1, [], "en").filter((i) => i.step === 5)
       .length,
     0,
   );

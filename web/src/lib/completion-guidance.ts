@@ -1,4 +1,5 @@
 import { summaryBudgetMessage } from "./summary-budget";
+import { sgasIssueMessage } from "./sgas-experience";
 import { activityDateErrors, activityDateMessage } from "./activity-planning";
 import { monitoringEntryIssues } from "./monitoring-plan";
 import {
@@ -43,7 +44,7 @@ export function completionGuidance(
     fieldLabel?: string,
   ) => out.push({ id, step, text, selector, fieldLabel });
   const field = (key: string) => `[data-validation-field="${key}"]`;
-  const issues = [0, 1, 2, 3].map((s) =>
+  const issues = [0, 1, 2, 3, 4].map((s) =>
     stepIssues(payload, rules, stage, s, phase2),
   );
   const keys = [
@@ -54,6 +55,10 @@ export function completionGuidance(
   ];
   const alignment = payload.concept.strategic_alignment;
   keys.forEach((key) => {
+    if (key.startsWith("sgas_")) {
+      add(key, 4, sgasIssueMessage(key, locale), key === "sgas_experience" ? "#sgas-experience" : `[data-validation-sgas="${key.slice(5)}"]`);
+      return;
+    }
     if (key === "other_instruments") return; // Individual missing fields are identified below.
     if (key.startsWith("summary_budget")) {
       add(key, 2, summaryBudgetMessage(key, locale), "#summary-budget");
@@ -503,7 +508,7 @@ export function completionGuidance(
     if (!payload[key])
       add(
         key,
-        4,
+        5,
         key === "truthful"
           ? es
             ? "Confirme la declaración de veracidad"

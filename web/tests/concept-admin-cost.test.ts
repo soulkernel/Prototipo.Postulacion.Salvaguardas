@@ -1,3 +1,4 @@
+import {completedSgas, generatedSgasDocs} from "./sgas-fixture";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createElement } from "react";
@@ -91,6 +92,7 @@ function complete() {
   p.consent = true;
   p.truthful = true;
   p.concept.summary_budget = {version:"glf-summary-v1",currency:"USD",entries:p.activities.map((a,i)=>({activity_id:a.id,goods:i===0?Math.round(((p.concept.requested_amount??0)+(p.concept.cofinance_amount??0))*100):0,services:0,consultancies:0,fees:0})),administrative:0,other_remuneration:0,sgas:0};
+  p.concept.sgas_experience=completedSgas();
   return p;
 }
 
@@ -140,7 +142,7 @@ test("concept note reaches 100% with objective and outcome only, without silentl
       rules,
       1,
       [],
-      [{ kind: "concept_signed" }, { kind: "matrix_signed" }],
+      [{ kind: "concept_signed" }, { kind: "matrix_signed" }, ...generatedSgasDocs(p)],
       true,
       true,
     ).percent,
@@ -187,7 +189,7 @@ test("linked monitoring replaces the legacy text requirement and reaches 100% wi
       rules,
       1,
       [],
-      [{ kind: "concept_signed" }, { kind: "matrix_signed" }],
+      [{ kind: "concept_signed" }, { kind: "matrix_signed" }, ...generatedSgasDocs(p)],
       true,
       true,
     ).percent,
@@ -201,7 +203,7 @@ test("linked monitoring replaces the legacy text requirement and reaches 100% wi
       rules,
       1,
       [],
-      [{ kind: "concept_signed" }, { kind: "matrix_signed" }],
+      [{ kind: "concept_signed" }, { kind: "matrix_signed" }, ...generatedSgasDocs(p)],
       true,
       true,
     ).percent < 100,
@@ -246,7 +248,7 @@ test("M15 complete v3 reaches 100% without a contribution field and keeps benefi
       rules,
       1,
       [],
-      [{ kind: "concept_signed" }, { kind: "matrix_signed" }],
+      [{ kind: "concept_signed" }, { kind: "matrix_signed" }, ...generatedSgasDocs(p)],
       true,
       true,
     ).percent,
@@ -273,7 +275,7 @@ test("M08 new concept without admin_cost can be parsed and completed at 100%, wi
   assert.deepEqual(stepIssues(p, rules, 1, 0), { missing: [], invalid: [] });
   for (const locale of ["es", "en"] as const)
     assert.deepEqual(completionGuidance(p, rules, 1, [], locale), []);
-  const docs = [{ kind: "concept_signed" }, { kind: "matrix_signed" }];
+  const docs = [{ kind: "concept_signed" }, { kind: "matrix_signed" }, ...generatedSgasDocs(p)];
   assert.equal(
     submissionProgress(p, rules, 1, [], docs, true, true).percent,
     100,

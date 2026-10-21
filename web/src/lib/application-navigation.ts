@@ -1,5 +1,5 @@
 // URLs use the same one-based numbering displayed in the wizard.
-const sections = ["general", "description", "budget", "risks", "review"];
+const sections = ["general", "description", "budget", "risks", "sgas", "review"];
 export function applicationStepFromQuery(
   value: unknown,
   section?: unknown,
@@ -8,12 +8,12 @@ export function applicationStepFromQuery(
     return sections.indexOf(section);
   // Old bookmarks used 3 for risks and 4 for review. Stable section keys make
   // newly numbered links unambiguous after inserting Budget.
-  return typeof value === "string" && /^[1-5]$/.test(value)
+  return typeof value === "string" && /^[1-6]$/.test(value)
     ? Number(value) <= 2
       ? Number(value) - 1
       : Number(value) === 3
         ? 3
-        : 4
+        : 5
     : 0;
 }
 

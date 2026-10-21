@@ -1,3 +1,5 @@
+import { SgasReview } from "./sgas-experience-fields";
+import { sgasSource } from "@/lib/sgas-experience";
 import type { Activity, Concept, Locale } from "@/lib/domain";
 import { ActivityReview } from "./activity-review";
 import { conceptSections } from "@/lib/concept-presentation";
@@ -108,6 +110,7 @@ export function ConceptReview({
             renderSections(sections.filter((section) => section.id === id))
           ),
         )}
+        <SgasReview source={sgasSource(concept)} locale={locale}/>
       </div>
     );
   return (
@@ -121,6 +124,7 @@ export function ConceptReview({
         />
       )}
       {afterActivities && renderSections(sections.filter(deferred))}
+      <SgasReview source={sgasSource(concept)} locale={locale}/>
     </div>
   );
 }

@@ -15,7 +15,7 @@ export const attachmentRequirementSchema = z
       .min(1)
       .max(100)
       .regex(/^[^\u0000-\u001f\u007f]+$/)
-      .refine((id) => id !== "agreement"),
+      .refine((id) => !["agreement", "sgas_experience"].includes(id)),
     label_es: z.string().trim().min(1).max(200),
     label_en: z.string().trim().min(1).max(200),
     formats: z.array(z.enum(attachmentFormats)).min(1).max(5),
@@ -153,11 +153,23 @@ export function partnerLetterRequirements(
 export function applicationAttachments(
   rules: AttachmentRules,
   concept: Partners,
+  stage = 1,
 ) {
-  return [
+  const requirements = [
     ...requiredAttachments(rules).filter((r) => !isPartnerLetterRequirement(r)),
     ...partnerLetterRequirements(concept, rules),
   ];
+  if (stage === 1 && !requirements.some(isExperienceRequirement)) requirements.unshift({
+    id:"experience_capacity", label_es:"Anexo 1. Experiencia y capacidad del proponente y socios", label_en:"Annex 1. Applicant and partners’ experience and capacity", formats:["pdf","docx"],conditions:[],
+    instructions_es:(concept as {applicant_type?:string}).applicant_type === "individual" ? "Adjunte su currículo y la experiencia de sus socios, si corresponde. El PDF Experiencia SGAS se incorpora por separado automáticamente." : "Adjunte un resumen de experiencia y una lista comentada de proyectos similares ejecutados; incluya la experiencia de los socios, si corresponde. El PDF Experiencia SGAS se incorpora por separado automáticamente.",
+    instructions_en:(concept as {applicant_type?:string}).applicant_type === "individual" ? "Attach your CV and partner experience, where applicable. The ESMS experience PDF is attached separately and automatically." : "Attach an experience summary and an annotated list of similar completed projects, including partner experience where applicable. The ESMS experience PDF is attached separately and automatically.",
+  });
+  return requirements;
+}
+export function isExperienceRequirement(r:AttachmentRequirement) {
+ if(/\b(sgas|esms)\b/i.test(r.label_es+" "+r.label_en))return false;
+ return ["experience_capacity","experience","cv","curriculum","applicant_experience","organization_experience","reference_information"].includes(r.id) ||
+   /experiencia y capacidad|resumen de (la )?experiencia|experience and capacity|applicant.*experience|curr[ií]cul/i.test(r.label_es+" "+r.label_en);
 }
 export function missingPartnerLetters(
   concept: Partners,
@@ -200,6 +212,7 @@ export function attachmentLabel(
 ) {
   const r = rules.attachment_requirements?.find((r) => r.id === id);
   const builtIn: Record<string, [string, string]> = {
+    sgas_experience: ["Experiencia SGAS", "ESMS experience"],
     concept_signed: [
       "Nota conceptual firmada electrónicamente",
       "Electronically signed concept note",

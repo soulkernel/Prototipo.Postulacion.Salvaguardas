@@ -6,7 +6,7 @@ import {
 } from "../src/lib/application-navigation";
 
 test("application step survives refresh via a bounded query without changing other URL context", () => {
-  for (let step = 0; step < 5; step++) {
+  for (let step = 0; step < 6; step++) {
     const next = new URL(
       applicationStepUrl(
         "https://example.invalid/applicant/fake?receipt=test#main-content",
@@ -24,7 +24,7 @@ test("application step survives refresh via a bounded query without changing oth
     null,
     "",
     "0",
-    "6",
+    "7",
     "-1",
     "2.5",
     "02",

@@ -218,8 +218,8 @@ test("current review/PDF sections include a single summary with included amounts
   }
   assert.deepEqual(p, before);
 });
-test("five steps use stable keys and old risk/review URLs preserve their original section", () => {
-  for (let i = 0; i < 5; i++) {
+test("six steps use stable keys and old risk/review URLs preserve their original section", () => {
+  for (let i = 0; i < 6; i++) {
     const url = new URL(
       applicationStepUrl("https://qa.invalid/applicant/id?receipt=qa#main", i),
       "https://qa.invalid",
@@ -234,6 +234,6 @@ test("five steps use stable keys and old risk/review URLs preserve their origina
     assert.equal(url.searchParams.get("receipt"), "qa");
   }
   assert.equal(applicationStepFromQuery("3"), 3);
-  assert.equal(applicationStepFromQuery("4"), 4);
+  assert.equal(applicationStepFromQuery("4"), 5);
   assert.equal(applicationStepFromQuery("3", "budget"), 2);
 });

@@ -345,8 +345,8 @@ export const manualChapters: ManualChapter[] = [
     ],
     screen: [
       [
-        "1 Información general → 2 Descripción del proyecto → 3 Presupuesto → 4 Actividades y Riesgos A&S → 5 Revisar y enviar",
-        "1 General information → 2 Project description → 3 Budget → 4 Activities and E&S Risks → 5 Review and submit",
+        "1 Información general → 2 Descripción → 3 Presupuesto → 4 Actividades y riesgos → 5 Experiencia SGAS → 6 Revisar y enviar",
+        "1 General information → 2 Description → 3 Budget → 4 Activities and risks → 5 ESMS experience → 6 Review and submit",
       ],
       ["Título del proyecto *", "Project title *"],
       ["Contacto · teléfono · ubicación *", "Contact · phone · location *"],
@@ -1040,10 +1040,24 @@ export const manualChapters: ManualChapter[] = [
     ],
   },
   {
+    id: "experiencia-sgas",
+    title: ["Paso 5 · Experiencia SGAS", "Step 5 · ESMS experience"],
+    intro: ["Declare su experiencia con el Sistema de Gestión Ambiental y Social. El cuestionario complementa la experiencia y el currículo del Anexo 1.", "Declare your Environmental and Social Management System experience. This questionnaire complements the experience summary and CV in Annex 1."],
+    steps: [
+      ["Responda Sí o No sin dejar preguntas aplicables pendientes. Una respuesta No sobre experiencia no implica rechazo automático.", "Answer Yes or No for each applicable question. A No about experience does not imply automatic rejection."],
+      ["Si declara antecedentes en derechos humanos, indique el estado de cualquier investigación. Si usa personal externo, responda sobre su experiencia; puede combinarlo con personal interno.", "If declaring human rights involvement, state the status of any investigation. When using external staff, answer about their expertise; you may also use internal staff."],
+      ["Pulse Finalizar y anexar. Espere la confirmación de que se guardaron las respuestas y se incorporó el PDF. No tiene que descargarlo, firmarlo ni volver a subirlo.", "Select Complete and attach. Wait for confirmation that answers were saved and the PDF attached. No download, signature or manual upload is required."],
+      ["Consulte el documento Experiencia SGAS en el paso 6 Revisar y enviar → Anexos. Si cambia respuestas o los datos de su encabezado, pulse Actualizar anexo.", "View ESMS experience in step 6 Review and submit → Attachments. After changing answers or heading details, select Update attachment."],
+    ],
+    rows: [["Anexo 1", "Cargue por separado proyectos similares o currículo, según su tipo de proponente.", "Annex 1", "Upload similar projects or a CV separately, according to applicant type."], ["Error al anexar", "Sus respuestas se conservan; reintente. No considere incorporado el documento hasta ver la confirmación.", "Attachment error", "Your answers are preserved; retry. The document is attached only once confirmed."]],
+    tip: ["Finalizar este cuestionario incorpora un anexo; el envío al GLF se realiza en el último paso.", "Completing this questionnaire adds an attachment; submission to GLF takes place in the final step."],
+    screen: [["Sí / No", "Yes / No"], ["Finalizar y anexar", "Complete and attach"], ["Formulario completado y anexado", "Form completed and attached"]],
+  },
+  {
     id: "documentos",
     title: [
-      "Paso 5 · Preparar y firmar documentos",
-      "Step 5 · Prepare and sign documents",
+      "Paso 6 · Preparar y firmar documentos",
+      "Step 6 · Prepare and sign documents",
     ],
     intro: [
       "Revise el contenido antes de generar los dos PDF. Debe firmarlos electrónicamente fuera del portal y cargar cada archivo en su casilla correspondiente.",
@@ -1392,7 +1406,7 @@ export const manualChapters: ManualChapter[] = [
       ],
     ],
     tip: [
-      "Antes de enviar: información completa ✓ presupuesto coherente ✓ riesgos evaluados ✓ declaraciones aceptadas ✓ dos PDF actuales firmados y cargados ✓.",
+      "Antes de enviar: información completa ✓ presupuesto coherente ✓ riesgos evaluados ✓ declaraciones aceptadas ✓ dos PDF actuales firmados y cargados ✓ Experiencia SGAS anexada ✓ Anexo 1 cargado ✓.",
       "Before submitting: complete information ✓ consistent budget ✓ assessed risks ✓ accepted declarations ✓ two current signed PDFs uploaded ✓.",
     ],
     screen: [

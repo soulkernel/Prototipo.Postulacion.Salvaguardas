@@ -45,7 +45,7 @@ export default async function ApplicantPage({
             : "The draft could not be opened. Check that the call is open."}
         </div>
       )}
-      <section className="live-card" id="convocatorias">
+      <section className="live-card applicant-call-card" id="convocatorias">
         {Boolean(draftCount) && (
           <p>
             {es

@@ -47,7 +47,7 @@ export default async function ApplicationPage({
       .order("revision", { ascending: false }),
     viewer.db
       .from("application_documents")
-      .select("id,file_name,kind,created_at,version_id,storage_path")
+      .select("id,file_name,kind,created_at,version_id,storage_path,generation_source,generated_locale")
       .eq("application_id", id)
       .order("created_at", { ascending: false }),
     viewer.db

@@ -992,7 +992,7 @@ before(async () => {
   for (const name of (await readdir(migrations))
     // Earlier tests exercise historical workflow contracts. The final test
     // applies 051 twice and verifies the new completion rule and unchanged data.
-    .filter((n) => n.endsWith(".sql") && !["202610200051_required_linked_monitoring.sql", "202610210052_concept_summary_budget.sql"].includes(n))
+    .filter((n) => n.endsWith(".sql") && !["202610200051_required_linked_monitoring.sql", "202610210052_concept_summary_budget.sql", "202610210053_sgas_experience_documents.sql"].includes(n))
     .sort()) {
     try {
       await db.exec(await readFile(new URL(name, migrations), "utf8"));
@@ -3866,4 +3866,52 @@ test("summary budget enforces direct SQL/RPC totals and caps, permits incomplete
  const frozen=(await db.query("select payload,concept_layout_version from public.prepared_documents where id=$1",[prepared])).rows[0];
  assert.equal(frozen.concept_layout_version,"glf-concept-20261020-v7");assert.deepEqual(frozen.payload.concept.summary_budget,p.concept.summary_budget);
  for(const role of ["anon","authenticated"])assert.equal((await db.query("select has_function_privilege($1,'private.validate_summary_budget(jsonb,boolean,integer)','EXECUTE') allowed",[role])).rows[0].allowed,false);
+});
+
+test("SGAS SQL preserves history, validates branches, prevents forged system attachments and keeps revision-bound finalization idempotent",async()=>{
+ const snapshot=async()=>Object.fromEntries(await Promise.all(["applications","application_versions","prepared_documents","application_documents","application_events","calls","activities","risks"].map(async t=>[t,(await db.query(`select to_jsonb(row)-'generation_source'-'generated_source_hash'-'generated_locale' value from public.${t} row order by id`)).rows])));
+ const before=await snapshot();await db.exec(await readFile(process.env.SGAS_GUARDED_SQL || new URL("../../supabase/migrations/202610210053_sgas_experience_documents.sql",import.meta.url),"utf8"));assert.deepEqual(await snapshot(),before);
+ const form={version:"glf-sgas-v1",manual_reviewed:false,exclusions_confirmed:false,human_rights_involved:false,investigation_status:"",international_standards:false,standards_detail:"",environmental_assessments:false,assessments_detail:"",environmental_social_experts:false,gender_experts:false,internal_staff:false,external_staff:false,external_expertise:null};
+ const validate=(f,complete=true,stage=1)=>db.query("select private.validate_sgas($1::jsonb,$2,$3)",[JSON.stringify({concept:f===undefined?{}:{sgas_experience:f}}),complete,stage]);
+ await validate(undefined,false);await validate(undefined,true,2);await assert.rejects(validate(undefined),/GLF_REQUIRED:sgas_experience/);await validate(form);
+ await assert.rejects(validate({...form,manual_reviewed:null}),/GLF_REQUIRED:sgas_manual_reviewed/);
+ await assert.rejects(validate({...form,human_rights_involved:true}),/GLF_REQUIRED:sgas_investigation_status/);
+ await validate({...form,human_rights_involved:true,investigation_status:"En investigación ficticia."});
+ await assert.rejects(validate({...form,external_staff:true}),/GLF_REQUIRED:sgas_external_expertise/);
+ await validate({...form,internal_staff:true,external_staff:true,external_expertise:false});
+ for(const f of [{...form,gender_experts:"yes"},{...form,investigation_status:42},{...form,unknown:1}])await assert.rejects(validate(f,false),/GLF_INVALID_SGAS/);
+ const p=structuredClone((await db.query("select payload from public.prepared_documents where payload->'concept'->'summary_budget' is not null order by created_at desc limit 1")).rows[0].payload);delete p.attachments;p.concept.sgas_experience=form;
+ const map=new Map(p.activities.map(a=>[a.id,crypto.randomUUID()]));p.activities=p.activities.map(a=>({...a,id:map.get(a.id),risks:a.risks.map(r=>({...r,id:crypto.randomUUID()}))}));
+ p.concept.summary_budget.entries=p.concept.summary_budget.entries.map(e=>({...e,activity_id:map.get(e.activity_id)}));
+ p.concept.monitoring_plan=p.concept.monitoring_plan.map(m=>m.parameter==="activity"?{...m,reference_id:map.get(m.reference_id)}:m);
+ if(p.concept.sustainability_plan)p.concept.sustainability_plan=p.concept.sustainability_plan.map(s=>({...s,references:s.references.map(r=>r.type==="activity"?{...r,id:map.get(r.id)}:r)}));
+ const owner=await temporaryAccount(),other=await temporaryAccount(),app=await rpc("create_application",{call_id:call},owner);
+ await rpc("save_application",{application_id:app,expected_revision:0,payload:p},owner);
+ await assert.rejects(rpc("prepare_application_documents",{app_id:app,expected_revision:1},owner),/GLF_REQUIRED:sgas_document/);
+ const context=await rpc("sgas_document_context",{app_id:app,expected_revision:1,locale:"es"},owner);assert.equal(context.document,null);assert.deepEqual(context.source.questionnaire,form);
+ await assert.rejects(rpc("sgas_document_context",{app_id:app,expected_revision:1,locale:"es"},other),/GLF_APPLICATION_LOCKED/);
+ await assert.rejects(rpc("sgas_document_context",{app_id:app,expected_revision:0,locale:"es"},owner),/GLF_VERSION_CONFLICT/);
+ const fakePath=`${app}/${owner}/attachment/${crypto.randomUUID()}.pdf`;
+ await db.query("insert into storage.objects(bucket_id,name,metadata) values('application-files',$1,'{\"size\":100}')",[fakePath]);
+ await assert.rejects(rpc("register_document",{app_id:app,object_path:fakePath,original_name:"forged.pdf",mime:"application/pdf",bytes:100,checksum:"a".repeat(64),document_kind:"sgas_experience"},owner),/GLF_SGAS_FORBIDDEN/);
+ const path=`${app}/system/sgas/${crypto.randomUUID()}.pdf`;await db.query("insert into storage.objects(bucket_id,name,metadata) values('application-files',$1,'{\"size\":100}')",[path]);
+ const args={app_id:app,actor_id:owner,expected_revision:1,source:context.source,object_path:path,original_name:"QA-Experiencia-SGAS.pdf",bytes:100,checksum:"a".repeat(64),locale:"es"};
+ await assert.rejects(rpc("register_sgas_document",args,owner),/permission denied/);
+ const register=async(a)=>{await db.exec("select set_config('request.jwt.claims','{\"role\":\"service_role\"}',false);set role service_role");try{return (await db.query('select public.register_sgas_document('+Object.keys(a).map((k,i)=>k+'=>$'+(i+1)).join(',')+') result',Object.values(a))).rows[0].result;}finally{await db.exec("reset role;select set_config('request.jwt.claims','{}',false)");}};
+ const doc=await register(args);assert.ok(doc.id);assert.equal((await register(args)).id,doc.id);assert.deepEqual(doc.generation_source,context.source);
+ assert.equal((await rpc("sgas_document_context",{app_id:app,expected_revision:1,locale:"es"},owner)).document.id,doc.id);
+ assert.ok(await rpc("prepare_application_documents",{app_id:app,expected_revision:1},owner));
+ const modified=structuredClone(p);modified.concept.sgas_experience.gender_experts=true;
+ await rpc("save_application",{application_id:app,expected_revision:1,payload:modified},owner);
+ await assert.rejects(register(args),/GLF_VERSION_CONFLICT/);await assert.rejects(rpc("prepare_application_documents",{app_id:app,expected_revision:2},owner),/GLF_REQUIRED:sgas_document/);
+ assert.equal((await db.query("select count(*)::int n from public.application_documents where id=$1",[doc.id])).rows[0].n,1);
+ const newer=await rpc("sgas_document_context",{app_id:app,expected_revision:2,locale:"es"},owner);assert.equal(newer.document,null);
+ const secondPath=`${app}/system/sgas/${crypto.randomUUID()}.pdf`;await db.query("insert into storage.objects(bucket_id,name,metadata) values('application-files',$1,'{\"size\":100}')",[secondPath]);
+ const second=await register({...args,expected_revision:2,source:newer.source,object_path:secondPath});assert.notEqual(second.id,doc.id);
+ await assert.rejects(db.query("update public.applications set status='submitted' where id=$1",[app]),/GLF_ATTACHMENT_REQUIRED:experience_capacity/);
+ assert.equal((await db.query("select count(*)::int n from public.application_documents where application_id=$1 and kind='sgas_experience'",[app])).rows[0].n,2);
+ for(const role of ['anon','authenticated']){
+  assert.equal((await db.query("select has_function_privilege($1,'public.register_sgas_document(uuid,uuid,integer,jsonb,text,text,bigint,text,text,uuid)','EXECUTE') allowed",[role])).rows[0].allowed,false);
+  assert.equal((await db.query("select has_function_privilege($1,'public.prepare_application_documents_before_sgas(uuid,integer)','EXECUTE') allowed",[role])).rows[0].allowed,false);
+ }
 });

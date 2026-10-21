@@ -31,6 +31,7 @@ export async function POST(request: NextRequest) {
   const file = form.get("file");
   const app = z.uuid().safeParse(form.get("application_id"));
   const kind = String(form.get("kind") || "other").trim();
+  if (kind === "sgas_experience") return NextResponse.json({error:"GLF_SGAS_FORBIDDEN"},{status:403});
   if (
     !app.success ||
     !(file instanceof File) ||
@@ -45,7 +46,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid file" }, { status: 400 });
   const { data: applicationRules, error: rulesError } = await viewer.db
     .from("applications")
-    .select("rules_snapshot,payload")
+    .select("rules_snapshot,payload,stage")
     .eq("id", app.data)
     .maybeSingle();
   if (rulesError || !applicationRules)
@@ -56,6 +57,7 @@ export async function POST(request: NextRequest) {
   const requirement = applicationAttachments(
     applicationRules.rules_snapshot,
     applicationRules.payload.concept,
+    applicationRules.stage,
   ).find((r) => r.id === kind);
   if (kind.startsWith(partnerLetterPrefix) && !requirement)
     return NextResponse.json(
