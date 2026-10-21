@@ -1,13 +1,13 @@
 {
   "name": "web",
-  "version": "0.7.53",
+  "version": "0.7.54",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --test tests/database.test.mjs tests/m05-server.test.mjs && tsx --test tests/domain.test.ts tests/pdf.test.ts tests/receipt.test.ts tests/backup-selection.test.ts tests/embedding.test.ts tests/corpus-upload.test.ts tests/strategic-alignment.test.ts tests/potential-risks.test.ts tests/project-results.test.ts tests/monitoring-plan.test.ts tests/sustainability-plan.test.ts tests/completion-guidance.test.ts tests/pdf-signature.test.ts tests/qwen.test.ts tests/rag-context.test.ts tests/usability-review.test.ts tests/annual-review.test.ts tests/report-export.test.ts tests/applicant-validation.test.ts tests/concept-presentation.test.ts tests/project-description-order.test.ts tests/partner-letters.test.ts tests/concept-admin-cost.test.ts tests/money-input.test.ts tests/partner-removal.test.ts"
+    "test": "node --test tests/database.test.mjs tests/m05-server.test.mjs && tsx --test tests/domain.test.ts tests/pdf.test.ts tests/receipt.test.ts tests/backup-selection.test.ts tests/embedding.test.ts tests/corpus-upload.test.ts tests/strategic-alignment.test.ts tests/potential-risks.test.ts tests/project-results.test.ts tests/monitoring-plan.test.ts tests/sustainability-plan.test.ts tests/completion-guidance.test.ts tests/pdf-signature.test.ts tests/qwen.test.ts tests/rag-context.test.ts tests/usability-review.test.ts tests/annual-review.test.ts tests/report-export.test.ts tests/applicant-validation.test.ts tests/concept-presentation.test.ts tests/project-description-order.test.ts tests/partner-letters.test.ts tests/concept-admin-cost.test.ts tests/money-input.test.ts tests/partner-removal.test.ts tests/risk-interpretation.test.ts"
   },
   "dependencies": {
     "@fontsource/noto-sans": "^5.3.0",

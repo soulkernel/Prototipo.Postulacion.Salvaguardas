@@ -65,6 +65,11 @@ import {
   type MoneyField,
 } from "@/lib/financial-feedback";
 import { RiskReferenceTable } from "./risk-reference-table";
+import {
+  RiskRatingField,
+  RiskInterpretationGuide,
+  RiskCategoryResult,
+} from "./risk-rating-fields";
 import { RiskOverview } from "./risk-overview";
 import { PotentialRiskFields } from "./potential-risk-fields";
 import { riskLabel } from "@/lib/potential-risks";
@@ -100,7 +105,6 @@ import {
 import {
   newRisk,
   riskScore,
-  riskLevel,
   validateComplete,
   financialErrors,
   type Application,
@@ -130,22 +134,6 @@ type DocumentRow = {
   kind: string;
   created_at: string;
   protected?: boolean;
-};
-const levels = {
-  es: {
-    incomplete: "Sin completar",
-    low: "Bajo",
-    medium: "Medio",
-    high: "Alto",
-    very_high: "Muy alto",
-  },
-  en: {
-    incomplete: "Incomplete",
-    low: "Low",
-    medium: "Medium",
-    high: "High",
-    very_high: "Very high",
-  },
 };
 function message(code: string, es: boolean) {
   if (code.includes("GLF_INVALID_SUSTAINABILITY"))
@@ -659,50 +647,6 @@ export function ApplicationEditor({
             },
       ),
     }));
-  const scale = (
-    label: string,
-    value: number | null,
-    onChange: (n: number | null) => void,
-  ) => (
-    <label>
-      <span className="field-label">
-        {label}
-        <RequiredMark locale={locale} />
-      </span>
-      <select
-        aria-required="true"
-        data-validation-field={
-          /residual/i.test(label)
-            ? /probab/i.test(label)
-              ? "residual_probability"
-              : "residual_severity"
-            : /probab/i.test(label)
-              ? "probability"
-              : /gravedad|severity/i.test(label)
-                ? "severity"
-                : /inicio|start/i.test(label)
-                  ? "start_quarter"
-                  : "end_quarter"
-        }
-        value={value ?? ""}
-        onChange={(e) =>
-          onChange(e.target.value ? Number(e.target.value) : null)
-        }
-      >
-        <option value="">{es ? "Seleccione" : "Select"}</option>
-        {[1, 2, 3, 4, 5].map((n) => (
-          <option key={n} value={n}>
-            {n} ·{" "}
-            {
-              (es
-                ? ["Muy baja", "Baja", "Media", "Alta", "Muy alta"]
-                : ["Very low", "Low", "Medium", "High", "Very high"])[n - 1]
-            }
-          </option>
-        ))}
-      </select>
-    </label>
-  );
   const quarter = (
     label: string,
     value: number | null,
@@ -1703,13 +1647,13 @@ export function ApplicationEditor({
               application.stage === 1
                 ? "Descripción del proyecto"
                 : "Proyecto completo",
-              "Examen Ambiental y Social inicial",
+              "Actividades y Riesgos A&S",
               "Revisar y enviar",
             ]
           : [
               "General information",
               application.stage === 1 ? "Project description" : "Full proposal",
-              "Initial environmental and social screening",
+              "Activities and E&S Risks",
               "Review and submit",
             ]
         ).map((label, i) => (
@@ -2342,14 +2286,14 @@ export function ApplicationEditor({
             </div>
           )}
           {step === 2 && (
-            <div className="live-form">
+            <div className="live-form risk-assessment-fields">
               <h2 className="application-section-title">
                 {es
                   ? application.stage === 1
-                    ? "Screening: actividades y riesgos A&S"
+                    ? "Actividades y Riesgos A&S"
                     : "Evaluación completa de riesgos y PGAS"
                   : application.stage === 1
-                    ? "Screening: activities and E&S risks"
+                    ? "Activities and E&S Risks"
                     : "Full risk assessment and ESMP"}
               </h2>
               <p>
@@ -2357,6 +2301,7 @@ export function ApplicationEditor({
                   ? "Identifique y evalúe los riesgos de cada actividad. La mitigación y el PGAS se completan en la Fase 2. Si no identifica riesgos, justifíquelo."
                   : "Identify and assess risks for each activity. Mitigation and the ESMP are completed in Phase 2. If you identify no risks, explain why."}
               </p>
+              <RiskInterpretationGuide locale={locale} />
               <RiskOverview payload={payload} locale={locale} />
               {application.stage === 2 && (
                 <RiskReferenceTable
@@ -2440,11 +2385,6 @@ export function ApplicationEditor({
                     </label>
                   )}
                   {activity.risks.map((risk, ri) => {
-                    const score = riskScore(risk.probability, risk.severity);
-                    const residual = riskScore(
-                      risk.residual_probability,
-                      risk.residual_severity,
-                    );
                     return (
                       <article
                         className="live-risk"
@@ -2620,28 +2560,38 @@ export function ApplicationEditor({
                               }
                             />
                           </label>
-                          {scale(
-                            es
-                              ? "Probabilidad de ocurrencia (1–5)"
-                              : "Probability of occurrence (1–5)",
-                            risk.probability,
-                            (n) => updateRisk(ai, ri, { probability: n }),
-                          )}
-                          {scale(
-                            es
-                              ? "Gravedad del riesgo (1–5)"
-                              : "Risk severity (1–5)",
-                            risk.severity,
-                            (n) => updateRisk(ai, ri, { severity: n }),
-                          )}
+                          <RiskRatingField
+                            label={
+                              es
+                                ? "Probabilidad de ocurrencia (1–5)"
+                                : "Probability of occurrence (1–5)"
+                            }
+                            field="probability"
+                            value={risk.probability}
+                            locale={locale}
+                            onChange={(n) =>
+                              updateRisk(ai, ri, { probability: n })
+                            }
+                          />
+                          <RiskRatingField
+                            label={
+                              es
+                                ? "Gravedad del riesgo (1–5)"
+                                : "Risk severity (1–5)"
+                            }
+                            field="severity"
+                            value={risk.severity}
+                            locale={locale}
+                            onChange={(n) =>
+                              updateRisk(ai, ri, { severity: n })
+                            }
+                          />
                         </div>
-                        <div className={"risk-result " + riskLevel(score)}>
-                          {es ? "Puntaje del riesgo" : "Risk score"}:{" "}
-                          <strong>
-                            {risk.probability ?? "—"} × {risk.severity ?? "—"} ={" "}
-                            {score ?? "—"} · {levels[locale][riskLevel(score)]}
-                          </strong>
-                        </div>
+                        <RiskCategoryResult
+                          probability={risk.probability}
+                          severity={risk.severity}
+                          locale={locale}
+                        />
                         {application.stage === 2 && (
                           <>
                             <section className="measure-section">
@@ -2778,24 +2728,34 @@ export function ApplicationEditor({
                               </div>
                             </section>
                             <div className="live-grid form-columns">
-                              {scale(
-                                es
-                                  ? "Probabilidad residual (1–5)"
-                                  : "Residual probability (1–5)",
-                                risk.residual_probability,
-                                (n) =>
+                              <RiskRatingField
+                                label={
+                                  es
+                                    ? "Probabilidad residual (1–5)"
+                                    : "Residual probability (1–5)"
+                                }
+                                field="residual_probability"
+                                value={risk.residual_probability}
+                                locale={locale}
+                                onChange={(n) =>
                                   updateRisk(ai, ri, {
                                     residual_probability: n,
-                                  }),
-                              )}
-                              {scale(
-                                es
-                                  ? "Gravedad residual (1–5)"
-                                  : "Residual severity (1–5)",
-                                risk.residual_severity,
-                                (n) =>
-                                  updateRisk(ai, ri, { residual_severity: n }),
-                              )}
+                                  })
+                                }
+                              />
+                              <RiskRatingField
+                                label={
+                                  es
+                                    ? "Gravedad residual (1–5)"
+                                    : "Residual severity (1–5)"
+                                }
+                                field="residual_severity"
+                                value={risk.residual_severity}
+                                locale={locale}
+                                onChange={(n) =>
+                                  updateRisk(ai, ri, { residual_severity: n })
+                                }
+                              />
                               <label>
                                 <span className="field-label">
                                   {es ? "Ubicación" : "Location"}
@@ -2865,14 +2825,12 @@ export function ApplicationEditor({
                                 (n) => updateRisk(ai, ri, { end_quarter: n }),
                               )}
                             </div>
-                            <div
-                              className={"risk-result " + riskLevel(residual)}
+                            <RiskCategoryResult
+                              probability={risk.residual_probability}
+                              severity={risk.residual_severity}
+                              locale={locale}
+                              residual
                             >
-                              {es ? "Puntaje residual" : "Residual score"}:{" "}
-                              <strong>
-                                {residual ?? "—"} ·{" "}
-                                {levels[locale][riskLevel(residual)]}
-                              </strong>
                               <span>
                                 {es ? "Duración" : "Duration"}:{" "}
                                 {risk.end_quarter &&
@@ -2882,7 +2840,7 @@ export function ApplicationEditor({
                                   : "—"}{" "}
                                 {es ? "trimestres" : "quarters"}
                               </span>
-                            </div>
+                            </RiskCategoryResult>
                           </>
                         )}
                       </article>

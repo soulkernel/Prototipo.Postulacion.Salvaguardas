@@ -1,5 +1,7 @@
 "use client";
 import type { Payload, Locale } from "@/lib/domain";
+import { riskScore } from "@/lib/domain";
+import { riskLevelLabel } from "@/lib/fields";
 export function RiskReferenceTable({
   payload,
   locale,
@@ -30,7 +32,7 @@ export function RiskReferenceTable({
                   "Descripción",
                   "Probabilidad",
                   "Gravedad",
-                  "Puntaje",
+                  "Categoría del riesgo",
                 ]
               : [
                   "Activity",
@@ -39,7 +41,7 @@ export function RiskReferenceTable({
                   "Description",
                   "Probability",
                   "Severity",
-                  "Score",
+                  "Risk category",
                 ]
             ).map((t) => (
               <th key={t}>{t}</th>
@@ -85,9 +87,17 @@ export function RiskReferenceTable({
                 <td>{r.probability ?? "—"}</td>
                 <td>{r.severity ?? "—"}</td>
                 <td>
-                  {r.probability !== null && r.severity !== null
-                    ? r.probability * r.severity
-                    : "—"}
+                  <strong>
+                    {riskLevelLabel(
+                      riskScore(r.probability, r.severity),
+                      locale,
+                    )}
+                  </strong>
+                  <small className="risk-table-calculation">
+                    {es ? "Cálculo" : "Calculation"}: {r.probability ?? "—"} ×{" "}
+                    {r.severity ?? "—"} ={" "}
+                    {riskScore(r.probability, r.severity) ?? "—"}
+                  </small>
                 </td>
               </tr>
             )),

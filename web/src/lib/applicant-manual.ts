@@ -345,8 +345,8 @@ export const manualChapters: ManualChapter[] = [
     ],
     screen: [
       [
-        "1 Información general → 2 Descripción del proyecto → 3 Examen Ambiental y Social inicial → 4 Revisar y enviar",
-        "1 General information → 2 Project description → 3 Initial environmental and social screening → 4 Review and submit",
+        "1 Información general → 2 Descripción del proyecto → 3 Actividades y Riesgos A&S → 4 Revisar y enviar",
+        "1 General information → 2 Project description → 3 Activities and E&S Risks → 4 Review and submit",
       ],
       ["Título del proyecto *", "Project title *"],
       ["Contacto · teléfono · ubicación *", "Contact · phone · location *"],
@@ -859,7 +859,7 @@ export const manualChapters: ManualChapter[] = [
   },
   {
     id: "screening",
-    title: ["Paso 3 · Evaluar riesgos A&S", "Step 3 · Assess E&S risks"],
+    title: ["Paso 3 · Actividades y Riesgos A&S", "Step 3 · Activities and E&S Risks"],
     intro: [
       "El screening inicial identifica y evalúa riesgos por actividad. En esta fase no se solicitan medidas de mitigación, costos, responsables ni planificación del PGAS.",
       "Initial screening identifies and assesses risks by activity. This stage does not request mitigation measures, costs, responsible persons or ESMP planning.",
@@ -905,20 +905,20 @@ export const manualChapters: ManualChapter[] = [
       ],
       [
         "Probabilidad de ocurrencia (1–5)",
-        "Seleccione de muy baja (1) a muy alta (5), según la posibilidad de que ocurra.",
+        "Seleccione de 1 a 5 y consulte el significado original del GLF que aparece debajo. Puede comparar los cinco niveles en Consultar claves de calificación.",
         "Probability of occurrence (1–5)",
-        "Select from very low (1) to very high (5), according to how likely it is to occur.",
+        "Select from 1 to 5 and review the original GLF definition shown below. Compare all five levels under View rating interpretation keys.",
       ],
       [
         "Gravedad del riesgo (1–5)",
-        "Seleccione de muy baja (1) a muy alta (5), según la magnitud de las consecuencias.",
+        "Seleccione de 1 a 5 según la magnitud de las consecuencias y la definición original que aparece debajo del campo.",
         "Risk severity (1–5)",
-        "Select from very low (1) to very high (5), according to the magnitude of consequences.",
+        "Select from 1 to 5 based on the magnitude of consequences and the original definition displayed below the field.",
       ],
       [
-        "Puntaje / Nivel de riesgo",
+        "Categoría del riesgo",
         "Cálculo automático: probabilidad × gravedad. 1–4: bajo; 5–9: medio; 10–15: alto; 16–25: muy alto. Sin ambas calificaciones queda incompleto.",
-        "Score / Risk level",
+        "Risk category",
         "Automatic calculation: likelihood × severity. 1–4: low; 5–9: medium; 10–15: high; 16–25: very high. Both ratings are required.",
       ],
       [
@@ -948,8 +948,8 @@ export const manualChapters: ManualChapter[] = [
       ["Actividad 1 → Riesgo registrado *", "Activity 1 → Registered risk *"],
       ["Descripción concisa *", "Concise description *"],
       [
-        "Probabilidad: 3 × Gravedad: 4 = 12 · Alto",
-        "Likelihood: 3 × Severity: 4 = 12 · High",
+        "Categoría del riesgo: Alto · Cálculo: 3 × 4 = 12",
+        "Risk category: High · Calculation: 3 × 4 = 12",
       ],
       [
         "Ver mapa de riesgos → filtrar → consultar",
