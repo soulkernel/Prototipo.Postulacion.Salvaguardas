@@ -990,7 +990,9 @@ before(async () => {
  `);
   const migrations = new URL("../../supabase/migrations/", import.meta.url);
   for (const name of (await readdir(migrations))
-    .filter((n) => n.endsWith(".sql"))
+    // Earlier tests exercise historical workflow contracts. The final test
+    // applies 051 twice and verifies the new completion rule and unchanged data.
+    .filter((n) => n.endsWith(".sql") && n !== "202610200051_required_linked_monitoring.sql")
     .sort()) {
     try {
       await db.exec(await readFile(new URL(name, migrations), "utf8"));
@@ -3796,4 +3798,37 @@ test("ordered description layout changes only new-document defaults and preserve
  const before=await snapshot();await db.exec(sql);await db.exec(sql);assert.deepEqual(await snapshot(),before);
  const defaults=(await db.query("select table_name,column_default from information_schema.columns where table_schema='public' and table_name in ('prepared_documents','application_versions') and column_name='concept_layout_version' order by table_name")).rows;
  assert.equal(defaults.length,2);for(const row of defaults)assert.match(row.column_default,/glf-concept-20261020-v6/);
+});
+
+test("required monitoring blocks legacy bypass and preserves drafts, records and linked documents", async()=>{
+ const sql=await readFile(new URL("../../supabase/migrations/202610200051_required_linked_monitoring.sql",import.meta.url),"utf8");
+ const snapshot=async()=>Object.fromEntries(await Promise.all(["applications","application_versions","prepared_documents","application_documents","application_events","calls","activities","risks"].map(async t=>[t,(await db.query(`select to_jsonb(row) value from public.${t} row order by id`)).rows])));
+ const before=await snapshot();await db.exec(sql);await db.exec(sql);assert.deepEqual(await snapshot(),before);
+ const p=structuredClone(payload),oid=crypto.randomUUID(),rid=crypto.randomUUID();
+ p.concept.strategic_alignment={version:"pg2030-ods-general-v3",objectives:[{id:crypto.randomUUID(),kind:"general",text:"Propósito ficticio",plan:["E1"],ods:[14],glf:[]},{id:oid,kind:"specific",text:"Capacitar QA",plan:[],ods:[],glf:[]}]};
+ p.activities=p.activities.map(a=>({...a,id:crypto.randomUUID(),objective_ids:[oid],risks:a.risks.map(r=>({...r,id:crypto.randomUUID()}))}));
+ p.concept.project_results=[{id:rid,objective_id:oid,result:"Personal capacitado QA",indicator:"",target:null,unit:"",other_unit:"",evidence:""}];
+ p.concept.monitoring="PROPUESTA ANTERIOR CONSERVADA";delete p.concept.monitoring_plan;
+ for(const stage of [1,2]){
+  await db.query("select private.validate_payload($1::jsonb,$2::jsonb,false,$3)",[JSON.stringify(p),JSON.stringify(rules),stage]);
+  await assert.rejects(db.query("select private.validate_payload($1::jsonb,$2::jsonb,true,$3)",[JSON.stringify(p),JSON.stringify(rules),stage]),/GLF_REQUIRED:monitoring/);
+ }
+ const call=await rpc("create_call",{details:{code:"LINKED-REQUIRED-QA",title_es:"QA ficticia",title_en:"Fictional QA",description_es:"QA",description_en:"QA",opens_at:"2020-01-01T00:00:00Z",closes_at:"2099-01-01T00:00:00Z",rules}},"grants");await rpc("publish_call",{call_id:call},"grants");
+ const owner=await temporaryAccount(),app=await rpc("create_application",{call_id:call},owner);
+ await rpc("save_application",{application_id:app,expected_revision:0,payload:p},owner);
+ await assert.rejects(rpc("prepare_application_documents",{app_id:app,expected_revision:1},owner),/GLF_REQUIRED:monitoring/);
+ // Public submission also refuses the unprepared draft; preparation itself
+ // cannot be obtained without linked monitoring, even through direct RPC.
+ await assert.rejects(rpc("submit_application",{application_id:app,expected_revision:1},owner),/GLF_PREPARE_DOCUMENTS_REQUIRED/);
+ p.concept.monitoring_plan=[{id:crypto.randomUUID(),parameter:"result",reference_id:rid,indicator:"Participantes con competencias demostradas",strategy:"Evaluación práctica y registro al finalizar"}];
+ const validate=(value,complete=true)=>db.query("select private.validate_monitoring_plan($1::jsonb,$2)",[JSON.stringify(value),complete]);
+ await validate(p);
+ for(const patch of [{reference_id:crypto.randomUUID()},{parameter:"activity"},{indicator:" "},{strategy:""}]){const bad=structuredClone(p);Object.assign(bad.concept.monitoring_plan[0],patch);await validate(bad,false);await assert.rejects(validate(bad),/GLF_REQUIRED:monitoring_1/);}
+ const empty=structuredClone(p);empty.concept.monitoring_plan=[];await validate(empty,false);await assert.rejects(validate(empty),/GLF_REQUIRED:monitoring/);
+ const malformed=structuredClone(p);malformed.concept.monitoring_plan=null;await assert.rejects(validate(malformed,false),/GLF_INVALID_MONITORING/);
+ await rpc("save_application",{application_id:app,expected_revision:1,payload:p},owner);
+ const prepared=await rpc("prepare_application_documents",{app_id:app,expected_revision:2},owner);
+ const frozen=(await db.query("select payload from public.prepared_documents where id=$1",[prepared])).rows[0].payload;
+ assert.deepEqual(frozen.concept.monitoring_plan,p.concept.monitoring_plan);assert.equal(frozen.concept.monitoring,"PROPUESTA ANTERIOR CONSERVADA");
+ for(const role of ["anon","authenticated"])assert.equal((await db.query("select has_function_privilege($1,'private.validate_monitoring_plan(jsonb,boolean)','EXECUTE') allowed",[role])).rows[0].allowed,false);
 });

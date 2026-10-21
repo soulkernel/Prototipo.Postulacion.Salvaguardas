@@ -100,6 +100,9 @@ export function completionGuidance(
       activities: es
         ? "Agregue al menos una actividad"
         : "Add at least one activity",
+      monitoring: es
+        ? "Complete al menos una ficha de seguimiento vinculada a una actividad o resultado"
+        : "Complete at least one monitoring card linked to an activity or outcome",
       risk_unlinked: es
         ? "Vincule los riesgos registrados con sus actividades"
         : "Link registered risks to activities",

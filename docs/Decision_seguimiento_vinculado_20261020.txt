@@ -54,3 +54,17 @@ IMPLEMENTACIÓN Y PUBLICACIÓN
 Las validaciones de cliente, servidor y SQL deben concordar. La migración local
 048 no modifica registros históricos. Su publicación requiere aplicarla antes
 de desplegar el frontend que utiliza el nuevo formato de presentación.
+
+PRECISIÓN POSTERIOR APROBADA: CAPTURA PRINCIPAL VINCULADA
+Las fichas son la captura principal también para borradores con narrativa previa.
+El texto monitoring se conserva literalmente, como referencia consultable, sin
+conversión automática ni guardado por abrir/consultar. Se retira la organización
+opcional. Abrir muestra una ficha vacía transitoria; solo editar o agregar guarda.
+Preparar/enviar exige al menos una ficha completa y vinculada en cliente,
+servidor y SQL; guardar borradores incompletos sigue permitido. No se exige una
+ficha por cada actividad/resultado ni se añaden metas o metodología detallada.
+Se conservan los UUID de indicadores existentes y los vínculos de Sostenibilidad.
+La migración 051 solo refuerza la validación en operaciones nuevas, sin actualizar
+aplicaciones, narrativas, documentos preparados, versiones ni firmas históricas.
+Las salidas actuales utilizan las fichas existentes; los documentos congelados
+mantienen el formato y el contenido registrados. No se crea aún seguimiento real.

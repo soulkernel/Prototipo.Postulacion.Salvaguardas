@@ -131,6 +131,13 @@ function fixture() {
   activity.title = "Actividad";
   activity.description = "Descripción";
   payload.activities = [activity];
+  const objective = crypto.randomUUID();
+  payload.concept.strategic_alignment = {version:"pg2030-ods-general-v3",objectives:[
+    {id:crypto.randomUUID(),kind:"general",text:"Propósito ficticio",plan:["E1"],ods:[14],glf:[]},
+    {id:objective,kind:"specific",text:"Objetivo específico ficticio",plan:[],ods:[],glf:[]}
+  ]};
+  activity.objective_ids = [objective];
+  payload.concept.monitoring_plan = [{id:crypto.randomUUID(),parameter:"activity",reference_id:activity.id,indicator:"Avance ficticio",strategy:"Revisar registros ficticios"}];
   const state = {
     app: {
       payload,
@@ -318,6 +325,18 @@ test("M05 actual upload route rejects unknown/removed partner and failed upload;
   assert.equal((await api.POST(request())).status, 409);
   assert.equal(s.registerCount, 1);
 });
+test("current actions require linked monitoring, preserve legacy text and allow incomplete draft saves", async () => {
+  const s=fixture();
+  const source=s.app.payload.concept.monitoring;
+  delete s.app.payload.concept.monitoring_plan;
+  assert.equal((await api.saveDraft(appId,0,s.app.payload)).ok,true);
+  assert.equal(s.savedPayload.concept.monitoring,source);
+  assert.equal(s.savedPayload.concept.monitoring_plan,undefined);
+  assert.deepEqual(await api.prepareDocuments(appId,0),{error:"GLF_REQUIRED:monitoring"});
+  assert.deepEqual(await api.submitDraft(appId,0),{ok:false,error:"GLF_REQUIRED:monitoring"});
+  assert.equal(s.submitCount,0);
+});
+
 test("M05 actual submit action blocks missing or unreadable individual letter before submit RPC; permits complete or zero-partner flow", async () => {
   const s = fixture();
   let result = await api.submitDraft(appId, 0);

@@ -497,7 +497,7 @@ export function validateComplete(
       key !== "partners" &&
       key !== "results_source" &&
       key !== "summary" &&
-      !(key === "monitoring" && c.monitoring_plan !== undefined) &&
+      key !== "monitoring" &&
       !(key === "sustainability" && c.sustainability_plan !== undefined) &&
       key !== "other_islands" &&
       !(stage === 1 && key === "admin_cost") &&

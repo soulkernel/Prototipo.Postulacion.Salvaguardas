@@ -101,9 +101,9 @@ export function monitoringEntryIssues(
 }
 export function monitoringIssues(p: MonitoringContext): string[] {
   const plan = p.concept.monitoring_plan;
-  if (plan === undefined)
-    return p.concept.monitoring.trim() ? [] : ["monitoring"];
-  if (!plan.length) return ["monitoring"];
+  // Current editable forms require explicit links. Legacy text is still retained
+  // and rendered by frozen documents, but does not complete a new submission.
+  if (!plan?.length) return ["monitoring"];
   const seen = new Set<string>();
   return plan.flatMap((item, i) => {
     const invalid =

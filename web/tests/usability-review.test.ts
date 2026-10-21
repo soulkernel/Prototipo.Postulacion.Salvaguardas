@@ -62,6 +62,13 @@ function complete() {
   });
   a.risks = [r];
   p.activities = [a];
+  const objective = crypto.randomUUID();
+  p.concept.strategic_alignment = {version:"pg2030-ods-general-v3",objectives:[
+    {id:crypto.randomUUID(),kind:"general",text:"Propósito ficticio",plan:["E1"],ods:[14],glf:[]},
+    {id:objective,kind:"specific",text:"Objetivo ficticio",plan:[],ods:[],glf:[]}
+  ]};
+  a.objective_ids = [objective];
+  p.concept.monitoring_plan = [{id:crypto.randomUUID(),parameter:"activity",reference_id:a.id,indicator:"Avance ficticio",strategy:"Revisar registros"}];
   p.consent = true;
   p.truthful = true;
   return p;

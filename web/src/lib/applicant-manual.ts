@@ -776,9 +776,9 @@ export const manualChapters: ManualChapter[] = [
       ],
       [
         "Borradores anteriores",
-        "El texto guardado sigue siendo editable. Organizarlo en fichas es opcional y conserva la narrativa original sin conversión automática.",
+        "El texto anterior se conserva en Consultar propuesta anterior. Complete las fichas seleccionando sus vínculos; no se convierte el texto automáticamente. Antes de preparar o enviar, se exige al menos una ficha completa. Puede guardar un borrador incompleto.",
         "Older drafts",
-        "Saved text remains editable. Organizing it into cards is optional and preserves the original narrative without automatic conversion.",
+        "The original text is retained under View previous proposal. Complete the cards and select their links; text is not converted automatically. At least one complete card is required before preparing or submitting. Incomplete drafts can be saved.",
       ],
     ],
     tip: [
@@ -793,7 +793,7 @@ export const manualChapters: ManualChapter[] = [
         "Estrategia y actividades de seguimiento *",
         "Monitoring strategy and activities *",
       ],
-      ["+ Agregar otro indicador", "+ Add another indicator"],
+      ["+ Agregar indicador de seguimiento", "+ Add monitoring indicator"],
     ],
   },
   {

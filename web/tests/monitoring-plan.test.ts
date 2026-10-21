@@ -257,8 +257,66 @@ test("legacy text is preserved verbatim and active/frozen presentation uses the 
   }
   assert.deepEqual(p, before);
   delete p.concept.monitoring_plan;
-  assert.deepEqual(monitoringIssues(p), []);
+  assert.deepEqual(monitoringIssues(p), ["monitoring"]);
   assert.equal(monitoringText(p), p.concept.monitoring);
+});
+
+test("legacy drafts open directly in linked cards without changing or inferring saved text", () => {
+  const p = fixture();
+  delete p.concept.monitoring_plan;
+  const before = structuredClone(p);
+  for (const locale of ["es", "en"] as const) {
+    const html = renderToStaticMarkup(
+      createElement(MonitoringFields, {
+        payload: p,
+        locale,
+        checked: true,
+        onChange: () =>
+          assert.fail("Rendering must not save or convert a draft"),
+      }),
+    );
+    assert.match(html, /data-validation-monitoring="1"/);
+    assert.match(html, /data-validation-field="reference_id"/);
+    assert.match(html, /TEXTO_HISTORICO_SIN_CAMBIOS/);
+    assert.match(html, /<details class="monitoring-source">/);
+    assert.doesNotMatch(
+      html,
+      /Organizar en indicadores|Organize into linked|\(opcional\)|\(optional\)/,
+    );
+    assert.ok(
+      html.includes(
+        locale === "es"
+          ? "Consultar propuesta anterior"
+          : "View previous proposal",
+      ),
+    );
+    assert.equal(
+      stepIssues(p, {} as Rules, 1, 1).missing.filter((k) => k === "monitoring")
+        .length,
+      1,
+    );
+    assert.ok(
+      completionGuidance(
+        p,
+        { categories: [], summary_word_limit: 500 } as unknown as Rules,
+        1,
+        [],
+        locale,
+      ).some((i) => i.id === "monitoring" && i.selector === "#monitoring-plan"),
+    );
+  }
+  assert.deepEqual(p, before);
+  p.concept.monitoring = "";
+  const html = renderToStaticMarkup(
+    createElement(MonitoringFields, {
+      payload: p,
+      locale: "es",
+      checked: false,
+      onChange: () => {},
+    }),
+  );
+  assert.doesNotMatch(html, /monitoring-source/);
+  assert.match(html, /data-validation-monitoring="1"/);
 });
 test("entry labels, empty first card and keyboard controls match the approved capture", () => {
   const p = fixture();

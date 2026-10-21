@@ -1462,6 +1462,19 @@ input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="
 
 .project-location-fields { display: grid; gap: 24px; margin-top: 24px; }
 .sustainability-fields { display: grid; gap: 12px; min-width: 0; }
+.monitoring-fields { display: grid; gap: 12px; min-width: 0; }
+.monitoring-fields > .application-section-title { margin-bottom: 0; }
+.monitoring-source { border: 1px solid #cbd9e5; border-radius: 8px; padding: 10px 14px; background: #f7f9fc; min-width: 0; }
+.monitoring-source summary { cursor: pointer; font-weight: 600; color: var(--navy); }
+.monitoring-source-text { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 280px; overflow-y: auto; line-height: 1.6; }
+.monitoring-card { background: #f7fafc; border-left: 4px solid #0996a1; min-width: 0; }
+.monitoring-card .live-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 20px; }
+.monitoring-card .live-form > label:nth-last-child(-n+2) { grid-column: 1 / -1; }
+.monitoring-card .live-form > * { min-width: 0; }
+.monitoring-card .live-notice { grid-column: 1 / -1; margin: 0; padding: 10px 14px; }
+.monitoring-card .live-notice ul { margin-bottom: 0; }
+.monitoring-card .field-help { font-size: 12px; }
+@media (max-width: 700px) { .monitoring-card .live-form { grid-template-columns: minmax(0, 1fr); } }
 .sustainability-section-heading, .sustainability-card-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; }
 .sustainability-section-heading h2, .sustainability-card-heading h3 { margin: 0; overflow-wrap: anywhere; }
 .sustainability-section-heading > span { color: #526673; font-size: 13px; white-space: nowrap; }

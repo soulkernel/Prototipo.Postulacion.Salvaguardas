@@ -45,8 +45,7 @@ export function stepIssues(
     for (const key of keys) {
       if (["partners", "other_islands", "project_islands"].includes(key))
         continue;
-      if (key === "monitoring" && payload.concept.monitoring_plan !== undefined)
-        continue;
+      if (key === "monitoring") continue;
       if (
         key === "sustainability" &&
         payload.concept.sustainability_plan !== undefined

@@ -82,6 +82,12 @@ function complete() {
       "Se realiza únicamente revisión documental sin intervención de campo.",
   });
   p.activities = [activity];
+  const specific = { ...newObjective("specific", currentAlignmentVersion), text:"Objetivo ficticio" };
+  p.concept.strategic_alignment = { version:currentAlignmentVersion, objectives:[
+    {...newObjective("general", currentAlignmentVersion),text:"Propósito ficticio",plan:["E1"],ods:[14]}, specific
+  ]};
+  activity.objective_ids = [specific.id];
+  p.concept.monitoring_plan = [{...newMonitoringItem(),parameter:"activity",reference_id:activity.id,indicator:"Avance documentado",strategy:"Revisar registros"}];
   p.consent = true;
   p.truthful = true;
   return p;

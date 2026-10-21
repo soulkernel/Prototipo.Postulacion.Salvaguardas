@@ -92,12 +92,12 @@ const guidance: Record<string, [string[], string[]]> = {
   ],
   monitoring: [
     [
-      "Seleccione una actividad o un resultado ya registrado e indique qué observará o medirá para comprobar su avance o su logro. Sus objetivos específicos asociados se mostrarán automáticamente.",
-      "Describa brevemente la estrategia y las actividades de seguimiento para ese indicador. Puede agregar otros indicadores; las metas y el método detallado de medición se completarán en la fase de proyecto completo.",
+      "En cada ficha, seleccione si evaluará el avance de una actividad o el logro de un resultado y escoja el registro que ya ingresó. Se mostrarán automáticamente sus objetivos específicos asociados.",
+      "Indique qué observará o medirá (indicador propuesto) y cómo lo comprobará (estrategia y actividades de seguimiento). Complete al menos una ficha antes del envío; puede guardar un borrador incompleto. Las metas y el método detallado se completarán en el proyecto completo.",
     ],
     [
-      "Select an activity or outcome already entered and state what you will observe or measure to assess progress or achievement. Its associated specific objectives will be shown automatically.",
-      "Briefly describe the monitoring strategy and activities for that indicator. You can add other indicators; targets and the detailed measurement method will be completed in the full proposal phase.",
+      "In each card, choose whether to assess progress of an activity or achievement of an outcome, then select the record already entered. Its associated specific objectives will be shown automatically.",
+      "State what you will observe or measure (proposed indicator) and how you will check it (monitoring strategy and activities). Complete at least one card before submitting; incomplete drafts can be saved. Targets and the detailed method will be completed in the full proposal.",
     ],
   ],
 };
