@@ -197,11 +197,23 @@ export async function applicationPdf({
 
   // Split long rows across pages and repeat column labels; never reserve a whole
   // narrative block that would leave a large unused part of the current page.
-  function table(headers: string[], rows: string[][], widths: number[]) {
-    const lineHeight = 14;
+  function table(
+    headers: string[],
+    rows: string[][],
+    widths: number[],
+    compact = false,
+  ) {
+    const lineHeight = compact ? 12 : 14;
+    const cellSize = compact ? 8.5 : 10;
+    const padding = compact ? 6 : 8;
     function cells(values: string[], heading: boolean) {
       return values.map((v, i) =>
-        lines(v || "—", heading ? bold : font, 10, widths[i] - 16),
+        lines(
+          v || "—",
+          heading ? bold : font,
+          cellSize,
+          widths[i] - padding * 2,
+        ),
       );
     }
     function paint(
@@ -224,9 +236,9 @@ export async function applicationPdf({
         });
         column.slice(offset, offset + count).forEach((text, j) => {
           page.drawText(text, {
-            x: x + 8,
+            x: x + padding,
             y: y - 10 - j * lineHeight,
-            size: 10,
+            size: cellSize,
             font: heading ? bold : font,
             color: rgb(0, 0, 0),
           });
@@ -442,8 +454,16 @@ export async function applicationPdf({
                 ? [160, 190, 141]
                 : block.headers.length === 4
                   ? [106, 133, 119, 133]
-                  : block.headers.map(() => width / block.headers.length);
-          table(block.headers, block.rows, widths);
+                  : section.id === "summary_budget" &&
+                      block.headers.length === 7
+                    ? [130, 60, 60, 74, 66, 64, 37]
+                    : block.headers.map(() => width / block.headers.length);
+          table(
+            block.headers,
+            block.rows,
+            widths,
+            section.id === "summary_budget" && block.headers.length === 7,
+          );
         }
       }
     };

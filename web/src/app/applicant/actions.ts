@@ -25,6 +25,7 @@ import { activityPlanningIssues } from "@/lib/activity-planning";
 import { resultIssues, resultText } from "@/lib/project-results";
 import { monitoringIssues } from "@/lib/monitoring-plan";
 import { sustainabilityIssues } from "@/lib/sustainability-plan";
+import { summaryBudgetIssues } from "@/lib/summary-budget";
 import { synchronizeRisks } from "@/lib/potential-risks";
 import { geographyIssues, organizationProvinceIssue } from "@/lib/geography";
 import { projectSummary } from "@/lib/summary";
@@ -108,6 +109,7 @@ async function storedPlanningError(db: SupabaseClient, id: string) {
   if (activityPlanningIssues(parsed.data).length)
     return "GLF_REQUIRED:activities";
   const issues = [
+    ...(data.stage === 1 ? summaryBudgetIssues(parsed.data) : []),
     ...resultIssues(parsed.data.concept, data.stage),
     ...monitoringIssues(parsed.data),
     ...sustainabilityIssues(parsed.data),

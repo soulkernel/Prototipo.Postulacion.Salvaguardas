@@ -182,7 +182,7 @@ test("concept estimates ignore dormant annual lines while full projects reconcil
     assert.ok(!validateComplete(p, rules, 1).includes(key));
     assert.ok(!stepIssues(p, rules, 1, 0).invalid.includes(key));
     assert.ok(validateComplete(p, rules, 2).includes(key));
-    assert.ok(stepIssues(p, rules, 2, 0).invalid.includes(key));
+    assert.ok(stepIssues(p, rules, 2, 2).invalid.includes(key));
   }
   assert.equal(p.concept.requested_amount, 320000);
   assert.equal(p.concept.cofinance_amount, 80000);

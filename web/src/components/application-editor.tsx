@@ -58,6 +58,12 @@ import { StrategicFields } from "./strategic-fields";
 import { ProjectResultFields } from "./project-result-fields";
 import { resultText } from "@/lib/project-results";
 import { BudgetFields } from "./budget-fields";
+import { SummaryBudgetFields } from "./summary-budget-fields";
+import {
+  summaryBudgetMessage,
+  summaryBudgetTotals,
+  summaryUsd,
+} from "@/lib/summary-budget";
 import { budgetTotals, budgetYears } from "@/lib/budget";
 import {
   financialFeedback,
@@ -392,7 +398,7 @@ export function ApplicationEditor({
   const [autoError, setAutoError] = useState("");
   const [lastSaved, setLastSaved] = useState(application.updated_at);
   const [step, setStepState] = useState(
-    editable || academicReadOnly ? initialStep : 3,
+    editable || academicReadOnly ? initialStep : 4,
   );
   function setStep(next: number) {
     setStepState(next);
@@ -703,7 +709,7 @@ export function ApplicationEditor({
           ? "Revise los importes del presupuesto: use como máximo dos decimales."
           : "Check budget amounts: use at most two decimals.",
       );
-      setStep(0);
+      setStep(2);
       return;
     }
     if (submit) {
@@ -713,7 +719,7 @@ export function ApplicationEditor({
         documents,
       );
       if (missingLetters.length) {
-        setStep(3);
+        setStep(4);
         setError(
           (es ? "Falta cargar: " : "Upload: ") +
             missingLetters
@@ -733,7 +739,7 @@ export function ApplicationEditor({
           locale,
         ).length
       ) {
-        setStep(3);
+        setStep(4);
         return;
       }
       const missing = validateComplete(
@@ -959,6 +965,8 @@ export function ApplicationEditor({
       return es
         ? "Número de credencial de residencia permanente"
         : "Permanent residence card number";
+    if (key.startsWith("summary_budget"))
+      return summaryBudgetMessage(key, locale);
     if (key.startsWith("budget_"))
       return es
         ? "Presupuesto anual: revise años, partidas y totales"
@@ -1647,12 +1655,14 @@ export function ApplicationEditor({
               application.stage === 1
                 ? "Descripción del proyecto"
                 : "Proyecto completo",
+              "Presupuesto",
               "Actividades y Riesgos A&S",
               "Revisar y enviar",
             ]
           : [
               "General information",
               application.stage === 1 ? "Project description" : "Full proposal",
+              "Budget",
               "Activities and E&S Risks",
               "Review and submit",
             ]
@@ -2204,42 +2214,6 @@ export function ApplicationEditor({
                   })
                 )}
               </div>
-              {step === 0 && application.stage === 2 && (
-                <BudgetFields
-                  value={payload.budget}
-                  years={budgetYears(
-                    payload.concept.start_date,
-                    payload.concept.end_date,
-                  )}
-                  locale={locale}
-                  onValidity={setBudgetUiValid}
-                  onChange={(b) =>
-                    setPayload((p) => {
-                      const budget = {
-                        ...b,
-                        legacy_summary: b.legacy_summary ?? {
-                          requested_amount: p.concept.requested_amount,
-                          cofinance_amount: p.concept.cofinance_amount,
-                          admin_cost: p.concept.admin_cost,
-                        },
-                      };
-                      const t = budgetTotals(budget);
-                      return {
-                        ...p,
-                        budget,
-                        concept: b.lines.length
-                          ? {
-                              ...p.concept,
-                              requested_amount: t.glf / 100,
-                              cofinance_amount: t.other / 100,
-                              admin_cost: (t.admin.glf + t.admin.other) / 100,
-                            }
-                          : p.concept,
-                      };
-                    })
-                  }
-                />
-              )}
               {step === 1 && application.stage === 2 && (
                 <section>
                   <h2 className="application-section-title">
@@ -2285,7 +2259,79 @@ export function ApplicationEditor({
               )}
             </div>
           )}
-          {step === 2 && (
+          {step === 2 && application.stage === 1 && (
+            <SummaryBudgetFields
+              payload={payload}
+              locale={locale}
+              onValidity={setBudgetUiValid}
+              onChange={(summary_budget) => {
+                setError("");
+                setPayload((p) => ({
+                  ...p,
+                  concept: { ...p.concept, summary_budget },
+                }));
+              }}
+              editGeneral={() => setStep(0)}
+              editActivities={() => setStep(1)}
+            />
+          )}
+          {step === 2 && application.stage === 2 && (
+            <>
+              {payload.concept.summary_budget && (
+                <p className="live-notice">
+                  {es
+                    ? "Presupuesto resumido de la nota conceptual conservado como referencia"
+                    : "Concept note summary budget retained as reference"}
+                  :{" "}
+                  <strong>
+                    {summaryUsd(
+                      summaryBudgetTotals(payload.concept.summary_budget).total,
+                      locale,
+                    )}
+                  </strong>
+                  .{" "}
+                  {es
+                    ? "Puede consultar su desglose en Revisar y enviar. Complete abajo el detalle anual de fase 2."
+                    : "See its breakdown in Review and submit. Complete the phase-two annual detail below."}
+                </p>
+              )}
+              <BudgetFields
+                value={payload.budget}
+                years={budgetYears(
+                  payload.concept.start_date,
+                  payload.concept.end_date,
+                )}
+                locale={locale}
+                onValidity={setBudgetUiValid}
+                onChange={(b) =>
+                  setPayload((p) => {
+                    const budget = {
+                      ...b,
+                      legacy_summary: b.legacy_summary ?? {
+                        requested_amount: p.concept.requested_amount,
+                        cofinance_amount: p.concept.cofinance_amount,
+                        admin_cost: p.concept.admin_cost,
+                      },
+                    };
+                    const t = budgetTotals(budget);
+                    return {
+                      ...p,
+                      budget,
+                      concept: b.lines.length
+                        ? {
+                            ...p.concept,
+                            requested_amount: t.glf / 100,
+                            cofinance_amount: t.other / 100,
+                            admin_cost: (t.admin.glf + t.admin.other) / 100,
+                          }
+                        : p.concept,
+                    };
+                  })
+                }
+              />
+            </>
+          )}
+          {step === 3 && (
             <div className="live-form risk-assessment-fields">
               <h2 className="application-section-title">
                 {es
@@ -2887,7 +2933,7 @@ export function ApplicationEditor({
               </div>
             </div>
           )}
-          {step === 3 && (
+          {step === 4 && (
             <div className="live-form">
               <h2 className="application-section-title">
                 {es ? "Revisión del expediente" : "Application review"}
@@ -2960,7 +3006,7 @@ export function ApplicationEditor({
           )}
         </div>
       </fieldset>
-      {step === 3 && editable && (
+      {step === 4 && editable && (
         <section className="live-card">
           <h2 className="application-section-title">
             {application.stage === 1
@@ -3006,6 +3052,7 @@ export function ApplicationEditor({
                           es
                             ? "Descripción del proyecto"
                             : "Project description",
+                          es ? "Presupuesto" : "Budget",
                           es ? "Actividades y riesgos" : "Activities and risks",
                           es ? "Declaraciones" : "Declarations",
                         ][issue.step]
@@ -3103,7 +3150,7 @@ export function ApplicationEditor({
           </div>
         </section>
       )}
-      {step === 3 && application.stage === 1 && (
+      {step === 4 && application.stage === 1 && (
         <section className="live-card">
           <h2 className="application-section-title">
             {es ? "Documentos firmados" : "Signed documents"}
@@ -3168,7 +3215,7 @@ export function ApplicationEditor({
           />
         </section>
       )}
-      {step === 3 && application.stage !== 1 && (
+      {step === 4 && application.stage !== 1 && (
         <section className="live-card">
           <h2 className="application-section-title">
             {es ? "Anexos del proyecto" : "Project attachments"}
@@ -3283,7 +3330,7 @@ export function ApplicationEditor({
                 : "All changes saved"}
           </span>
           <div className="editor-action-feedback">
-            {step === 3 && !!missingLetters.length && (
+            {step === 4 && !!missingLetters.length && (
               <p className="field-warning" role="status">
                 {es
                   ? "Cartas de apoyo pendientes: "
@@ -3293,7 +3340,7 @@ export function ApplicationEditor({
                   .join("; ")}
               </p>
             )}
-            {step === 3 && application.stage === 1 && !signedDocumentsReady && (
+            {step === 4 && application.stage === 1 && !signedDocumentsReady && (
               <p className="field-help" role="status">
                 {es
                   ? "Para enviar al GLF, cargue ambos PDF firmados de la versión vigente."
@@ -3324,7 +3371,7 @@ export function ApplicationEditor({
                   {es ? "Guardar borrador" : "Save draft"}
                 </ActionLabel>
               </button>
-              {step === 3 ? (
+              {step === 4 ? (
                 <button
                   className="button primary"
                   disabled={
@@ -3417,7 +3464,7 @@ export function ApplicationEditor({
                       return;
                     }
                     setError("");
-                    setStep(Math.min(step + 1, 3));
+                    setStep(Math.min(step + 1, 4));
                   }}
                 >
                   {es ? "Continuar" : "Continue"} →

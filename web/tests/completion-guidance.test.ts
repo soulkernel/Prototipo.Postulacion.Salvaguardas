@@ -27,7 +27,7 @@ test("points to individual risk fields and removes corrected items without alter
   const issues = completionGuidance(p, rules, 1, [], "es");
   const issue = issues.find((i) => i.id === "risk-0-0-severity");
   assert.ok(issue);
-  assert.equal(issue.step, 2);
+  assert.equal(issue.step, 3);
   assert.match(issue.selector, /1-1/);
   assert.match(issue.text, /gravedad/);
   assert.ok(!issues.some((i) => i.id === "risk-0-0-probability"));
@@ -52,14 +52,14 @@ test("separates declarations and phase two requirements", () => {
   a.risks = [r];
   p.activities = [a];
   const first = completionGuidance(p, rules, 1, [], "en");
-  assert.equal(first.filter((i) => i.step === 3).length, 2);
+  assert.equal(first.filter((i) => i.step === 4).length, 2);
   assert.ok(!first.some((i) => i.id.includes("residual_probability")));
   const second = completionGuidance(p, rules, 2, [], "en");
   assert.ok(second.some((i) => i.id === "risk-0-0-residual_probability"));
   p.consent = true;
   p.truthful = true;
   assert.equal(
-    completionGuidance(p, rules, 1, [], "en").filter((i) => i.step === 3)
+    completionGuidance(p, rules, 1, [], "en").filter((i) => i.step === 4)
       .length,
     0,
   );

@@ -16,6 +16,8 @@ export function CompletionFeedback({
   useEffect(() => {
     const cleanup: (() => void)[] = [];
     for (const issue of issues.filter((i) => i.step === step)) {
+      // Summary budget renders its own live, contextual validation messages.
+      if (issue.id.startsWith("summary_budget")) continue;
       const target = document.querySelector<HTMLElement>(issue.selector);
       if (!target) continue;
       const control = target.matches("input,textarea,select")
@@ -72,7 +74,7 @@ export function CompletionFeedback({
       : target.querySelector<HTMLElement>("input,textarea,select,button");
     (control || target).focus({ preventScroll: true });
   }, [focusIssue, step]);
-  if (!issues.some((i) => i.step === step) || step === 3) return null;
+  if (!issues.some((i) => i.step === step) || step === 4) return null;
   return (
     <aside className="completion-step-notice" role="status">
       {locale === "es"

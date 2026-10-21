@@ -131,6 +131,8 @@ function fixture() {
   activity.title = "Actividad";
   activity.description = "Descripción";
   payload.activities = [activity];
+  Object.assign(payload.concept,{requested_amount:10000,cofinance_amount:0,summary_budget:{version:"glf-summary-v1",currency:"USD",entries:[{activity_id:activity.id,goods:1000000,services:0,consultancies:0,fees:0}],administrative:0,other_remuneration:0,sgas:0}});
+
   const objective = crypto.randomUUID();
   payload.concept.strategic_alignment = {version:"pg2030-ods-general-v3",objectives:[
     {id:crypto.randomUUID(),kind:"general",text:"Propósito ficticio",plan:["E1"],ods:[14],glf:[]},
@@ -411,4 +413,14 @@ test("M07 actual server actions block missing catalogues and foreign or historic
     assert.equal((await api.submitDraft(appId,0)).ok, true);
     assert.equal(s.submitCount, 1);
   }
+});
+
+
+test("summary budget actual actions retain incomplete drafts and refuse preparation/submission with mismatched totals",async()=>{
+ const state=fixture(),p=state.app.payload;state.app.stage=1;
+ delete p.concept.summary_budget;assert.equal((await api.saveDraft(appId,0,p)).ok,true);assert.deepEqual(await api.prepareDocuments(appId,0),{error:"GLF_REQUIRED:summary_budget"});
+ p.concept.summary_budget={version:"glf-summary-v1",currency:"USD",entries:[{activity_id:p.activities[0].id,goods:1000001,services:0,consultancies:0,fees:0}],administrative:0,other_remuneration:0,sgas:0};
+ assert.equal((await api.saveDraft(appId,0,p)).ok,true);assert.deepEqual(await api.prepareDocuments(appId,0),{error:"GLF_REQUIRED:summary_budget_totals"});assert.deepEqual(await api.submitDraft(appId,0),{ok:false,error:"GLF_REQUIRED:summary_budget_totals"});
+ p.concept.summary_budget.entries[0].goods=1000000;assert.equal((await api.saveDraft(appId,0,p)).ok,true);assert.ok((await api.prepareDocuments(appId,0)).id);
+ assert.equal(state.savedPayload.concept.requested_amount,10000);assert.deepEqual(state.savedPayload.concept.summary_budget,p.concept.summary_budget);
 });

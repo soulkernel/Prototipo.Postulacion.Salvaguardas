@@ -35,7 +35,7 @@ test("new review follows the capture sequence in both languages and stages, with
       );
       assert.deepEqual(
         sections.map((s) => s.id),
-        conceptSectionOrder.filter((id) => id !== "activities"),
+        conceptSectionOrder.filter((id) => !["activities","summary_budget"].includes(id)),
       );
       const html = renderToStaticMarkup(
         createElement(ConceptReview, {
@@ -51,7 +51,7 @@ test("new review follows the capture sequence in both languages and stages, with
           /class="concept-review-section" aria-label="([^"]+)"/g,
         ),
       ].map((m) => m[1]);
-      const expected = conceptSectionOrder.map((id) =>
+      const expected = conceptSectionOrder.filter(id=>id!=="summary_budget").map((id) =>
         id === "activities"
           ? locale === "es"
             ? "Actividades"

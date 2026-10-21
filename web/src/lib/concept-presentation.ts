@@ -1,3 +1,9 @@
+import {
+  summaryBudgetCategories,
+  summaryBudgetTotals,
+  summaryEntryTotal,
+  summaryUsd,
+} from "./summary-budget";
 import { proposalTitle } from "./proposal-guidance";
 import type { Activity, Concept, Locale } from "./domain";
 import { monitoringReference, monitoringParameter } from "./monitoring-plan";
@@ -775,6 +781,130 @@ export function conceptSections(
                     : "Alignment connects the general objective with the Galapagos 2030 Plan and the Sustainable Development Goals (SDGs). It also presents any other planning instruments added by the applicant."
                   : introductions[f.key]?.[es ? 0 : 1] || "",
       blocks,
+    });
+  }
+  if (presentation.layoutVersion === currentConceptLayout && c.summary_budget) {
+    const budget = c.summary_budget;
+    const totals = summaryBudgetTotals(budget);
+    const budgetNumber = (n: number) =>
+      new Intl.NumberFormat(es ? "es-EC" : "en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(n / 100);
+    sections.push({
+      id: "summary_budget",
+      title:
+        presentation.stage === 2
+          ? es
+            ? "Presupuesto resumido de la nota conceptual (referencia)"
+            : "Concept note summary budget (reference)"
+          : es
+            ? "Presupuesto resumido"
+            : "Summary budget",
+      introduction: es
+        ? "Estimación por actividad en USD. Los gastos administrativos, las remuneraciones y el SGAS están incluidos en los rubros y no se suman otra vez. Los porcentajes se calculan sobre el total presupuestado."
+        : "Activity estimates in USD. Administrative costs, remuneration and ESMS costs are included in the categories and are not added again. Percentages use the budgeted total.",
+      blocks: [
+        table(
+          es
+            ? [
+                "Actividad / objetivos",
+                "Bienes",
+                "Servicios",
+                "Consultorías",
+                "Honorarios",
+                "Total",
+                "%",
+              ]
+            : [
+                "Activity / objectives",
+                "Goods",
+                "Services",
+                "Consultancies",
+                "Fees",
+                "Total",
+                "%",
+              ],
+          [
+            ...budget.entries.map((entry) => {
+              const activity = activities.find(
+                (a) => a.id === entry.activity_id,
+              );
+              const objectives = c.strategic_alignment?.objectives
+                .filter((o) => activity?.objective_ids?.includes(o.id))
+                .map(
+                  (o) =>
+                    (c.strategic_alignment?.objectives
+                      .filter((item) => item.kind === "specific")
+                      .findIndex((item) => item.id === o.id) ?? -1) + 1,
+                )
+                .join(", ");
+              return [
+                (activity?.title ||
+                  (es
+                    ? "Actividad pendiente de vincular"
+                    : "Activity pending link")) +
+                  (objectives
+                    ? "\n" +
+                      (es
+                        ? "Objetivos específicos: "
+                        : "Specific objectives: ") +
+                      objectives
+                    : ""),
+                ...summaryBudgetCategories.map(([key]) =>
+                  entry[key] === null ? "—" : budgetNumber(entry[key]!),
+                ),
+                budgetNumber(summaryEntryTotal(entry)),
+                (totals.total
+                  ? (summaryEntryTotal(entry) / totals.total) * 100
+                  : 0
+                ).toLocaleString(locale, { maximumFractionDigits: 1 }) + "%",
+              ];
+            }),
+            [
+              "Total",
+              ...summaryBudgetCategories.map(([key]) =>
+                budgetNumber(totals.categories[key]),
+              ),
+              budgetNumber(totals.total),
+              totals.total ? "100%" : "0%",
+            ],
+          ],
+        ),
+        table(
+          es
+            ? ["Importes incluidos / referencia", "Monto"]
+            : ["Included amounts / reference", "Amount"],
+          [
+            [
+              es
+                ? "Gastos administrativos incluidos (máximo 10 % del costo total)"
+                : "Included administrative costs (maximum 10% of total cost)",
+              budget.administrative === null
+                ? "—"
+                : summaryUsd(budget.administrative, locale),
+            ],
+            [
+              es
+                ? "Remuneraciones, honorarios y salarios incluidos (máximo 30 % del aporte GLF)"
+                : "Included remuneration, fees and salaries (maximum 30% of GLF funding)",
+              summaryUsd(totals.remuneration, locale),
+            ],
+            [
+              es
+                ? "Elaboración e implementación del SGAS incluidas"
+                : "Included ESMS preparation and implementation",
+              budget.sgas === null ? "—" : summaryUsd(budget.sgas, locale),
+            ],
+            [
+              es
+                ? "Costo total de Información general (GLF + cofinanciamiento)"
+                : "General information total cost (GLF + cofinancing)",
+              amount((c.requested_amount ?? 0) + (c.cofinance_amount ?? 0)),
+            ],
+          ],
+        ),
+      ],
     });
   }
   if (usesOrderedProjectDescription(presentation))

@@ -15,6 +15,7 @@ function blank(value: unknown, key = ""): unknown {
       "kind",
       "dimension",
       "objective_ids",
+      "activity_id",
     ].includes(key)
   )
     return value;
@@ -62,7 +63,7 @@ export function submissionProgress(
     const p = applicable(raw);
     return new Set([
       ...validateComplete(p, rules, stage),
-      ...[0, 1, 2].flatMap((i) => {
+      ...[0, 1, 2, 3].flatMap((i) => {
         const s = stepIssues(p, rules, stage, i, phase2);
         return [...s.missing, ...s.invalid];
       }),

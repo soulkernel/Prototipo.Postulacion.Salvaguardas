@@ -71,6 +71,7 @@ function complete() {
   p.concept.monitoring_plan = [{id:crypto.randomUUID(),parameter:"activity",reference_id:a.id,indicator:"Avance ficticio",strategy:"Revisar registros"}];
   p.consent = true;
   p.truthful = true;
+  p.concept.summary_budget = {version:"glf-summary-v1",currency:"USD",entries:p.activities.map((a,i)=>({activity_id:a.id,goods:i===0?Math.round(((p.concept.requested_amount??0)+(p.concept.cofinance_amount??0))*100):0,services:0,consultancies:0,fees:0})),administrative:0,other_remuneration:0,sgas:0};
   return p;
 }
 test("progress requires all content, current signed files, declarations; saving is independent; never mutates the payload", () => {

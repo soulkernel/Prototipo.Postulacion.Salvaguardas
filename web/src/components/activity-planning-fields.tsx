@@ -76,6 +76,13 @@ export function ActivityPlanningFields({
                     ? es
                       ? " Las estrategias de sostenibilidad relacionadas se conservarán y requerirán revisar su asociación."
                       : " Related sustainability strategies will be kept and their association will need review."
+                    : "") +
+                  (payload.concept.summary_budget?.entries.some(
+                    (entry) => entry.activity_id === activity.id,
+                  )
+                    ? es
+                      ? " Los importes presupuestados se conservarán como pendientes de revisión en Presupuesto."
+                      : " Budgeted amounts will be retained for review under Budget."
                     : "")
                 }
                 disabled={activity.risks.length > 0}

@@ -6,6 +6,7 @@ import type { AttachmentRequirement } from "./attachment-requirements";
 import { z } from "zod";
 import { applicationTopicIssue } from "./call-themes";
 import { budgetSchema, budgetIssues } from "./budget";
+import { summaryBudgetSchema, summaryBudgetIssues } from "./summary-budget";
 import { normalizePhone } from "./phone";
 import { geographyIssues, applicantTypeAddressPatch } from "./geography";
 import { emptySummary, projectSummary } from "./summary";
@@ -72,6 +73,7 @@ export const conceptSchema = z
     requested_amount: money,
     cofinance_amount: money,
     admin_cost: money.default(null),
+    summary_budget: summaryBudgetSchema.optional(),
     start_date: z.string().max(10),
     end_date: z.string().max(10),
     summary: text,
@@ -477,6 +479,7 @@ export function validateComplete(
   missing.push(...identificationIssues(c));
   missing.push(...Object.keys(projectDateErrors(c, rules)));
   if (stage === 2) missing.push(...budgetIssues(payload.budget, c));
+  if (stage === 1) missing.push(...summaryBudgetIssues(payload));
   if (applicationTopicIssue(c.project_type, rules))
     missing.push("project_type");
   missing.push(...partnerIssues(c));

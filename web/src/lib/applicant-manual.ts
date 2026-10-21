@@ -345,8 +345,8 @@ export const manualChapters: ManualChapter[] = [
     ],
     screen: [
       [
-        "1 Información general → 2 Descripción del proyecto → 3 Actividades y Riesgos A&S → 4 Revisar y enviar",
-        "1 General information → 2 Project description → 3 Activities and E&S Risks → 4 Review and submit",
+        "1 Información general → 2 Descripción del proyecto → 3 Presupuesto → 4 Actividades y Riesgos A&S → 5 Revisar y enviar",
+        "1 General information → 2 Project description → 3 Budget → 4 Activities and E&S Risks → 5 Review and submit",
       ],
       ["Título del proyecto *", "Project title *"],
       ["Contacto · teléfono · ubicación *", "Contact · phone · location *"],
@@ -355,56 +355,6 @@ export const manualChapters: ManualChapter[] = [
         "GLF amount + Co-financing = Total cost",
       ],
       ["Guardar borrador | Continuar", "Save draft | Continue"],
-    ],
-  },
-  {
-    id: "presupuesto",
-    title: [
-      "Estimación de costos de la nota conceptual",
-      "Concept note cost estimates",
-    ],
-    intro: [
-      "En esta etapa ingrese directamente los montos estimados. No se solicita un presupuesto anual ni un desglose por partidas.",
-      "At this stage, enter estimated amounts directly. An annual or line-item budget is not requested.",
-    ],
-    steps: [
-      [
-        "Ingrese el monto solicitado al GLF y el cofinanciamiento. En la nota conceptual no se solicita un importe separado de gastos administrativos.",
-        "Enter requested GLF funding and cofinancing. A separate administrative expense amount is not requested in the concept note.",
-      ],
-      [
-        "Revise los límites de la categoría y el costo total estimado, que se calcula automáticamente.",
-        "Check category limits and the estimated total cost, which is calculated automatically.",
-      ],
-      [
-        "Si su nota conceptual es preseleccionada, el GLF le solicitará el proyecto completo con su presupuesto detallado.",
-        "If your concept note is shortlisted, GLF will request the full project with its detailed budget.",
-      ],
-    ],
-    rows: [
-      [
-        "Montos estimados",
-        "Los campos nuevos están vacíos. Ingrese sus estimaciones; los avisos aparecen al terminar de editar o al pulsar Continuar. Un importe guardado se conserva al retomar el borrador.",
-        "Estimated amounts",
-        "New fields are blank. Enter your estimates; warnings appear after editing or when selecting Continue. Saved amounts remain when resuming the draft.",
-      ],
-      [
-        "Costo total",
-        "Monto solicitado al GLF más cofinanciamiento. No se suma ningún importe adicional a estas dos estimaciones.",
-        "Total cost",
-        "Requested GLF funding plus cofinancing. No additional amount is added to these two estimates.",
-      ],
-    ],
-    tip: [
-      "Los mensajes en rojo señalan valores que debe corregir antes de continuar.",
-      "Red messages identify amounts to correct before continuing.",
-    ],
-    screen: [
-      [
-        "Monto solicitado al GLF · Cofinanciamiento",
-        "Requested GLF funding · Cofinancing",
-      ],
-      ["Costo total estimado", "Estimated total cost"],
     ],
   },
   {
@@ -858,8 +808,65 @@ export const manualChapters: ManualChapter[] = [
     ],
   },
   {
+    id: "presupuesto",
+    title: ["Paso 3 · Presupuesto resumido", "Step 3 · Summary budget"],
+    intro: [
+      "Estime los costos de las actividades ya ingresadas. El presupuesto resumido debe coincidir con el monto GLF más el cofinanciamiento de Información general. El detalle anual corresponde a fase 2.",
+      "Estimate costs for activities already entered. The summary budget must match GLF funding plus cofinancing in General information. Annual detail belongs to phase 2.",
+    ],
+    steps: [
+      [
+        "Consigne Bienes, Servicios, Consultorías y Honorarios por actividad; use 0 si no aplica.",
+        "Enter Goods, Services, Consultancies and Fees per activity; use 0 if not applicable.",
+      ],
+      [
+        "Identifique los gastos administrativos y el SGAS ya incluidos. Honorarios incluye remuneraciones y salarios; declare aparte solo los incluidos en otros rubros, sin sumarlos nuevamente.",
+        "Identify administrative and ESMS costs already included. Fees include remuneration and salaries; separately identify only those included in other categories, without adding them again.",
+      ],
+      [
+        "Administración: máximo 10 % del costo total del proyecto. Remuneraciones, honorarios y salarios: máximo 30 % del monto solicitado al GLF.",
+        "Administration: maximum 10% of total project cost. Remuneration, fees and salaries: maximum 30% of the amount requested from GLF.",
+      ],
+      [
+        "Puede guardar un borrador incompleto. Complete las actividades y corrija diferencias y límites antes de preparar los documentos y enviar.",
+        "You can save an incomplete draft. Complete the activities and resolve differences and limits before preparing documents and submitting.",
+      ],
+    ],
+    rows: [
+      [
+        "Totales",
+        "No se modifican automáticamente los montos generales. El aviso indica cuánto falta distribuir o cuánto se excede.",
+        "Totals",
+        "General amounts are not changed automatically. A notice shows the remaining allocation or excess.",
+      ],
+      [
+        "Vínculos",
+        "Renombrar o reordenar actividades conserva los importes. Si elimina una actividad, revise y confirme la retirada de sus costos pendientes.",
+        "Links",
+        "Renaming or reordering activities preserves amounts. If an activity is deleted, review and confirm removal of its pending costs.",
+      ],
+    ],
+    tip: [
+      "Los importes incluidos de administración, remuneraciones y SGAS son parte del total, no cargos adicionales.",
+      "Included administration, remuneration and ESMS amounts are part of the total, not additional charges.",
+    ],
+    screen: [
+      [
+        "Actividad → cuatro rubros → total y porcentaje",
+        "Activity → four categories → total and percentage",
+      ],
+      [
+        "Información general = Total presupuestado",
+        "General information = Budgeted total",
+      ],
+    ],
+  },
+  {
     id: "screening",
-    title: ["Paso 3 · Actividades y Riesgos A&S", "Step 3 · Activities and E&S Risks"],
+    title: [
+      "Paso 4 · Actividades y Riesgos A&S",
+      "Step 4 · Activities and E&S Risks",
+    ],
     intro: [
       "El screening inicial identifica y evalúa riesgos por actividad. En esta fase no se solicitan medidas de mitigación, costos, responsables ni planificación del PGAS.",
       "Initial screening identifies and assesses risks by activity. This stage does not request mitigation measures, costs, responsible persons or ESMP planning.",
@@ -1035,8 +1042,8 @@ export const manualChapters: ManualChapter[] = [
   {
     id: "documentos",
     title: [
-      "Paso 4 · Preparar y firmar documentos",
-      "Step 4 · Prepare and sign documents",
+      "Paso 5 · Preparar y firmar documentos",
+      "Step 5 · Prepare and sign documents",
     ],
     intro: [
       "Revise el contenido antes de generar los dos PDF. Debe firmarlos electrónicamente fuera del portal y cargar cada archivo en su casilla correspondiente.",

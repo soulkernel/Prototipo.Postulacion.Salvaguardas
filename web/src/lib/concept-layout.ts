@@ -1,5 +1,6 @@
 // Legacy snapshots retain their recorded layout; defaults apply only to new documents.
-export const currentConceptLayout = "glf-concept-20261020-v6";
+export const currentConceptLayout = "glf-concept-20261020-v7";
+export const orderedConceptLayout = "glf-concept-20261020-v6";
 export const sustainabilityConceptLayout = "glf-concept-20261020-v5";
 export const monitoringConceptLayout = "glf-concept-20261020-v4";
 export const resultsConceptLayout = "glf-concept-20261020-v3";
@@ -28,15 +29,20 @@ export const conceptSectionOrder = [
   "duration",
   "financing",
   ...projectDescriptionOrder,
+  "summary_budget",
 ] as const;
 export function usesOrderedProjectDescription(
   presentation: ConceptPresentation,
 ) {
-  return presentation.layoutVersion === currentConceptLayout;
+  return (
+    presentation.layoutVersion === currentConceptLayout ||
+    presentation.layoutVersion === orderedConceptLayout
+  );
 }
 export function usesCurrentGlfForm(presentation: ConceptPresentation) {
   return (
     presentation.layoutVersion === currentConceptLayout ||
+    presentation.layoutVersion === orderedConceptLayout ||
     presentation.layoutVersion === sustainabilityConceptLayout ||
     presentation.layoutVersion === monitoringConceptLayout ||
     presentation.layoutVersion === resultsConceptLayout ||
@@ -49,6 +55,7 @@ export function includesDetailedResults(presentation: ConceptPresentation) {
 export function usesStageSpecificResults(presentation: ConceptPresentation) {
   return (
     presentation.layoutVersion === currentConceptLayout ||
+    presentation.layoutVersion === orderedConceptLayout ||
     presentation.layoutVersion === sustainabilityConceptLayout ||
     presentation.layoutVersion === monitoringConceptLayout ||
     presentation.layoutVersion === resultsConceptLayout
@@ -57,6 +64,7 @@ export function usesStageSpecificResults(presentation: ConceptPresentation) {
 export function usesStructuredMonitoring(presentation: ConceptPresentation) {
   return (
     presentation.layoutVersion === currentConceptLayout ||
+    presentation.layoutVersion === orderedConceptLayout ||
     presentation.layoutVersion === sustainabilityConceptLayout ||
     presentation.layoutVersion === monitoringConceptLayout
   );
@@ -66,6 +74,7 @@ export function usesStructuredSustainability(
 ) {
   return (
     presentation.layoutVersion === currentConceptLayout ||
+    presentation.layoutVersion === orderedConceptLayout ||
     presentation.layoutVersion === sustainabilityConceptLayout
   );
 }

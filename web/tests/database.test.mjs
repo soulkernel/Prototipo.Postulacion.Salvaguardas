@@ -992,7 +992,7 @@ before(async () => {
   for (const name of (await readdir(migrations))
     // Earlier tests exercise historical workflow contracts. The final test
     // applies 051 twice and verifies the new completion rule and unchanged data.
-    .filter((n) => n.endsWith(".sql") && n !== "202610200051_required_linked_monitoring.sql")
+    .filter((n) => n.endsWith(".sql") && !["202610200051_required_linked_monitoring.sql", "202610210052_concept_summary_budget.sql"].includes(n))
     .sort()) {
     try {
       await db.exec(await readFile(new URL(name, migrations), "utf8"));
@@ -3831,4 +3831,39 @@ test("required monitoring blocks legacy bypass and preserves drafts, records and
  const frozen=(await db.query("select payload from public.prepared_documents where id=$1",[prepared])).rows[0].payload;
  assert.deepEqual(frozen.concept.monitoring_plan,p.concept.monitoring_plan);assert.equal(frozen.concept.monitoring,"PROPUESTA ANTERIOR CONSERVADA");
  for(const role of ["anon","authenticated"])assert.equal((await db.query("select has_function_privilege($1,'private.validate_monitoring_plan(jsonb,boolean)','EXECUTE') allowed",[role])).rows[0].allowed,false);
+});
+
+
+test("summary budget enforces direct SQL/RPC totals and caps, permits incomplete drafts and preserves historical data",async()=>{
+ const sql=await readFile(new URL("../../supabase/migrations/202610210052_concept_summary_budget.sql",import.meta.url),"utf8");
+ const snapshot=async()=>Object.fromEntries(await Promise.all(["applications","application_versions","prepared_documents","application_documents","application_events","calls","activities","risks"].map(async t=>[t,(await db.query(`select to_jsonb(row) value from public.${t} row order by id`)).rows])));
+ const before=await snapshot();await db.exec(sql);assert.deepEqual(await snapshot(),before);
+ const previous=(await db.query("select payload from public.prepared_documents where payload->'concept'->'monitoring_plan' is not null order by created_at desc limit 1")).rows[0].payload;
+ const p=structuredClone(previous);delete p.attachments;
+ Object.assign(p.concept,{requested_amount:10000,cofinance_amount:2000});
+ const budget={version:"glf-summary-v1",currency:"USD",entries:p.activities.map((a,i)=>({activity_id:a.id,goods:i?0:900000,services:0,consultancies:0,fees:i?0:300000})),administrative:120000,other_remuneration:0,sgas:50000};
+ const validate=(value,complete=true,stage=1)=>db.query("select private.validate_summary_budget($1::jsonb,$2,$3)",[JSON.stringify(value),complete,stage]);
+ await validate(p,false);await assert.rejects(validate(p),/GLF_REQUIRED:summary_budget/);p.concept.summary_budget=budget;await validate(p);
+ for(const [field,value,code] of [["administrative",120001,"admin_limit"],["other_remuneration",1,"remuneration_limit"],["sgas",1200001,"sgas_subset"]]){const bad=structuredClone(p);bad.concept.summary_budget[field]=value;await validate(bad,false);await assert.rejects(validate(bad),new RegExp("GLF_REQUIRED:summary_budget_"+code));}
+ const mismatch=structuredClone(p);mismatch.concept.summary_budget.entries[0].goods++;await validate(mismatch,false);await assert.rejects(validate(mismatch),/GLF_REQUIRED:summary_budget_totals/);
+ const orphan=structuredClone(p);orphan.concept.summary_budget.entries[0].activity_id=crypto.randomUUID();await validate(orphan,false);await assert.rejects(validate(orphan),/GLF_REQUIRED:summary_budget_unlinked/);
+ const incomplete=structuredClone(p);incomplete.concept.summary_budget.entries[0].goods=null;await validate(incomplete,false);await assert.rejects(validate(incomplete),/GLF_REQUIRED:summary_budget_activity/);
+ for(const amount of [-1,1.5,"100",100000000000000]){const bad=structuredClone(p);bad.concept.summary_budget.entries[0].goods=amount;await assert.rejects(validate(bad,false),/GLF_INVALID_SUMMARY_BUDGET/);}
+ const duplicate=structuredClone(p);duplicate.concept.summary_budget.entries.push(duplicate.concept.summary_budget.entries[0]);await assert.rejects(validate(duplicate,false),/GLF_INVALID_SUMMARY_BUDGET/);
+ const phase2=structuredClone(p);phase2.concept.requested_amount=20000;await validate(phase2,true,2);assert.deepEqual(phase2.concept.summary_budget,budget);
+ const owner=await temporaryAccount(),app=await rpc("create_application",{call_id:call},owner);
+ // Generate fresh activity/risk IDs; carry all existing planning references with them.
+ const map=new Map(p.activities.map(a=>[a.id,crypto.randomUUID()]));
+ p.activities=p.activities.map(a=>({...a,id:map.get(a.id),risks:a.risks.map(r=>({...r,id:crypto.randomUUID()}))}));
+ p.concept.summary_budget.entries=p.concept.summary_budget.entries.map(e=>({...e,activity_id:map.get(e.activity_id)}));
+ p.concept.monitoring_plan=p.concept.monitoring_plan.map(m=>m.parameter==="activity"?{...m,reference_id:map.get(m.reference_id)}:m);
+ if(p.concept.sustainability_plan)p.concept.sustainability_plan=p.concept.sustainability_plan.map(s=>({...s,references:s.references.map(r=>r.type==="activity"?{...r,id:map.get(r.id)}:r)}));
+ const bad=structuredClone(p);bad.concept.summary_budget.entries[0].goods++;
+ await rpc("save_application",{application_id:app,expected_revision:0,payload:bad},owner);
+ await assert.rejects(rpc("prepare_application_documents",{app_id:app,expected_revision:1},owner),/GLF_REQUIRED:summary_budget_totals/);
+ await rpc("save_application",{application_id:app,expected_revision:1,payload:p},owner);
+ const prepared=await rpc("prepare_application_documents",{app_id:app,expected_revision:2},owner);
+ const frozen=(await db.query("select payload,concept_layout_version from public.prepared_documents where id=$1",[prepared])).rows[0];
+ assert.equal(frozen.concept_layout_version,"glf-concept-20261020-v7");assert.deepEqual(frozen.payload.concept.summary_budget,p.concept.summary_budget);
+ for(const role of ["anon","authenticated"])assert.equal((await db.query("select has_function_privilege($1,'private.validate_summary_budget(jsonb,boolean,integer)','EXECUTE') allowed",[role])).rows[0].allowed,false);
 });

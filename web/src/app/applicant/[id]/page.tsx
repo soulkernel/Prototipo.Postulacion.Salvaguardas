@@ -14,7 +14,11 @@ export default async function ApplicationPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ receipt?: string; step?: string | string[] }>;
+  searchParams: Promise<{
+    receipt?: string;
+    step?: string | string[];
+    section?: string | string[];
+  }>;
 }) {
   const requestTime = await getRequestTime();
   const { id } = await params;
@@ -119,7 +123,7 @@ export default async function ApplicationPage({
         call={call as Call}
         locale={locale}
         editable={editable}
-        initialStep={applicationStepFromQuery(query.step)}
+        initialStep={applicationStepFromQuery(query.step, query.section)}
         academicReadOnly={viewer.profile.access_kind === "academic"}
         serverNow={requestTime}
         accountEmail={viewer.user.email || ""}

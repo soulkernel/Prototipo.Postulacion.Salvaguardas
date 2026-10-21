@@ -3,6 +3,7 @@ import {
   projectDateErrors,
 } from "./applicant-validation";
 import { budgetIssues } from "./budget";
+import { summaryBudgetIssues } from "./summary-budget";
 import { z } from "zod";
 import { normalizePhone } from "./phone";
 import { geographyIssues } from "./geography";
@@ -67,8 +68,6 @@ export function stepIssues(
         invalid.push("project_type");
       invalid.push(...identificationIssues(payload.concept));
       invalid.push(...Object.keys(projectDateErrors(payload.concept, rules)));
-      if (stage === 2)
-        invalid.push(...budgetIssues(payload.budget, payload.concept));
       missing.push(...partnerIssues(payload.concept));
       missing.push(...geographyIssues(payload.concept));
       if (
@@ -103,6 +102,12 @@ export function stepIssues(
             missing.push("phase2:" + f.id);
     }
   } else if (step === 2) {
+    invalid.push(
+      ...(stage === 1
+        ? summaryBudgetIssues(payload)
+        : budgetIssues(payload.budget, payload.concept)),
+    );
+  } else if (step === 3) {
     missing.push(
       ...validateComplete(payload, rules, stage).filter(
         (k) =>

@@ -1,0 +1,66 @@
+GLF — Presupuesto resumido de fase 1 — decisión del usuario, 20/10/2026
+
+ALCANCE
+Secuencia: 1 Información general; 2 Descripción del proyecto; 3 Presupuesto;
+4 Actividades y Riesgos A&S; 5 Revisar y enviar. ES/EN equivalentes.
+Es un resumen rápido de la nota conceptual: cuatro rubros por actividad ya creada
+(Bienes, Servicios, Consultorías y Honorarios), totales y porcentajes automáticos.
+No exige años, cantidades, costos unitarios, comprobantes ni partidas detalladas.
+El presupuesto anual existente sigue correspondiendo a fase 2 y pasa al paso 3.
+
+REGLAS CONFIRMADAS
+- Total resumido = monto solicitado al GLF + cofinanciamiento de Información general.
+  Se muestra la diferencia, sin sobrescribir ni repartir automáticamente esos montos.
+- Administración: máximo 10 % del costo total del proyecto (GLF + cofinanciamiento).
+  La confirmación expresa sustituye el retiro para nuevos presupuestos resumidos;
+  no reintroduce la antigua entrada admin_cost en Información general de fase 1.
+- Remuneraciones, honorarios y salarios: máximo 30 % del monto solicitado al GLF.
+  Honorarios integra esos pagos; se identifica adicionalmente el importe de esa
+  naturaleza incluido en otros rubros, para no omitirlo ni contarlo dos veces.
+- SGAS: identificar el importe ya previsto para elaboración e implementación,
+  sin inventar un mínimo. Cero es válido. Administración, remuneraciones y SGAS
+  son componentes ya incluidos, no sumandos adicionales al total.
+- Los límites exactos se aceptan; un centavo por encima se observa.
+- Guardado incompleto/diferencias permitidos; preparación y envío exigen coherencia.
+
+VÍNCULOS Y ALMACENAMIENTO
+concept.summary_budget, versión glf-summary-v1, moneda USD.
+Importes como enteros de centavos, null para entradas pendientes. Una fila por
+activity_id UUID único; los objetivos se leen de los vínculos existentes.
+Una actividad asociada a varios objetivos se suma una sola vez.
+Renombrar y reordenar conserva los importes. Una actividad eliminada deja sus
+costos pendientes, visibles y bloqueantes al completar; se retiran solo mediante
+confirmación explícita. Agregar una actividad deja sus cuatro rubros pendientes.
+Mostrar/plegar fichas no guarda ni crea datos. Las fichas no se cierran al completar
+el último importe. Los decimales parciales y ceros escritos permanecen al editar.
+
+COMPATIBILIDAD
+admin_cost y budget anual históricos se conservan. El resumen no se convierte ni
+distribuye automáticamente al presupuesto anual. En fase 2 permanece como referencia
+consultable y no se reconcilia con las ediciones del detalle anual.
+El formato glf-concept-20261020-v7 aplica a documentos nuevos; v6 y anteriores
+mantienen sus formatos. No se reescriben aplicaciones, documentos preparados,
+versiones enviadas, firmas, reglas de convocatoria ni archivos históricos.
+Los borradores existentes requieren el resumen al volver a preparar/enviar con
+las reglas actuales, sin rellenar importes por inferencia.
+Enlaces nuevos usan section=general|description|budget|risks|review además del
+número visible. Los enlaces antiguos ?step=3 y ?step=4 siguen abriendo Riesgos
+y Revisar respectivamente; el nuevo Presupuesto usa ?step=3&section=budget.
+
+INTEGRACIÓN
+Captura, guardado, acciones del servidor, SQL, progreso, avisos/enlaces de pendientes,
+revisión externa/interna y PDF comparten importes y relaciones. El PDF presenta
+montos sin repetir USD en cada celda de la matriz, con encabezado/unidad explícitos,
+objetivos por su número y formato compacto para evitar fraccionar cifras habituales.
+La migración 052 agrega validación privada y cambia los valores por defecto de los
+formatos; no contiene UPDATE/DELETE de registros. Conserva funciones y permisos.
+La ejecución remota debe verificar la huella vigente, ser transaccional, comprobar
+límites con JSON sintético y contrastar las huellas de los datos antes/después.
+
+PRUEBAS PREVISTAS PARA LA ENTREGA
+ES/EN; cero/una/varias actividades; coincidencia y diferencia de un centavo;
+límites 10/30 exactos y excedidos; componentes incluidos sin doble suma; cifras,
+entradas parciales y malformed; guardado/reapertura/error/reintento; vínculos al
+renombrar/reordenar/agregar/eliminar; borrador incompleto; bloqueo de preparación;
+fase 2; nuevo PDF y legado v6; teclado, móvil, tableta y zoom. Registrar ejecución
+y límites reales en el informe de publicación; no asumir éxito por esta lista.

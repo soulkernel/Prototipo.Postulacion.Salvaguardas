@@ -1,3 +1,4 @@
+import { summaryBudgetMessage } from "./summary-budget";
 import { activityDateErrors, activityDateMessage } from "./activity-planning";
 import { monitoringEntryIssues } from "./monitoring-plan";
 import {
@@ -42,7 +43,7 @@ export function completionGuidance(
     fieldLabel?: string,
   ) => out.push({ id, step, text, selector, fieldLabel });
   const field = (key: string) => `[data-validation-field="${key}"]`;
-  const issues = [0, 1, 2].map((s) =>
+  const issues = [0, 1, 2, 3].map((s) =>
     stepIssues(payload, rules, stage, s, phase2),
   );
   const keys = [
@@ -54,10 +55,14 @@ export function completionGuidance(
   const alignment = payload.concept.strategic_alignment;
   keys.forEach((key) => {
     if (key === "other_instruments") return; // Individual missing fields are identified below.
+    if (key.startsWith("summary_budget")) {
+      add(key, 2, summaryBudgetMessage(key, locale), "#summary-budget");
+      return;
+    }
     if (key.startsWith("budget_")) {
       add(
         key,
-        0,
+        2,
         es
           ? "Presupuesto: revise descripciones, años y concordancia de los totales."
           : "Budget: check descriptions, years and matching totals.",
@@ -126,7 +131,7 @@ export function completionGuidance(
         : key === "activities" ||
             key.startsWith("no_risks_reason") ||
             key === "risk_unlinked"
-          ? 2
+          ? 3
           : 1;
     let text = f?.[es ? "es" : "en"] || names[key];
     if (key === "partners")
@@ -347,7 +352,7 @@ export function completionGuidance(
         if (value === null || (typeof value === "string" && !value.trim()))
           add(
             `risk-${ai}-${ri}-${key}`,
-            2,
+            3,
             label +
               ": " +
               (es ? "complete " : "complete ") +
@@ -362,7 +367,7 @@ export function completionGuidance(
       )
         add(
           `risk-${ai}-${ri}-measures`,
-          2,
+          3,
           label +
             (es
               ? ": complete las medidas de mitigación"
@@ -377,7 +382,7 @@ export function completionGuidance(
       )
         add(
           `risk-${ai}-${ri}-quarters`,
-          2,
+          3,
           label +
             (es
               ? ": la finalización no puede preceder al inicio"
@@ -396,7 +401,7 @@ export function completionGuidance(
       )
         add(
           `risk-${ai}-${ri}-source`,
-          2,
+          3,
           label +
             (es
               ? ": seleccione un riesgo registrado válido"
@@ -498,7 +503,7 @@ export function completionGuidance(
     if (!payload[key])
       add(
         key,
-        3,
+        4,
         key === "truthful"
           ? es
             ? "Confirme la declaración de veracidad"

@@ -1175,6 +1175,29 @@ dialog.narrative-adjust-dialog {
 /* Compact account controls remain distinct from the primary navigation. */
 .live-header nav { gap: 8px; justify-content: flex-start; min-width: 0; }
 .live-header .reference-link-icon { margin-left: 5px; flex-shrink: 0; }
+.summary-budget-overview { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:18px 0; }
+.summary-budget-overview > div { padding:14px;border:1px solid #cbdce9;border-radius:8px;background:#edf5fc; }
+.summary-budget-overview span,.summary-budget-overview strong {display:block;line-height:1.5;}
+.summary-budget-overview strong {font-size:20px;color:#1e3a6c;margin-top:6px;overflow-wrap:anywhere;}
+.summary-budget-links {display:flex;flex-wrap:wrap;gap:10px;margin:14px 0;}
+.summary-budget .button {white-space:normal;max-width:100%;}
+.summary-budget-card {border:1px solid #c6dce5;border-left:4px solid #008c99;border-radius:9px;background:#f4f9fc;margin:14px 0;padding:16px;}
+.summary-budget-card > summary {display:flex;justify-content:space-between;gap:14px;cursor:pointer;color:#1e3a6c;font-weight:700;line-height:1.5;}
+.summary-budget-card > summary::before {content:"▸";}
+.summary-budget-card[open] > summary::before {content:"▾";}
+.summary-budget-card > summary > span {flex:1;min-width:0;overflow-wrap:anywhere;}
+.summary-budget-card > p {font-size:13px;color:#465a73;line-height:1.6;}
+.summary-budget-amounts {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 22px;}
+.summary-budget-included {margin:20px 0;padding:18px;border:1px solid #ccdce7;border-radius:9px;background:#f7f9fc;}
+.summary-budget-included h3 {font-size:18px;color:#1e3a6c;font-weight:700;margin-top:0;}
+.summary-budget-warning,.summary-budget-orphan {margin:14px 0;padding:14px 18px;border:1px solid #ddb56b;border-left:4px solid #9b4e12;border-radius:7px;background:#fff5df;color:#6a3710;line-height:1.6;}
+.summary-budget-warning ul {list-style:disc;padding-left:20px;margin:0;}
+.summary-budget-orphan {display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.summary-budget-match {color:#165a43;background:#edf8f2;border:1px solid #badac9;border-radius:7px;padding:12px;}
+.summary-budget .concept-table-scroll {margin-top:18px;}
+.summary-budget table caption {text-align:left;padding:8px 0;font-weight:700;color:#1e3a6c;}
+@media(max-width:760px){.summary-budget-overview{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(max-width:520px){.summary-budget-amounts{grid-template-columns:1fr;}.summary-budget-card > summary{flex-wrap:wrap;}.summary-budget-card > summary > strong{margin-left:auto;}.summary-budget-overview strong{font-size:18px;}}
 .live-header nav a {
   display: inline-flex;
   align-items: center;

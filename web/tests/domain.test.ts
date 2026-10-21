@@ -6,7 +6,7 @@ import {
 } from "../src/lib/application-navigation";
 
 test("application step survives refresh via a bounded query without changing other URL context", () => {
-  for (let step = 0; step < 4; step++) {
+  for (let step = 0; step < 5; step++) {
     const next = new URL(
       applicationStepUrl(
         "https://example.invalid/applicant/fake?receipt=test#main-content",
@@ -14,7 +14,7 @@ test("application step survives refresh via a bounded query without changing oth
       ),
       "https://example.invalid",
     );
-    assert.equal(applicationStepFromQuery(next.searchParams.get("step")), step);
+    assert.equal(applicationStepFromQuery(next.searchParams.get("step"), next.searchParams.get("section")), step);
     assert.equal(next.searchParams.get("receipt"), "test");
     assert.equal(next.hash, "#main-content");
     assert.equal(next.pathname, "/applicant/fake");
@@ -24,7 +24,7 @@ test("application step survives refresh via a bounded query without changing oth
     null,
     "",
     "0",
-    "5",
+    "6",
     "-1",
     "2.5",
     "02",
@@ -576,7 +576,7 @@ test("continue reports missing required fields and financial errors together", (
   p.concept.admin_cost = 1000;
   assert.deepEqual(stepIssues(p, rules, 1, 0).invalid, []);
   assert.ok(stepIssues(p, rules, 1, 1).missing.includes("summary"));
-  assert.deepEqual(stepIssues(p, rules, 1, 2).missing, ["activities"]);
+  assert.deepEqual(stepIssues(p, rules, 1, 3).missing, ["activities"]);
 });
 test("new applications reuse editable applicant details without copying project data", () => {
   const original = {

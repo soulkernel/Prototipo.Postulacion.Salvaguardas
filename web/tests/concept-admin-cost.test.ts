@@ -90,6 +90,7 @@ function complete() {
   p.concept.monitoring_plan = [{...newMonitoringItem(),parameter:"activity",reference_id:activity.id,indicator:"Avance documentado",strategy:"Revisar registros"}];
   p.consent = true;
   p.truthful = true;
+  p.concept.summary_budget = {version:"glf-summary-v1",currency:"USD",entries:p.activities.map((a,i)=>({activity_id:a.id,goods:i===0?Math.round(((p.concept.requested_amount??0)+(p.concept.cofinance_amount??0))*100):0,services:0,consultancies:0,fees:0})),administrative:0,other_remuneration:0,sgas:0};
   return p;
 }
 
@@ -282,8 +283,8 @@ test("M08 new concept without admin_cost can be parsed and completed at 100%, wi
   const financing = manualChapters.find(
     (chapter) => chapter.id === "presupuesto",
   )!;
-  assert.match(financing.steps[0][0], /no se solicita un importe separado/);
-  assert.match(financing.steps[0][1], /not requested in the concept note/);
+  assert.match(financing.steps.map(step=>step[0]).join(" "), /Administración: máximo 10 % del costo total/);
+  assert.match(financing.steps.map(step=>step[1]).join(" "), /Administration: maximum 10% of total project cost/);
   assert.ok(
     !manualChapters
       .flatMap((chapter) => chapter.rows)
@@ -334,6 +335,7 @@ test("M08 historical amount is preserved, ignored in phase one and controlled ag
 
 test("M08 review and presentation omit admin only in the new phase-one layout and preserve legacy and phase-two views in ES/EN", () => {
   const c = complete().concept;
+  delete c.summary_budget; // Historical M08 scenario, without the new summary.
   c.admin_cost = 987.65;
   const original = structuredClone(c);
   for (const locale of ["es", "en"] as const) {
