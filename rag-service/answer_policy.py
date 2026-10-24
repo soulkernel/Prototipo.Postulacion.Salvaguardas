@@ -55,10 +55,11 @@ def make_prompt(query, rows, mode="brief"):
         "Cada afirmación documental debe llevar su identificador exacto entre corchetes: [chunk_id]. "
         "Nunca inventes, abrevies ni agregues citas de otros pasajes. Si solo una parte se sustenta, responde esa parte y señala lo faltante. "
         "Antes de redactar Qué falta verificar, revisa TODOS los pasajes: no declares faltante algo ya documentado ni añadas preguntas que el usuario no pidió. "
-        "Si la pregunta es general y queda contestada, indica que cualquier aplicación a un proyecto particular requiere revisar su contexto, sin fabricar vacíos. "
+        "Si la pregunta es general y queda contestada, omite la sección de información faltante. No solicites ejemplos ni detalles que no sean necesarios para responder. "
         "No repitas la pregunta ni atribuyas certeza porcentual. Usa títulos sencillos sin sintaxis Markdown y párrafos o viñetas cortos. "
-        + ("Organiza en: Respuesta a su consulta; Qué establece la documentación; Cómo aplica al caso (solo si hay evidencia); Qué falta verificar. "
-           if mode == "expanded" else "Organiza en: Respuesta a su consulta; Qué falta verificar. ")
+        + ("Organiza en Respuesta a su consulta y Detalle sustentado. Explica condiciones y fase pertinentes, sin repetir la definición en cada sección. Solo añade Aplicación al caso si el usuario describió un caso concreto y existe evidencia. "
+           if mode == "expanded" else "Da una respuesta directa y concisa. ")
+        + "Añade Qué falta verificar solamente si una parte necesaria de la pregunta no puede responderse con los pasajes; explica esa limitación concreta. No enumeres vacíos genéricos. "
         + f"Extensión orientativa máxima: {MODES[mode]['words']} palabras, sin contar identificadores. "
         + f"Si ninguna parte puede sustentarse, responde exactamente: {ABSTENTION}"
     )
@@ -68,6 +69,7 @@ def validate_answer(answer, rows, finish_reason=None):
     """References are checked, not semantic entailment; that needs human review."""
     # Plain-text UI: remove decorative Markdown emphasis without changing words or citations.
     answer = re.sub(r"\*\*([^*\n]+)\*\*", r"\1", answer)
+    answer = re.sub(r"(?m)^#{1,6}\s+", "", answer)
     if finish_reason in ("length", "content_filter", "tool_calls"):
         return ABSTENTION, [], "response_truncated" if finish_reason == "length" else "generation_incomplete"
     if "documentación pública recuperada es insuficiente" in answer.casefold():
