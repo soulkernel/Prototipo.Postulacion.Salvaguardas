@@ -1,0 +1,74 @@
+M05 — Aviso y carta de apoyo individual por organización asociada
+Fecha: 17 de octubre de 2026 · hora de referencia: Galápagos
+Estado: implementación local; NO publicada.
+Repositorio: D:\GDRIVE LOCAL\CONSULTORIAS\SALVAGUARDAS GLF\portal-app
+Rama: feat/full-grants-platform
+Base revisada: b70c150 (versión publicada 0.7.22). No se creó commit ni se hizo push.
+
+DIAGNÓSTICO
+Las organizaciones se almacenaban como nombres en associated_organizations y un texto de compatibilidad partners. No tenían identificador estable, aviso de carta por fila, requisito individual ni validación cruzada de cartas. Los anexos generales ya disponían de arrastre, selección, tamaño, formatos, acceso privado y registro documental; se reutilizaron.
+
+IMPLEMENTACIÓN
+1. Datos generales: aviso ES/EN junto a cada socio. Se mantiene el máximo existente de 50 organizaciones y la validación del nombre de cada fila. La confirmación de papelera informa que la carta deja de exigirse, pero que sus archivos se conservan.
+2. Identidad: nuevo campo opcional concept.partner_organizations con objetos {id: UUID, name}. Se mantienen sincronizados associated_organizations y partners para las salidas existentes. Los borradores antiguos reciben IDs al abrirlos para edición; los expedientes enviados no se normalizan ni modifican. No hay actualización masiva.
+3. Cada carta usa kind=partner_letter_<UUID sin guiones>. El vínculo no depende del nombre ni de la posición. Renombrar, reordenar y agregar conservan los vínculos existentes. Eliminar un socio no elimina sus archivos ni reasigna la carta.
+4. Revisar y enviar → Anexos: campo independiente por organización no vacía, con nombre, selector accesible, arrastre, estado, archivos, descarga y error contextual. Antes de cargar una carta se deben guardar los cambios del socio. La carga muestra progreso y bloquea operaciones simultáneas.
+5. Se conservan los formatos y 4 MB del mecanismo de carga existente. Si la convocatoria define expresamente un requisito genérico de cartas de organizaciones asociadas, sus formatos, condiciones e instrucciones se reutilizan por socio y no se pide una carta genérica adicional. Otros requisitos documentales permanecen intactos.
+6. Cartas históricas sin vínculo: se muestran para consulta; en fase 1 también se conservan visibles los archivos cargados como Otro anexo. La aplicación no decide por el nombre del archivo a quién corresponden. Si son cartas de socios actuales, el operador debe volver a cargarlas en su campo individual para vincularlas expresamente. Los originales permanecen conservados.
+7. Borradores: se pueden guardar aunque falten cartas o haya una fila pendiente de completar. Una fila sin nombre no crea un anexo. Se conserva la validación que exige completar o quitar esa fila antes de finalizar.
+8. Envío: la interfaz indica las cartas pendientes y bloquea el envío. El servidor vuelve a comprobar los documentos guardados y su contenido; identifica la organización cuya carta falta o no se pudo validar. Cargas fallidas o en curso no sustituyen a un documento guardado. La revisión de contenido y autenticidad por GLF no se reemplaza con esta comprobación.
+9. SQL local: migración 039 valida identificadores, nombres y coherencia de los datos, rechaza registros documentales asociados a socios inexistentes y comprueba cartas por ID antes del envío directo por RPC. Mantiene autorización, bloqueo por revisión, versiones y eventos. No modifica políticas RLS ni acceso a documentos, ni contiene purgas o actualizaciones de expedientes históricos.
+10. No se implementan otros requerimientos M22; esta corrección cubre exclusivamente las cartas de organizaciones asociadas.
+
+ARCHIVOS MODIFICADOS
+web/src/components/partner-fields.tsx
+web/src/components/required-attachment-uploads.tsx
+web/src/components/application-editor.tsx
+web/src/components/file-drop-field.tsx (etiqueta accesible opcional; otros usos conservan su comportamiento)
+web/src/lib/partners.ts
+web/src/lib/domain.ts
+web/src/lib/attachment-requirements.ts
+web/src/lib/attachment-validation.ts
+web/src/lib/submission-progress.ts
+web/src/app/api/files/route.ts
+web/src/app/applicant/actions.ts
+web/package.json (añade pruebas; no incrementa versión ni dependencias)
+web/tests/database.test.mjs (prueba M05 y aislamiento de las pruebas que reejecutan migraciones anteriores)
+
+ARCHIVOS NUEVOS
+supabase/migrations/202610170039_partner_support_letters.sql
+web/tests/partner-letters.test.ts
+web/tests/m05-server.test.mjs
+Este informe y la evidencia auxiliar en scratch/m05-qa.
+
+PRUEBAS EJECUTADAS Y RESULTADOS
+• npm test: 148 pruebas correctas, 0 fallidas (48 SQL/servidor y 100 TypeScript/documentos). Las 48 incluyen 46 pruebas PGlite y 2 de las funciones reales de servidor con dependencias simuladas.
+• Cinco pruebas unitarias M05: cero, una y varias organizaciones; fila vacía; compatibilidad; IDs estables; renombrado/reordenamiento; requisitos genéricos explícitos; formatos/tamaño existentes; errores de documento y mensajes por organización.
+• PGlite: todas las migraciones, incluida 039, sobre base transitoria. Verificación de borrador incompleto, preparación sin cartas, bloqueo por carta ausente o ajena, rechazo fuera de interfaz, registro de cartas independientes, reapertura, renombrado, reordenamiento, eliminación, conservación de archivos/versiones y envío de expedientes sintéticos completos con cero/uno/varios socios. Se comprueba que el núcleo y los auxiliares privados no sean ejecutables por roles de navegador.
+• Servidor real aislado: se ejecutaron POST /api/files y submitDraft con identidad, almacenamiento y RPC simulados. Se rechaza un ID de socio desconocido o eliminado, un fallo de almacenamiento y una carta que no puede leerse; no se invoca el RPC de envío hasta satisfacer la condición de cartas. No se conectan estos ensayos a Supabase.
+• Navegador: 24 casos registrados y 36 aserciones correctas. Cero socios, carta individual, aviso, selección nativa de PDF, carga fallida/reintento, carga exitosa, estado pendiente, bloqueo/habilitación por cartas, renombrado, agregar, reordenar, guardar y reabrir, papelera/cancelar/Escape/confirmar con doble clic, archivo conservado, carta genérica antigua, Otro anexo antiguo, fila vacía, idioma y etiquetas accesibles.
+• Selección nativa: se utilizó el selector real de Chrome; el archivo inequívoco carta-QA-seleccion-nativa.pdf aparece tras la carga. La inspección DOM no expone FileList; por ello sus arrays files no se usan como prueba de la selección.
+• Arrastre: ejecutado el manejador real FileDropField con DragEvent y DataTransfer desde el control del banco de pruebas. No se realizó arrastre manual desde el Explorador de Windows.
+• Accesibilidad: asociación del aviso con aria-describedby; formularios nombrados por organización; selector con etiqueta específica; estados, errores y carga accesibles; Cancelar y Escape en confirmación. No equivale a una auditoría formal con lector de pantalla.
+• npm run lint: correcto, sin errores. npm run build: compilación y TypeScript correctos; 26 páginas generadas. git diff --check del alcance: sin errores de espacios. Ver logs adjuntos.
+
+EVIDENCIA LOCAL
+scratch/m05-qa/tests.log
+scratch/m05-qa/lint.log
+scratch/m05-qa/build.log
+scratch/m05-qa/browser-evidence.json
+scratch/m05-qa/assert-evidence.mjs
+scratch/m05-qa/assertions.log
+scratch/m05-qa/aviso-socios-es.png
+scratch/m05-qa/anexos-individuales-es.png
+scratch/m05-qa/ui.tsx y run.mjs: banco de pruebas reproducible, sin acceso a producción.
+Vista de prueba: http://127.0.0.1:3190/
+Los documentos firmados y la carga del banco visual son simulados; los datos se guardan en localStorage. No son un expediente listo para envío real ni acreditan una firma electrónica.
+
+PENDIENTES Y LÍMITES
+• Migración 039 preparada y probada únicamente en PGlite; NO aplicada en Supabase.
+• Cambios NO enviados a GitHub ni desplegados en Vercel, según la instrucción de M05.
+• No se probó carga ni persistencia en el Storage real ni autenticación en una publicación nueva. Se deberá comprobar en un entorno de prueba autorizado cuando se decida publicar.
+• Pendiente la comprobación manual de arrastre desde el Explorador; el manejador de arrastre sí se ejecutó en la prueba aislada.
+• Las cartas antiguas ambiguas requieren vinculación expresa del usuario; no se han revisado ni modificado documentos reales.
+• Se preservó el cambio ajeno preexistente scratch/desktop.ini. No se modificaron usuarios, privilegios, datos, firmas ni comunicaciones.

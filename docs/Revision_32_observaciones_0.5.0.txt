@@ -1,0 +1,153 @@
+REVISIÓN DE FACTIBILIDAD Y MAPA DE IMPLEMENTACIÓN — v0.5.0
+V: implementado/verificado con pruebas automatizadas; P: parte pendiente/configuración institucional. V/P distingue capacidad existente de aceptación operativa. No equivale a aprobación de GLF.
+
+Fuentes: instrucciones de Schubert (Texto pegado.txt) y Manual GLF 2025, pp. impresas 5,14,24,26–29:
+https://galapagoslifefund.org.ec/es/2convocatoria/
+https://galapagoslifefund.org.ec/es/wp-content/uploads/sites/2/2025/12/MANUAL-DE-PROCEDIMIENTOS-GLF-2025.pdf
+Matriz original: Formatos y Normativa de postulación/AI SALVAGUARDAS reunion 16.09.2026/Matriz_Riesgos_Salvaguardas_Final.xlsx, lectura sin modificar. Catálogo definitivo pendiente en hoja Catálogo salvaguardas; consulta Supabase confirmó cero registros en safeguard_catalog.
+
+No se modifican usuarios/roles/privilegios/autenticación, no se eliminan datos, no se envían invitaciones ni se presentan solicitudes o resoluciones.
+
+32 OBSERVACIONES
+01. Dos fases: conservar y probar.
+Estado actual V: Pruebas SQL de dos fases y compuerta humana; invitación no significa aprobación.
+
+02. Nota conceptual y screening inicial: conservar y probar.
+Estado actual V: Screening inicial conserva fase 1; SQL rechaza medidas y residuales en esta fase.
+
+03. Invitación a fase 2, propuesta completa y calendario: verificar; no inventar fechas.
+Estado actual P: Invitación/calendario existentes probados; no se inventan fechas ni se activa fase 2 sin resolución.
+
+04. Duraciones máximas 12/24/36 meses: probar.
+Estado actual V: Máximos 12/24/36 conservados; duración menor aceptada; exceso rechazado; años bisiestos verificados.
+
+05. Límites de texto: unificar confirmados; otros pendientes.
+Estado actual P: Resumen conjunto 500 palabras confirmado. Otros límites institucionales pendientes. Contador narrativo muestra caracteres actuales, sin reclamar máximo institucional ni truncar texto histórico.
+
+06. Porcentaje de avance: implementar.
+Estado actual V: Avance por requisitos aplicables de fase; guardado excluido. Ver fórmula abajo.
+
+07. Arrastrar y soltar en cargas: implementar.
+Estado actual V/P: FileDropField común: arrastrar/soltar, selector nativo, teclado, formato, un archivo y 4 MB. Validaciones automatizadas; aceptación manual de arrastre multinavegador pendiente.
+
+08. Confirmación y fecha/hora de envío: probar.
+Estado actual V: Comprobante e historial con fecha/hora Galápagos y pruebas ES/EN de PDF.
+
+09. Código único: probar unicidad y persistencia.
+Estado actual V: Código UUID/referencia única conservados; persistencia entre expediente y versiones, sin cambiar esquema de referencias.
+
+10. PDF y aviso de no garantía de financiamiento: completar consistencia.
+Estado actual V: Aviso institucional existente centralizado en nota, matriz y comprobante; no se agrega condición legal.
+
+11. PDF desde base de datos: inventariar alcance actual; alcance adicional pendiente.
+Estado actual P: Nota/propuesta, matriz y comprobante por versión y archivos firmados separados. PDF consolidado adicional/audiencia pendientes; no se amplían.
+
+12. Screening en pestaña separada junto a nota conceptual: probar.
+Estado actual V: Screening conserva sección propia y documento separado; pruebas de exportación.
+
+13. Fase 1 solo A–G y reutilización de actividades: verificar límites de fase y continuidad.
+Estado actual V/P: Actividades por ID reutilizadas; fase 1 sin mitigación/costos/residuales. Columna requerida por feedback añadida preservando descripción; modalidad fase 2 pendiente.
+
+14. Tercera columna norma de desempeño: implementar preservando descripción.
+Estado actual P: Tabla visible: Actividad, Riesgo, Norma de desempeño (tercera), Descripción, Probabilidad, Gravedad, Puntaje. Persistencia payload/PDF y validación de referencias. Catálogo vacío en Supabase y pendiente en Excel original: selección preparada, no operativa hasta recibir/cargar catálogo validado.
+
+15. Fase 2, PGAS/PPPI/MGQ: verificar capacidades; modalidad final pendiente.
+Estado actual P: PGAS/PPPI/MGQ diferenciados; capacidad de campos/cargas configurable. Modalidad y aplicabilidad finales pendientes.
+
+16. Categorías de subvención y grande >250.000: corregir sin retroactividad.
+Estado actual V: Nuevas operaciones: pequeña <=100000; mediana 100000,01–250000; grande >=250000,01, USD. Sin UPDATE a convocatorias/drafts/versiones existentes. Prueba de 250000 y no retroactividad.
+
+17. Cuatro líneas temáticas: verificar rótulos y configuración.
+Estado actual V/P: Cuatro líneas configurables en nuevos borradores de convocatoria; históricas conservan configuración. No se asignan líneas de oficio.
+
+18. Cofinanciamiento 0/10/25%: conservar y probar.
+Estado actual V: Cofinanciación 0/10/25% del solicitado conservada; cero permitido en pequeñas.
+
+19. Screening y clasificación institucional A/B/C: preservar revisión institucional, sin inventar decisión automática.
+Estado actual V/P: Categoría institucional por Sostenibilidad conservada; sumatoria no decide A/B/C ni aprobación.
+
+20. Presupuesto anual GLF/Otros: implementar.
+Estado actual V: Detalle anual GLF/Otros activable; años 1–3 según duración; resumen histórico capturado en legacy_summary, sin distribución automática.
+
+21. Subtotales y dos decimales: unificar y probar.
+Estado actual V: Centavos enteros, subtotales categoría/año/fuente, USD dos decimales. SQL valida concordancia al completar, rechaza fracciones de centavo/duplicados.
+
+22. Siete categorías oficiales: implementar.
+Estado actual V: Personal/Salarios; Equipos/Materiales; Formación/Seminarios/Talleres; Consultorías; Servicios; Viajes; Costos administrativos.
+
+23. Reglas 10% y 30%: preparar cálculos; separar ambigüedades y activación.
+Estado actual P: 30% incluye remuneraciones GLF+Otros de cualquier categoría, con clasificación sí/no/pendiente. No se presume que toda consultoría sea honorario. Control administrativo existente sobre total conservado. admin_base preparado sin selección; decidir base y advertencia/bloqueo.
+
+24. Formato completo A/B, Excel y PGAS de fase 2: revisar fuente; no confundir con clasificación A/B/C.
+Estado actual P: Bloques A/B fase 2 conservados, con medidas/residuales/costos/responsables/trimestres; no se confunden con A/B/C. Desglose subanual ambiguo del manual y modalidad de instrumentos pendientes; se implementan años sin inventar subperíodos.
+
+25. Conformidad administrativa antes del CAT: implementar partes deterministas; barrera productiva pendiente.
+Estado actual P: Checklist administrativo por fase, borrador individual, historial, referencias de numeración original duplicada e IDs únicos. Sin conformidad institucional ni bloqueo CAT automático.
+
+26. Rúbrica de 50 puntos: implementar contenido y borradores.
+Estado actual V: Diez criterios, 50 puntos, grupos/códigos/texto fuente completos. 1–5/null; borrador propio por versión, auditoría y concurrencia.
+
+27. Rúbrica de 55 puntos: implementar contenido y borradores.
+Estado actual V: Once criterios, 55 puntos; mismas garantías, independiente de fase 1; no se normalizan a otra escala.
+
+28. Promedio <25 y rechazo: función probada; activación pendiente.
+Estado actual P: Promedio preparado y probado, estrictamente <25; 25 no activa condición. Pendientes no son cero; abstenciones excluidas; definitive=false. No hay rechazo automático.
+
+29. Anexo 3, identidad/residencia frente a anexos del manual: no mezclar identidades ni aplicabilidad.
+Estado actual P: Anexos vigentes conservados; no equiparar Anexo 3 de identidad/residencia con screening o evaluación administrativa. Aplicabilidad pendiente.
+
+30. Botones agregar actividades/riesgos: probar.
+Estado actual V: Agregar actividades/riesgos conservado; pruebas de identidad, enlaces, persistencia y rechazo de duplicados.
+
+31. Etiquetas verbales 1–5: verificar escala correspondiente y probar.
+Estado actual V: Riesgos probabilidad×gravedad y etiquetas propias; rúbrica muy deficiente/deficiente/adecuado/bueno/muy bueno separada.
+
+32. Panel interno: probar con roles ficticios; no ampliar permisos.
+Estado actual V/P: Panel y autorización existentes, pruebas sintéticas de aislamiento/MFA. No se crean usuarios ni cambian asignaciones. Aceptación con técnicos reales pendiente.
+
+SIETE GRUPOS DE PREGUNTAS
+
+
+Agrupa preguntas e indica qué impiden activar:
+- ¿Base del 10%: total del proyecto o aporte GLF? ¿Qué incumplimientos advierten y cuáles bloquean, incluido 30%? ¿Cómo clasificar partidas dudosas?
+- ¿Límites narrativos adicionales al resumen de 500 palabras?
+- ¿Fase 2/PGAS/PPPI/MGQ mediante formularios, archivos o combinación?
+- ¿Quién revisa, evalúa y cierra? ¿Cuándo hay promedio definitivo? ¿Quórum, evaluaciones pendientes, abstenciones y conflictos?
+- ¿Qué significa exactamente Anexo 3 y a quién aplica? Distinguir identificación/residencia, cartas y numeraciones de diferentes formatos.
+- ¿Contenido del PDF consolidado e información interna excluida?
+- ¿Confirmación de corrección del checklist contradictorio sobre cofinanciación pequeña? Mientras tanto, conservar cero permitido.
+
+
+
+METODOLOGÍA DEL AVANCE
+Un requisito es una clave única de validación aplicable: campos requeridos, grupos estructurados y coherencias de la fase. Se aplica el mismo validador a una copia vacía con la misma estructura/IDs y se incluyen verificaciones aplicables detectadas. Sustitutos narrativos ocultos se excluyen al existir objetivos/resultados/riesgos estructurados. Socios/anexos opcionales y requisitos futuros no cuentan.
+R = requisitos aplicables únicos + tipos de anexos obligatorios únicos.
+P = requisitos pendientes + anexos obligatorios faltantes/no vigentes.
+Porcentaje = floor(100 × max(0,R-P)/R), máximo 100.
+Es porcentaje por requisito/grupo, no por palabras ni calidad. El denominador cambia con actividades/riesgos y condiciones aplicables. Guardar no suma cumplimiento. 100% no reemplaza validación de servidor, vigencia, autorización ni revisión de firmas. Modificar datos puede invalidar anexos preparados.
+
+CONSERVACIÓN Y MIGRACIONES
+028 añade plantillas por fase/convocatoria, borradores por evaluador/version/kind e historial. No cambia estados. Guardar exige última versión presentada y revisión esperada; auditoría en cada guardado. La primera revisión fija plantilla por convocatoria/fase. Un criterio sin responder es null y no cero.
+029 valida presupuesto y corrige umbrales solo en snapshots de nuevas postulaciones. Borradores antiguos y versiones enviadas conservan reglas; migrarlos requeriría procedimiento explícito de GLF, nunca reclasificación automática.
+Presupuesto previo sin detalle no se reparte. El detalle suma centavos; resumen original se captura al activarlo. Se imprime detalle cuando tiene partidas. No se inventan trimestres/subperíodos del cuadro presupuestario ambiguo.
+Respaldo técnico del administrador añade borradores, historial y plantillas vinculadas a las convocatorias seleccionadas. Excel ejecutivo y PDFs del postulante no incluyen evaluaciones internas ni amplían audiencia.
+
+PENDIENTES: EFECTO SOBRE ACTIVACIÓN
+1 Finanzas: impide nuevas restricciones 10%/30%; permite cálculo y desglose.
+2 Límites: impide convertir límites técnicos en requisitos institucionales nuevos.
+3 Instrumentos fase 2: impide configurar PGAS/PPPI/MGQ obligatorios finales. Aclarar subcolumnas 1–4/1–3 y tercer año del presupuesto; no impide detalle anual.
+4 Gobernanza evaluación: impide cierre, promedio definitivo, conformidad vinculante y rechazo automático; no impide borradores propios.
+5 Anexo 3: impide nuevos requisitos generales de identidad/residencia.
+6 Consolidado: impide ampliar contenido/audiencia del PDF consolidado.
+7 Cofinanciación pequeña: impide volver contradicción del checklist un bloqueo; cero sigue permitido.
+Dependencia adicional conocida: recibir/cargar catálogo definitivo validado. No se fabrica catálogo ni se vuelve a pedir aprobación de toda la normativa.
+
+VERIFICACIÓN
+Suite PostgreSQL aislada PGlite + TypeScript: envíos, versiones, roles, documentos, RAG, presupuesto, límites, rúbricas. Identidades sintéticas solo locales; no se manipulan usuarios reales. Pruebas manuales/deploy se registran al cierre; un push no prueba la UI.
+
+RESULTADOS PREVIOS A PUBLICACIÓN
+92 pruebas correctas: 33 PostgreSQL + 59 TypeScript, cero fallos. ESLint y TypeScript correctos. Compilación de producción correcta. Revisión visual del presupuesto anual, firma/QR y comprobante sin desbordes.
+Supabase: cuatro plantillas confirmadas (checklists 8/7 ítems, rúbricas 10/11 criterios). Definiciones SQL comparadas con archivos locales mediante hash MD5 normalizado sin espacios: create_application=6ae37f163fcc7c5612c8346802172438; save_working_review=49d98879fdeebd60277bfbaf113633f4; validate_payload=6b6a61a9e0695a5050532ef6d26ab384. Coinciden las tres.
+
+PUBLICACIÓN Y AJUSTE VISUAL
+0.5.0 publicada, commit cf36bd6; GitHub Actions y Vercel correctos. Pantalla interna conectada a plantillas Supabase; prueba visual de 50/50 sin guardar valoraciones y traducción EN correcta. Ajuste 0.5.1 corrige distribución de tarjetas de evaluación y casillas de líneas temáticas, sin modificar lógica, permisos ni datos.

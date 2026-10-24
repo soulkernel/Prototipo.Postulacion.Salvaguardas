@@ -1,0 +1,56 @@
+M01 — PERSONA NATURAL SOLO EN SUBVENCIÓN PEQUEÑA
+Revisión y corrección exclusivamente local — 17 de octubre de 2026
+
+BASE RECONFIRMADA
+Repositorio: D:\GDRIVE LOCAL\CONSULTORIAS\SALVAGUARDAS GLF\portal-app
+Rama: feat/full-grants-platform
+HEAD inicial y final: ed35d455eb01886c7ad58e3a7b7507901199f4e5
+Versión base: 0.7.18. No se incrementó ni publicó una versión.
+Se leyó web/AGENTS.md y la guía instalada de Next sobre Server Functions.
+Las rutas pedidas existen en este checkout: web/src/components/application-editor.tsx, web/src/lib/domain.ts y supabase/migrations.
+Antes de editar, web y las migraciones no tenían cambios locales. El cambio ajeno de scratch/desktop.ini y los numerosos archivos de trabajo anteriores se conservaron.
+
+DIAGNÓSTICO ANTES DE EDITAR
+La interfaz ofrecía todas las categorías de rules_snapshot.categories para individual. La validación compartida no cruzaba tipo de solicitante con categoría. Las acciones de servidor y private.validate_payload validaban distintos requisitos, pero no aplicaban M01.
+La disposición implementada es la instrucción expresa del usuario: persona natural únicamente categoría small, hasta USD 100.000, respetando límites más restrictivos de la convocatoria. El usuario cita el Manual de procedimientos GLF 2025, sección 4. No se localizó una copia identificable de ese manual 2025 en la búsqueda local; no se afirma una verificación documental independiente del texto completo.
+
+COMPORTAMIENTO IMPLEMENTADO
+1. Para individual: pequeña habilitada; mediana y grande siguen visibles y tienen disabled nativo. Se muestra una explicación ES/EN del límite de USD 100.000.
+2. Para organization: se mantienen las opciones de la convocatoria. No se añaden categorías que esa convocatoria no ofrezca.
+3. Cambiar el tipo no cambia categoría ni monto. Un borrador histórico individual/mediana o individual/grande sigue abierto con sus valores; muestra advertencia y no puede completar el paso, preparar documentos ni enviarse hasta corregir la incompatibilidad.
+4. Guardar un borrador incompleto o incompatible sigue permitido, para no perder trabajo. Guardarlo no lo convierte en elegible. No hay recategorización ni ajuste automático de importes.
+5. El límite individual también se comprueba si una configuración small admite más de USD 100.000. Un límite inferior de la convocatoria continúa vigente. Las reglas de montos positivos, cofinanciamiento, duración y demás validaciones se conservan.
+6. Las acciones prepareDocuments y submitDraft comprueban el payload almacenado con el usuario autenticado antes de continuar. Una petición directa a SQL tampoco puede eludir M01: private.validate_payload lo aplica al completar, tanto en fase 1 como en fase 2.
+
+ARCHIVOS DE APLICACIÓN Y PRUEBAS
+Modificados:
+- web/src/components/application-editor.tsx: conecta el selector y el mensaje de error M01; mantiene updateConcept sin automatismos.
+- web/src/lib/domain.ts: funciones grantCategoryAllowed e individualGrantIssue; integración con financialErrors, usada por stepIssues, validateComplete, avance y revisión.
+- web/src/app/applicant/actions.ts: comprobación en servidor antes de preparar y enviar.
+- web/src/lib/financial-feedback.ts: texto del rango individual small limitado a USD 100.000, sin modificar el payload ni rules_snapshot.
+- web/src/app/live.css: advertencia discreta y alineación de los dos controles de esta fila.
+- web/tests/domain.test.ts: casos M01 de categorías, tipos, límites, render real del selector y conservación de valores.
+- web/tests/database.test.mjs: casos M01 SQL/RPC, preservación histórica y permisos de la migración.
+Nuevos:
+- web/src/components/grant-category-select.tsx: selector compartido, opciones disabled, ayuda y advertencia ES/EN accesibles.
+- supabase/migrations/202610170037_individual_small_grant_only.sql: envoltorio compatible del validador existente; no actualiza tablas ni snapshots. Mantiene sin EXECUTE público las funciones privadas y delega las demás validaciones al validador anterior.
+
+PRUEBAS EJECUTADAS
+A. npm test: 138 aprobadas, cero fallos y cero omitidas. Incluye 44 pruebas de base de datos y 94 de TypeScript/documentos/lógica. Evidencia: scratch/m01-tests.log.
+B. SQL aislado PGlite: todas las migraciones, incluida 037, ejecutadas localmente. Individual small a USD 100.000 aceptado; medium y large rechazados al completar. Organizaciones aceptadas en las tres categorías con valores válidos. Comprobado en ambas fases. Se conservan los límites inferiores y tipos permitidos de la convocatoria.
+C. Fuera de la interfaz: llamadas directas a prepare_application_documents y submit_application rechazadas por M01 para un borrador individual/mediana. El caso de envío simula únicamente metadatos históricos de anexos en la base aislada; no se generó ni firmó un PDF ni se contactó un servicio real.
+D. Compatibilidad de migración: se retiró el envoltorio nuevo en la base aislada, se reaplicó 037 y se compararon las filas de aplicaciones, versiones, eventos y documentos preparados antes/después: idénticas. El borrador incompatible permanece editable. La función anterior no queda accesible a anon/authenticated.
+E. Acciones reales de servidor compiladas con autenticación y base de datos simuladas: 14 casos aprobados. Los bloqueos M01 ocurren antes del RPC; guardar los borradores incompatibles continúa permitido. Los casos elegibles superan la barrera M01 pero no se declaran envíos válidos completos porque sus fixtures carecen deliberadamente de otros datos. Evidencia: scratch/m01-qa/server-check.log y check-server.mjs.
+F. Chrome, formulario ApplicationEditor real compilado en un entorno local aislado, con guardado simulado en el almacenamiento del navegador. Se comprobaron small habilitada y medium/large deshabilitadas; cambio organization→medium→individual; guardado y reapertura conservando medium y USD 150.000; cambio organization→large→individual; selección manual posterior de small sin alterar USD 350.000. El importe solo cambió al digitarlo expresamente. La organización recupera las tres opciones permitidas. Evidencia: scratch/m01-qa/browser-evidence.json e individual-small.png.
+G. npm run lint aprobado. npm run build aprobado, incluyendo TypeScript y generación de 26 páginas. git diff --check para web/supabase aprobado. Evidencia de compilación final: scratch/m01-qa/build.log.
+
+ENTORNO DE PRUEBA VISUAL
+scratch/m01-qa/ui.tsx y run.mjs utilizan el componente real ApplicationEditor, con las acciones de envío/preparación bloqueadas y saveAction simulado. Solo se sirvieron archivos locales en 127.0.0.1:3187; no se usaron credenciales, datos de usuarios ni Supabase/Vercel. Los intentos iniciales de conexión desde el entorno aislado del navegador fallaron; la prueba efectiva se ejecutó después en Chrome con un servidor local accesible. No se presenta ese intento fallido como prueba aprobada.
+Para reproducir: desde portal-app, ejecutar con Node instalado scratch/m01-qa/run.mjs y abrir http://127.0.0.1:3187. El guardado de esa página es exclusivamente local. El servidor se detuvo al finalizar la revisión.
+
+PENDIENTES Y LÍMITES
+- Cambios sin commit, push ni despliegue, conforme a la instrucción. Ninguna migración se aplicó en producción y el portal publicado aún no incorpora M01.
+- Cuando se autorice publicar, aplicación y migración 037 deberán activarse coordinadamente. No se propone ejecutar esa operación ahora.
+- No se ejecutaron envíos, firmas, comunicaciones ni cambios reales de usuarios, expedientes o privilegios.
+- No se verificó visualmente el entorno de producción ni se validó contra una instancia remota de Supabase. Las comprobaciones SQL son locales y las de Server Actions usan dependencias simuladas, descritas expresamente.
+- El único alcance implementado es M01. No se modificaron los demás requisitos de convocatoria u organización, ni los PDF, ni la estructura de las fases.

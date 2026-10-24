@@ -1,0 +1,98 @@
+M12 — CONSERVAR EL FORMULARIO ACTIVO AL SALIR DE UNA CAJA
+Fecha: 19/10/2026
+Estado: investigación local; síntoma original no reproducido; sin corrección de aplicación.
+
+COHERENCIA Y ALCANCE
+El usuario aclara que, durante una demostración al GLF, probablemente estaba en Nota
+conceptual y de pronto apareció Datos generales. No recuerda el campo ni la acción
+inmediata. No se dispone de una captura de ese momento, su URL, navegador/dispositivo
+confirmados o traza de red. El alcance es investigar esa pérdida de contexto; no dar
+por demostrado que onBlur, el router o un remount sean su causa.
+
+ESTADO REVISADO
+Repositorio: D:\GDRIVE LOCAL\CONSULTORIAS\SALVAGUARDAS GLF\portal-app
+Rama: feat/full-grants-platform
+HEAD: 638e177 — Release 0.7.27
+Instrucciones: web/AGENTS.md, leídas antes de las pruebas.
+Rutas confirmadas:
+  web/src/components/application-editor.tsx
+  web/src/app/applicant/actions.ts
+Se revisaron también la página que monta el editor y los componentes directamente
+relacionados con foco, captura y desplazamiento, para contrastar la hipótesis.
+El diff de aplicación antes y después conserva los mismos cambios anteriores de las
+cajas narrativas, sus pruebas y CSS. Se preservó el cambio ajeno en scratch/desktop.ini.
+
+DIAGNÓSTICO DE CÓDIGO
+1. onBlur de cédula y montos actualiza estados de validación, no navega ni cambia de paso.
+2. El autoguardado espera 2000ms sin edición y actualiza revisión, copia guardada y fecha.
+   Su éxito o error no llama al router ni a setStep.
+3. Guardar borrador manualmente tampoco llama al router. Las llamadas de navegación de
+   persist corresponden al envío definitivo, que no se ejecutó en esta investigación.
+4. saveDraft valida y guarda mediante RPC; devuelve resultado y revalida el listado de
+   postulaciones. No contiene redirect. Esta acción se inspeccionó; no se llamó al
+   Supabase del usuario ni se probó la revalidación real de Next contra un portal autenticado.
+5. El estado inicial del editor editable es el primer paso. La clave del componente usa
+   id, fase, estado, editabilidad e idioma, no la revisión del guardado. No se demostró
+   un cambio de esa clave durante el incidente.
+
+PRUEBA AISLADA EJECUTADA
+Editor ApplicationEditor real y componentes reales, compilados desde el checkout actual.
+Datos e identificaciones exclusivamente ficticios. Chrome 155 en Windows, sin interfaz,
+en escritorio 1280x900 y móvil emulado 390x844. No es una prueba en un teléfono físico.
+Ruta local:
+  http://127.0.0.1:3197/applicant/11111111-1111-4111-8111-111111111112
+Next router y acciones de servidor sustituidos por dobles de prueba; se registran los
+intentos de navegación. Guardado en un servidor HTTP local aislado en memoria. Se
+bloquearon todas las solicitudes a otros orígenes; sin cuentas ni documentos reales.
+
+Campos de Nota conceptual probados en ambos tamaños:
+  Resumen del proyecto; Beneficiarios; Sostenibilidad; Seguimiento y evaluación.
+Se registraron paso, URL, agente de navegador, tamaño de pantalla, foco, scroll y llamadas
+de guardado antes y después de Tab y del autoguardado. También se probó clic fuera,
+error de autoguardado, error de guardado manual, reintento manual exitoso y recarga.
+
+RESULTADOS
+22 verificaciones aprobadas, 4 observaciones registradas y ningún error JavaScript.
+- Los cuatro campos, en ambos tamaños, conservan Nota conceptual y el texto al pulsar
+  Tab y hacer clic fuera. No hubo intento de navegación del router.
+- Tras asentarse el desplazamiento normal del navegador para mostrar el control
+  enfocado con Tab, el autoguardado exitoso no cambió paso, URL, foco ni scroll.
+- Error de guardado automático: conserva paso, URL, texto y control enfocado; muestra
+  el mensaje correspondiente. Error de guardado manual: conserva paso y texto.
+- Reintentar manualmente con respuesta exitosa guarda la copia ficticia y conserva
+  Nota conceptual sin navegación.
+- Recarga explícita: inicia Datos generales; la copia ficticia guardada se conserva
+  y puede consultarse al volver a Nota conceptual. Se registra como observación, no
+  como un cumplimiento de conservación de paso tras recargar ni como reproducción
+  del salto automático relatado por el usuario.
+- Al aparecer el aviso de error se observó un cambio de scroll de +38px en escritorio
+  y +85px en móvil, sin cambio de formulario ni pérdida del foco. Se distingue este
+  desplazamiento del síntoma original. No se afirma que el scroll sea invariable ante errores.
+
+AJUSTES DE LA PROPIA PRUEBA
+La primera medición de scroll se tomó antes de terminar la animación de foco del
+navegador (CSS existente scroll-behavior: smooth); se corrigió la línea base de prueba.
+Una aserción inicial exigía scroll absoluto idéntico al insertar un aviso de error:
+se sustituyó por el registro explícito de esa observación, conservando las comprobaciones
+de paso, URL, texto y foco. Se hizo esperar la respuesta del guardado manual fallido antes
+de cambiar el doble de prueba a éxito, evitando una carrera del simulador. No se modificó
+la aplicación para hacer pasar ninguna de estas mediciones.
+
+ARCHIVOS NUEVOS DE INVESTIGACIÓN
+scratch/m12-qa/fixture.tsx — editor con datos ficticios y persistencia local simulada.
+scratch/m12-qa/run.cjs — reproducción automatizada y registro de contexto.
+scratch/m12-qa/results.json — resultados finales y snapshots antes/después.
+scratch/m12-qa/browser.log — ejecución final.
+scratch/m12-qa/desktop-concept-saved.png y mobile-concept-saved.png — evidencia visual local.
+Este informe. No se modificaron application-editor.tsx ni applicant/actions.ts para M12.
+
+CONCLUSIÓN Y PENDIENTES
+No se reprodujo el retorno automático desde Nota conceptual a Datos generales. La
+recarga explícita reproduce solamente el inicio en el primer paso, no demuestra qué
+ocurrió durante la reunión. No hay causa localizada que justifique un parche de router
+o persistencia de paso como si resolviera el incidente original.
+Pendiente: reproducir el evento en un entorno autenticado con un expediente aislado y
+capturar en ese momento campo/paso, URL, foco, scroll, evento de recarga y respuesta
+del guardado. Con esa evidencia se podrá proponer la corrección específica. No se pide
+al usuario que invente datos que no recuerda; se conserva su descripción actual.
+No hubo push, despliegues, migraciones, envíos, firmas o comunicaciones.

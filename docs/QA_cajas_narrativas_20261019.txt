@@ -1,0 +1,76 @@
+AJUSTE LOCAL DE CAJAS NARRATIVAS — 19/10/2026
+
+Repositorio: portal-app
+Rama: feat/full-grants-platform
+Base revisada: 638e177, versión 0.7.27. Sin commit, push ni publicación de este ajuste.
+
+ALCANCE
+Beneficiarios y contribuciones a los medios de vida; Sostenibilidad y replicabilidad;
+Seguimiento y evaluación propuestos. No se añadió un editor enriquecido ni controles
+de negrita, centrado o justificación. Resumen del proyecto y demás campos conservados.
+
+DIAGNÓSTICO Y SOLUCIÓN
+Las cajas ya ocupaban la fila completa. Los cortes pegados de documentos y las líneas
+vacías explicaban el espacio libre dentro del texto. Se conserva la captura como texto
+simple y el ancho completo. Altura mínima 190px, ajuste al contenido hasta 400px;
+se puede ampliar manualmente. Al reducir el contenido también disminuye la altura
+automática, salvo que el usuario haya fijado una altura manual.
+
+Se ofrece «Ajustar saltos de línea» solo cuando hay una propuesta diferente. Se muestran
+texto original y propuesta, en paralelo en escritorio y apilados en móvil. Abrir, cancelar
+o pulsar Escape no llama al cambio del campo ni inicia un guardado. Aplicar modifica
+una sola vez el campo elegido mediante updateConcept y el guardado existente.
+Se bloquea aplicar una propuesta si el valor cambió mientras se mostraba el diálogo.
+
+La propuesta une líneas largas de prosa y reduce líneas vacías repetidas; conserva
+separaciones explícitas de párrafos, listas, rótulos, sangrías, referencias y tablas.
+No inventa información ni elimina palabras. No pretende reconocer perfectamente la
+intención de cada salto: la vista previa y la confirmación son necesarias. Nunca se
+normaliza automáticamente al abrir, guardar o escribir. No se alteran registros históricos.
+
+ARCHIVOS DE APLICACIÓN
+web/src/components/application-editor.tsx — integración limitada a los tres campos.
+web/src/components/narrative-textarea.tsx — captura, tamaño y vista previa ES/EN.
+web/src/lib/narrative-editing.ts — propuesta conservadora de ajuste, sin mutaciones.
+web/src/app/live.css — estilos acotados al nuevo componente y su diálogo.
+web/tests/concept-presentation.test.ts — tres pruebas nuevas de contenido/compatibilidad.
+
+VERIFICACIÓN EJECUTADA
+1. npm test: 163 pruebas aprobadas, 0 fallos (53 SQL/servidor + 110 TypeScript).
+   Incluye generación de PDF y coherencia entre presentación original y texto ajustado.
+2. npm run lint: aprobado.
+3. npm run build: aprobado. Un intento encontró EPERM al limpiar .next; la repetición
+   autorizada terminó correctamente. No se realizó limpieza de datos ni migración.
+4. Chrome local aislado, componente real y estilos del proyecto: 10 grupos aprobados.
+   - Apertura sin modificar el texto ni guardar.
+   - Los tres controles ocupan 1092/1092px del contenedor de escritorio.
+   - En cada campo: vista previa; cancelar; Escape; aplicación única aun con doble clic;
+     modificación exclusiva del campo elegido; reducción de altura tras quitar líneas
+     vacías; retorno del foco de teclado; persistencia simulada y reapertura.
+   - Escritura conserva párrafos/saltos y posición de inserción.
+   - Ajuste automático acotado; ampliación manual de 500px conservada al escribir.
+   - Etiquetas accesibles, traducciones ES/EN y bloqueo por fieldset deshabilitado.
+   - Móvil 375px: documento 375px, cajas 327/327px, sin desborde horizontal;
+     vista previa en una columna, dentro de la pantalla.
+   - Ningún error de ejecución del navegador.
+5. Capturas locales de escritorio y móvil inspeccionadas visualmente.
+6. git diff --check de los archivos modificados de aplicación: correcto.
+
+EVIDENCIA REPRODUCIBLE
+scratch/narrative-entry-qa/run.cjs
+scratch/narrative-entry-qa/fixture.tsx
+scratch/narrative-entry-qa/results.json
+scratch/narrative-entry-qa/browser.log
+scratch/narrative-entry-qa/tests.log
+scratch/narrative-entry-qa/lint.log
+scratch/narrative-entry-qa/build.log
+scratch/narrative-entry-qa/desktop.png
+scratch/narrative-entry-qa/mobile-preview.png
+
+LÍMITES Y PENDIENTES
+La prueba visual usa una página local aislada con el componente real y persistencia
+simulada en localStorage; no es una prueba autenticada de guardado en Supabase. No se
+editó ninguna postulación del usuario ni se realizaron envíos, firmas o migraciones.
+La suite SQL/servidor se ejecutó contra su entorno de pruebas local habitual.
+Pendiente publicación y comprobación autenticada del portal desplegado, cuando se autorice.
+El cambio ajeno existente en scratch/desktop.ini y demás archivos previos se preservó.

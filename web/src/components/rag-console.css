@@ -1,0 +1,206 @@
+.rag-console {
+  --rag-blue: #193662;
+  --rag-teal: #008997;
+  color: var(--rag-blue);
+}
+.rag-console .rag-intro {
+  background: #eef5fb;
+  border-left: 4px solid var(--rag-teal);
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-bottom: 18px;
+}
+.rag-console .rag-task-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 18px 0;
+}
+.rag-console .rag-task-tabs button {
+  text-align: left;
+  border: 1px solid #c7d8e7;
+  border-radius: 10px;
+  padding: 16px;
+  background: #fff;
+  color: var(--rag-blue);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 700;
+}
+.rag-console .rag-task-tabs button[aria-selected="true"] {
+  background: #eaf5f6;
+  border: 2px solid var(--rag-teal);
+}
+.rag-console .rag-task-tabs small {
+  display: block;
+  font-weight: 400;
+  margin-top: 5px;
+}
+.rag-console button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.rag-console button:focus-visible,
+.rag-console a:focus-visible,
+.rag-console textarea:focus-visible {
+  outline: 3px solid var(--rag-teal);
+  outline-offset: 3px;
+}
+.rag-console textarea::placeholder {
+  color: #667582;
+}
+.rag-console .rag-counter {
+  text-align: right;
+  font-size: 0.85rem;
+  margin: 5px 0;
+}
+.rag-console .rag-examples,
+.rag-console .rag-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px 0;
+}
+.rag-console .rag-examples button {
+  border: 1px solid #c7d8e7;
+  border-radius: 20px;
+  padding: 7px 12px;
+  color: var(--rag-blue);
+  background: #f4f8fb;
+}
+.rag-console .rag-notice {
+  padding: 16px;
+  border: 1px solid #cbdce9;
+  border-radius: 10px;
+  background: #eef5fb;
+  margin: 16px 0;
+}
+.rag-console .rag-notice h3 {
+  margin: 0 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.rag-console .rag-notice p:last-child {
+  margin-bottom: 0;
+}
+.rag-console .rag-warning {
+  background: #fff9e9;
+  border-color: #e7c871;
+}
+.rag-console .rag-error {
+  background: #fff2f2;
+  border-color: #e5aaaa;
+}
+.rag-console .rag-progress {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 0;
+  list-style: none;
+}
+.rag-console .rag-progress li {
+  border-radius: 6px;
+  padding: 8px 12px;
+  background: #fff;
+  border: 1px solid #ccdbe6;
+}
+.rag-console .rag-progress li[data-current="true"] {
+  border-color: var(--rag-teal);
+  font-weight: 700;
+}
+.rag-console .rag-progress li[data-seen="true"] {
+  color: #16656c;
+}
+.rag-console .rag-spinner {
+  animation: rag-rotate 1.2s linear infinite;
+}
+@keyframes rag-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rag-console .rag-spinner {
+    animation: none;
+  }
+}
+.rag-console .rag-source {
+  border: 1px solid #c7d8e7;
+  border-left: 4px solid var(--rag-teal);
+  border-radius: 10px;
+  padding: 18px;
+  margin: 16px 0;
+  scroll-margin-top: 100px;
+  overflow-wrap: anywhere;
+}
+.rag-console .rag-answer {
+  white-space: pre-wrap;
+  line-height: 1.8;
+}
+.rag-console .rag-answer a {
+  white-space: nowrap;
+  padding: 2px 5px;
+  background: #e8f3f5;
+  border-radius: 4px;
+  font-weight: 700;
+}
+.rag-console .rag-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 12px 0;
+}
+.rag-console .rag-meta span {
+  background: #edf3f8;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 0.86rem;
+}
+.rag-console details {
+  border: 1px solid #d4e0eb;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 14px 0;
+}
+.rag-console summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+.rag-console .rag-history button {
+  text-align: left;
+  display: block;
+  width: 100%;
+  margin: 8px 0;
+}
+.rag-console .rag-technical {
+  overflow-wrap: anywhere;
+  font-size: 0.85rem;
+}
+.rag-console .rag-privacy {
+  font-size: 0.86rem;
+  color: #536a7e;
+}
+@media (max-width: 650px) {
+  .rag-console .rag-task-tabs {
+    grid-template-columns: 1fr;
+  }
+  .rag-console .rag-actions .button {
+    width: 100%;
+  }
+}
+
+.rag-mode {
+  display: grid;
+  gap: 0.45rem;
+  margin-block: 0.6rem;
+}
+.rag-mode small {
+  font-weight: 400;
+  color: #45617a;
+}
+.rag-diagnostics code {
+  overflow-wrap: anywhere;
+  font-size: 0.8em;
+}

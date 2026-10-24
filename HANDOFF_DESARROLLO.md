@@ -1,0 +1,437 @@
+# Relevo de desarrollo — Plataforma de postulaciones y salvaguardas GLF
+
+**Actualizado:** 6 de octubre de 2026 (Galápagos)
+**Repositorio local:** `D:\GDRIVE LOCAL\CONSULTORIAS\SALVAGUARDAS GLF\portal-app`
+**Rama activa:** `feat/full-grants-platform`
+**Remoto:** `https://github.com/soulkernel/Prototipo.Postulacion.Salvaguardas.git`
+
+Este archivo deja el contexto para continuar el trabajo en otro modelo. Es un relevo técnico y no una declaración de que el sistema ya esté listo para producción.
+
+## Objetivo del sistema
+
+Construir una aplicación GLF para gestionar el proceso de subvenciones de extremo a extremo: portal bilingüe para aplicantes; Nota Conceptual y matriz A&S de Ulf; gestión de convocatorias; revisión técnica y coordinación interna; compuerta de decisión CAT/comité/consejo; propuesta completa para invitados; convenios; y reportes internos de cierre. Vercel aloja la aplicación web, Supabase aporta Auth/Postgres/Storage con RLS, y el asistente E5 se ejecuta localmente en un equipo autorizado del GLF. El sistema sirve a postulantes, al personal responsable (Ulf, Paulina y Gabriela) y a las instancias de decisión.
+
+## Decisiones que hay que preservar
+
+- El sitio de Stitch enviado a revisión está publicado en GitHub Pages. Se conserva íntegro en `main` mientras el GLF lo revisa. La solución funcional se desarrolla en una rama de este mismo repositorio; nunca se sobrescribe el prototipo ni se fusiona a `main` sin revisión explícita.
+- `main` conserva el `index.html` del sitio publicado; la nueva aplicación Next.js está en `web/`, por lo que Vercel debe usar `web` como Root Directory. Las migraciones se guardan en `supabase/`.
+- El portal externo y el espacio de personal son áreas separadas. Roles internos: `grants_manager` (Paulina), `sustainability_reviewer` (Ulf), `project_coordinator` (Gabriela, San Cristóbal), `committee_member` y `administrator`. Los roles reales provienen del perfil Supabase, no de una elección del navegador.
+- Solicitantes y convocatorias deben admitir las categorías configuradas para cada convocatoria; español e inglés, inicializados desde el idioma del navegador con selector manual.
+- Fase 1 replica el formato oficial de Nota Conceptual proporcionado y sustituye VEAS por la matriz de Ulf, conforme a decisión expresa del usuario. La Nota Conceptual y la matriz son documentos independientes del expediente. El formulario oficial completo de Fase 2 todavía debe validarse; sus campos no se deben inventar.
+- Una actividad puede asociarse con varios riesgos y un riesgo con varias salvaguardas. Según la aclaración más reciente de Ulf, Fase 1 exige únicamente A–G (screening); Fase 2 exige la matriz A–Q con mitigación y planificación/PGAS. Catálogo oficial de salvaguardas pendiente de entrega/aprobación por Ulf; mientras tanto, las propuestas del solicitante deben distinguirse claramente de medidas aprobadas.
+- Matriz de Ulf: probabilidad y severidad inherentes/residuales de 1–5; puntaje = producto; bandas por riesgo: 1–4 bajo, 5–9 medio, 10–15 alto, 16–25 muy alto. Cronograma trimestral hasta 12 trimestres, duración inclusiva. La suma de puntajes por actividad puede mostrarse como suma; **no hay bandas confirmadas para asignar categoría global automática**. No mapear categorías A/B/C a la escala de Ulf.
+- Postulación enviada queda bloqueada. Solo GLF autoriza reapertura registrada con plazo. La invitación a Fase 2, aprobación formal y convenio firmado son hitos distintos, documentados por separado. Comité/consejo conserva decisión humana.
+- Reportería interna al cierre: recibidas, no calificadas/no avanzadas, invitadas/seleccionadas, propuestas completas, aprobadas y convenios firmados; clasificación por tipo y montos; indicadores ambientales/sociales **esperados o comprometidos**, claramente distintos de impacto observado. El sistema entrega datos a Comunicación, no publica ni escribe noticias. Monitoreo de ejecución es otro sistema futuro.
+- El E5 `intfloat/multilingual-e5-small` recupera fragmentos del corpus con documento, página/sección y referencia verificable; no evalúa cumplimiento, no asigna puntajes ni decide. Correr localmente en equipo GLF autorizado; nunca servir el modelo desde Vercel ni exponer el equipo en internet.
+- Diseño sobrio/minimalista, marca GLF; se extrajo el logo embebido del prototipo existente a `web/public/glf-logo.png`. No incluir documentos de expedientes reales ni datos personales en demos.
+
+## Aclaración más reciente de Ulf (6 de octubre)
+
+Ver REQUIREMENTS_ULF_2026-10-06.md. Se separaron screening y PGAS en servidor, interfaz, panel y PDF mediante una cuarta migración. Las observaciones de Gaby siguen pendientes; no inventar su contenido. El index.html de revisión continúa sin cambios.
+
+## Implementación actual (6 de octubre)
+
+Código funcional publicado en la rama `feat/full-grants-platform`, commit `ed4d2fb`. Pull request **en borrador**: https://github.com/soulkernel/Prototipo.Postulacion.Salvaguardas/pull/1 . CI Linux de ese commit completada correctamente: https://github.com/soulkernel/Prototipo.Postulacion.Salvaguardas/actions/runs/37469587258 . No se fusionó a main; `index.html` no forma parte de los cambios.
+
+La aplicación real está en las rutas raíz, /applicant e /internal; el antiguo demo ficticio quedó explícitamente separado en /demo. Se corrigieron los errores de compilación anteriores y se añadieron Auth, formularios conectables a Supabase, versiones inmutables, anexos privados, PDF, funciones de workflow, RLS y reportería. El E5 todavía NO está implementado: solo hay tabla vectorial y RPC de recuperación preparados.
+
+El usuario confirmó que no hay proyectos Supabase/Vercel existentes y autorizó preparar proyectos nuevos. Se abrieron los servicios en Chrome; ambos requieren iniciar sesión. Se le pidió hacerlo directamente, sin compartir secretos. No se creó proyecto, aplicó migración ni confirmó despliegue remoto aún.
+
+## Arquitectura y seguridad implementadas
+
+- Next 16.3.8 / React 19.2.8, Supabase SSR, validación Zod. Las acciones usan el JWT del usuario; no hay service_role en la web.
+- Cuatro migraciones aún NO aplicadas a una base real; se pueden corregir antes del primer despliegue. Después de aplicadas, cualquier cambio requiere una migración nueva.
+- Mutaciones solo por RPC security definer con search_path vacío y comprobación de rol, estado, revisión y plazo; permisos de ejecución PUBLIC revocados. RLS en tablas/Storage. El borrador inicial pertenece solo al aplicante; personal accede después del primer envío.
+- MFA aal2 requerido en código y base para roles de personal; perfiles inactivos quedan sin acceso. Primer administrador requiere bootstrap por propietario de base. No confiar roles de metadatos del registro.
+- Guardado MANUAL de borrador, aviso de cambios sin guardar, control optimista de revisión. Envío crea una versión inmutable con anexos registrados. Reapertura requiere GLF y plazo; para revisar o decidir se exige reenvío, aunque el plazo de corrección haya expirado.
+- Revisión por área; segunda fase solo por invitación humana y esquema oficial configurado; nueva revisión A&S sobre versión actual para aprobar. CAT únicamente recomienda. Monto aprobado independiente; convenio no excede aprobado y firmas no anteceden aprobación.
+- Reportes basados en última versión ENVIADA, no en borradores de corrección. Montos solicitado/aprobado/convenido distintos; indicadores narrativos aún no agregados.
+- PDF separados de concepto y matriz, ES/EN, fuentes Noto Sans embebidas, QR autenticado a versión persistida. Se generan desde snapshot; NO son todavía un binario archivado. Anexos por separado, enlaces firmados breves, bucket privado.
+- CSP nonce, anti-enmarcado, no-store en respuestas privadas, retorno Auth de mismo origen, validación de archivos y neutralización CSV.
+
+## Verificación realizada
+
+- 20 pruebas automatizadas: 14 de PostgreSQL/PGlite ejecutando migraciones/RLS/transiciones y 6 de dominio/archivos/PDF. Incluyen aislamiento, escalada de rol denegada, MFA, conflicto de edición, bloqueo tras envío, corrección/reenvío, revisión vigente, aprobación y techo del convenio. Reejecutar tras cambios.
+- Compilación de producción y TypeScript pasan; ESLint pasa. La caché persistente de build Turbopack falló repetidamente al reabrirse en esta carpeta sincronizada Windows. Se desactivó con experimental.turbopackFileSystemCacheForBuild=false; la compilación no depende de esa caché.
+- npm audit --omit=dev: 0 vulnerabilidades conocidas al verificar. El audit completo registra 5 altas en cadena de herramientas de desarrollo braces/micromatch, sin corrección automática disponible; no ocultarlas ni aplicar --force.
+- Cuatro PDF ficticios generados (dos tipos por dos idiomas); comprobada paginación e imágenes QR por prueba automatizada y revisión visual representativa. Falta cotejo institucional integral, QR decodificado y navegación autenticada alojada.
+- Navegador: portada, cambio ES/EN, redirección de /internal a login sin sesión, registro móvil 390x844 legible, sin errores de consola observados. No se han probado todavía formularios autenticados con backend alojado.
+- CI configurada en .github/workflows/web-checks.yml. El resultado remoto se debe consultar después del push; no equiparar configuración con CI aprobada.
+
+## Próximo trabajo prioritario
+
+1. Verificar sesión del usuario en Supabase/Vercel y crear proyectos de prueba siguiendo DEPLOYMENT.md. Pedir al usuario que establezca cualquier contraseña nueva directamente; nunca imprimir tokens ni pegarlos en conversación.
+2. Aplicar migraciones en proyecto nuevo y configurar Auth/correo/MFA/URLs. Probar dos solicitantes y los roles internos, incluyendo intentos directos de bypass de RLS y descarga ajena.
+3. Completar el cotejo de Nota Conceptual contra formato institucional, presupuesto detallado y límite de seis páginas, sin inventar reglas. Catálogo oficial de Ulf y formato final de fase 2 siguen pendientes de aprobación.
+4. Archivar PDF definitivos como binarios con huella/versionado. Diseñar carga directa segura para anexos mayores de 4 MB, escaneo/cuarentena y limpieza de huérfanos. La firma de bytes no es antivirus.
+5. Completar edición/versionado de convocatoria, gestión de cuentas/activación, filtros y paginación operativa, mensajes de validación más específicos y pruebas de accesibilidad en los formularios conectados.
+6. Implementar E5 CPU local con corpus autorizado y versionado, fuentes citadas y pruebas de recuperación. Ingresar nuevos expedientes aprobados al corpus no equivale a reentrenamiento automático.
+7. Validar con personal GLF antes de producción, definir backup/restauración, retención, administración institucional y protección de datos. Mantener main y prototipo publicado sin cambios.
+
+## Archivos y comandos
+
+- README.md: ejecución y alcance real; DEPLOYMENT.md: entornos y aceptación.
+- web/src/lib/domain.ts y fields.ts: modelo y etiquetas; src/lib/pdf.ts: PDF; src/proxy.ts: sesión y cabeceras.
+- web/src/app/applicant y internal: interfaz/acciones; supabase/migrations: permisos y reglas transaccionales.
+- Ejecutar desde web: npm run lint; npm test; npm run build; npm audit --omit=dev.
+- .test-artifacts, .env.local, .next y node_modules ignorados. No subir corpus/expedientes reales al repositorio público.
+- gh funciona fuera del sandbox mediante credenciales del llavero; dentro del sandbox puede informar token inválido aunque no lo sea. No volver a autenticar sin comprobarlo.
+- El resumen de versiones Git/PR se debe verificar con git status, git log y gh pr view; nunca inferir push a partir de commit local.
+
+## Relevo de despliegue 2026-10-06
+Supabase glf-postulaciones (dcxhuwghakdjcnrqkziq) YA tiene las cinco migraciones instaladas; auditoría remota correcta (14 tablas public, todas con RLS, bucket privado, sin escritura directa). Véase último bloque de DEPLOYMENT.md. No repetir instalación inicial. Falta conciliar historial CLI, Auth y conectar frontend. Vercel bloqueado en verificación de identidad GitHub del titular. Las pestañas Supabase/Vercel/GitHub se conservan para continuación. Nueva migración 202610060005 protege private.role_events; 14 pruebas DB pasan.
+
+## Estado al entregar enlace
+Preview 2sDkHSFeuZTbJxdZkgFjnHbw3KEc alcanzó Ready (57 s). Registro abierto en URL estable y comprobado visualmente en inglés; cambio ES/EN funciona. No se ha registrado usuario ni probado autenticación/envío/PDF reales. MFA TOTP está Enabled en Supabase. Commit fb3f596 subido corrige texto inicial (screening sin medidas en fase1); despliegue automático de ese commit aún por verificar. Siguiente paso: titular crea cuenta desde /register y confirma correo; posteriormente asignar primer administrador con autorización y realizar pruebas de roles. Sigue pendiente conciliación historial migraciones CLI y SMTP de pruebas.
+
+## Recuperacion de importacion 2026-10-06
+Vercel logs del fallo 18:04:38 muestran POST HF /embed sin llamada posterior import_evidence: fallo en inferencia. Commit ff9fe04 agrega reintentos limitados (5), codigos seguros, conserva archivo con onSubmit y checkpoint en memoria por SHA256. Reanuda en misma pagina; al recargar se reinicia recorrido pero DB evita duplicados. Pruebas corpus-upload (2), tsc y eslint correctos. Nueva vista previa Fsjnjo7Vjey85N1XLMCrSRrMi4UH en construccion. Corpus completo y causa HTTP exacta aun no verificados; no aprobar fuentes automaticamente.
+
+## Flujo funcional 2026-10-07
+Commit fc0b2a9: /demo redirige a portada; shell por rol; categorias por convocatoria. Migracion 007 instalada con exito via SQL d9cc90fc-11ef-42b8-a9d1-3113f39f9e6c, no repetir. prepared_documents separados de envios/reportes, PDF previo inmutable con QR, adjunto concept_signed PDF requerido para primer envio fase1. Validacion criptografica de firma pendiente; comprobacion actual solo tipo y fecha posterior a preparacion. Revisar endurecimiento en reenvios de correccion donde status pueda seguir submitted: trigger actual exige transicion de estado. 15 DB tests, PDF y build pasan. Firma/adjuntos todavia sin ensayo alojado integral con cuenta postulante. No hay convocatoria abierta publicada aun. Dominio corto glf-postulaciones.vercel.app vinculado Preview rama y exceptuado de Vercel Auth con aprobacion humana; Supabase siteURL/env todavia alias largo funcional. Observaciones GLF siguen autoridad.
+
+Actualizacion: migracion 008 instalada con exito; wrapper submit_application comprueba documentos actuales tambien para reenvios. Funcion core sin permisos authenticated. Pruebas DB 15 pasan. Sustituye el pendiente de trigger en parrafo anterior.
+
+## Revision uniforme 2026-10-07
+Commit 6bb34d2 retira portal-app.tsx y demo/view.tsx de web (prototipo main intacto), navegación por rol con destinos reales, categorías 3 tarjetas, CSS uniforme/mobile. Interno muestra payload última versión enviada, no borrador de corrección. 21 pruebas, lint, tsc y build pasan. No declarar aceptación E2E: faltan cuentas de técnicos/invitaciones, convocatoria abierta y aprobación corpus. Se solicitaron correos/administrador por pregunta asíncrona. Portada minimalista f00909e validada visualmente y registro navega. Usuario pide mismo diseño en todas pantallas, solo funcional. Seguimiento ejecución futuro incluye Paulina/Gabriela/Ulf/Verónica; todavía fuera alcance actual. No asignar permisos a nombres sin autorización/correos.
+
+Aclaracion titular: ver ADMINISTRACION_GLF_REQUISITOS.md. Monica y Schubert generales; Ulf y Paulina administracion por area independiente de roles tecnicos. No dar permiso de usuarios a Veronica/Gabriela/Danny. Nombre Paulina Kummer difiere del listado previo Couenberg; correo pendiente confirmar antes de invitacion.
+
+Nombre confirmado por el titular: Paulina Counmberg (apellido exacto), misma persona y mismo correo paulina.couenberg@glf.org.ec. Sustituye variantes previas; no volver a pedir confirmacion.
+
+
+## Depuracion y accesos 2026-10-07
+Migraciones 009 y 010 instaladas con Success via SQL Editor. No repetir. Administración de usuarios por ámbito independiente del rol técnico: administrator general; grants_manager con scope projects; sustainability_reviewer con scope sustainability. Delegación solo administrador y sin autoasignación. Auditoría privada guarda ámbito anterior/nuevo. staff_invitation_drafts con RLS, RPC controlado, sin creación Auth ni correos. Preparados 6 contactos GLF; ninguna invitación enviada ni permiso concedido a esas personas. Nombre definitivo Paulina Counmberg, paulina.couenberg@glf.org.ec.
+Convocatoria GLF-PRUEBA-INTERNA-2026 published, 3 categorías, apertura 2026-10-07 02:18:18 UTC y cierre 2026-11-06 02:18:18 UTC (30 días; Galápagos 6 octubre 20:18 a 5 noviembre 20:18). Datos exclusivamente ficticios, parámetros de prueba, sin validez oficial. phase2_schema vacío: NO declarar fase2 lista ni emitir invitación de fase2 hasta configurar formato oficial.
+Auditoría corpus remoto: 3549 fragmentos y 0 aprobados. UI deshabilita consulta mientras no haya fuentes aprobadas; falta flujo de validación por documento/version, no aprobar masivamente. Se solicitó al titular crear cuenta EXTERNA de prueba distinta del administrador y confirmar correo, sin compartir contraseña, para ensayo alojado integral. Pendientes: ensayo externo PDF/firma/anexos/envío y revisión interna, aprobación corpus, envío de invitaciones solo tras autorización futura explícita. Propuestas de acceso NO son usuarios internos creados. Claves y MFA se ingresan por titular.
+Pruebas actuales: 17 DB + 6 dominio/PDF = 23 pasan; lint/build correctos antes de último ajuste de estado corpus; build final en curso al redactar este bloque. Historial CLI no conciliado: nunca db push inicial. Dominio corto Preview glf-postulaciones.vercel.app; conservar prototipo main/Pages. Acceso administrativo a pruebas externas requiere cuenta separada, no degradar rol Schubert.
+
+Verificacion final del lote: commit 5da20ab subido a GitHub; Vercel BdjZGpVGKaPKWcwifTUZhXZyS8sP Ready 44s. Modulo /internal/users verificado en navegador con sesión Schubert MFA: 6 propuestas correctas, Paulina Counmberg, Ulf/Paulina con delegación preparada, Schubert único usuario existente y protegido contra cambio propio. 23 pruebas, lint y build final correctos. Dominio corto abre login sin Vercel Auth; la sesión antigua del titular está en alias largo. Debe probar cuenta externa en corto. No declarar listo para invitaciones todavía.
+
+## Confirmacion de correo 2026-10-07
+Incidente titular: registro en alias corto, correo de Supabase, regreso con error credentials. Se verificó Supabase Site URL y NEXT_PUBLIC_SITE_URL Preview con alias largo; templates UI indica SMTP propio requerido o Pro para editar plantillas. Site URL Supabase y variable Preview Vercel ahora https://glf-postulaciones.vercel.app. Allow list conserva callback largo y agrega callback corto y login corto?confirmation=return, verificado guardado. Commit 47d59e2: signUp/resend devuelve tras verificación Supabase a login explícito, no depende de PKCE entre dispositivos; callback antiguo con code sin sesión muestra instrucciones de ingreso, no error de registro; callback token_hash soporta email/signup/recovery para futura plantilla SSR. Mensaje claro registro, error email_not_confirmed/enlace vencido/reenvío. No desactivada confirmación ni MFA. Lint/tsc/build pasan. Pendiente verificar Ready y navegación alojada al redactar.
+SMTP y remitente Galapagos Life Fund NO configurados: se preguntó cuenta institucional autorizada o proveedor con dominio propio, sin pedir secretos por chat. Template bilingüe listo en supabase/templates/confirm-signup.html, todavía NO instalado; asunto propuesto Galapagos Life Fund — Confirme su correo electrónico. No contratar plan Pro ni proveedor sin autorización. No emitir invitaciones internas. Falta ensayo real del correo nuevo y login con cuenta externa por titular, contraseña privada.
+Verificación alojada: deployment CS5meYz5tR1C44fUr7HjtcSBh5h2 Ready 37s (47d59e2). IAB sin sesión verifica mensaje register?sent=1, callback legacy con código ficticio devuelve login?confirmation=signin sin error rojo y token_hash ficticio devuelve error de enlace específico; desplegable reenvío abre formulario correctamente. No se ha enviado correo nuevo ni comprobado confirmación real después de este cambio. SMTP queda pendiente de respuesta humana. No afirmar correo remitente GLF ya activo.
+Teléfono: selector internacional con Ecuador +593 inicial, número móvil/fijo, libphonenumber-js/max versión fijada, normalización E.164 manteniendo concept.phone. Validación navegador y servidor al preparar/enviar; borradores parciales conservados hasta completar. Migración 011 instalada Success (SQL 1da61c0f-fb53-4b8c-8081-38b7371f04f8): valida largo <=32 en borradores y formato E.164 en completitud, wrapper privado conserva validaciones previas y no cambia datos ni permisos. Pruebas ECU móvil/fijo, US, excesos/letras/código inválido, DB bloquea números malformados; 19 DB + 7 dominio/PDF pasan, lint/build correctos. No valida propiedad del número ni envía SMS. Pendiente Ready y comprobación visual alojada después de publicar.
+
+## Ajustes del formulario 2026-10-07
+Teléfono 9add570 Ready verificado; financiero f6ebbb9 Vercel success. Validación financiera inmediata por campo y bloqueo de Continuar: categoría, cofinanciamiento y administrativo sobre total solicitado+cofinanciamiento; total destacado en tiempo real. Topes del servidor ya existían. Correo a2fa296 Vercel success: cuenta autenticada como inicial en nuevas postulaciones y borradores editables vacíos; no sobrescribe correo guardado ni expediente bloqueado.
+Datos reutilizables 9f5ac16: createDraft consulta exclusivamente applications del titular (applicant_id=user.id, RLS), más reciente por updated_at/created_at/id con nombre de proponente no vacío, antes de crear nueva solicitud. Copia solo applicant_type/applicant_name/contact_name/email/phone/address; email de cuenta como respaldo. Tipo solo si admitido por convocatoria. No mezcla organizaciones de distintas postulaciones; datos editables, copiados al nuevo expediente y no vinculados al anterior. Título, actividades, riesgos, presupuesto y fechas empiezan vacíos. Prueba de selección de campos, independencia y primera solicitud pasa; 19 DB, 8 dominio y PDF pasan, lint/build correctos. Push realizado; verificar Vercel success antes de declarar desplegado. Sin cambios Supabase ni invitaciones. Remitente Supabase queda intacto por petición expresa del titular hasta disponer correo institucional GLF.
+
+Geografía y domicilio: provincia (24 provincias Ecuador), ciudad/localidad (opciones frecuentes según provincia + Otra con texto obligatorio) y dirección específica. Galápagos ofrece cuatro cabeceras pobladas + otra localidad; no deriva elegibilidad de domicilio. Reutiliza province/city/address con datos de último expediente; title vacío y project_islands vacío en nuevo proyecto. Islas múltiples: Todo Galápagos exclusivo, San Cristóbal/Santa Cruz/Isabela/Floreana/Baltra/Otras con texto condicional. Datos adicionales en JSON concept sin cambios de columnas Supabase. Campos históricos reciben valores vacíos al editar, conservando address/location previos; no inventar ubicación. UI y Server Actions validan geografía al continuar y preparar/enviar; SQL RPC todavía no tiene restricciones nuevas de geografía (reforzar en siguiente migración antes de producción oficial). PDF incluye campos estructurados, arrays separados por coma. Reportería territorial/filtros aún no incorporados. Pruebas 19 DB + 11 dominio/PDF, lint/build correctos. Sin envíos de invitaciones.
+Campos obligatorios 61d17ff, aviso junto a botones 0dc5ba2 y validación por paso eb0989d Vercel success verificado. Última consulta de pasos enumera faltantes y montos inválidos juntos; guardar borradores sigue permitido.
+
+Resumen estructurado: source Formatos y Normativa de postulación/Formato-de-Nota-Conceptual-web.docx verificado: resumen máximo 500 palabras, sin límites individuales de palabras para otros apartados; máximo oficial 6 páginas (control global PDF pendiente). summary_parts JSON con contexto/problema/amenazas/justificación/solución/resultados; concept.summary conserva concatenación sin subtítulos para conteo SQL existente. SaveDraft regenera canonical summary desde partes; UI y Server Actions verificar partes completas/límite conjunto antes de preparar/enviar. PDF renderiza seis subtítulos; anteriores sin partes mantienen resumen original. Editor muestra resumen anterior íntegro en Contexto con indicación de redistribuir, no modifica silenciosamente. Otros apartados: contador de palabras y 12.000 caracteres (límite existente), no inventar tope 500 por campo. Campos geografía existentes en JSON; guardrails SQL para geografía/partes adicionales pendientes, no afirmar producción oficial completa. Nuevos menús/header y textos 69b836c/b24d12b/aaad950 Vercel success. Resumen test frontera 500/501 y parte faltante pasa, PDF estructurado y lint/tsc/build pasan.
+
+## Sesión recordada — 7 octubre 2026
+- Login y verificación MFA ofrecen Mantenerme conectado por 90 días en este navegador. Caducidad absoluta, sin extensión por refresco; desmarcado usa cookies de sesión.
+- Login reconoce sesiones existentes; seguridad redirige si ya existe aal2. MFA y RLS permanecen obligatorios para personal interno; no se implementa bypass de segundo factor.
+- Preferencia aplicada a cookies SSR, proxy y cliente navegador; cierre de sesión elimina preferencia. Pruebas de política de cookies, DB, dominio, PDF, lint y build aprobadas. Prueba real con cuenta y autenticador pendiente.
+
+
+## Invitaciones de personal interno — 7 octubre 2026
+- Migración 202610070012 aplicada por SQL Editor, consulta 2bde6291-bd2e-4404-b0cd-b8f3094e6b83, Success. No rows returned. No repetirla ni ejecutar db push sin reconciliar historial.
+- Edge Function staff-invitations desplegada desde editor; usa secretos internos de Supabase, getUser/getClaims, AAL2 y validación de rol/delegación más RPC transaccional. Vercel no recibe service_role.
+- Módulo prepara/edita, revisa, confirma envío, reenvía y cancela; estados auditados. Envíos limitados y con bloqueo/concurrencia. Usuario invitado inactivo hasta activación, email confirmado y contraseña establecida; luego MFA obligatorio. No asignar roles desde metadata.
+- Ruta exacta https://glf-postulaciones.vercel.app/auth/activate añadida a Auth allowlist. La activación consume tokens de fragmento, limpia URL, verifica destinatario en DB y acepta desde Server Action. Puede abrirse en otro dispositivo.
+- SMTP personalizado deshabilitado, confirmado en dashboard. Servicio de correo de pruebas puede rechazar destinatarios fuera del equipo Supabase. Consulta pendiente al titular sobre SMTP; no se enviaron invitaciones reales ni se crearon cuentas reales durante pruebas.
+- Pruebas locales: 21 DB y 14 dominio/PDF, lint y build pasan. Comprobación alojada de servicio y UI pendiente al publicar. Activación real/entrega a bandeja requieren prueba autorizada y destinatario humano.
+
+
+- QA alojada del módulo completada en Chrome con Schubert AAL2: seis invitaciones pendientes, edición Ulf conserva Sostenibilidad/delegación; revisión de envío muestra destinatario y checkbox obligatorio. Comprobar servicio devolvió Servicio conectado, sin correos enviados. Captura scratch/invitaciones-personal-glf.png. Vercel a841530 Success. Entrega real de correo y activación humana siguen pendientes por SMTP/prueba autorizada.
+
+## 2026-10-07 — Convocatorias: borrador, vista previa y publicación
+- Editor conservado tras guardar; permite retomar borradores desde el listado.
+- Guardar / Vista previa / Publicar juntos. La vista previa y publicación se deshabilitan si hay cambios sin guardar; publicar también exige campos y reglas válidos.
+- Se guardan borradores incompletos con un código identificador. Fechas nulas exclusivamente en borrador.
+- Vista previa ES/EN con fechas en Galápagos, categorías, montos, plazos, requisitos, anexos y privacidad. No inicia postulaciones.
+- Confirmación explícita con resumen y casilla obligatoria antes de publicar. Publicado queda sin edición de bases en este módulo.
+- Migración 013 aplicada remotamente en una transacción mediante SQL Editor (consulta d088a0f5-a58d-481b-be46-0997ebd5e410), éxito confirmado. No ejecutar de nuevo.
+- RPCs save_call_draft y publish_call_reviewed: permisos y MFA existentes, bloqueo de fila, control revision, registro privado de eventos. La ruta publish_call también valida contenido y fechas; publish_call_rules no se concede a usuarios.
+- No se envían correos ni se publican convocatorias oficiales mediante esta verificación.
+- QA publicada de d1633cf: 36 pruebas, lint, TypeScript y build correctos. Verificación con Chrome: guardado incompleto, retomar borrador, datos conservados, ES/EN, confirmación con casilla sin activar y bloqueo tras modificaciones. No se confirmó ninguna publicación.
+- Borrador técnico QA-VISTA-PREVIA-20261007 (id 0dfd0147-9bde-49a3-9774-f675a41cbbaf), sin validez oficial, permanece sin publicar para revisión. Imagen de prueba local scratch/convocatoria-vista-previa.png; no incluir en Git.
+
+## 2026-10-07 — Código sugerido de convocatoria
+- Nueva convocatoria propone GLF-AAAA-NNN según año de Galápagos y el mayor consecutivo ya existente. Serie de pruebas independiente GLF-PRUEBA-AAAA-NNN, seleccionable en el formulario.
+- Código editable hasta publicar; botón para recuperar la sugerencia. Cambiar serie/código/sugerencia requiere guardar nuevamente antes de vista previa/publicación. Códigos previos se conservan al editar.
+- Guardado normaliza a mayúsculas y comprueba duplicados. Si otro usuario tomó el código, conserva los campos y propone uno disponible para revisar y reintentar. La restricción UNIQUE de Supabase resuelve colisiones simultáneas; no se reserva un número al abrir el formulario.
+- Sin migración ni consulta SQL nueva. Serie de código es nomenclatura, no cambia por sí sola elegibilidad o validez de una convocatoria.
+- 37 pruebas pasaron, incluidos independencia de series, cambio de año Galápagos, más de 999 y unicidad de la base de datos. Lint y TypeScript correctos.
+
+## 2026-10-07 — Destino local de respaldos
+- Decisión expresa: elegir carpeta local, Google Drive para escritorio o dispositivo externo; no pedir usuario/contraseña Google. Sin cifrado adicional del ZIP.
+- /internal/backups requiere administrator y MFA (página y exportación). No se amplían roles. Selector File System Access en Chrome/Edge con permiso explícito; handle IndexedDB separado por usuario y navegador. Destino recordado no significa copia ni sincronización completada.
+- Copia manual todos los expedientes recibidos o por convocatoria: JSON relacional, versiones, documentos originales, eventos/revisiones/decisiones/acuerdos. Anexos se descargan directamente de Storage con URLs firmadas 15 minutos; nunca incluir las URLs en ZIP. SHA-256 y tamaño se verifican antes de escribir. ZIP asíncrono en navegador, manifiesto de hashes, fallback descarga estándar.
+- Límites actuales: 200 expedientes / 128 MB sin comprimir; datos del plan máximo 4 MB. Lecturas secuenciales, no snapshot transaccional. No incluir borradores sin remitir, Auth/secretos, configuración ni corpus RAG. No equiparar esta copia al respaldo técnico completo.
+- Automatización diaria/semanal y retención 30 días/8 semanas NO activadas: requieren runner independiente o servicio cloud configurado. Copias manuales no se borran. Delegación de permiso backup, auditoría de jobs, exportación Excel y dossier ZIP individual continúan pendientes del alcance anterior. No afirmar que todo el módulo de expedientes está terminado.
+- Despliegue 9072632 confirmado Success. QA Chrome admin AAL2: módulo visible, selección por convocatoria, descarga real en Downloads. ZIP prueba de vista previa (0 expedientes) contiene 13 archivos, 11 hashes validados. Picker nativo/escritura en destino elegido y anexos reales aún requieren prueba humana. 37 pruebas previas, lint/TypeScript/build pasan. No se enviaron invitaciones ni se cambiaron permisos.
+
+## 2026-10-07 — Selección explícita de respaldos
+- Pantalla en tres pasos: alcance (todos / convocatoria / expedientes específicos), destino (descarga / carpeta) y resumen antes de ejecutar. Convocatorias con conteo, búsqueda por referencia/proyecto, filtro de convocatoria y selección múltiple. Sólo remitidos; títulos desde versiones remitidas. Vacío o >200 no habilita copia.
+- Selector orientado inicialmente a Documentos; guía para escoger subcarpeta dedicada, incluyendo Drive y dispositivo externo. Chrome conserva sus bloqueos de carpetas protegidas. No se eluden.
+- Exportación POST mismo origen, administrator+AAL2, esquema discriminado estricto; rechaza selección vacía, duplicada, inválida o ambigua. IDs seleccionados comprobados antes de emitir URLs: faltantes producen 409. RLS intacta.
+- 38 pruebas pasan, incluido riesgo de convertir selección vacía en exportación completa; lint, TypeScript y compilación pasan. QA alojada pendiente tras publicación.
+- Vercel 385c26d Success. QA Chrome administrador AAL2: tres radios visibles, convocatoria muestra conteo y resumen; selección específica muestra filtro/buscador/tabla; destino carpeta muestra orientación. Ambos calls actualmente tienen 0 expedientes remitidos: botón deshabilitado verificado. No se generaron expedientes ficticios para forzar prueba. Descarga con selección no vacía y selector nativo/escritura requieren expediente remitido y prueba humana. Captura local scratch/respaldos-seleccion-expedientes.png (no subir a Git).
+
+## 2026-10-08 — Portal externo separado
+- /applicant es Nueva postulación: sólo convocatorias abiertas/categorías. No consulta ni muestra expedientes.
+- /applicant/applications es Mis postulaciones: exclusivamente aplicaciones del usuario conectado, con filtro explícito applicant_id y RLS existente. Incluye borradores para retomarlos, estados remitidos y propuesta completa cuando corresponde.
+- Navegación usa rutas distintas; marca activa diferenciada. Enlace de regreso del editor apunta al listado propio. Usuarios internos siguen fuera de estas rutas por requireViewer applicant.
+- 38 pruebas pasan incluyendo aislamiento de usuarios en DB, lint y build; QA alojada pendiente publicación y sesión externa.
+
+## 2026-10-08 — Guía de postulación e icono institucional
+- Fuente revisada https://galapagoslifefund.org.ec/es/2convocatoria/ y Manual de Procedimientos GLF 2025 vinculado. Segunda convocatoria cerrada 02-02-2026; tabla/eligibilidad se presentan como referencia identificada. Reglas operativas de tarjetas provienen de la convocatoria configurada, sin alterar límites ni eligibilidad ni publicar convocatorias.
+- /applicant/guide (sólo applicant): etapas 1/2, categorías, consulta breve de elegibilidad/documentos/envío/correcciones y enlace institucional. Nuevo menú Cómo postular. Identificación/evaluación inicial sin mitigación fase1; PGAS fase2 conforme última instrucción Ulf.
+- /applicant: explicación breve Nota Conceptual antes de tarjetas; instrucción de escoger categoría; duración y cofinanciamiento separados. No reintroducir expedientes.
+- Icono SVG usa el símbolo del logo existente, con colores originales; se elimina favicon estándar Next. No reconstruir marca con IA.
+- Nota de ambigüedad límite USD250k web(ambas categorías) frente a manual(grande >250k): no inventar regla; manda configuración de la convocatoria.
+- Lint/TypeScript/build correctos; QA visual portal externo pendiente sesión applicant.
+
+## 2026-10-08 — Reglas generales confirmadas por Schubert
+- El usuario confirma montos, categorías y elegibilidad vigentes para convocatorias anteriores y futuras; no presentarlos como reglas históricas/exclusivas de segunda convocatoria. Cambios futuros requieren decisión del directorio y actualización del portal.
+- Guía ES/EN: elimina fecha de cierre y referencia histórica de categorías; Consulta rápida usa Quiénes pueden postular. Conserva datos y fuente institucional, sin nota sobre solapamiento USD250k en la interfaz. No alterar fechas de convocatorias ni estados.
+- Esta instrucción reemplaza el tratamiento histórico del apartado previo de relevo.
+
+## 2026-10-08 — Limpieza institucional y prioridades
+- Retirados de guía ES/EN enlace Información institucional del GLF y del pie global la frase Postulaciones / Salvaguardas / Decisiones trazables. Pie conserva nombre institucional únicamente.
+- Aclaración Schubert: prioridades temáticas y lineamientos sí cambian por convocatoria; categorías, montos, elegibilidad y plazos de categorías siguen comunes hasta decisión de directorio. Evitar referencias/comentarios editoriales innecesarios en interfaz lista para revisión GLF.
+
+## 2026-10-08 — Pie y versión
+- Pie aprobado: © 2026 Galápagos Life Fund · v0.1.0, sin Todos los derechos reservados. Mismo contenido ES/EN.
+- Versión se importa desde web/package.json (fuente única), actualmente 0.1.0. Commit exacto continúa en historial Git/Vercel.
+
+## 2026-10-08 — Convocatoria presentada sin avisos de prueba
+- Solicitud expresa: retirar Prueba interna y descripción de datos ficticios; versión preparada para pruebas reales. Cambio en datos, sin ocultar por CSS ni sustituir lógica.
+- Ejecutada operación supabase/operations/20261008_call_presentation.sql en SQL Editor. Título Convocatoria de subvenciones GLF / GLF grant call; descripción vacía ES/EN. ID 9e195a21-938c-459c-8a08-f955bfdc4d05; status published conservado, reglas/fechas/código sin cambios. Revisión incrementada y evento privado presentation_text_updated. Consulta a5445272-c90d-4d71-b50b-84f2c1aca876 guardada; no repetir operación por su guardia de contenido.
+- Al hidratar sql/new se abrió snippet anterior 013; primer fill dejó texto parcial. Consulta produjo exclusivamente error de sintaxis, sin cambios DB. Snippet original 013 restaurado desde repo y guardado SIN ejecutarlo. Luego se abrió consulta independiente y se aplicó operación correcta con resultado verificado.
+- Evidencia local scratch/convocatoria-texto-depurado.png, no subir.
+- Usuario quiere reinicio de datos DESPUÉS de pruebas reales, no ahora. No hay eliminación realizada ni programada. Antes de limpieza: inventario, copia verificada y acuerdo de alcance (expedientes/anexos/cuentas de prueba/corpus); preservar esquema, permisos, configuración y accesos administrativos necesarios. No interpretar el plan futuro como orden inmediata de eliminar base completa.
+
+## Alineación estratégica — 2026-10-08, versión 0.2.0
+- Selecciones estructuradas dentro de concept.strategic_alignment, almacenadas en el JSONB del expediente y sus versiones; sin borrar datos ni crear una segunda fuente de verdad.
+- Objetivo general y hasta 10 específicos, identificadores UUID, contribución prevista por objetivo, selección múltiple de políticas Plan Galápagos 2030, objetivos ODS y líneas generales GLF.
+- Catálogo inicial comprobado: 17 políticas del anexo 6 del Plan, sus relaciones con los 17 ODS y 7 líneas del Manual GLF sección 3. Etiquetas abreviadas bilingües; enlaces a fuentes. Los cruces son a nivel de política/objetivo ODS, no de las 169 metas. No se declara completo el catálogo de estrategias del Plan.
+- Sugerencias ODS deterministas según políticas elegidas; no autoselección ni puntuaciones. Se mantienen selecciones previas si cambia una política; el aplicante decide retirarlas.
+- Conjunto del proyecto cubre los tres marcos, cada objetivo tiene contribución y alguna referencia; no se fuerzan los tres marcos en cada específico. Borradores incompletos siguen guardándose.
+- Actividades permiten asociar objetivos específicos; al retirar un objetivo se limpian sus asociaciones en el editor. Validación de referencias también en servidor/BD.
+- Compatibilidad: texto anterior se conserva en legacy_text al organizarlo. No se convierte automáticamente en selecciones. Los expedientes anteriores sin estructura siguen compatibles.
+- PDF bilingüe y revisión interna generan texto desde identificadores y catálogo, sin confiar en etiquetas enviadas por cliente. Priorización específica de convocatorias y elegibilidad permanecen distintas de las líneas generales seleccionables.
+- Migración 015 aplicada manualmente en SQL Editor, transacción con Success. Consulta posterior confirma wrapper anterior presente y 3 expedientes conservados. No repetir ni db push sin conciliar historial CLI.
+- Pruebas: 24 de base y 24 TypeScript pasan, incluyendo referencias falsas, duplicados, cobertura y PDF con alineación. UI probada en Chrome mediante ruta local temporal, retirada antes de compilar/publicar.
+- No se enviaron invitaciones ni se alteraron expedientes existentes. No se añadió planificación del Parque Nacional Galápagos.
+- Despliegue verificado: commit e9c5d9e; Vercel CpEXjzuJ2aXStqK8aR4LXqjFANHE Ready, Preview con alias glf-postulaciones.vercel.app. Página publicada confirma footer v0.2.0. No confundir este estado de revisión con apertura oficial de una convocatoria.
+
+## Objetivos y selectores laterales — versión 0.2.1
+- Cada objetivo tiene su propia caja de texto y, al lado, selectores compactos de Plan Galápagos 2030, ODS y GLF. Las selecciones múltiples se muestran como etiquetas removibles; los ODS relacionados con las políticas elegidas aparecen primero.
+- Botón + para añadir específicos; eliminación independiente. Un objetivo general permanece único. La contribución prevista se registra en un campo separado del objetivo.
+- En móvil los selectores quedan debajo. Chrome verifica añadir/eliminar específicos, quitar/reseleccionar referencias y ausencia de desbordamiento a 390 px. Lint aprobado; ruta de prueba temporal retirada.
+- Sin cambios de esquema, permisos ni expedientes; migración 015 no se repite. No se envían invitaciones.
+
+## Registro individual de riesgos — versión 0.3.0, 2026-10-09
+- concept.risk_register opcional contiene UUID, dimensión y nombre; numeración visible RA/RS por dimensión. Nuevos borradores inicializan registro vacío. Históricos conservan texto y requieren acción Organizar; no se altera su contenido automáticamente.
+- Riesgos de actividades referencian source_id del registro; nombre/dimensión se sincronizan al editar y guardar. Una actividad admite varios riesgos y un riesgo varias actividades, cada asociación mantiene probabilidad/gravedad/puntaje independiente. Al cambiar la selección se reinicia la calificación inicial y residual.
+- Registro vinculado no puede eliminarse hasta retirar asociaciones. Completar exige vincular cada registro al menos a una actividad; referencias falsas y duplicados en la misma actividad se rechazan. Borradores permiten campos pendientes.
+- Narrativas y PDF usan numeración derivada del registro; matriz incluye código asociado. UUID persiste aunque se renumeren filas al eliminar. Medidas y PGAS continúan únicamente en fase 2.
+- Migración 016 aplicada en transacción en SQL Editor: Success; consulta posterior confirma wrapper y 3 expedientes conservados. No repetir migración. Permisos no se amplían.
+- Lint y 51 pruebas pasan (25 BD, 26 TypeScript). Chrome verifica añadir/quitar filas ambientales y sociales y ancho móvil sin desbordamiento. Ruta local temporal retirada antes de publicar.
+
+## Respuesta visual uniforme — versión 0.3.1
+- Preparar nota conceptual y cierre de sesión usan SubmitButton compartido; formularios internos de revisión, reapertura, decisiones, convenios y roles/delegaciones también. Prop disabled conserva restricciones anteriores además de pending.
+- Reportes usa Next Form GET con estado pendiente. RAG, importación corpus y respaldo muestran spinner ActionLabel y aria-busy; los flujos de autenticación, MFA y edición ya lo implementaban.
+- Criterio permanente documentado en web/AGENTS.md: progreso visible inmediato, bloqueo de repetición y recuperación al terminar; sin demoras artificiales en producción.
+- Chrome verificó componente compartido con operación temporal: Preparando… y botón deshabilitado durante espera; recupera etiqueta/habilitación al terminar. Ruta temporal retirada. Sin cambios de datos, permisos ni invitaciones.
+
+## Borradores — versión 0.4.0 (2026-10-09)
+- Autoguardado tras 2 segundos sin editar, estado visible y hora Galápagos, guardado manual y aviso al salir con cambios pendientes. Errores detienen reintentos automáticos; guardado manual permite recuperar. Conflictos de revisión requieren recargar. Edición durante guardado conserva cambios posteriores.
+- Mis postulaciones: último guardado, Continuar borrador y eliminación con confirmación explícita. Nueva postulación avisa si hay borradores.
+- Eliminación solo propietario externo, fase 1, borrador nunca enviado y sin versiones. Dos RPC con bloqueo/revisión y marca deletion_pending; retiran archivos antes de finalizar. Fallos permiten Completar eliminación. RLS y trigger impiden eliminar enviados incluso tras reapertura.
+- Migración 017 aplicada en Supabase: Success; consulta confirmó columna y ambas funciones, 6 aplicaciones existentes. No repetir migración. No se eliminaron registros reales.
+- 53 pruebas pasan: 27 base de datos y 26 TypeScript. Pruebas locales de eliminación validan propiedad, revisión, archivos huérfanos, bloqueo y protección de enviados. Chrome con persistencia simulada verificó autoguardado, fallo, recuperación manual y confirmación/cancelación sin eliminar datos. Ruta temporal retirada.
+
+## Botones de borrador — versión 0.4.1
+- Continuar y Eliminar con mismo tamaño, borde gris/rojo, separación de 16px y apilados en móvil. Confirmación y permisos sin cambios. Lint y build pasan; vista visual local con CSS real verificada.
+
+## Organizaciones asociadas — versión 0.4.4
+- Sección opcional con filas numeradas, agregar y quitar; array concept.associated_organizations opcional, hasta 50 nombres de 200 caracteres. Texto histórico se conserva como una fila sin dividir por comas. partners mantiene representación numerada compatible con exportaciones existentes.
+- Autoguardado conserva filas incompletas. Continuar/enviar/preparar PDF exige completar nombres o quitar filas vacías. Validación cliente y Server Actions, sin cambios de permisos ni esquema SQL.
+- PDF usa lista estructurada cuando existe, incluyendo lista vacía explícita. 16 pruebas de dominio/PDF pasan; PDF con dos organizaciones extraído y verificado. Compilación final correcta.
+- Versiones 0.4.2/0.4.3: aclaración exacta del usuario, negritas en navegación y fecha/hora de guardado junto a estado Borrador; hora Galápagos.
+
+## Planificación y screening separados — versión 0.4.5 (2026-10-10)
+- Actividades principales se registran en paso 2 Nota conceptual: nombre, descripción y objetivos específicos completos. Screening reutiliza mismos UUID, nombres, descripciones y objetivos; allí solo se evalúan riesgos (PGAS se mantiene en fase 2).
+- Pestañas permiten regresar/editar sin perder el payload compartido. Screening ofrece retorno directo a planificación. Autoguardado y bloqueo de expedientes enviados conservados.
+- Objetivos se muestran con texto completo y número; objetivos sin texto no seleccionables. Cada actividad de planificación estructurada debe tener objetivo específico válido antes de continuar/preparar/enviar; validación cliente y Server Actions. Compatibilidad con objetivos históricos no estructurados.
+- Quitar actividad se bloquea si tiene riesgos asociados; se explica retirar asociaciones primero. Cambiar nombres/descripciones conserva riesgos y puntajes, con recordatorio de revisar screening. Quitar objetivos limpia referencias existentes y obliga revisar asociaciones faltantes antes de enviar.
+- 55 pruebas pasan (27 BD, 28 TypeScript), lint y compilación final correctos. Navegador local con componente real verificó agregar/quitar, editar, objetivo completo y eliminación bloqueada con riesgos. Ruta temporal retirada, sin cambios a datos reales ni permisos SQL.
+
+## Cierre de sesión global — versión 0.4.6
+- Shell compartido presenta Cerrar sesión debajo de ES/EN para cualquier usuario autenticado, en todas las pantallas internas y externas. Se retiraron tres botones duplicados de páginas individuales.
+- Conserva Server Action signOut, cierre local y limpieza de preferencia de sesión; SubmitButton bloquea repetición y muestra progreso ES/EN. No cambia roles ni base de datos.
+- ESLint y compilación TypeScript/Next correctos. Los seis expedientes reales siguen pendientes de carga como borradores de schubertlm.reg@gmail.com; preparación local en Trabajo_Carga_6_Expedientes, sin subir documentos a GitHub.
+
+
+## Resultados estructurados — versión 0.4.9 (2026-10-10)
+- Fichas repetibles: resultado, objetivo específico, indicador, meta preliminar, unidad y evidencia. Fórmulas y línea base se completarán en proyecto completo.
+- project_results opcional permite históricos sin migración implícita; results_source preserva texto anterior al organizar. Borradores incompletos permitidos. Validación cliente y servidor de referencias, campos, porcentajes y unidades.
+- Texto derivado compatible con revisión interna, PDF y exportaciones. No modifica expedientes cargados ni permisos. Futuro módulo de seguimiento conserva IDs estables.
+
+
+## Documentos firmados — versión 0.4.12 (2026-10-10)
+- Fase 1: dos bloques explícitos PDF (nota conceptual y evaluación de riesgos A&S), sin selector genérico de tipo. Confirmación previa con texto aprobado y revisión de firma reservada al GLF.
+- Ambos PDF deben ser posteriores a la preparación vigente; editar exige preparar, firmar y adjuntar ambos nuevamente. Estados y descarga de archivos adjuntos disponibles.
+- Migración 202610110024 aplicada en Supabase en transacción; comprobación devolvió both_pdfs_required=true y pdf_validation_active=true. Consulta guardada. No repetir ni eliminar datos.
+- Pruebas de base de datos incluyen falta de evaluación, formato incorrecto y versión antigua. 63 pruebas pasaron; lint, TypeScript y compilación correctos. Fase 2 conserva su formulario de anexos.
+
+## Comprobante de recepción — versión 0.4.14 (2026-10-10)
+- GET /receipts/[versionId] genera PDF desde application_versions y su lista congelada de anexos. Número GLF-REC-UUID único; fecha oficial del servidor, código, título, responsable, categoría, fase/revisión y cuenta remitente identificada por UUID estable.
+- QR apuntan a /files/ID de los PDF efectivamente adjuntos: solo IDs y SHA-256 del snapshot; escoger la carga más reciente de cada tipo dentro del envío. Nunca toma anexos nuevos de una corrección posterior. Descargas respetan Auth/RLS/MFA existentes, no-store, sin URLs temporales incrustadas.
+- Al enviar se navega a confirmación con receipt=ID e intenta descargar; botón con progreso y recuperación siempre disponible. Historial externo e interno ofrece comprobante de cada envío, conservando anteriores. Fallo de descarga no se informa como fallo de recepción.
+- Registros históricos sin alguno de los anexos muestran su ausencia; no se fabrica un QR ni una firma. No se alteran DB ni documentos enviados.
+- 65 pruebas pasan, lint y build correctos. PDF ES/EN de una página verificado con datos ficticios; nombre de archivos conservado. No se enviaron los borradores del usuario para probar.
+
+## 2026-10-11 — v0.4.17: detección de firma en anexos
+- /api/files analiza la estructura del PDF para concept_signed/matrix_signed antes de almacenar; rechaza ausencia de firma incorporada o PDF ilegible/protegido con advertencias ES/EN.
+- submitDraft vuelve a descargar y comprobar los dos anexos actuales de fase 1, incluyendo cargas anteriores. Conserva validaciones SQL de versión, preparación, estado y plazos.
+- Detección estructural mediante diccionario Sig/campo FT Sig, ByteRange y Contents no vacío con forma DER. No valida criptografía CMS, identidad, confianza, revocación ni vigencia del certificado; no equivale a certificar una firma válida. GLF conserva revisión final. Una imagen o recuadro de firma no es una firma incorporada.
+- Advertencia: no se detectó firma; presentarlo sin firma podría ser motivo de descalificación; firmar y volver a cargar. PDF no legible se distingue de PDF sin firma.
+- 68 pruebas aprobadas (28 SQL + 40 dominio/PDF). Pendiente prueba con PDF firmado real de un proveedor usado por GLF. No se enviaron ni eliminaron expedientes.
+
+## 2026-10-11 — v0.4.18: reparación del envío real
+- Diagnóstico en Supabase del expediente 6e97dd1e: error PostgreSQL 42883, función public.submit_application_core(uuid,integer) inexistente. El wrapper de envío sí existía. Desajuste del despliegue respecto a las migraciones locales; no era un rechazo de firma.
+- Migración 026 restaura el núcleo con todas las validaciones vigentes. EXECUTE revocado a public/anon/authenticated; no expone un camino que evada los dos PDF preparados exigidos por el wrapper.
+- Prueba real en subtransacción con excepción deliberada: operación completada y revertida; expediente conservado en draft, revisión 7, cero versiones enviadas. No se realizó envío real.
+- Ambos anexos firmados existentes descargados desde el portal y comprobados con detectPdfSignature: detected. No equivale a validar certificados.
+- Error RPC inesperado devuelve GLF_SUBMISSION_UNAVAILABLE con mensaje explícito; registro de diagnóstico en servidor con código y motivo seguro sin contenido del expediente.
+- 70 pruebas aprobadas (29 SQL + 41 dominio/PDF), incluyendo restauración de núcleo ausente sin privilegios de bypass y traducción segura de errores.
+
+## 2026-10-11 — v0.4.19: textos externos e historial de presentación
+- Cada versión presentada muestra confirmación con título de su snapshot, fecha/hora local Pacific/Galapagos y descripción de Fase 1/2; descargas con nombres comprensibles. No usa el título mutable del expediente para describir envíos anteriores.
+- Retirada explicación técnica de copias inmutables/autorización y etiqueta de versión de reglas del encabezado externo. Mantiene códigos y datos históricos, sin reescribirlos.
+- Los avisos heredados de prueba/datos ficticios se muestran como una breve explicación neutral del uso de información para gestionar/evaluar postulaciones; los avisos institucionales sin texto de prueba se conservan. Es una presentación de interfaz, no modificación retroactiva del aviso aceptado guardado en la base de datos ni de los documentos ya generados.
+- 71 pruebas aprobadas, lint/TypeScript y compilación correctos. Verificación de fecha al cruzar medianoche UTC y nombres por versión incluida.
+
+## 2026-10-11 — v0.4.20 Manual externo
+Manual público /manual ES/EN: 14 capítulos, esquemas numerados de pantallas (sin datos reales), tablas de campos/acciones, buscador sin acentos, índice, impresión completa aunque haya filtro, diseño móvil. Menú externo, ayuda login/registro y enlaces por paso en nueva pestaña para preservar borrador. Manual interno no construido por instrucción del usuario. Base de datos intacta. npm test: 29 SQL + 42 TS; lint, TypeScript y build correctos. Segunda fase solo contextual, sin instrucciones sobre controles aún no terminados.
+Verificación publicada: Vercel success 608e3a9; 14 capítulos y 110 filas explicativas; búsqueda firma: 7 resultados; índice sin enlaces rotos; ES/EN correcto; ancho móvil 390 px sin desbordamiento; acceso sin cuenta verificado en IAB. Captura scratch/manual-externo-0.4.20.png.
+
+## Actualización 0.5.0 — observaciones GLF
+
+Se implementa el trabajo autorizado en Texto pegado.txt. Consultar docs/Revision_32_observaciones_0.5.0.txt: mapa de los 32 puntos, fórmula de avance, fuentes y siete grupos de decisiones pendientes.
+
+- Presupuesto anual GLF/Otros en centavos, siete categorías, totales consistentes y PDF; resúmenes previos preservados sin distribución artificial. Clasificación explícita de remuneraciones en ambas fuentes; 30% calculado, sin nuevo bloqueo. Base del 10% pendiente: comportamiento vigente conservado.
+- Nuevas postulaciones: mediana >100000 y <=250000; grande >250000. Migración 029 no actualiza convocatorias/drafts/versiones históricos. Borradores anteriores mantienen snapshots.
+- Migración 028: rúbricas 50/55 y checklist 8/7 por fase; plantillas fijadas por convocatoria; borradores independientes y auditoría, concurrencia por revisión y versión. Reutiliza roles/MFA existentes; no se modifican cuentas ni privilegios. No activa cierre/promedio institucional/rechazo automático.
+- Tercera columna Norma de desempeño preparada. safeguard_catalog está vacío y el Excel original indica catálogo definitivo pendiente. No inventar ni marcar selección operativa hasta recibir el catálogo validado.
+- Avance excluye guardar, campos ocultos sustituidos y fases futuras. Aviso institucional PDF centralizado, firma/QR conservados. Manual externo actualizado. Instrumentos PGAS/PPPI/MGQ distinguidos sin decidir modalidad final.
+- Migraciones 028/029 aplicadas manualmente vía Supabase SQL. No usar db push inicial: historial CLI todavía sin conciliar. Funciones vivas coinciden con fuente local tras normalizar espacios (hashes en documento de revisión).
+- QA: 92 pruebas correctas (33 SQL,59 TS), lint, tsc, build y revisión visual de presupuesto/firma/comprobante. Aceptación con usuarios externos/reales sigue siendo distinta de estas pruebas.
+- RAG no se modifica en este lote; tampoco se borran datos, envían invitaciones o presentan resoluciones.
+
+0.5.1: corrección visual de tarjetas de revisión (live-form y espaciado explícito), máximo 50/55 siempre visible, casillas de líneas temáticas con check-row. Sin cambios de lógica/roles/datos. cf36bd6/0.5.0 pasó CI Linux y Vercel; se verificó suma 50/50 sin guardar evaluaciones, EN y lectura de plantillas en sesión administradora.
+
+Auditoría 13/10/2026 de v0.5.1: ver docs/Auditoria_funcional_20261013.txt. 92 pruebas web/SQL + 5 adaptador RAG, lint, tsc y build pasan. HTTP sin sesión correctamente protegido. Siete controles SQL de integridad con cero incidencias. Recorrido externo e interno sin modificar datos. E5 responde. Qwen falla en proveedor con HTTP 503 tras reintento; healthz correcto 271 fragmentos/7 documentos, token válido según logs. No afirmar disponibilidad de Qwen. Respaldo completo/automático no configurado. Reportes inicialmente selecciona convocatoria anterior por calls[0], manualmente vigente produce 7 recibidas y USD 1.346.391,35; mejora propuesta usar defaultCall. Evento descarga Excel no proporcionó ruta, no certificar archivo/restauración. Registro previo React418 no se reprodujo tras recargar. No cambios de roles/usuarios/envíos/gasto. Ningún cambio de código de aplicación en esta auditoría.
+
+Versión 0.5.2 — presentación de documentos y formularios (13/10/2026)
+- PDF: tablas con resultado/indicador/meta y relación objetivo/evidencia; textos históricos sin estructura preservados en cuadro, sin inventar indicadores. Beneficiarios y sostenibilidad con explicación introductoria y cuadro de contenido. Filas extensas continúan con encabezados repetidos. Saltos en blanco redundantes normalizados y retirada reserva de bloque completo de alineación que provocaba grandes vacíos.
+- Pantallas: escala de títulos 22px, formulario/proyecto 18px; estado y fecha de guardado en tarjeta junto al contador, apiladas únicamente en pantallas estrechas.
+- QA: 33 pruebas SQL +60 TS aprobadas, lint/tsc/build correctos. PDF corto y extremo renderizados; extracción confirma las 110 repeticiones y marcador final sin pérdida ni invasión del pie. No cambios de esquema, permisos o datos.
+
+Reparación de conexión Qwen — 13/10/2026:
+El HTTP 503 era intermitente del proveedor Featherless, no de Supabase ni del corpus. HF_MODEL del Space cambiado y releído: Qwen/Qwen2.5-72B-Instruct:deepinfra. Es una variante 72B distinta del 7B académico; no atribuirle métricas originales. Corpus público 7 documentos/271 fragmentos, BM25/citas/abstención conservados; E5 independiente. Límite HF verificado USD5, CPU Basic gratuito, recarga automática no habilitada, sin cambios de credenciales. Portal respondió sobre redes de deriva (9,4s, cita AnexoB p3 P03C01) y desplazamiento forzado (1,6s, misma referencia, contenido consistente). Cinco tests adaptador pasan. README del servicio actualizado con configuración y tarifas de referencia. Prueba fuera de ámbito en curso al escribir este bloque.
+Prueba final de abstención completada: pregunta ajena al corpus (capital de Noruega), evidencia insuficiente sin respuesta inventada, 0,8s. Reparación comprobada con dos respuestas sustentadas y una abstención. No hubo cambios de código funcional, únicamente variable HF_MODEL en Space y documentación de despliegue.
+
+Versión 0.5.5 — líneas temáticas configurables por convocatoria (13/10/2026).
+Añadidos CallThemeEditor y validación compartida call-themes: nuevos nombres ES/EN hasta 200 caracteres, identificador UUID estable, selección automática, editar/quitar y mantener opciones desmarcadas. Duplicados rechazados por idioma ignorando mayúsculas/acentos/espacios; máximo técnico 50 opciones. El servidor rechaza selecciones desconocidas y nombres estándar alterados, y conserva una edición pendiente cuando se intenta guardar antes de aplicarla. Opciones y selección guardadas en rules.theme_options / rules.themes, aprovechando JSONB existente, sin migración ni cambios de privilegios. Vista previa y pantalla externa muestran las líneas seleccionadas; el formulario externo usa el catálogo congelado por postulación existente. Publicadas siguen inmutables con el control de DB anterior. Duplicar como borrador copia configuración y opciones, propone código nuevo y exige nuevas fechas; la copia no se guarda automáticamente. 34 pruebas SQL +61 TypeScript pasan (95); lint/tsc/build correctos. Pruebas SQL aisladas comprueban guardado, publicación y snapshot bilingüe sin publicar convocatorias reales. Pendiente verificación visual del despliegue al escribir este bloque.
+Complemento 0.5.5: callThemeLabel resuelve los nombres ES/EN desde las reglas congeladas para PDF, resumen del postulante, expediente interno y Excel; reportería usa las reglas de la convocatoria publicada. Se conserva el texto histórico si no existe coincidencia. Se evita mostrar UUIDs en las salidas de usuario. Pruebas finales: 34 SQL +63 TypeScript (97), lint y tsc correctos; test Excel verifica que un cambio posterior de nombre no sustituya el nombre congelado. Interfaz publicada comprobada agregando una línea sin guardar convocatoria, selección automática, duplicados por mayúsculas/tildes y apertura de edición. Publicadas no modificadas.
+
+Versión 0.5.7 — categorías y requisitos de anexos (13/10/2026).
+Categorías Pequeña/Mediana/Grande convertidas de fieldsets con legend sobrepuesto a tarjetas con título dentro del borde y campos alineados. Nuevo CallAttachmentEditor: anexos independientes, nombres ES/EN, formatos PDF/JPG/PNG/DOCX/XLSX (estos dos últimos conservan compatibilidad previa), condiciones firma electrónica/notarizado/otra e instrucciones ES/EN. IDs estables hasta100, nombres200, instrucciones2000, máximo30; validación de duplicados, al menos un formato y consistencia firma=>soloPDF, otra condición=>instrucciones bilingües. Required identifiers se mantienen en required_attachments; requisitos detallados en rules.attachment_requirements usando JSONB existente, sin migración/RLS/roles nuevos. Los anexos antiguos se convierten para edición conservando identificadores y formatos previos. La duplicación conserva requisitos; publicación mantiene bloqueo existente. Dos PDFs firmados de fase1 siguen obligatorios con controles anteriores, independientemente de anexos adicionales.
+Vista previa y tarjetas de carga externas muestran nombre, formatos, condiciones e instrucciones. /api/files valida extensión/contenido y presencia de firma cuando corresponde. submitDraft revalida los archivos requeridos más recientes desde Storage, con máximo3 cargas simultáneas y presupuesto de tiempo60s en página; reglas congeladas de cada expediente. Firma detectable no equivale a validez criptográfica; notarización/autenticidad revisión humana GLF, sin verificación automática inventada. Manual externo actualizado. Identificadores de anexos se presentan con su nombre en expediente interno. No se modificaron convocatorias publicadas ni usuarios.
+QA local: 35 pruebas SQL/PGlite +65 TypeScript (100), lint/tsc/build correctos. Cobertura nueva: requisitos bilingües, duplicados, formatos, firma ausente, archivo reemplazado, fallo Storage, preservación legacy y snapshot tras publicación. Prueba visual publicada pendiente al escribir este bloque; no se publicaron nuevas convocatorias de prueba ni enviaron expedientes.
+
+## v0.5.8 - Tarjetas de resumen interno
+- Cinco indicadores en una fila cuando hay ancho suficiente: rejilla adaptable con mínimo de 150 px, separación de 12 px y relleno de 16 px. Cifras alineadas y tarjetas de igual altura; en pantallas pequeñas se reorganizan sin desbordamiento.
+- Solo presentación: sin cambios en consultas, filtros, roles o datos. Encabezado Espacio interno GLF pendiente de elección del usuario; recomendación Panel interno GLF.
+- Validación: lint y compilación de producción con TypeScript correctos.
+
+
+## v0.6.0 - Cuentas y evaluación académica
+- Migración 031: ciclo de cuentas, auditoría privada, archivado, revocación por sesión (auth.sessions), eliminación con ticket y bloqueo de FK/historial. Ningún expediente existente se elimina. Mantiene todos los roles y el doble factor del personal.
+- Acceso académico usa perfil applicant aislado mediante access_kind; current_role retorna NULL, sin acceso a expedientes ni operaciones internas. Tres meses calendario desde creación, vencimiento comprobado en cada petición. E5 solo fuentes aprobadas official/translation; BM25/Qwen sin cambios. Límite académico compartido 15/hora y 60/día; tope de facturación HF sin cambios.
+- /evaluation: RAG real con ejemplos sintéticos independientes y recorrido de consulta del ciclo. No es una copia editable del sistema institucional. Administrador con AAL2 puede previsualizarlo; cuenta académica no importa corpus ni guarda notas en expedientes.
+- Gestión de usuarios: búsqueda, filtros, desactivar/reactivar, archivar/desarchivar, cerrar sesiones; eliminación solo administrador, cuenta inactiva archivada sin historial y confirmación. No se cambia el acceso propio. Se conservan límites por área.
+- Edge user-administration: crea identidad nueva confirmada y contraseña aleatoria que devuelve una sola vez al administrador, sin correos automáticos; elimina mediante auth.admin.deleteUser y cascada protegida. Las credenciales administrativas permanecen en Supabase.
+- QA local: 40 pruebas SQL y 65 TypeScript, lint y build correctos. Migración 031 instalada en Supabase con transacción y recarga de esquema. Cuenta de profesora todavía NO creada; pendiente confirmación final desde la interfaz, entrega de credenciales y prueba de login académico real.
+
+
+## v0.6.1 - Alcance académico aclarado por el titular
+- El usuario confirmó que TODOS los expedientes actuales son de prueba y autorizó a la profesora a consultar expedientes y descargar archivos. Esto sustituye el alcance exclusivo de ejemplos de v0.6.0.
+- Migración 032: cerrar sesiones/desactivar/archivar también elimina las sesiones Auth del destinatario, con revocación por fecha como defensa adicional. No ejecuta cierres al instalarse.
+- Migración 033: fotografía explícita de los expedientes actuales en private.academic_application_scope; no incorpora automáticamente expedientes futuros. can_read_application habilita solo lectura al académico activo/no vencido; current_role sigue NULL y todas las mutaciones conservan requireViewer y roles originales. RLS de archivos, versiones, documentos, revisiones, decisiones y reportes filtra a los expedientes compartidos.
+- Corpus E5 aprobado: sus 36 documentos conservan source_kind=unclassified. Se usa lista exacta de nombres/versiones (hashes del corpus validado), sin modificar contenido ni reclasificar documentos arbitrariamente. Qwen conserva su corpus público independiente.
+- Profesor: /evaluation redirige al RAG real; menú de expedientes recibidos, todos los expedientes/archivos de prueba (incluye borradores), formularios completos solo consulta, convocatorias, reportes/CSV, manual y recorrido. No administra cuentas ni modifica convocatorias/decisiones. No es una maqueta ni un dashboard ficticio.
+- 41 pruebas SQL y 65 TypeScript pasan; controles verifican consulta de expediente/Storage habilitado, rechazo de caso futuro y de escrituras, y retirada del acceso al desactivar. Servicio Edge autenticado probado: disponible. Cuenta de profesora aún pendiente de creación final/entrega; no se envió correo.
+- Descargas firmadas de Storage ya emitidas tienen vigencia máxima de 60 segundos; la revocación impide emitir nuevas. Los archivos ya descargados no se retiran del equipo de quien los recibió.
+
+
+## v0.6.2 - Verificación con cuenta académica real
+- Titular confirmó expresamente la creación de Gladys Villegas Rugel (gmvillegas@uees.edu.ec). Cuenta creada y vence el 13/01/2027. Sin correo automático; contraseña aleatoria guardada solo en archivo local fuera del repositorio y ocultada en interfaz.
+- Prueba real por Supabase SSR/Auth y HTTP, sin alterar sesión Chrome del administrador: AAL1, cero factores MFA, acceso a 11 expedientes y 23 documentos; corpus académico 3.549 ventanas / 36 documentos exactos. Reporte devuelve 7 recibidos.
+- 200 verificados: RAG, todos los expedientes/archivos, convocatorias, bandeja interna, detalle de expediente enviado y de borrador, formulario completo en consulta y reportes. Descargar archivo cargado, PDF de nota conceptual y PDF de comprobante produce PDF válido. Gestión de usuarios redirige y RPC de administración deniega acceso.
+- Sesión usada para esta prueba cerrada al terminar; cuenta permanece activa y lista para ingreso de la profesora. Informe sin secretos: scratch/qa-academic-live.json (no versionado). Credenciales no copiadas al repositorio ni a GitHub, no enviadas por mail.
+- Ajuste final de UI: singular cuenta/account y eliminación de enlace redundante de previsualización administrativa.
+
+
+## v0.6.3 - Identidad integrada en la cabecera
+- Correo de la cuenta bajo el logotipo, 12 px, sin avatar ni espacio reservado en el contenido. Correos largos se abrevian visualmente y se muestran completos al pasar el puntero o enfocar con teclado.
+- Cabecera compartida externa, interna y académica. Menús e idioma/cierre mantienen altura uniforme de 40 px en escritorio y 44 px con puntero táctil. Navegación sigue de izquierda a derecha y controles de cuenta separados.
+- No modifica permisos, autenticación ni datos. Lint, pruebas, compilación y auditoría de dependencias correctos (GitHub 38458311614). Vercel success; manual externo verificado a 958 px y 390 px sin desbordamiento, contenido a ancho completo; cabecera interna verificada. Captura scratch/cabecera-correo-logo-0.6.3.png.
+
+## v0.6.4 - Lectura de evidencia y apoyo normativo más claros
+- E5: guía de lectura en lenguaje natural según tipo de fuente (definición, exclusión o disposición general), extracto literal legible, fragmento original expandible. No resume con un LLM ni agrega consumo de inferencia.
+- BM25/Qwen: preguntas sin duplicar el riesgo; selector de evaluación inicial/PGAS o exclusiones. Pasajes distinguidos de citas de respuesta y botón de búsqueda complementaria E5 (requiere ejecutar la consulta, sin mezclar corpus).
+- Adaptador runtime 1.1 añade instrucciones para proponer respuestas parciales sustentadas, distinguir definiciones de obligaciones y explicitar faltantes. Devuelve pasajes ante abstención y motivo separado para fallo de citas. BM25, corpus público y validador originales permanecen intactos.
+- QA: 41 pruebas SQL, 68 TypeScript (incluye referencias legibles), 7 adaptador y smoke pasan; lint/build pasan. Permisos, cuentas, cuotas y límite monetario sin cambios. HF commit 01606001f9e2965773cae1c024c7ad7ed8cca079, runtime 1.1 comprobado: pregunta original se abstiene conservando 5 pasajes, pregunta reformulada responde con 3 citas y límites explícitos, pregunta ajena se abstiene conservando pasajes no citados. Portal probado con el caso de fondeos: E5 devuelve 6 pasajes y Qwen devuelve material de apoyo ante abstención. La generación sigue siendo variable: no prometer respuesta para todo riesgo.
+
+- Ajuste de lectura: nombres amigables de fuentes E5 y referencia de fragmento/página sin inventar paginación; identificadores y versión originales conservados en detalle expandible. Aviso contextual cuando la fuente histórica menciona VEAS. Corregida puntuación duplicada de riesgos cuyo nombre ya terminaba en punto.
+- Adaptador 1.2: los logs confirmaron una respuesta sin identificadores de citas (finish=stop, no truncada). Se añade un único intento de regeneración del formato, sin insertar citas automáticamente y conservando el validador original; no reintenta abstención explícita. Presupuesto conjunto de generación de 43 segundos. Ocho pruebas del adaptador pasan. No cambian proveedor, corpus, cuotas ni límite monetario.
+
+## v0.6.5 - Evidencia pertinente y observaciones editables
+- Cada pasaje E5/BM25 puede marcarse como pertinente para el riesgo seleccionado. La selección se guarda con la consulta, versión enviada, riesgo, autor y fecha, sin modificar la calificación.
+- Preparar observación genera localmente un borrador editable a partir de actividad/riesgo, referencias seleccionadas y aclaración opcional del técnico. No afirma obligaciones automáticamente ni consume inferencia adicional. Fase 1 solicita caracterización/fundamento; fase 2 contempla PGAS. No envía mensajes al aplicante.
+- Confirmación de revisión antes de guardar, selección obligatoria, IDs únicos y pertenecientes al resultado validados en servidor, sustitución de texto con advertencia y cambio de selección/instrucción invalida la confirmación. Conjunto guardado queda bloqueado; otra consulta inicia otro registro.
+- Historial distingue evidencia seleccionada y mantiene compatibilidad con notas anteriores. Se mantienen roles, MFA, RLS y acceso académico de consulta; sin migraciones.
+- QA: 41 pruebas SQL y 70 TypeScript pasan, lint/build correctos. GitHub 38475317698 y Vercel success (bea8b96). Prueba real en portal con el riesgo RA-2 de Puerto Villamil, versión 34: selección, preparación, edición, confirmación y guardado completos para E5 y Qwen. Historial muestra ambas observaciones y una referencia seleccionada en cada una. Comprobados bloqueo sin selección/revisión, texto conservado al cancelar sustitución y bloqueo al cambiar la selección. No se enviaron mensajes ni decisiones. Captura local scratch/observacion-editable-0.6.5.png.
+
+## v0.6.6 - Separación entre recuperación y pregunta de revisión
+- La búsqueda de BM25 usa riesgo y actividad, sin anteponer las instrucciones genéricas de identificación/evaluación. Expansiones acotadas de vocabulario para biodiversidad/hábitats, residuos/contaminación y seguridad ocupacional; exclusiones se añade solo cuando se selecciona ese propósito. Son términos de recuperación, no reglas ni clasificaciones.
+- Qwen conserva la pregunta completa y su fase. Si el técnico modifica la pregunta automática, se usa su consulta editada para buscar; consulta libre no recibe expansiones por un riesgo seleccionado previamente.
+- runtime 1.3 admite retrieval_query opcional de 3–600 caracteres. Adaptador por petición delega al BM25 original; sin cambios en corpus, pesos, validación de citas, abstención, permisos o gasto máximo. No filtra el texto de una petición a otra. La respuesta devuelve el texto utilizado y el portal lo conserva como parte de la evidencia.
+- Pruebas: 41 SQL, 72 TypeScript y 10 del adaptador pasan, lint/build correctos. Despliegue y comprobación del caso del manglar en curso.
+- Ajuste tras pruebas del manglar: se prioriza la descripción del riesgo; la actividad completa se mantiene en la pregunta para Qwen y solo se usa para búsqueda si falta descripción. La primera búsqueda separada aún se abstuvo: la ventana original de cuatro pasajes dejaba fuera una disposición pertinente situada quinta. runtime 1.4 compone el contexto colocando disposiciones antes de documentos titulados Definiciones cuando se pide normativa; mantiene puntajes BM25 y conserva orden original para preguntas de definiciones o clientes sin búsqueda separada. Once pruebas del adaptador pasan.
+
+- runtime 1.5 combina tres pasajes del riesgo con uno procedimental del Manual SGAS, recuperado mediante la pregunta completa y sin duplicar IDs. Segunda búsqueda BM25 local (sin otra inferencia). Evita perder la fase al enfocar la biodiversidad. Doce pruebas del adaptador pasan; cliente muestra el criterio de composición en detalle expandible.
+- QA final: runtime 1.5 comprobado por API y portal. Caso Aula Manglar, riesgo RA-1, versión enviada 15: pregunta original conservada, búsqueda efectiva «Presión sobre áreas sensibles del manglar por tránsito durante actividades educativas. biodiversidad conservación hábitats». Se recuperan marco legal, exclusiones y conservación de biodiversidad junto con Manual SGAS. Respuesta parcial con cita al Manual SGAS y faltantes explícitos; no determina la aplicabilidad específica ni una categoría de riesgo. UI mostró resultado en 5,9 s. Captura scratch/manglar-busqueda-corregida-0.6.6.png.
+- Control fuera de ámbito (capital de Noruega, incluso con términos de manglar) conserva abstención. Una consulta libre genérica sobre exclusiones también se abstuvo; no prometer respuesta a toda pregunta ni atribuir cobertura completa. La ruta sin retrieval_query no cambia el algoritmo/orden original. Las nuevas composiciones de contexto no heredan las métricas del RAG académico original.
+- 41 SQL, 72 TypeScript y 12 pruebas del adaptador; lint/build correctos. GitHub 38478704358 y Vercel success para 77a8a26. Sin modificaciones de cuentas, permisos, expedientes, corpus privado o límite de gasto. No se enviaron mensajes al aplicante.
+
+
+## v0.7.0 — Observaciones de postulantes (14/10/2026)
+- Cabeceras externas con ModuleHeading y títulos de grupos dentro del borde; avisos rojo oscuro y campo inválido resaltado en ambos módulos. Se conservan fieldsets disabled donde protegen operaciones pendientes.
+- PasswordInput compartido en login, registro, recuperación y activación interna: oculto inicialmente, ojo accesible, no persiste contraseñas ni cambia permisos/MFA.
+- Credencial de residencia permanente para persona natural; RUC de 13 dígitos para organización. Formato y presencia, sin afirmar comprobación oficial. Textos acordados de vigencia de credencial y domicilio tributario en Galápagos.
+- Fechas del proyecto: comparación inclusiva con meses calendario y límite congelado de categoría; avisos inmediatos y bloqueo al continuar/preparar/enviar. No se alteran reglas de convocatorias históricas.
+- Alineación v2: solo objetivo general Plan2030+ODS y contribución. Objetivos específicos independientes. V1 preservada en versiones enviadas; borradores editables adoptan v2 conservando IDs de objetivos y vínculos con actividades/resultados. PDF y manual coherentes.
+- Migración034 aplicada en Supabase por SQL Editor con BEGIN/COMMIT: installed=true, 13 expedientes conservados. No repetir migración. Revocación de funciones privadas mantiene permisos previos.
+- Pendiente con Gabriela Ayala: confirmar estructura/nivel de detalle del presupuesto anual GLF/Otros y etapa en que se exige (nota conceptual o propuesta completa). Se mantiene comportamiento presupuestario actual.
+- QA local: 42 pruebas SQL +78 TS =120 aprobadas; lint y tsc correctos; build de producción correcto. Verificación del despliegue pendiente al escribir este bloque.
+
+
+## v0.7.1 — Compatibilidad entre módulos (14/10/2026)
+- Auditoría de contrato de datos y flujo externo→interno. Registro condicional de credencial/RUC compatible con versiones enviadas; se agrega una columna textual al final de Excel/CSV de reportes y Excel de respaldos. Solo se exporta la identificación aplicable de la versión congelada, no la del borrador posterior. Columnas previas mantienen posiciones y fórmulas.
+- Fechas de reportes/respaldos denominadas inicio/finalización del proyecto, coherentes con el formulario. Sin nuevos controles de elegibilidad ni cambios en presupuesto.
+- Ficha de revisión usa el título de la versión enviada, no el borrador activo de fase2. Detalle muestra la revisión enviada y conserva expected_revision operativo para concurrencia. Cabeceras de ambas pantallas con diseño compartido.
+- Nueva prueba aislada recorre persona natural y organización: borradorv2, preparación de documentos, registro de dos PDF, envío, lectura interna, aislamiento de otro postulante, revisión de sostenibilidad, invitación, edición de propuesta completa, conservación de versión1 y presentación de fase2. No opera sobre datos remotos ni crea invitaciones reales.
+- Sin migración, cambios de roles/MFA, borrados ni decisiones remotas. Pendiente Gabriela Ayala se mantiene.
+- Validación local: 43 pruebas SQL +80 TypeScript =123 aprobadas. Lint, tsc y build producción correctos. No cambios de esquema. Publicación y recorrido visual en curso.

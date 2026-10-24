@@ -1,0 +1,360 @@
+{
+  "source": {
+    "title": "Anexo B del SGAS del GLF · Lista de exclusión",
+    "versionLabel": {
+      "es": "Archivo suministrado: octubre de 2024",
+      "en": "Supplied file: October 2024"
+    },
+    "path": "/reference/glf-exclusion-list-oct-2024-es.pdf",
+    "sha256": "db376093916a60f1b712846c5b3f04f700d99f60f7659c2202843cb036e23613",
+    "language": "es",
+    "introduction": "La Lista de Exclusión del Galápagos Life Fund (GLF) es una lista exhaustiva de actividades que el GLF no financia ni apoya. Estas exclusiones se aplican en conjunto con las exclusiones de la Corporación Financiera Internacional (IFC[1]) y la Corporación Financiera de Estados Unidos para de Desarrollo (DFC[1])[2]. Por lo tanto, el GLF no financiará ni apoyará proyectos que impliquen cualquiera de las siguientes actividades:",
+    "notes": [1, 2]
+  },
+  "notes": [
+    {
+      "id": 1,
+      "text": "Por sus siglas en inglés.",
+      "links": []
+    },
+    {
+      "id": 2,
+      "text": "La Lista de exclusión de la IFC está disponible aquí. La Lista de Exclusión de DFC se encuentra en el Apéndice B, conocido como \"Prohibiciones Categóricas\", dentro de la Política y Procedimientos Ambientales y Sociales de DFC. El documento está disponible aquí.",
+      "links": [
+        {
+          "label": "IFC",
+          "href": "https://www.ifc.org/en/what-we-do/sector-expertise/sustainability/ifc-exclusion-list-2007"
+        },
+        {
+          "label": "DFC",
+          "href": "https://www.dfc.gov/sites/default/files/media/documents/DFC_ESPP_012020.pdf"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "text": "Trabajo forzado significa todo trabajo o servicio, no realizado voluntariamente, extraído de un individuo bajo amenaza de fuerza o penalización (de la Lista de Exclusión de la IFC).",
+      "links": []
+    },
+    {
+      "id": 4,
+      "text": "Por trabajo infantil peligroso se entiende el empleo de niños en condiciones de explotación económica, que pueda ser peligroso para la educación del niño o interferir en ella, o que sea peligroso para la salud o el desarrollo físico, mental, espiritual, moral o social del niño ( Lista de exclusión de IFC y ND 2 de IFC).",
+      "links": []
+    },
+    {
+      "id": 5,
+      "text": "Según la definición de la Reunión de Expertos FAO/PNUMA sobre el impacto de las prácticas pesqueras destructivas, la pesca insostenible y la pesca ilegal, no declarada y no reglamentada (INDNR) en la biodiversidad y los hábitats marinos (Roma, 23-25 de septiembre de 2009).",
+      "links": []
+    },
+    {
+      "id": 6,
+      "text": "Esto no incluye la compra de gasolina y otros productos derivados del petróleo necesarios para las actividades regulares de los beneficiarios del GLF.",
+      "links": []
+    },
+    {
+      "id": 7,
+      "text": "La versión de julio de 2020 de este documento del DFC es aplicable al GLF. Disponible aquí.",
+      "links": [
+        {
+          "label": "DFC · julio de 2020",
+          "href": "https://www.dfc.gov/sites/default/files/media/documents/DFC_ESPP_07312020-final_1.pdf"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "text": "Excepto para la producción a pequeña escala o artesanal de cerveza, vino o bebidas alcohólicas tradicionales.",
+      "links": []
+    },
+    {
+      "id": 9,
+      "text": "Consulte aquí la lista de sitios del Patrimonio Mundial.",
+      "links": [
+        {
+          "label": "Patrimonio Mundial · UNESCO",
+          "href": "https://whc.unesco.org/en/list/"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "text": "Consulte la Lista de Parques Nacionales y Áreas Protegidas de las Naciones Unidas aquí.",
+      "links": [
+        {
+          "label": "Protected Planet",
+          "href": "https://www.protectedplanet.net/"
+        }
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "id": "1",
+      "title": {
+        "es": "Legalidad y sustancias reguladas",
+        "en": "Legality and regulated substances"
+      },
+      "topics": ["legality", "materials"],
+      "page": 2,
+      "text": "Actividades ilegales según las leyes, reglamentos ecuatorianos o convenios y acuerdos internacionales ratificados por Ecuador, o actividades sujetas a reglamentos ecuatorianos o internacionales tendientes a su eliminación o prohibición o sujetos a una prohibición internacional, incluidas las siguientes:",
+      "bullets": [
+        "Determinados productos farmacéuticos, plaguicidas, herbicidas y otras sustancias tóxicas (en virtud del Convenio de Rotterdam, el Convenio de Estocolmo y el documento de la Organización Mundial de la Salud (OMS) \"Productos farmacéuticos: Restricciones de uso y disponibilidad\").",
+        "Sustancias que agotan la capa de ozono (en virtud del Protocolo de Montreal).",
+        "Bifenilos policlorados (PCB[1]).",
+        "Fauna y flora silvestres protegidas o productos derivados (según la Convención sobre el Comercio Internacional de Especies Amenazadas de Fauna y Flora Silvestres (Convención CITES)).",
+        "Prohibición del comercio transfronterizo de residuos (en virtud del Convenio de Basilea)."
+      ],
+      "notes": [1],
+      "children": []
+    },
+    {
+      "id": "2",
+      "title": {
+        "es": "Planes de manejo y áreas protegidas",
+        "en": "Management plans and protected areas"
+      },
+      "topics": ["nature"],
+      "page": 2,
+      "text": "Actividades que contravengan el plan de manejo de la Reserva Marina de la Hermandad (RMH), la Reserva Marina de Galápagos (RMG) o el Parque Nacional Galápagos (PNG) o actividades que tengan un impacto negativo neto en cualquiera de estas áreas.",
+      "bullets": [],
+      "notes": [],
+      "children": []
+    },
+    {
+      "id": "3",
+      "title": {
+        "es": "Especies invasoras",
+        "en": "Invasive species"
+      },
+      "topics": ["nature"],
+      "page": 2,
+      "text": "Actividades que conlleven riesgos considerables de introducción de especies invasoras en el área protegida de Galápagos (HMR, GMR, GNP).",
+      "bullets": [],
+      "notes": [],
+      "children": []
+    },
+    {
+      "id": "4",
+      "title": {
+        "es": "Bosques, manglares y hábitats",
+        "en": "Forests, mangroves and habitats"
+      },
+      "topics": ["nature"],
+      "page": 2,
+      "text": "Actividades que dañen los bosques primarios, los bosques de alto valor de conservación, los manglares o cualquier otro hábitat crucial, excepto impactos menores y manejables a escala limitada resultantes de esfuerzos de conservación que logren una ganancia neta de los valores de biodiversidad asociados al hábitat en cuestión.",
+      "bullets": [],
+      "notes": [],
+      "children": []
+    },
+    {
+      "id": "5",
+      "title": {
+        "es": "Tala y productos forestales",
+        "en": "Logging and forest products"
+      },
+      "topics": ["nature"],
+      "page": 2,
+      "text": "Actividades relacionadas con operaciones de tala comercial y actividades que impliquen la producción o el comercio de madera u otros productos forestales que no procedan de bosques gestionados de forma sostenible.",
+      "bullets": [],
+      "notes": [],
+      "children": []
+    },
+    {
+      "id": "6",
+      "title": {
+        "es": "Modificación de zonas protegidas y consulta",
+        "en": "Changes to protected areas and consultation"
+      },
+      "topics": ["nature", "rights"],
+      "page": 3,
+      "text": "Actividades destinadas a modificar zonas protegidas sin una evaluación de derechos humanos y sin verificar el cumplimiento de los requisitos de consulta informada y participación con las comunidades afectadas y otras partes interesadas.",
+      "bullets": [],
+      "notes": [],
+      "children": []
+    },
+    {
+      "id": "7",
+      "title": {
+        "es": "Desplazamiento y reasentamiento",
+        "en": "Displacement and resettlement"
+      },
+      "topics": ["rights"],
+      "page": 3,
+      "text": "Actividades que impliquen desplazamiento forzado o reasentamiento involuntario.",
+      "bullets": [],
+      "notes": [],
+      "children": []
+    },
+    {
+      "id": "8",
+      "title": {
+        "es": "Trabajo peligroso, forzado e infantil",
+        "en": "Hazardous, forced and child labour"
+      },
+      "topics": ["rights"],
+      "page": 3,
+      "text": "Actividades que impliquen trabajo peligroso, trabajo forzado[3], o trabajo infantil peligroso[4], tal y como establecen los convenios fundamentales de la Organización Internacional del Trabajo (OIT).",
+      "bullets": [],
+      "notes": [3, 4],
+      "children": []
+    },
+    {
+      "id": "9",
+      "title": {
+        "es": "Prácticas y artes de pesca",
+        "en": "Fishing practices and gear"
+      },
+      "topics": ["fishing"],
+      "page": 3,
+      "text": "Actividades que impliquen prácticas pesqueras destructivas[5], o pesca con redes de deriva en el medio marino utilizando redes de más de 2,5 km o que impliquen la compra o el uso de prácticas pesqueras destructivas o técnicas de redes de enmalle y redes de deriva, o artes de pesca fijas que obstruyan pasivamente los pasos naturales de los peces y otras especies sin ser supervisadas físicamente por los pescadores.",
+      "bullets": [],
+      "notes": [5],
+      "children": []
+    },
+    {
+      "id": "10",
+      "title": {
+        "es": "Tierras y consentimiento de los pueblos",
+        "en": "Peoples’ lands and consent"
+      },
+      "topics": ["rights"],
+      "page": 3,
+      "text": "Actividades que afecten las tierras de propiedad de pueblos indígenas, afroecuatorianos y montubios o reclamadas por estos pueblos, sin su consentimiento libre, previo e informado.",
+      "bullets": [],
+      "notes": [],
+      "children": []
+    },
+    {
+      "id": "11",
+      "title": {
+        "es": "Productos químicos peligrosos",
+        "en": "Hazardous chemicals"
+      },
+      "topics": ["materials"],
+      "page": 3,
+      "text": "Actividades que impliquen la producción, el comercio, el almacenamiento o el transporte de volúmenes significativos de productos químicos peligrosos o la utilización a escala comercial de productos químicos peligrosos, incluida la gasolina, el queroseno y otros productos derivados del petróleo[6].",
+      "bullets": [],
+      "notes": [6],
+      "children": []
+    },
+    {
+      "id": "12",
+      "title": {
+        "es": "Minería, petróleo y gas",
+        "en": "Mining, oil and gas"
+      },
+      "topics": ["materials"],
+      "page": 3,
+      "text": "Actividades relacionadas con la minería o la prospección, exploración o producción de petróleo y gas.",
+      "bullets": [],
+      "notes": [],
+      "children": []
+    },
+    {
+      "id": "13",
+      "title": {
+        "es": "Asbesto",
+        "en": "Asbestos"
+      },
+      "topics": ["materials"],
+      "page": 3,
+      "text": "Actividades relacionadas con la producción o el comercio de asbestos y de materiales que contengan asbesto para la construcción.",
+      "bullets": [],
+      "notes": [],
+      "children": []
+    },
+    {
+      "id": "14",
+      "title": {
+        "es": "Proyectos de Categoría A",
+        "en": "Category A projects"
+      },
+      "topics": ["other"],
+      "page": 3,
+      "text": "Proyectos categorizados como Categoría A: alto riesgo por el GLF o proyectos de Categoría A según la definición del Anexo A de la Política y Procedimientos Ambientales y Sociales de DFC[7], independientemente de las medidas potenciales de mitigación del riesgo ambiental y social.",
+      "bullets": [],
+      "notes": [7],
+      "children": []
+    },
+    {
+      "id": "15",
+      "title": {
+        "es": "Construcción de presas",
+        "en": "Dam construction"
+      },
+      "topics": ["other"],
+      "page": 3,
+      "text": "Construcción de presas.",
+      "bullets": [],
+      "notes": [],
+      "children": []
+    },
+    {
+      "id": "16",
+      "title": {
+        "es": "Corrupción y conducta ética",
+        "en": "Corruption and ethical conduct"
+      },
+      "topics": ["legality"],
+      "page": 3,
+      "text": "Empresas u organizaciones halladas culpables o sospechosas de estar implicadas en corrupción, violaciones graves de las normas éticas fundamentales u otros principios éticos empresariales.",
+      "bullets": [],
+      "notes": [],
+      "children": []
+    },
+    {
+      "id": "17",
+      "title": {
+        "es": "Exclusiones adicionales IFC y DFC",
+        "en": "Additional IFC and DFC exclusions"
+      },
+      "topics": ["nature", "materials", "other"],
+      "page": 4,
+      "text": "Además, de acuerdo con las listas de exclusión consideradas como mejores prácticas internacionales (IFC y DFC), GLF no financiará proyectos descritos en el Anexo B de la Política y Procedimientos Ambientales y Sociales de DFC, o proyectos que impliquen cualquiera de las actividades enumeradas a continuación:",
+      "bullets": [],
+      "notes": [],
+      "children": [
+        {
+          "id": "17a",
+          "text": "Actividades de producción, comercio o comercialización de productos del tabaco y bebidas alcohólicas[8].",
+          "notes": [8]
+        },
+        {
+          "id": "17b",
+          "text": "Actividades relacionadas con la producción o el comercio de municiones, armas de fuego y artículos relacionados.",
+          "notes": []
+        },
+        {
+          "id": "17c",
+          "text": "Juegos de azar, casinos y empresas similares.",
+          "notes": []
+        },
+        {
+          "id": "17d",
+          "text": "Actividades que requieran la compra de material radiactivo, excepto la adquisición de equipos médicos, equipos de control de calidad u otros equipos cuya fuente radiactiva sea insignificante y/o esté adecuadamente blindada.",
+          "notes": []
+        },
+        {
+          "id": "17e",
+          "text": "Arrendamiento financiero de equipos de explotación forestal.",
+          "notes": []
+        },
+        {
+          "id": "17f",
+          "text": "Debe evitarse cualquier impacto en los sitios naturales del Patrimonio Mundial[9] a menos que pueda demostrarse mediante una evaluación ambiental que el proyecto (i) no provocará la degradación del área protegida y (ii) producirá beneficios ambientales y sociales positivos.",
+          "notes": [9]
+        },
+        {
+          "id": "17g",
+          "text": "Cualquier impacto en zonas incluidas en la Lista de Parques Nacionales y Áreas Protegidas de las Naciones Unidas[10] a menos que pueda demostrarse mediante una evaluación medioambiental que el proyecto (i) no provocará la degradación de la zona protegida y (ii) producirá beneficios medioambientales y sociales positivos.",
+          "notes": [10]
+        },
+        {
+          "id": "17h",
+          "text": "Actividades de extracción o construcción de infraestructuras en áreas protegidas clasificadas como Categoría I, II, III y IV (Reserva Natural Estricta/Áreas Silvestres y Parques Nacionales, Monumentos Naturales y Áreas de Manejo de Hábitats/Especies), según la definición de la Unión Internacional para la Conservación de la Naturaleza (UICN), o que afecten estas áreas. Los proyectos en áreas clasificadas como Categorías V (Paisaje terrestre/marino protegido) y VI (Área protegida de recursos gestionados) de la UICN deben ser coherentes con los objetivos de manejo de la UICN, a menos que pueda demostrarse mediante una evaluación ambiental (i) que no hay degradación del área protegida y (ii) que hay beneficios ambientales y sociales positivos.",
+          "notes": []
+        }
+      ]
+    }
+  ]
+}
