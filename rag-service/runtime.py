@@ -30,6 +30,8 @@ def provider_urlopen(request, *args, **kwargs):
         request.add_header("Accept", "application/json")
         try:
             timeout = kwargs.get("timeout", 35)
+            if has_request_context() and getattr(g, "glf_mode", "brief") == "expanded":
+                timeout = 45  # Longer output, still inside the shared 50-second budget.
             if has_request_context() and hasattr(g, "glf_generation_deadline"):
                 timeout = min(timeout, max(1, g.glf_generation_deadline - time.monotonic()))
             deadline = time.monotonic() + timeout
