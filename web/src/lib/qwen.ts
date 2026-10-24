@@ -3,6 +3,7 @@ import {
   requestQwen,
   validateQwenCitations,
   type QwenResponse,
+  type AnswerMode,
 } from "./qwen-contract";
 import { readRagLines, ragStage, type RagStage } from "./rag-session";
 export function qwenConfigured() {
@@ -13,6 +14,7 @@ export async function askQwen(
   retrievalQuery?: string,
   progress?: (stage: RagStage) => void,
   signal?: AbortSignal,
+  mode?: AnswerMode,
 ) {
   if (!qwenConfigured()) throw new Error("configuration");
   if (progress) {
@@ -37,6 +39,7 @@ export async function askQwen(
       },
       body: JSON.stringify({
         query,
+        ...(mode ? { answer_mode: mode } : {}),
         ...(retrievalQuery ? { retrieval_query: retrievalQuery } : {}),
       }),
       signal: AbortSignal.any([
@@ -65,11 +68,13 @@ export async function askQwen(
           terminal = true;
         } else if (event.type === "error")
           throw new Error(
-            event.code === "quota"
-              ? "quota"
-              : event.code === "configuration"
-                ? "configuration"
-                : "unavailable",
+            event.code === "invalid"
+              ? "invalid"
+              : event.code === "quota"
+                ? "quota"
+                : event.code === "configuration"
+                  ? "configuration"
+                  : "unavailable",
           );
         else if (event.type !== "heartbeat")
           throw new Error("invalid-response");
@@ -85,5 +90,6 @@ export async function askQwen(
     query,
     fetch,
     retrievalQuery,
+    mode,
   );
 }

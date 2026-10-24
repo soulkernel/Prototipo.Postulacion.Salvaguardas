@@ -25,7 +25,7 @@ class ProgressTests(unittest.TestCase):
         self.assertEqual([e['stage'] for e in events if e['type']=='stage'],['retrieval','generation','verification'])
         self.assertEqual(events[1]['model'],'Qwen/actual-model')
         self.assertTrue(events[-1]['result']['generated'])
-        self.assertEqual(events[-1]['result']['review_support_version'],'1.6')
+        self.assertEqual(events[-1]['result']['review_support_version'],'1.7')
 
     def test_invalid_query_does_not_generate_and_quota_remains_enforced(self):
         for query in [None,3,{},[], '  ', 'x'*601]:

@@ -87,6 +87,7 @@ export async function POST(request: Request) {
             parsed.retrieval_query,
             stage,
             request.signal,
+            parsed.answer_mode,
           );
           model =
             response.model || "Qwen · modelo no informado por el servicio";

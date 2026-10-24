@@ -3,19 +3,19 @@ on:
   push:
     branches: [feat/full-grants-platform]
   pull_request:
-    paths: ["web/**", "supabase/**", "scripts/build-sgas-function.mjs", ".github/workflows/web-checks.yml"]
+    paths: ["web/**", "rag-service/**", "supabase/**", "scripts/build-sgas-function.mjs", ".github/workflows/web-checks.yml"]
 permissions:
   contents: read
 jobs:
   verify:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     defaults:
       run:
         working-directory: web
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: npm
@@ -27,3 +27,18 @@ jobs:
       - run: npm test
       - run: npm run build
       - run: npm audit --omit=dev --audit-level=high
+
+  rag-service:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: rag-service
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: pip install -r public_demo/requirements.txt 'requests>=2.32,<3'
+      - run: python -m unittest discover -p 'test_*.py' -q
+      - run: python -m public_demo.smoke_test

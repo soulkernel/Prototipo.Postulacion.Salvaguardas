@@ -132,3 +132,107 @@ test("export preserves submitted query, context and original source locators", (
       text.includes("GLF::P01C01"),
   );
 });
+
+const diagnostics = {
+  policy_version: "glf-grounded-v1",
+  retrieval_method: "BM25-heading-authority-v2",
+  corpus_sha256: "a".repeat(64),
+  context_ids: [source.chunk_id],
+  context_chars: 1200,
+  max_output_tokens: 1500,
+  provider_attempts: 1,
+  usage_complete: true,
+  input_tokens: 500,
+  output_tokens: 300,
+  finish_reason: "stop" as const,
+};
+test("quality modes, context stages, usage and historic notes remain compatible", () => {
+  const value = {
+    ...response,
+    answer_mode: "expanded" as const,
+    diagnostics,
+    reason: "answered" as const,
+  };
+  assert.ok(validateQwenCitations(value));
+  assert.ok(parseReviewEvidence("qwen", value));
+  assert.ok(
+    ragInput.safeParse({
+      method: "qwen",
+      query: "consulta",
+      answer_mode: "expanded",
+    }).success,
+  );
+  assert.equal(
+    ragInput.safeParse({
+      method: "qwen",
+      query: "consulta",
+      answer_mode: "unlimited",
+    }).success,
+    false,
+  );
+  assert.ok(
+    ragEvent.safeParse({
+      type: "stage",
+      stage: "context",
+      requestId: "00000000-0000-4000-8000-000000000001",
+    }).success,
+  );
+  const text = exportRagResult(
+    {
+      method: "qwen",
+      query: "Consulta",
+      requestId: "00000000-0000-4000-8000-000000000001",
+      seconds: 1,
+      version: "test",
+      model: "test",
+      results: [],
+      response: value,
+    },
+    "Contexto",
+    true,
+  );
+  assert.match(text, /expanded/);
+  assert.match(text, /500 \/ 300/);
+  assert.ok(text.includes(diagnostics.corpus_sha256));
+});
+test("forged diagnostics and partial generations cannot be saved as grounded answers", () => {
+  for (const change of [
+    { context_ids: ["OTHER::P01C01"] },
+    { context_ids: [] },
+    { context_ids: [source.chunk_id, source.chunk_id] },
+    { input_tokens: -1 },
+    { input_tokens: null },
+    { provider_attempts: 3 },
+    { finish_reason: "length" },
+    { corpus_sha256: "private" },
+  ])
+    assert.throws(() =>
+      validateQwenCitations({
+        ...response,
+        diagnostics: { ...diagnostics, ...change },
+      }),
+    );
+  assert.throws(() =>
+    validateQwenCitations({ ...response, reason: "response_truncated" }),
+  );
+  assert.ok(
+    validateQwenCitations({
+      ...response,
+      generated: false,
+      sources: [],
+      reason: "response_truncated",
+      diagnostics: { ...diagnostics, finish_reason: "length" },
+    }),
+  );
+  assert.ok(
+    validateQwenCitations({
+      ...response,
+      diagnostics: {
+        ...diagnostics,
+        usage_complete: false,
+        input_tokens: null,
+        output_tokens: null,
+      },
+    }),
+  );
+});

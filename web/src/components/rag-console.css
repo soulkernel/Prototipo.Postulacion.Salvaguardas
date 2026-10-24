@@ -190,3 +190,17 @@
     width: 100%;
   }
 }
+
+.rag-mode {
+  display: grid;
+  gap: 0.45rem;
+  margin-block: 0.6rem;
+}
+.rag-mode small {
+  font-weight: 400;
+  color: #45617a;
+}
+.rag-diagnostics code {
+  overflow-wrap: anywhere;
+  font-size: 0.8em;
+}

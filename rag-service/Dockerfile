@@ -5,7 +5,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install --no-cache-dir 'requests>=2.32,<3'
 COPY public_demo /app/public_demo
 COPY src /app/src
-COPY runtime.py /app/runtime.py
+COPY runtime.py answer_policy.py /app/
 RUN python -m public_demo.smoke_test
 RUN useradd -m -u 1000 glf
 USER glf

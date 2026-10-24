@@ -40,3 +40,18 @@ Adaptador 1.3: parámetro opcional retrieval_query (3–600 caracteres) para bus
 Adaptador 1.4: para consultas normativas con búsqueda específica, compone el contexto poniendo las disposiciones antes de los documentos titulados Definiciones. Evita que la ventana original de cuatro fragmentos excluya una disposición pertinente por ocupar el quinto lugar. No cambia el algoritmo/puntuaciones BM25 ni el validador de citas; preguntas de definiciones y clientes sin búsqueda separada conservan el orden original. La actividad permanece en la pregunta de interpretación; la búsqueda automática prioriza la descripción del riesgo y usa actividad solo si no hay descripción.
 
 Adaptador 1.5: compone los cuatro pasajes para generación con tres referencias centradas en el riesgo y una referencia procedimental del Manual SGAS recuperada con la pregunta completa, cuando está disponible y es distinta. Evita perder el contexto de la fase al priorizar biodiversidad. Segunda búsqueda BM25 local, sin una segunda consulta de inferencia ni aumento de cuota; IDs sin duplicados y validador original intacto.
+
+
+## Política de respuesta 1.7 (portal 0.7.62)
+
+`answer_policy.py` sustituye la composición del prompt en el adaptador, conservando `public_demo/app.py` como procedencia histórica. `answer_mode` admite `brief` (por defecto; 700 tokens de salida y orientación de 200 palabras) o `expanded` (1500 tokens y 450 palabras). Ambos preservan hasta cinco pasajes completos y sin duplicados, con presupuestos de 12000/18000 caracteres; son límites de caracteres del contexto, no recuentos exactos de tokens. Los fragmentos originales del corpus no se resegmentan ni cambian sus identificadores. Se omite un pasaje que no cabe; no se recorta una condición adicionalmente.
+
+La búsqueda conserva BM25-heading-authority-v2. Se descartan resultados cuyo único puntaje es el desplazamiento de autoridad GLF (0.15), pues no prueban coincidencia léxica. E5 y la fusión híbrida permanecen fuera de la generación en producción hasta una comparación independiente sobre corpus común.
+
+La salida incluye `answer_mode`, huella SHA-256 del contenido y procedencia del corpus, IDs efectivamente enviados, política, tiempos, intentos y tokens reportados. `usage_complete=false` identifica consumo parcial/no informado; nunca se representa como consumo cero. La huella canónica del servicio es distinta del hash de bytes del JSONL académico: registrar ambos al cotejar una exportación. No se almacenan preguntas, respuestas ni credenciales en los logs de diagnóstico.
+
+Como máximo dos intentos al proveedor en total, contando errores transitorios y una posible corrección de citas; comparten 50 segundos. Las cuotas anteriores siguen vigentes. Si el proveedor finaliza por longitud, se retira la respuesta con `response_truncated`; otros finales incompletos se marcan `generation_incomplete`. No se repite automáticamente una salida truncada. Las referencias desconocidas y las abstenciones no se presentan como respuestas fundamentadas. Validar una referencia no verifica la verdad de cada afirmación: continúa la revisión humana.
+
+La actualización no cambia GPU, hardware, recarga automática, límite monetario ni esquemas de Supabase. La cuota en memoria se reinicia con el servicio: el límite financiero configurado en HF sigue siendo necesario. La comparación de calidad final espera las anotaciones independientes, no se deduce de las pruebas unitarias.
+
+Pruebas sin conexión: `python -m unittest discover -p 'test_*.py' -q` y `python -m public_demo.smoke_test`.

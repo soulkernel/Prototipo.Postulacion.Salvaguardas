@@ -85,7 +85,10 @@ export function useRagQuery() {
         if (event.type === "result") {
           if (
             event.result.method !== input.method ||
-            event.result.query !== input.query.trim()
+            event.result.query !== input.query.trim() ||
+            (event.result.response?.answer_mode &&
+              event.result.response.answer_mode !==
+                (input.answer_mode || "brief"))
           )
             throw new Error("invalid-response");
           terminal = true;

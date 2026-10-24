@@ -1,9 +1,10 @@
 import { z } from "zod";
-import { qwenResponse } from "./qwen-contract";
+import { qwenResponse, answerMode } from "./qwen-contract";
 
 export const ragInput = z
   .object({
     method: z.enum(["e5", "qwen"]),
+    answer_mode: answerMode.optional(),
     query: z.string().trim().min(3).max(1500),
     retrieval_query: z.string().trim().min(3).max(600).optional(),
   })
@@ -33,6 +34,7 @@ export const ragStage = z.object({
     "connecting",
     "embedding",
     "retrieval",
+    "context",
     "generation",
     "verification",
   ]),
@@ -162,6 +164,14 @@ export function exportRagResult(
     result.query,
     `\n${result.method === "qwen" ? answer : es ? "Búsqueda documental; no genera una respuesta." : "Document search; no generated answer."}`,
     `\n${es ? "Evidencia recuperada" : "Retrieved evidence"}\n${sources.join("\n\n")}`,
+    ...(result.response?.diagnostics
+      ? [
+          `\n${es ? "Modalidad" : "Mode"}: ${result.response.answer_mode || "brief"} · ${result.response.diagnostics.policy_version}`,
+          `${es ? "Corpus (SHA-256)" : "Corpus (SHA-256)"}: ${result.response.diagnostics.corpus_sha256}`,
+          `${es ? "Intentos de proveedor" : "Provider attempts"}: ${result.response.diagnostics.provider_attempts}`,
+          `${es ? "Tokens entrada/salida reportados" : "Reported input/output tokens"}: ${result.response.diagnostics.input_tokens ?? "N/D"} / ${result.response.diagnostics.output_tokens ?? "N/D"} (${result.response.diagnostics.usage_complete ? (es ? "completo" : "complete") : es ? "parcial o no informado" : "partial or unreported"})`,
+        ]
+      : []),
     `\n${result.model} · ${result.seconds.toFixed(1)} s · v${result.version}\nID: ${result.requestId}`,
     es
       ? "Compruebe las fuentes y su aplicabilidad. La decisión corresponde al GLF."

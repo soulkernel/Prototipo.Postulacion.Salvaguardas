@@ -20,6 +20,7 @@ import {
   evidenceLocation,
 } from "@/lib/evidence-presentation";
 import { exportRagResult, type RagCode } from "@/lib/rag-session";
+import type { AnswerMode } from "@/lib/qwen-contract";
 import type { Locale } from "@/lib/domain";
 import { useRagQuery } from "./use-rag-query";
 import "./rag-console.css";
@@ -44,6 +45,7 @@ export function RagConsole({
   const es = locale === "es",
     t = (a: string, b: string) => (es ? a : b);
   const defaultMethod = initialMethod || (qwenEnabled ? "qwen" : "e5");
+  const [answerMode, setAnswerMode] = useState<AnswerMode>("brief");
   const [method, setMethod] = useState<"e5" | "qwen">(defaultMethod);
   const [query, setQuery] = useState(
     suggestedQuery ??
@@ -116,6 +118,7 @@ export function RagConsole({
       "Buscando pasajes documentales",
       "Retrieving document passages",
     ),
+    context: t("Preparando evidencia para Qwen", "Preparing evidence for Qwen"),
     generation: t(
       "Qwen está elaborando la respuesta",
       "Qwen is drafting the answer",
@@ -149,7 +152,9 @@ export function RagConsole({
     await session.run({
       method,
       query,
-      ...(method === "qwen" ? { retrieval_query: retrieval } : {}),
+      ...(method === "qwen"
+        ? { retrieval_query: retrieval, answer_mode: answerMode }
+        : {}),
     });
   }
   async function copy(text: string) {
@@ -362,6 +367,39 @@ export function RagConsole({
               </select>
             </label>
           )}
+          {method === "qwen" && (
+            <label className="rag-mode">
+              {t("Extensión de la respuesta", "Answer detail")}
+              <select
+                value={answerMode}
+                disabled={pending || !enabled}
+                onChange={(event) => {
+                  setAnswerMode(event.target.value as AnswerMode);
+                  session.reset();
+                  clearReview();
+                }}
+                aria-describedby="rag-mode-help"
+              >
+                <option value="brief">
+                  {t("Respuesta breve", "Brief answer")}
+                </option>
+                <option value="expanded">
+                  {t("Análisis ampliado", "Expanded analysis")}
+                </option>
+              </select>
+              <small id="rag-mode-help">
+                {answerMode === "brief"
+                  ? t(
+                      "Respuesta directa con fuentes y aspectos por verificar.",
+                      "Direct answer with sources and items to verify.",
+                    )
+                  : t(
+                      "Añade explicación, condiciones y aplicación al caso cuando las fuentes lo permiten. Puede tardar más y consumir más tokens.",
+                      "Adds explanations, conditions and applicability when supported. May take longer and use more tokens.",
+                    )}
+              </small>
+            </label>
+          )}
           <label htmlFor="rag-query">{t("Su consulta", "Your question")}</label>
           <textarea
             ref={inputRef}
@@ -468,7 +506,7 @@ export function RagConsole({
             <ol className="rag-progress">
               {(method === "e5"
                 ? ["embedding", "retrieval"]
-                : ["retrieval", "generation", "verification"]
+                : ["retrieval", "context", "generation", "verification"]
               ).map((stage) => (
                 <li
                   key={stage}
@@ -611,16 +649,31 @@ export function RagConsole({
                 <div className="rag-notice rag-warning">
                   <h3>
                     <AlertCircle size={20} aria-hidden="true" />
-                    {response.reason === "citation_validation_failed"
+                    {response.reason === "response_truncated" ||
+                    response.reason === "generation_incomplete"
                       ? t(
-                          "Las referencias no pudieron validarse",
-                          "References could not be validated",
+                          "La generación quedó incompleta",
+                          "Generation was incomplete",
                         )
-                      : t(
-                          "Evidencia insuficiente para responder",
-                          "Insufficient evidence to answer",
-                        )}
+                      : response.reason === "citation_validation_failed"
+                        ? t(
+                            "Las referencias no pudieron validarse",
+                            "References could not be validated",
+                          )
+                        : t(
+                            "Evidencia insuficiente para responder",
+                            "Insufficient evidence to answer",
+                          )}
                   </h3>
+                  {(response.reason === "response_truncated" ||
+                    response.reason === "generation_incomplete") && (
+                    <p>
+                      {t(
+                        "La respuesta no se presenta porque quedó cortada o no pudo completarse. Acote la pregunta; los documentos siguen disponibles para su revisión.",
+                        "The answer is withheld because generation was cut off or incomplete. Narrow your question; the documents remain available for review.",
+                      )}
+                    </p>
+                  )}
                   <p>
                     {t(
                       "Revise los pasajes como material de apoyo. Precise la actividad o el riesgo. La falta de evidencia no significa que el proyecto cumpla.",
@@ -763,6 +816,73 @@ export function RagConsole({
                     t("no informada", "not reported")}
                 </p>
               )}
+              {response?.diagnostics && (
+                <div className="rag-diagnostics">
+                  <p>
+                    {t("Modalidad: ", "Mode: ")}
+                    {response.answer_mode === "expanded"
+                      ? t("Análisis ampliado", "Expanded analysis")
+                      : t("Respuesta breve", "Brief answer")}{" "}
+                    · {response.diagnostics.policy_version}
+                  </p>
+                  <p>
+                    {response.diagnostics.retrieval_method} ·{" "}
+                    {response.diagnostics.context_ids.length}{" "}
+                    {t("pasajes enviados a Qwen", "passages sent to Qwen")}
+                  </p>
+                  <p>
+                    {t(
+                      "Búsqueda / preparación / generación / validación: ",
+                      "Retrieval / preparation / generation / validation: ",
+                    )}
+                    {[
+                      response.timings.retrieval_seconds,
+                      response.timings.context_seconds,
+                      response.timings.generation_seconds,
+                      response.timings.verification_seconds,
+                    ]
+                      .map((v) => (v === undefined ? "—" : `${v.toFixed(2)} s`))
+                      .join(" / ")}
+                  </p>
+                  <p>
+                    {t(
+                      "Tokens de entrada / salida reportados: ",
+                      "Reported input / output tokens: ",
+                    )}
+                    {response.diagnostics.input_tokens ??
+                      t("no informado", "not reported")}{" "}
+                    /{" "}
+                    {response.diagnostics.output_tokens ??
+                      t("no informado", "not reported")}
+                    .{" "}
+                    {response.diagnostics.usage_complete
+                      ? t(
+                          "Consumo reportado de todos los intentos.",
+                          "Reported usage for all attempts.",
+                        )
+                      : t(
+                          "Información parcial o no disponible; no equivale a consumo cero.",
+                          "Partial or unavailable information; it does not mean zero usage.",
+                        )}
+                  </p>
+                  <p>
+                    {t("Intentos al proveedor: ", "Provider attempts: ")}
+                    {response.diagnostics.provider_attempts} / 2 ·{" "}
+                    {t(
+                      "Límite de tokens de salida por intento: ",
+                      "Output token limit per attempt: ",
+                    )}
+                    {response.diagnostics.max_output_tokens}
+                  </p>
+                  <p>
+                    {t(
+                      "Identificador del corpus (SHA-256): ",
+                      "Corpus identifier (SHA-256): ",
+                    )}
+                    <code>{response.diagnostics.corpus_sha256}</code>
+                  </p>
+                </div>
+              )}
               <p>
                 Portal v{result.version} · ID {result.requestId}
               </p>
@@ -804,6 +924,7 @@ export function RagConsole({
               disabled={pending}
               onClick={() => {
                 setMethod(item.method);
+                setAnswerMode(item.response?.answer_mode || "brief");
                 setQuery(item.query);
                 clearReview();
                 session.restore(item);
