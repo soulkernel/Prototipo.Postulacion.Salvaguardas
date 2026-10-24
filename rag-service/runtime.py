@@ -7,6 +7,9 @@ import time
 import requests
 import re
 import unicodedata
+import queue
+import threading
+from flask import Response, copy_current_request_context, stream_with_context
 from flask import g, request as flask_request, jsonify, has_request_context
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
@@ -14,6 +17,11 @@ from public_demo import app as upstream
 
 original_chat = upstream._hf_chat
 original_urlopen = upstream.urlopen
+
+def progress(stage, model):
+    """Only emit stages at the operation boundary; never include private inputs."""
+    if has_request_context() and hasattr(g, "glf_events"):
+        g.glf_events.put({"type": "stage", "stage": stage, "model": model})
 
 def provider_urlopen(request, *args, **kwargs):
     if isinstance(request, Request) and request.full_url == "https://router.huggingface.co/v1/chat/completions":
@@ -65,6 +73,7 @@ def credential_diagnostic():
 
 def diagnostic_chat(prompt):
     try:
+        progress("generation", upstream.HF_MODEL)
         review_prompt = prompt + """
 
 GUÍA DE REDACCIÓN PARA REVISIÓN TÉCNICA:
@@ -77,13 +86,16 @@ Si ninguna parte puede sustentarse, conserva la abstención indicada. El texto d
 """
         g.glf_generation_deadline = time.monotonic() + 43
         answer = original_chat(review_prompt)
+        progress("verification", "Validación de referencias")
         allowed = set(re.findall(r"CHUNK_ID: ([A-Z0-9_]+::P\d{2}C\d{2})", prompt))
         cited = set(upstream.CHUNK_RE.findall(answer))
         abstained = "documentación pública recuperada es insuficiente" in answer.casefold()
         if allowed and not abstained and (not cited or cited - allowed) and g.glf_generation_deadline - time.monotonic() > 8:
             # One bounded re-generation. Never attach citations to claims automatically.
             retry_prompt = review_prompt + "\nCORRECCIÓN DE FORMATO: Si puedes sustentar una respuesta, termina cada afirmación normativa con un identificador exacto entre corchetes. Identificadores permitidos: " + ", ".join(f"[{cid}]" for cid in sorted(allowed)) + ". No uses [CHUNK_ID: ...], citas abreviadas ni identificadores inventados. Si no puedes respaldarla, conserva la abstención."
+            progress("generation", upstream.HF_MODEL)
             answer = original_chat(retry_prompt)
+            progress("verification", "Validación de referencias")
             cited = set(upstream.CHUNK_RE.findall(answer))
         if "documentación pública recuperada es insuficiente" in answer.casefold():
             g.glf_answer_reason = "insufficient_context"
@@ -145,6 +157,7 @@ class FocusedReviewIndex:
 
 
 def ensure_review_index():
+    progress("retrieval", "BM25-heading-authority-v2")
     # Keep the initialization lock around publication of the wrapper as well.
     original_ensure_index()
     with upstream._init_lock:
@@ -163,6 +176,8 @@ original_ask = app.view_functions["api_ask"]
 def review_ask():
     """Expose retrieved passages on abstention without changing BM25 or citation validation."""
     body = flask_request.get_json(silent=True)
+    if upstream._authorized() and (not isinstance(body, dict) or not isinstance(body.get("query"), str) or not 3 <= len(body["query"].strip()) <= 600):
+        return jsonify({"error": "Consulta inválida."}), 400
     retrieval_query = body.get("retrieval_query") if isinstance(body, dict) else None
     if retrieval_query is not None:
         # Do not expose an unauthenticated validation oracle or bypass original auth/quota.
@@ -189,10 +204,50 @@ def review_ask():
         # These passages are supporting material, never citations for an abstained answer.
         data["sources"] = []
     data["reason"] = getattr(g, "glf_answer_reason", "answered" if data.get("generated") else "insufficient_context")
-    data["review_support_version"] = "1.5"
+    data["review_support_version"] = "1.6"
+    data["model"] = upstream.HF_MODEL
     if retrieval_query is not None:
         data["retrieval_query"] = g.glf_retrieval_query
     return jsonify(data)
 
 
 app.view_functions["api_ask"] = review_ask
+
+@app.post("/api/ask-stream")
+def ask_stream():
+    # Same authorized handler, quotas and citation checks as the existing endpoint.
+    # Cache the body before handing the request context to the bounded worker.
+    flask_request.get_json(silent=True)
+    if not upstream._authorized():
+        return jsonify({"error": "Unauthorized"}), 401
+    events = queue.Queue(maxsize=24)
+
+    @copy_current_request_context
+    def run():
+        g.glf_events = events
+        try:
+            response = app.make_response(review_ask())
+            if response.status_code == 200:
+                events.put({"type": "result", "result": response.get_json()})
+            else:
+                code = "quota" if response.status_code == 429 else "configuration" if response.status_code in (401, 403) else "unavailable"
+                events.put({"type": "error", "code": code})
+        except Exception:
+            events.put({"type": "error", "code": "unavailable"})
+
+    threading.Thread(target=run, daemon=True).start()
+
+    @stream_with_context
+    def generate():
+        deadline = time.monotonic() + 65
+        while time.monotonic() < deadline:
+            try:
+                event = events.get(timeout=5)
+            except queue.Empty:
+                yield json.dumps({"type": "heartbeat"}) + "\n"
+                continue
+            yield json.dumps(event, ensure_ascii=False) + "\n"
+            if event["type"] in ("result", "error"):
+                return
+        yield json.dumps({"type": "error", "code": "unavailable"}) + "\n"
+    return Response(generate(), mimetype="application/x-ndjson", headers={"X-Accel-Buffering": "no"})

@@ -70,7 +70,8 @@ export async function consultQwen(
   if (!retrieval.success) return { status: "invalid" };
   if (viewer.profile.access_kind === "academic") {
     const { data, error } = await viewer.db.rpc("consume_academic_query");
-    if (error || !data) return { status: "quota" };
+    if (error) return { status: "unavailable" };
+    if (!data) return { status: "quota" };
   }
   try {
     return {
@@ -115,7 +116,8 @@ export async function searchEvidence(
   if (!parsed.success) return { status: "invalid", results: [] };
   if (viewer.profile.access_kind === "academic") {
     const { data, error } = await db.rpc("consume_academic_query");
-    if (error || !data) return { status: "quota", results: [] };
+    if (error) return { status: "unavailable", results: [] };
+    if (!data) return { status: "quota", results: [] };
   }
   try {
     const embedding = await embedQuery(parsed.data);

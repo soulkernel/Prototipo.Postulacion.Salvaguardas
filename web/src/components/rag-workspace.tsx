@@ -41,7 +41,7 @@ export function RagWorkspace({
   const [call, setCall] = useState(initial?.callId || "");
   const [projectId, setProjectId] = useState(initial?.id || "");
   const [riskId, setRiskId] = useState("");
-  const [free, setFree] = useState(false);
+  const [free, setFree] = useState(!initial);
   const project = projects.find((p) => p.id === projectId);
   const risk = project?.risks.find((r) => r.id === riskId);
   const levels: Record<string, string> = es
@@ -66,8 +66,8 @@ export function RagWorkspace({
           <span className="rag-step">1</span>
           <h2>
             {es
-              ? "Seleccione el riesgo que desea revisar"
-              : "Select the risk to review"}
+              ? "Elija el contexto de su consulta"
+              : "Choose your query context"}
           </h2>
         </div>
         <p>

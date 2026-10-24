@@ -75,7 +75,13 @@ export default async function EvidencePage({
   return (
     <Shell locale={locale} internal>
       <Link href="/internal">← GLF</Link>
-      <ModuleHeading title={es ? "Asistente RAG de IA" : "AI RAG assistant"}>
+      <ModuleHeading
+        title={
+          es
+            ? "Asistente de consulta de salvaguardas GLF"
+            : "GLF safeguards query assistant"
+        }
+      >
         <p>
           {es
             ? "Apoyo para identificar riesgos y salvaguardas ambientales y sociales en proyectos financiados por el GLF. Utilice uno o ambos modelos para fundamentar su revisión."

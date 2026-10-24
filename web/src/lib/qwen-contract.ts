@@ -27,6 +27,8 @@ export const qwenResponse = z
       .enum(["answered", "insufficient_context", "citation_validation_failed"])
       .optional(),
     public_demo: z.literal(true),
+    model: z.string().min(1).max(150).optional(),
+    review_support_version: z.string().max(80).optional(),
     sources: z.array(source).max(5),
     results: z
       .array(
@@ -76,6 +78,25 @@ export const qwenResponse = z
   });
 export type QwenResponse = z.infer<typeof qwenResponse>;
 
+export function validateQwenCitations(value: unknown): QwenResponse {
+  const result = qwenResponse.parse(value);
+  if (result.generated) {
+    const cited = new Set(
+      [...result.answer.matchAll(/\[([^\[\]\n]+::[^\[\]\n]+)\]/g)].map(
+        (m) => m[1],
+      ),
+    );
+    const sources = new Set(result.sources.map((s) => s.chunk_id));
+    if (
+      !cited.size ||
+      [...cited].some((id) => !sources.has(id)) ||
+      [...sources].some((id) => !cited.has(id))
+    )
+      throw new Error("invalid-response");
+  }
+  return result;
+}
+
 export async function requestQwen(
   endpoint: string,
   key: string,
@@ -119,5 +140,5 @@ export async function requestQwen(
   if (!response.ok) throw new Error("unavailable");
   const body = await response.text();
   if (body.length > 150000) throw new Error("invalid-response");
-  return qwenResponse.parse(JSON.parse(body));
+  return validateQwenCitations(JSON.parse(body));
 }
