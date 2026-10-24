@@ -93,6 +93,10 @@ class AnswerPolicyTests(unittest.TestCase):
         self.assertEqual(len(prepare_context([ROW,dict(ROW,chunk_id="OTHER::P01C01")])[0]),1)
 
     def test_question_cannot_add_allowed_citations_and_hash_ignores_scores(self):
+        formatted, sources, reason = validate_answer("**Respuesta**\nDato ["+ROW["chunk_id"]+"]", [ROW])
+        self.assertEqual(formatted, "Respuesta\nDato ["+ROW["chunk_id"]+"]")
+        self.assertEqual(reason, "answered")
+        self.assertEqual(sources[0]["chunk_id"], ROW["chunk_id"])
         self.assertEqual(validate_answer("Afirmación [FAKE::P01C01]",[ROW])[2],"citation_validation_failed")
         self.assertEqual(corpus_digest([ROW]),corpus_digest([dict(ROW,score=123)]))
         self.assertNotEqual(corpus_digest([ROW]),corpus_digest([dict(ROW,text="otra regla")]))
