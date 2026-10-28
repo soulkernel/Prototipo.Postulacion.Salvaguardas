@@ -1,0 +1,13 @@
+project_id = "glf-postulaciones"
+
+[functions.staff-invitations]
+verify_jwt = true
+
+[functions.user-administration]
+verify_jwt = true
+
+[functions.sgas-experience]
+verify_jwt = true
+
+[functions.staff-access-links]
+verify_jwt = false

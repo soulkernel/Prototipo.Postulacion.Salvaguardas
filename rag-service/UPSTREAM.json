@@ -1,0 +1,15 @@
+{
+  "repository": "https://github.com/schubertlombeida/SALVAGUARDAS.GLF",
+  "branch": "deploy/secure-public-demo",
+  "commit": "3a6fc13918a750991e0885e89b7bb42387529af4",
+  "preserved_files": [
+    "public_demo/__init__.py",
+    "public_demo/app.py",
+    "public_demo/requirements.txt",
+    "public_demo/smoke_test.py",
+    "src/__init__.py",
+    "src/retrieval_optimized.py",
+    "src/eda.py",
+    "LICENSE"
+  ]
+}

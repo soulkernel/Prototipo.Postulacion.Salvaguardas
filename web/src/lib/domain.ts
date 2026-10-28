@@ -1,0 +1,573 @@
+import {
+  identificationIssues,
+  projectDateErrors,
+} from "./applicant-validation";
+import type { AttachmentRequirement } from "./attachment-requirements";
+import { z } from "zod";
+import { applicationTopicIssue } from "./call-themes";
+import { budgetSchema, budgetIssues } from "./budget";
+import { summaryBudgetSchema, summaryBudgetIssues } from "./summary-budget";
+import { sgasExperienceSchema, sgasIssues } from "./sgas-experience";
+import { normalizePhone } from "./phone";
+import { geographyIssues, applicantTypeAddressPatch } from "./geography";
+import { emptySummary, projectSummary } from "./summary";
+import { strategicSchema, alignmentIssues } from "./strategic-alignment";
+import { potentialRiskIssues } from "./potential-risks";
+import { partnerIssues } from "./partners";
+import { activityPlanningIssues, isActivityDate } from "./activity-planning";
+import { projectResultSchema, resultIssues } from "./project-results";
+import { monitoringPlanSchema, monitoringIssues } from "./monitoring-plan";
+import {
+  sustainabilityPlanSchema,
+  sustainabilityIssues,
+} from "./sustainability-plan";
+export const roles = [
+  "applicant",
+  "internal_member",
+  "grants_manager",
+  "sustainability_reviewer",
+  "project_coordinator",
+  "committee_member",
+  "administrator",
+] as const;
+export type Role = (typeof roles)[number];
+export type Locale = "es" | "en";
+const text = z.string().max(12000);
+const money = z.number().finite().min(0).max(999999999999.99).nullable();
+const scale = z.number().int().min(1).max(5).nullable();
+export const conceptSchema = z
+  .object({
+    title: text,
+    applicant_type: text,
+    applicant_name: text,
+    residence_number: z.string().max(50).optional(),
+    identity_number: z.string().max(10).optional(),
+    ruc: z.string().max(13).optional(),
+    contact_name: text,
+    email: text,
+    phone: z.string().max(32),
+    address: text,
+    province: text.default(""),
+    city: text.default(""),
+    project_islands: z.array(z.string().max(100)).max(7).default([]),
+    other_islands: text.default(""),
+    partners: text,
+    associated_organizations: z.array(z.string().max(200)).max(50).optional(),
+    partner_organizations: z
+      .array(
+        z
+          .object({
+            id: z.uuid(),
+            name: z.string().max(200),
+            support: text.optional(),
+          })
+          .strict(),
+      )
+      .max(50)
+      .refine(
+        (rows) =>
+          new Set(rows.map((p) => p.id.toLowerCase())).size === rows.length,
+      )
+      .optional(),
+    location: text,
+    project_type: text,
+    category_id: text,
+    requested_amount: money,
+    cofinance_amount: money,
+    admin_cost: money.default(null),
+    summary_budget: summaryBudgetSchema.optional(),
+    sgas_experience: sgasExperienceSchema.optional(),
+    start_date: z.string().max(10),
+    end_date: z.string().max(10),
+    summary: text,
+    summary_parts: z
+      .object({
+        context: text,
+        problem: text,
+        threats: text,
+        rationale: text,
+        solution: text,
+        results: text,
+      })
+      .strict()
+      .default(emptySummary),
+    objectives: text,
+    beneficiaries: text,
+    results: text,
+    results_source: text.optional(),
+    project_results: z.array(projectResultSchema).max(30).optional(),
+    sustainability: text.default(""),
+    sustainability_plan: sustainabilityPlanSchema.optional(),
+    alignment: text,
+    strategic_alignment: strategicSchema.optional(),
+    monitoring: text.default(""),
+    monitoring_plan: monitoringPlanSchema.optional(),
+    environmental_risks: text,
+    social_risks: text,
+    risk_register: z
+      .array(
+        z
+          .object({
+            id: z.uuid(),
+            dimension: z.enum(["environmental", "social"]),
+            name: z.string().max(2000),
+          })
+          .strict(),
+      )
+      .max(100)
+      .optional(),
+  })
+  .strict();
+export const riskSchema = z
+  .object({
+    id: z.uuid(),
+    source_id: z.uuid().optional(),
+    name: text,
+    description: text,
+    performance_standard: z.string().max(2000).optional(),
+    dimension: z.enum(["environmental", "social"]),
+    probability: scale,
+    severity: scale,
+    residual_probability: scale,
+    residual_severity: scale,
+    location: text,
+    cost: money,
+    responsible: text,
+    start_quarter: z.number().int().min(1).max(12).nullable(),
+    end_quarter: z.number().int().min(1).max(12).nullable(),
+    measures: z
+      .array(
+        z
+          .object({
+            catalog_id: z.uuid().optional(),
+            text: text.optional(),
+            label_es: text.optional(),
+            label_en: text.optional(),
+            normative_reference: text.optional(),
+          })
+          .strict(),
+      )
+      .max(50),
+  })
+  .strict();
+export const activitySchema = z
+  .object({
+    id: z.uuid(),
+    title: text,
+    description: text,
+    no_risks_reason: text,
+    objective_ids: z.array(z.uuid()).max(10).optional(),
+    start_date: z
+      .string()
+      .max(10)
+      .refine((value) => !value || isActivityDate(value))
+      .optional(),
+    end_date: z
+      .string()
+      .max(10)
+      .refine((value) => !value || isActivityDate(value))
+      .optional(),
+    risks: z.array(riskSchema).max(100),
+  })
+  .strict();
+export const payloadSchema = z
+  .object({
+    concept: conceptSchema,
+    activities: z.array(activitySchema).max(100),
+    budget: budgetSchema.optional(),
+    phase2: z.record(z.string(), z.string().max(12000)),
+    consent: z.boolean(),
+    truthful: z.boolean(),
+  })
+  .strict()
+  .superRefine((p, ctx) => {
+    const rows = p.concept.risk_register;
+    if (!rows) return;
+    if (new Set(rows.map((r) => r.id)).size !== rows.length)
+      ctx.addIssue({ code: "custom", message: "Duplicate potential risk IDs" });
+    p.activities.forEach((a) => {
+      const ids = a.risks.map((r) => r.source_id).filter(Boolean);
+      if (new Set(ids).size !== ids.length)
+        ctx.addIssue({
+          code: "custom",
+          message: "Duplicate activity risk reference",
+        });
+      a.risks.forEach((r) => {
+        if (
+          r.source_id &&
+          !rows.some(
+            (s) =>
+              s.id === r.source_id &&
+              s.name === r.name &&
+              s.dimension === r.dimension,
+          )
+        )
+          ctx.addIssue({
+            code: "custom",
+            message: "Invalid potential risk reference",
+          });
+      });
+    });
+  });
+export type Payload = z.infer<typeof payloadSchema>;
+export type Risk = z.infer<typeof riskSchema>;
+export type Activity = z.infer<typeof activitySchema>;
+export type Concept = z.infer<typeof conceptSchema>;
+export function applicantDefaults(
+  previous: unknown,
+  accountEmail: string,
+  allowedTypes: string[],
+): Partial<Concept> {
+  const parsed = conceptSchema
+    .pick({
+      applicant_type: true,
+      applicant_name: true,
+      residence_number: true,
+      identity_number: true,
+      ruc: true,
+      contact_name: true,
+      email: true,
+      phone: true,
+      address: true,
+      province: true,
+      city: true,
+    })
+    .strip()
+    .partial()
+    .safeParse(previous);
+  const defaults = parsed.success ? { ...parsed.data } : {};
+  if (
+    defaults.applicant_type &&
+    !allowedTypes.includes(defaults.applicant_type)
+  )
+    delete defaults.applicant_type;
+  if (!defaults.email?.trim()) defaults.email = accountEmail;
+  // Only defaults for a newly created application; never rewrite prior records.
+  if (defaults.applicant_type === "organization")
+    Object.assign(
+      defaults,
+      applicantTypeAddressPatch(defaults, "organization"),
+    );
+  return defaults;
+}
+export type Category = {
+  id: string;
+  label_es: string;
+  label_en: string;
+  min_amount: number;
+  max_amount: number | null;
+  max_months: number;
+  cofinance_percent: number;
+};
+export type Rules = {
+  categories: Category[];
+  applicant_types: string[];
+  summary_word_limit: number;
+  max_admin_percent: number;
+  required_attachments: string[];
+  attachment_requirements?: AttachmentRequirement[];
+  privacy_es: string;
+  privacy_en: string;
+  version?: string;
+  grant_rule_version?: string;
+  themes?: { id: string; label_es: string; label_en: string }[];
+  theme_options?: { id: string; label_es: string; label_en: string }[];
+  admin_base?: "glf" | "project" | null;
+};
+export type Call = {
+  id: string;
+  code: string;
+  title_es: string;
+  title_en: string;
+  description_es: string;
+  description_en: string;
+  opens_at: string | null;
+  closes_at: string | null;
+  revision: number;
+  status: string;
+  rules_version: string;
+  rules: Rules;
+  phase2_schema: {
+    id: string;
+    label_es: string;
+    label_en: string;
+    type: string;
+    required: boolean;
+  }[];
+};
+export type Application = {
+  deletion_pending?: boolean;
+  id: string;
+  reference_code: string;
+  call_id: string;
+  applicant_id: string;
+  status: string;
+  stage: number;
+  revision: number;
+  payload: Payload;
+  rules_snapshot: Rules;
+  correction_deadline: string | null;
+  phase2_deadline: string | null;
+  submitted_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+export function emptyPayload(): Payload {
+  return {
+    concept: {
+      title: "",
+      applicant_type: "",
+      applicant_name: "",
+      contact_name: "",
+      email: "",
+      phone: "",
+      address: "",
+      province: "",
+      city: "",
+      project_islands: [],
+      other_islands: "",
+      partners: "",
+      location: "",
+      project_type: "",
+      category_id: "",
+      requested_amount: null,
+      cofinance_amount: null,
+      admin_cost: null,
+      start_date: "",
+      end_date: "",
+      summary: "",
+      summary_parts: { ...emptySummary },
+      objectives: "",
+      beneficiaries: "",
+      results: "",
+      sustainability: "",
+      alignment: "",
+      monitoring: "",
+      environmental_risks: "",
+      social_risks: "",
+    },
+    activities: [],
+    phase2: {},
+    consent: false,
+    truthful: false,
+  };
+}
+export function newRisk(): Risk {
+  return {
+    id: crypto.randomUUID(),
+    name: "",
+    description: "",
+    dimension: "environmental",
+    probability: null,
+    severity: null,
+    residual_probability: null,
+    residual_severity: null,
+    location: "",
+    cost: null,
+    responsible: "",
+    start_quarter: null,
+    end_quarter: null,
+    measures: [],
+  };
+}
+export function newActivity(): Activity {
+  return {
+    id: crypto.randomUUID(),
+    title: "",
+    description: "",
+    no_risks_reason: "",
+    risks: [],
+  };
+}
+export function riskScore(p: number | null, s: number | null) {
+  return p === null || s === null ? null : p * s;
+}
+export function riskLevel(
+  score: number | null,
+): "incomplete" | "low" | "medium" | "high" | "very_high" {
+  return score === null
+    ? "incomplete"
+    : score <= 4
+      ? "low"
+      : score <= 9
+        ? "medium"
+        : score <= 15
+          ? "high"
+          : "very_high";
+}
+export function safeReturnPath(value: unknown, fallback = "/applicant") {
+  if (
+    typeof value !== "string" ||
+    value.includes("\\") ||
+    /[\u0000-\u0020]/.test(value)
+  )
+    return fallback;
+  try {
+    const u = new URL(value, "https://glf.invalid");
+    return u.origin === "https://glf.invalid" &&
+      /^\/(?:applicant|internal|documents|files|security)(?:\/|$)/.test(
+        u.pathname,
+      )
+      ? u.pathname + u.search
+      : fallback;
+  } catch {
+    return fallback;
+  }
+}
+export function words(value: string) {
+  return value.trim().split(/\s+/).filter(Boolean).length;
+}
+// M01: retain incompatible drafts; enforce eligibility before completing them.
+export function grantCategoryAllowed(
+  applicantType: string,
+  categoryId: string,
+) {
+  return applicantType !== "individual" || categoryId === "small";
+}
+export function individualGrantIssue(
+  c: Pick<Concept, "applicant_type" | "category_id" | "requested_amount">,
+): "category_id" | "requested_amount" | null {
+  if (c.applicant_type !== "individual") return null;
+  if (c.category_id && !grantCategoryAllowed(c.applicant_type, c.category_id))
+    return "category_id";
+  return c.requested_amount !== null && c.requested_amount > 100000
+    ? "requested_amount"
+    : null;
+}
+export function financialErrors(
+  c: Concept,
+  rules: Rules,
+  stage = 2,
+): Partial<Record<keyof Concept, string>> {
+  // Legacy callers retain the full-proposal check; phase-aware callers pass stage.
+  const errors: Partial<Record<keyof Concept, string>> = {};
+  const category = rules.categories.find((item) => item.id === c.category_id);
+  if (
+    category &&
+    c.requested_amount !== null &&
+    (c.requested_amount <= 0 ||
+      c.requested_amount < category.min_amount ||
+      (category.max_amount !== null &&
+        c.requested_amount > category.max_amount))
+  )
+    errors.requested_amount = "CATEGORY_AMOUNT";
+  if (
+    category &&
+    c.requested_amount !== null &&
+    c.cofinance_amount !== null &&
+    c.cofinance_amount < (c.requested_amount * category.cofinance_percent) / 100
+  )
+    errors.cofinance_amount = "COFINANCE";
+  if (
+    stage === 2 &&
+    c.admin_cost !== null &&
+    c.requested_amount !== null &&
+    c.cofinance_amount !== null &&
+    c.admin_cost >
+      ((c.requested_amount + c.cofinance_amount) * rules.max_admin_percent) /
+        100
+  )
+    errors.admin_cost = "ADMIN_LIMIT";
+  const eligibility = individualGrantIssue(c);
+  if (eligibility) errors[eligibility] = "INDIVIDUAL_SMALL_ONLY";
+  return errors;
+}
+export function validateComplete(
+  payload: Payload,
+  rules: Rules,
+  stage: number,
+): string[] {
+  const missing: string[] = [];
+  const c = payload.concept;
+  missing.push(...identificationIssues(c));
+  missing.push(...Object.keys(projectDateErrors(c, rules)));
+  if (stage === 2) missing.push(...budgetIssues(payload.budget, c));
+  if (stage === 1)
+    missing.push(
+      ...summaryBudgetIssues(payload),
+      ...sgasIssues(c.sgas_experience),
+    );
+  if (applicationTopicIssue(c.project_type, rules))
+    missing.push("project_type");
+  missing.push(...partnerIssues(c));
+  missing.push(...resultIssues(c, stage));
+  missing.push(...monitoringIssues(payload));
+  missing.push(...sustainabilityIssues(payload));
+  missing.push(...activityPlanningIssues(payload));
+  missing.push(...potentialRiskIssues(payload));
+  missing.push(...alignmentIssues(c.strategic_alignment));
+  missing.push(...Object.keys(financialErrors(c, rules, stage)));
+  missing.push(...geographyIssues(c));
+  if (c.phone && !normalizePhone(c.phone)) missing.push("phone");
+  for (const [key, value] of Object.entries(c)) {
+    if (
+      key !== "residence_number" &&
+      key !== "identity_number" &&
+      key !== "ruc" &&
+      key !== "partners" &&
+      key !== "results_source" &&
+      key !== "summary" &&
+      key !== "monitoring" &&
+      !(key === "sustainability" && c.sustainability_plan !== undefined) &&
+      key !== "other_islands" &&
+      !(stage === 1 && key === "admin_cost") &&
+      (value === null || (typeof value === "string" && !value.trim()))
+    )
+      missing.push(key);
+  }
+  const summary = projectSummary(c);
+  if (!summary.trim()) missing.push("summary");
+  if (words(summary) > rules.summary_word_limit)
+    missing.push("summary_word_limit");
+  if (!payload.activities.length) missing.push("activities");
+  payload.activities.forEach((a, i) => {
+    if (
+      a.objective_ids?.some(
+        (id) =>
+          !c.strategic_alignment?.objectives.some(
+            (o) => o.id === id && o.kind === "specific",
+          ),
+      )
+    )
+      missing.push("activity_" + (i + 1));
+    if (!a.title.trim() || !a.description.trim())
+      missing.push("activity_" + (i + 1));
+    if (!a.risks.length && !a.no_risks_reason.trim())
+      missing.push("no_risks_reason_" + (i + 1));
+    a.risks.forEach((r, j) => {
+      if (
+        [
+          r.name,
+          r.description,
+          ...(stage === 2 ? [r.location, r.responsible] : []),
+        ].some((v) => !v.trim()) ||
+        [
+          r.probability,
+          r.severity,
+          ...(stage === 2
+            ? [
+                r.residual_probability,
+                r.residual_severity,
+                r.cost,
+                r.start_quarter,
+                r.end_quarter,
+              ]
+            : []),
+        ].some((v) => v === null) ||
+        (stage === 2 &&
+          (!r.measures.length ||
+            r.measures.some((m) => !m.catalog_id && !m.text?.trim())))
+      )
+        missing.push("risk_" + (i + 1) + "_" + (j + 1));
+      if (
+        stage === 2 &&
+        r.start_quarter &&
+        r.end_quarter &&
+        r.end_quarter < r.start_quarter
+      )
+        missing.push("quarters_" + (i + 1) + "_" + (j + 1));
+    });
+  });
+  if (!payload.consent || !payload.truthful) missing.push("declarations");
+  return missing;
+}

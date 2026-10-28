@@ -1,0 +1,50 @@
+GLF — Sostenibilidad y replicabilidad vinculada
+Decisión aprobada por el usuario: 20/10/2026.
+
+ALCANCE
+Fichas por estrategia después de Seguimiento y evaluación. Cada una asocia uno
+o varios resultados o actividades existentes, muestra sus objetivos específicos,
+recoge una estrategia de sostenibilidad y apropiación, actor previsto, posibilidad
+de ampliación/réplica y condiciones o motivo. Puede vincular un indicador de
+Seguimiento y evaluación de forma explícita y opcional. No inferir vínculos por
+compartir objetivo; no duplicar indicadores ni exigir una estrategia por registro.
+
+ACTORES Y POSIBILIDADES
+Actor: proponente, organización asociada identificada por UUID, otro actor con
+nombre o Por definir en el proyecto completo. No implica compromiso confirmado
+ni genera requisitos de RUC, contacto, carta o firma adicionales.
+Posibilidad: Ampliación, Réplica, Ambas, No prevista o Por definir en el proyecto
+completo. Siempre se explica brevemente las condiciones o el motivo; no se exige
+declarar que todo proyecto puede replicarse ni inventar compromisos o metas.
+
+CAPTURA COMPACTA
+Fichas numeradas con fondo suave, borde y franja lateral; título, plegado y
+papelera en una misma cabecera. Registros y narrativas a todo el ancho; actor y
+réplica en dos columnas en escritorio, una en móvil. Tres líneas iniciales en
+las narrativas estructuradas, ampliables. Las fichas completas se pueden plegar
+manualmente; las incompletas o con vínculos inválidos quedan desplegadas. Agregar
+abre la nueva ficha. Objetivos y vínculo opcional se consultan en desplegables.
+La primera ficha vacía es una vista y no guarda por sí sola. Plegar/abrir no
+modifica datos. Eliminar requiere la confirmación existente.
+
+DATOS Y VALIDACIÓN
+Nuevo concept.sustainability_plan opcional. Cada estrategia tiene UUID propio;
+referencias de tipo+UUID, actor mediante tipo+UUID cuando procede e indicador por
+UUID. Renombrar/reordenar conserva asociaciones. Eliminar un referente, actor o
+indicador conserva la estrategia y sus textos; avisa y exige revisar el vínculo
+antes de completar/enviar. Se permite retirar el vínculo opcional al indicador.
+Los borradores incompletos guardan. Cliente, servidor y SQL comprueban estructura,
+completitud y referencias dentro de la misma postulación. La viabilidad la evalúa
+GLF. Los límites reutilizan 12.000 caracteres de narrativa, 200 de nombres y 30
+fichas del patrón existente; hasta 130 referentes (100 actividades + 30 resultados).
+
+COMPATIBILIDAD Y FASE 2
+Se conserva literalmente sustainability anterior, sin sustituirlo por texto
+generado. Narrativas antiguas siguen editables y solo se organizan en fichas
+mediante una acción explícita, conservando el original y sin inferir estrategias.
+Revisión y PDF nuevos comparten tablas e introducciones en lenguaje natural.
+Nuevo formato glf-concept-20261020-v5; formatos v4/v3/v2/v1/NULL y snapshots se
+conservan. La migración 049 no transforma registros históricos.
+Fase 2 retoma las mismas estrategias, actores y referencias; allí se detallarán
+recursos, compromisos y metodología. No crea aún mediciones, puntuaciones,
+aprobaciones automáticas ni nuevos compromisos documentales.

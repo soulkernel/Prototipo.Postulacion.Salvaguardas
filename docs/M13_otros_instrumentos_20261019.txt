@@ -1,0 +1,111 @@
+M13 — OTROS INSTRUMENTOS DE PLANIFICACIÓN
+Fecha: 19/10/2026. Implementación exclusivamente local.
+Rama: feat/full-grants-platform. Base: 638e177, versión 0.7.27.
+
+ALCANCE CONFIRMADO
+Los instrumentos adicionales complementan, no sustituyen, las alineaciones actuales
+del objetivo general con el Plan Galápagos 2030 y los ODS. No se alinean los objetivos
+específicos del proyecto. El objetivo externo se registra como parte del instrumento,
+no como un nuevo objetivo del proyecto.
+
+DIAGNÓSTICO PREVIO
+strategic-fields.tsx ofrecía Plan Galápagos 2030 y ODS; el modelo v2 estricto no admitía
+instrumentos externos. Tras confirmar que la opción es complementaria, se amplió
+el esquema de forma opcional y se conservaron los requisitos actuales.
+
+FUNCIONAMIENTO IMPLEMENTADO
+Dentro del objetivo general, bajo los selectores actuales, se muestra «Otros instrumentos
+de planificación — opcional» y la ayuda acordada. «Añadir otro instrumento» crea una ficha
+con nombre del instrumento y objetivo externo, incluido su código cuando corresponda.
+Cada ficha tiene identificador propio estable. La edición utiliza ese identificador;
+agregar, editar o eliminar no cambia el UUID del objetivo general ni sus relaciones.
+
+Se admite guardar un borrador con fichas incompletas. Para continuar/completar, las fichas
+añadidas deben tener ambos campos. Se muestran pendientes específicos, asociados a las
+cajas correspondientes, en ES/EN. La eliminación utiliza la papelera común y una única
+confirmación; cancelar o Escape no cambia los datos. Solo se elimina la alineación elegida.
+
+Los límites técnicos son 10 instrumentos, hasta 2000 caracteres por campo y el límite
+global de texto estratégico ya existente. No representan una nueva regla de elegibilidad.
+La base de datos conserva el JSON: no se crean instrumentos ni se rellenan campos
+automáticamente en registros existentes. La propiedad es opcional y no tiene valores
+predeterminados al leer datos históricos.
+
+MODELO Y PRESENTACIÓN
+Se añade other_instruments al objetivo general v2: [{id, name, objective}].
+Se rechazan estructura incorrecta, campos desconocidos, UUID inválidos o duplicados,
+instrumentos sobre objetivos específicos y su introducción en estructuras legacy v1.
+domain.ts se revisó y no necesitó edición: incorpora strategicSchema por referencia.
+
+La acción existente de guardado admite la ampliación y sigue generando objectives/alignment.
+La revisión externa, consulta interna y PDF comparten conceptSections y alignmentNarrative.
+Los instrumentos aparecen como una alineación declarada por el postulante, con frases
+comprensibles; no se certifica ni se inventa una alineación normativa. La presentación de
+los registros sin instrumentos adicionales conserva su contenido anterior.
+
+ARCHIVOS DE APLICACIÓN MODIFICADOS O AÑADIDOS PARA M13
+web/src/components/strategic-fields.tsx
+web/src/components/other-planning-instruments.tsx (nuevo)
+web/src/components/application-editor.tsx (solo rótulo de error específico de M13)
+web/src/lib/strategic-alignment.ts
+web/src/lib/document-language.ts
+web/src/lib/completion-guidance.ts
+web/src/app/live.css (estilos acotados de las fichas)
+supabase/migrations/202610190042_other_planning_instruments.sql (nueva, local)
+
+PRUEBAS MODIFICADAS
+web/tests/strategic-alignment.test.ts
+web/tests/database.test.mjs
+web/tests/m05-server.test.mjs
+web/tests/pdf.test.ts
+
+MIGRACIÓN LOCAL
+La migración 042 agrega validación de los instrumentos al validador existente, conservando
+sus validaciones y permisos. Permite fichas incompletas en borrador y exige nombre/objetivo
+para completar. No contiene actualizaciones de registros ni de documentos históricos.
+Se ejecutó únicamente en PostgreSQL PGlite aislado. La reaplicación controlada en esa
+base de prueba conservó íntegramente aplicaciones, versiones, documentos preparados,
+anexos, eventos y convocatorias del conjunto de prueba. No se aplicó a Supabase.
+
+VERIFICACIÓN EJECUTADA
+1. npm test: 170 pruebas aprobadas, 0 fallos (55 SQL/servidor y 115 TypeScript).
+2. npm run lint: aprobado.
+3. npm run build: aprobado, incluidos TypeScript y generación de rutas.
+4. PostgreSQL local: cero instrumentos sin requisito nuevo; fichas incompletas admitidas
+   como borrador y bloqueadas al completar; Plan/ODS todavía obligatorios; validación de
+   formas inválidas y duplicados; guardado/reapertura/edición por RPC; UUID y relaciones
+   preservados; compatibilidad de fases 1/2 y registros anteriores.
+5. Acción de servidor real con transporte aislado: acepta fichas incompletas; conserva
+   fichas válidas y vínculos; genera texto de alineación; rechaza UUID incorrecto antes del RPC.
+6. Chrome aislado con editor ApplicationEditor real: 7 grupos aprobados, sin errores JS.
+   Cero/una/varias fichas; campos pendientes; autoguardado simulado; cancelar/Escape/confirmar
+   papelera; reapertura y renombrado con identificadores estables; revisión en lenguaje natural;
+   etiquetas/ayudas/confirmación EN; móvil 390px sin desborde horizontal. Las peticiones
+   externas se bloquearon y se utilizó un servidor local en memoria.
+7. PDF real: generados .test-artifacts/m13-additional-es.pdf y m13-additional-en.pdf.
+   Ambos de 5 páginas. Extracción de texto comprobó nombres y objetivos externos;
+   página 3 de ambos renderizada e inspeccionada visualmente, sin cortes ni superposición.
+   Los contenidos escritos por el postulante conservan su idioma original al cambiar ES/EN.
+8. git diff --check de los archivos de aplicación y pruebas modificados: correcto.
+
+AJUSTES DURANTE QA
+Se corrigieron datos de la nueva prueba SQL: para fase 1 no deben arrastrarse medidas
+de mitigación exclusivas de fase 2, y los expedientes aislados necesitan IDs de actividad
+y riesgo propios. Las reglas existentes rechazaron correctamente esas entradas iniciales.
+La extracción de texto del PDF normaliza espacios/saltos antes de contrastar frases, porque
+el salto visual de línea no representa pérdida de contenido. No se alteró el PDF para
+hacer pasar esa comprobación.
+
+EVIDENCIA
+scratch/m13-tests.log; scratch/m13-database.log; scratch/m13-lint.log; scratch/m13-build.log
+scratch/m13-qa/fixture.tsx; build.cjs; run.cjs; results.json; browser.log
+scratch/m13-qa/desktop.png; mobile.png; pdf-es-page3.png; pdf-en-page3.png
+scratch/m13-qa/pdf-es.txt; pdf-en.txt
+
+LÍMITES Y PENDIENTES
+La prueba de navegador usa acciones/router de Next simulados y persistencia HTTP local;
+el guardado SQL se verificó por separado en PGlite y la acción real con dobles de transporte.
+No es una prueba autenticada contra Supabase/Vercel. Pendiente autorizar publicación,
+aplicar la migración en el entorno correspondiente y comprobar allí el flujo autenticado.
+No hubo push, despliegues, migraciones de producción, firmas, envíos o comunicaciones.
+Se conservaron todos los cambios anteriores de cajas narrativas y el trabajo ajeno.
