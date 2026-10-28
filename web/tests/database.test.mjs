@@ -3927,7 +3927,7 @@ test("neutral internal identity requires MFA and has no grants, documents, appli
  assert.equal(await as(user,async()=>(await db.query("select private.current_role() r")).rows[0].r),null);
  await db.exec("set request.jwt.claim.aal='aal2'");
 });
-test("manual activation has recipient binding, seven day expiry, one-time redemption and cancellation",async()=>{
+test("manual activation has recipient binding, fifteen day expiry, one-time redemption and cancellation",async()=>{
  async function provision(){
   const user=await temporaryAccount(),email=`${user}@example.test`;
   // Separate address because the preparation RPC rejects existing accounts.
@@ -3941,7 +3941,7 @@ test("manual activation has recipient binding, seven day expiry, one-time redemp
   return {id,user,token};
  }
  const a=await provision();
- const invitation=(await db.query("select *,expires_at>now()+interval '6 days' long_expiry from public.staff_invitation_drafts where id=$1",[a.id])).rows[0];
+ const invitation=(await db.query("select *,expires_at>now()+interval '14 days' and expires_at<=now()+interval '15 days' long_expiry from public.staff_invitation_drafts where id=$1",[a.id])).rows[0];
  assert.equal(invitation.delivery_method,"manual");assert.equal(invitation.long_expiry,true);
  assert.equal((await db.query("select active from public.profiles where id=$1",[a.user])).rows[0].active,false);
  await assert.rejects(rpc("consume_staff_link",{secret_hash:a.token},"admin"),/permission denied/);

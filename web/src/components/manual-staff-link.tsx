@@ -24,8 +24,8 @@ export function ManualStaffLink({
       </summary>
       <p>
         {es
-          ? "Solo para esta persona. Vence en siete días; al generar otro se invalida el anterior. No se enviará correo automáticamente."
-          : "For this recipient only. Expires in seven days; a replacement invalidates the previous link. No email is sent automatically."}
+          ? "Solo para esta persona. Vence en quince días; al generar otro se invalida el anterior. No se enviará correo automáticamente."
+          : "For this recipient only. Expires in fifteen days; a replacement invalidates the previous link. No email is sent automatically."}
       </p>
       <form
         onSubmit={async (e) => {
