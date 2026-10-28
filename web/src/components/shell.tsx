@@ -108,41 +108,44 @@ export async function Shell({
               </MenuLink>
             </>
           )}
-          {viewer && viewer.profile.role !== "applicant" && (
-            <>
-              <MenuLink href="/internal">
-                {locale === "es" ? "Expedientes" : "Applications"}
-              </MenuLink>
-              {["grants_manager", "administrator"].includes(
-                viewer.profile.role,
-              ) && (
-                <MenuLink href="/internal/calls">
-                  {locale === "es" ? "Convocatorias" : "Calls"}
+          {viewer &&
+            !["applicant", "internal_member"].includes(viewer.profile.role) && (
+              <>
+                <MenuLink href="/internal">
+                  {locale === "es" ? "Expedientes" : "Applications"}
                 </MenuLink>
-              )}
-              {["sustainability_reviewer", "administrator"].includes(
-                viewer.profile.role,
-              ) && (
-                <MenuLink href="/internal/evidence">
-                  {locale === "es" ? "Asistente RAG" : "RAG assistant"}
+                {["grants_manager", "administrator"].includes(
+                  viewer.profile.role,
+                ) && (
+                  <MenuLink href="/internal/calls">
+                    {locale === "es" ? "Convocatorias" : "Calls"}
+                  </MenuLink>
+                )}
+                {["sustainability_reviewer", "administrator"].includes(
+                  viewer.profile.role,
+                ) && (
+                  <MenuLink href="/internal/evidence">
+                    {locale === "es" ? "Asistente RAG" : "RAG assistant"}
+                  </MenuLink>
+                )}
+                <MenuLink href="/internal/reports">
+                  {locale === "es" ? "Reportes" : "Reports"}
                 </MenuLink>
-              )}
-              <MenuLink href="/internal/reports">
-                {locale === "es" ? "Reportes" : "Reports"}
-              </MenuLink>
-              {viewer.profile.role === "administrator" && (
-                <MenuLink href="/internal/backups">
-                  {locale === "es" ? "Respaldos" : "Backups"}
-                </MenuLink>
-              )}
-              {(viewer.profile.role === "administrator" ||
-                viewer.profile.user_admin_scope !== "none") && (
-                <MenuLink href="/internal/users">
-                  {locale === "es" ? "Gestión de usuarios" : "User management"}
-                </MenuLink>
-              )}
-            </>
-          )}
+                {viewer.profile.role === "administrator" && (
+                  <MenuLink href="/internal/backups">
+                    {locale === "es" ? "Respaldos" : "Backups"}
+                  </MenuLink>
+                )}
+                {(viewer.profile.role === "administrator" ||
+                  viewer.profile.user_admin_scope !== "none") && (
+                  <MenuLink href="/internal/users">
+                    {locale === "es"
+                      ? "Gestión de usuarios"
+                      : "User management"}
+                  </MenuLink>
+                )}
+              </>
+            )}
         </nav>
         <div className="header-account-controls">
           <LanguageSwitch locale={locale} />

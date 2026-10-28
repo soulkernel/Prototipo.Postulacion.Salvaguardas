@@ -111,3 +111,30 @@ export async function checkStaffInvitationService() {
     return { ok: false, error: "GLF_INVITATION_CONFIG" };
   }
 }
+
+export async function prepareStaffLink(
+  id: string,
+  updated_at: string,
+): Promise<{ ok: boolean; url?: string; error?: string }> {
+  const { db } = await requireViewer(allowed);
+  if (
+    !z.uuid().safeParse(id).success ||
+    !z.iso.datetime({ offset: true }).safeParse(updated_at).success
+  )
+    return { ok: false, error: "GLF_INVALID_INVITATION" };
+  const { data, error } = await db.functions.invoke("staff-access-links", {
+    body: { operation: "prepare", id, updated_at },
+  });
+  revalidatePath("/internal/users");
+  if (error) {
+    let code = "GLF_INVITATION_CONFIG";
+    if ("context" in error && error.context instanceof Response) {
+      const body = await error.context.json().catch(() => null);
+      if (typeof body?.error === "string") code = body.error;
+    }
+    return { ok: false, error: code };
+  }
+  return data?.ok && typeof data.url === "string"
+    ? { ok: true, url: data.url }
+    : { ok: false, error: data?.error || "GLF_INVITATION_FAILED" };
+}

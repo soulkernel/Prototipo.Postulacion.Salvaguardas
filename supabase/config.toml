@@ -8,3 +8,6 @@ verify_jwt = true
 
 [functions.sgas-experience]
 verify_jwt = true
+
+[functions.staff-access-links]
+verify_jwt = false

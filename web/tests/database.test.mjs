@@ -3915,3 +3915,46 @@ test("SGAS SQL preserves history, validates branches, prevents forged system att
   assert.equal((await db.query("select has_function_privilege($1,'public.prepare_application_documents_before_sgas(uuid,integer)','EXECUTE') allowed",[role])).rows[0].allowed,false);
  }
 });
+
+test("neutral internal identity requires MFA and has no grants, documents, applicant or administration permissions",async()=>{
+ const user=await temporaryAccount();
+ await db.query("update public.profiles set role='internal_member',active=true where id=$1",[user]);
+ assert.equal(await as(user,async()=>(await db.query("select private.is_staff() ok")).rows[0].ok),false);
+ for(const table of ["applications","application_versions","application_documents","prepared_documents","knowledge_chunks"]){assert.equal((await as(user,()=>db.query(`select * from public.${table}`))).rows.length,0,table)}
+ await assert.rejects(rpc("create_application",{call_id:call},user),/GLF_FORBIDDEN/);
+ await assert.rejects(rpc("list_managed_accounts",{},user),/GLF_FORBIDDEN/);
+ await db.exec("set request.jwt.claim.aal='aal1'");
+ assert.equal(await as(user,async()=>(await db.query("select private.current_role() r")).rows[0].r),null);
+ await db.exec("set request.jwt.claim.aal='aal2'");
+});
+test("manual activation has recipient binding, seven day expiry, one-time redemption and cancellation",async()=>{
+ async function provision(){
+  const user=await temporaryAccount(),email=`${user}@example.test`;
+  // Separate address because the preparation RPC rejects existing accounts.
+  const newEmail=`invite-${user}@example.test`;
+  const id=await rpc("prepare_staff_invitation",{contact_email:newEmail,contact_name:"Internal QA",desired_role:"internal_member",desired_scope:"none"},"admin");
+  const updated=(await db.query("select updated_at from public.staff_invitation_drafts where id=$1",[id])).rows[0].updated_at;
+  const started=await rpc("begin_staff_link",{invitation_id:id,expected_updated_at:updated},"admin");
+  await db.query("update auth.users set email=$2,invited_at=now() where id=$1",[user,newEmail]);
+  const token=user.replaceAll("-","").repeat(2);
+  await db.query("select public.finish_staff_link($1,$2,$3,$4)",[id,started.attempt_id,user,token]);
+  return {id,user,token};
+ }
+ const a=await provision();
+ const invitation=(await db.query("select *,expires_at>now()+interval '6 days' long_expiry from public.staff_invitation_drafts where id=$1",[a.id])).rows[0];
+ assert.equal(invitation.delivery_method,"manual");assert.equal(invitation.long_expiry,true);
+ assert.equal((await db.query("select active from public.profiles where id=$1",[a.user])).rows[0].active,false);
+ await assert.rejects(rpc("consume_staff_link",{secret_hash:a.token},"admin"),/permission denied/);
+ await assert.rejects(db.query("select public.consume_staff_link($1)",["f".repeat(64)]),/GLF_INVITATION_EXPIRED/);
+ const redeemed=(await db.query("select public.consume_staff_link($1) r",[a.token])).rows[0].r;assert.equal(redeemed.recipient_id,a.user);
+ await assert.rejects(db.query("select public.consume_staff_link($1)",[a.token]),/GLF_INVITATION_EXPIRED/);
+ await assert.rejects(rpc("accept_staff_invitation",{invitation_id:a.id},"other"),/GLF_FORBIDDEN/);
+ await db.query("update auth.users set email_confirmed_at=now(),encrypted_password='test-only' where id=$1",[a.user]);
+ await rpc("accept_staff_invitation",{invitation_id:a.id},a.user);
+ assert.equal((await db.query("select role from public.profiles where id=$1",[a.user])).rows[0].role,"internal_member");
+ const b=await provision();const v=(await db.query("select updated_at from public.staff_invitation_drafts where id=$1",[b.id])).rows[0].updated_at;
+ await rpc("cancel_staff_invitation",{invitation_id:b.id,expected_updated_at:v},"admin");
+ await assert.rejects(db.query("select public.consume_staff_link($1)",[b.token]),/GLF_INVITATION_EXPIRED/);
+ const c=await provision();await db.query("update private.staff_activation_links set expires_at=now()-interval '1 second' where invitation_id=$1",[c.id]);
+ await assert.rejects(db.query("select public.consume_staff_link($1)",[c.token]),/GLF_INVITATION_EXPIRED/);
+});

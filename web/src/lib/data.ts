@@ -35,6 +35,11 @@ export async function requireViewer(allowed?: readonly Role[]) {
   const viewer = await getViewer();
   if (!viewer) redirect("/login");
   if (viewer.profile.access_kind === "academic") redirect("/evaluation");
+  if (
+    viewer.profile.role === "internal_member" &&
+    !allowed?.includes("internal_member")
+  )
+    redirect("/access");
   if (allowed && !allowed.includes(viewer.profile.role))
     redirect(viewer.profile.role === "applicant" ? "/applicant" : "/internal");
   if (viewer.profile.role !== "applicant") {

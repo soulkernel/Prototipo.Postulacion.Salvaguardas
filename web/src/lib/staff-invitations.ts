@@ -101,6 +101,7 @@ export function invitationError(code: string, locale: Locale) {
 }
 export type StaffInvitation = {
   id: string;
+  delivery_method?: "email" | "manual";
   email: string;
   full_name: string;
   assigned_role: Role;

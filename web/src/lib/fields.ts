@@ -235,6 +235,10 @@ export function statusLabel(
 }
 export const roleLabels: Record<string, [string, string]> = {
   applicant: ["Aplicante", "Applicant"],
+  internal_member: [
+    "Personal GLF · otras aplicaciones",
+    "GLF staff · other applications",
+  ],
   grants_manager: ["Convocatorias y subvenciones", "Calls and grants"],
   sustainability_reviewer: [
     "Sostenibilidad y salvaguardas",

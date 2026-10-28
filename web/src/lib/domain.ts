@@ -23,6 +23,7 @@ import {
 } from "./sustainability-plan";
 export const roles = [
   "applicant",
+  "internal_member",
   "grants_manager",
   "sustainability_reviewer",
   "project_coordinator",
@@ -481,7 +482,11 @@ export function validateComplete(
   missing.push(...identificationIssues(c));
   missing.push(...Object.keys(projectDateErrors(c, rules)));
   if (stage === 2) missing.push(...budgetIssues(payload.budget, c));
-  if (stage === 1) missing.push(...summaryBudgetIssues(payload), ...sgasIssues(c.sgas_experience));
+  if (stage === 1)
+    missing.push(
+      ...summaryBudgetIssues(payload),
+      ...sgasIssues(c.sgas_experience),
+    );
   if (applicationTopicIssue(c.project_type, rules))
     missing.push("project_type");
   missing.push(...partnerIssues(c));

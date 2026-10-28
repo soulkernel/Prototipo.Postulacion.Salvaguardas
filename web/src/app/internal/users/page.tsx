@@ -41,7 +41,7 @@ export default async function UsersPage({
   const { data: invitations, error: invitationError } = await db
     .from("staff_invitation_drafts")
     .select(
-      "id,email,full_name,assigned_role,user_admin_scope,status,updated_at,sent_at,expires_at,accepted_at,send_count,last_error,invited_user_id",
+      "id,email,full_name,assigned_role,user_admin_scope,status,updated_at,sent_at,expires_at,accepted_at,send_count,last_error,invited_user_id,delivery_method",
     )
     .order("full_name");
   if (invitationError) throw new Error("Invitations unavailable");

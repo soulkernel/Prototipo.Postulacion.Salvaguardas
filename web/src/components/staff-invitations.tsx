@@ -1,4 +1,5 @@
 "use client";
+import { ManualStaffLink } from "./manual-staff-link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Mail, Send, UserPlus } from "lucide-react";
@@ -350,7 +351,11 @@ export function StaffInvitations({
                       ? es
                         ? "Vencida · requiere reenvío"
                         : "Expired · resend required"
-                      : labels[i.status][es ? 0 : 1]}
+                      : i.delivery_method === "manual" && i.status === "sent"
+                        ? es
+                          ? "Enlace preparado · pendiente de activación"
+                          : "Link prepared · awaiting activation"
+                        : labels[i.status][es ? 0 : 1]}
                   </span>
                 </div>
                 <p>{i.email}</p>
@@ -364,7 +369,13 @@ export function StaffInvitations({
                 </p>
                 {i.sent_at && (
                   <p className="field-help">
-                    {es ? "Último envío: " : "Last sent: "}
+                    {i.delivery_method === "manual"
+                      ? es
+                        ? "Enlace preparado: "
+                        : "Link prepared: "
+                      : es
+                        ? "Último envío: "
+                        : "Last sent: "}
                     {date(i.sent_at)} · {es ? "Envíos: " : "Sends: "}
                     {i.send_count}
                   </p>
@@ -382,6 +393,9 @@ export function StaffInvitations({
                 )}
                 {notice(sendKey)}
                 {notice(cancelKey)}
+                {!["accepted", "cancelled", "sending"].includes(i.status) && (
+                  <ManualStaffLink invitation={i} es={es} />
+                )}
                 <div className="live-actions">
                   {["draft", "failed", "cancelled"].includes(i.status) && (
                     <button

@@ -29,12 +29,19 @@ export function StaffActivation({
   const [resolvedId, setResolvedId] = useState(invitationId);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [setupToken, setSetupToken] = useState("");
   useEffect(() => {
     let active = true;
     async function load() {
       try {
         const db = createSupabaseBrowserClient();
         const fragment = new URLSearchParams(window.location.hash.slice(1));
+        const setup = fragment.get("setup");
+        if (setup) {
+          window.history.replaceState(null, "", window.location.pathname);
+          if (active) setSetupToken(setup);
+          return;
+        }
         const access_token = fragment.get("access_token");
         const refresh_token = fragment.get("refresh_token");
         // Invitation links work across devices. Tokens never enter application logs or URLs sent to the server.
@@ -111,7 +118,50 @@ export function StaffActivation({
   }
   return (
     <>
-      {!details && !error && (
+      {setupToken && (
+        <>
+          <p>
+            {es
+              ? "Continúe para establecer su contraseña y activar el doble factor. Este enlace es personal y solo sirve para la activación inicial."
+              : "Continue to set your password and activate two-factor security. This personal link is for initial activation only."}
+          </p>
+          <button
+            className="button primary"
+            disabled={busy}
+            aria-busy={busy}
+            onClick={async () => {
+              if (busy) return;
+              setBusy(true);
+              setError("");
+              try {
+                const db = createSupabaseBrowserClient();
+                const { data, error } = await db.functions.invoke(
+                  "staff-access-links",
+                  { body: { operation: "redeem", token: setupToken } },
+                );
+                if (error || !data?.ok) throw new Error();
+                const { error: verifyError } = await db.auth.verifyOtp({
+                  token_hash: data.token_hash,
+                  type: "magiclink",
+                });
+                if (verifyError) throw new Error();
+                window.location.replace("/auth/activate?id=" + data.id);
+              } catch {
+                setError(invitationError("GLF_INVITATION_EXPIRED", locale));
+                setBusy(false);
+              }
+            }}
+          >
+            <ActionLabel
+              busy={busy}
+              pendingLabel={es ? "Comprobando acceso…" : "Checking access…"}
+            >
+              {es ? "Continuar con la activación" : "Continue activation"}
+            </ActionLabel>
+          </button>
+        </>
+      )}
+      {!details && !error && !setupToken && (
         <p role="status">
           {es ? "Comprobando invitación…" : "Checking invitation…"}
         </p>
