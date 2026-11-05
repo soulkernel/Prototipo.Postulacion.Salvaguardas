@@ -10,6 +10,7 @@ import { budgetText } from "@/lib/budget";
 import { SubmitButton } from "@/components/submit-button";
 import { getRequestTime } from "@/lib/data";
 import Link from "@/components/feedback-link";
+import { BackLink } from "@/components/back-link";
 import { getApplication, requireReadViewer } from "@/lib/data";
 import { getLocale } from "@/lib/locale";
 import { Shell } from "@/components/shell";
@@ -124,7 +125,7 @@ export default async function ReviewPage({
   );
   return (
     <Shell locale={locale} internal>
-      <Link
+      <BackLink
         href={
           safeReturnPath(feedback.returnTo, "/internal").startsWith(
             "/internal?",
@@ -133,8 +134,8 @@ export default async function ReviewPage({
             : "/internal"
         }
       >
-        ← {es ? "Expedientes" : "Applications"}
-      </Link>
+        {es ? "Volver a expedientes" : "Back to applications"}
+      </BackLink>
       <div className="live-title module-heading">
         <div>
           <p className="eyebrow">

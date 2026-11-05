@@ -1,4 +1,4 @@
-import Link from "@/components/feedback-link";
+import { BackLink } from "@/components/back-link";
 import { Shell } from "@/components/shell";
 import {
   WorkingReview,
@@ -83,9 +83,9 @@ export default async function WorkingReviewPage({
   if (he) throw new Error("Cannot load review audit");
   return (
     <Shell locale={locale} internal>
-      <Link href={`/internal/applications/${id}?${new URLSearchParams({ returnTo })}`}>
-        ← {es ? "Volver al expediente" : "Back to application"}
-      </Link>
+      <BackLink href={`/internal/applications/${id}?${new URLSearchParams({ returnTo })}`}>
+        {es ? "Volver al expediente" : "Back to application"}
+      </BackLink>
       <header className="module-heading">
         <h1>{v.payload.concept.title}</h1>
       </header>
