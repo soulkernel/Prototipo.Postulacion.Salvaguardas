@@ -31,7 +31,7 @@ import { ProposalFieldGuidance } from "./proposal-field-guidance";
 import { applicationStepUrl } from "@/lib/application-navigation";
 import Link from "@/components/feedback-link";
 import { SignedDocumentUpload } from "./signed-document-upload";
-import { ReceiptDownload } from "./receipt-download";
+import { VersionDownloads } from "./version-downloads";
 import {
   privacyNotice,
   submissionConfirmation,
@@ -130,6 +130,7 @@ type Catalog = {
   normative_reference: string;
 };
 type Version = {
+  document_metadata?: {format_version:number;author_name:string}|null;
   concept_layout_version?: string | null;
   project_title?: string;
   id: string;
@@ -2394,7 +2395,7 @@ export function ApplicationEditor({
                   : "Identify and assess risks for each activity. Mitigation and the ESMP are completed in Phase 2. If you identify no risks, explain why."}
               </p>
               <RiskInterpretationGuide locale={locale} />
-              <RiskOverview payload={payload} locale={locale} />
+              <RiskOverview payload={payload} locale={locale} stage={application.stage} />
               {application.stage === 2 && (
                 <RiskReferenceTable
                   payload={payload}
@@ -3177,24 +3178,7 @@ export function ApplicationEditor({
             </button>
             {prepared && prepared.revision === revision && !dirty && (
               <>
-                <DocumentDownload
-                  href={`/documents/${prepared.id}/concept?prepared=1&lang=${locale}`}
-                  locale={locale}
-                >
-                  {application.stage === 1
-                    ? es
-                      ? "Descargar nota conceptual"
-                      : "Download concept note"
-                    : es
-                      ? "Descargar propuesta completa"
-                      : "Download full proposal"}
-                </DocumentDownload>
-                <DocumentDownload
-                  href={`/documents/${prepared.id}/matrix?prepared=1&lang=${locale}`}
-                  locale={locale}
-                >
-                  {es ? "Descargar evaluación A&S" : "Download E&S screening"}
-                </DocumentDownload>
+                <VersionDownloads id={prepared.id} stage={application.stage} locale={locale} prepared />
               </>
             )}
           </div>
@@ -3544,31 +3528,7 @@ export function ApplicationEditor({
                   {submissionPhase(v.stage, locale)}
                 </span>
               </div>
-              <div className="live-actions">
-                <ReceiptDownload id={v.id} locale={locale} />
-                <DocumentDownload
-                  className="button secondary"
-                  href={"/documents/" + v.id + "/concept"}
-                  locale={locale}
-                >
-                  {v.stage === 1
-                    ? es
-                      ? "Nota conceptual"
-                      : "Concept note"
-                    : es
-                      ? "Propuesta completa"
-                      : "Full proposal"}
-                </DocumentDownload>
-                <DocumentDownload
-                  className="button secondary"
-                  href={"/documents/" + v.id + "/matrix"}
-                  locale={locale}
-                >
-                  {es
-                    ? "Evaluación de riesgos ambientales y sociales"
-                    : "Environmental and social risk assessment"}
-                </DocumentDownload>
-              </div>
+              <VersionDownloads id={v.id} stage={v.stage} locale={locale} legacy={v.document_metadata?.format_version !== 2} />
             </div>
           ))}
         </section>

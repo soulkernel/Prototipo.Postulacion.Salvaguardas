@@ -8,8 +8,8 @@ export type ManualChapter = {
   screen: [string, string][];
 };
 export const manualUpdatedDate = [
-  "21 de octubre de 2026",
-  "21 October 2026",
+  "4 de noviembre de 2026",
+  "4 November 2026",
 ] as const;
 export const manualFormSteps = [
   ["Información general", "General information", "datos"],
@@ -1435,15 +1435,15 @@ export const manualChapters: ManualChapter[] = [
         "After saving and completing ESMS experience, validates the content and prepares the two current PDFs. It neither submits the application nor adds a signature. If unavailable, check save status and monetary entries.",
       ],
       [
-        "Descargar nota conceptual",
+        "Nota conceptual PDF",
         "Descarga el PDF con la información del proyecto. El nombre incluye la referencia del expediente y el momento de generación.",
-        "Download concept note",
+        "Concept note PDF",
         "Downloads the project information PDF. Its filename includes the dossier reference and generation timestamp.",
       ],
       [
-        "Descargar evaluación A&S",
+        "Evaluación ambiental y social PDF",
         "Obtiene por separado el examen ambiental y social inicial. Tras firmarlo, cárguelo en Anexo 2. Resultados del examen ambiental y social — PDF firmado, dentro de Documentos firmados.",
-        "Download E&S screening",
+        "Environmental and social assessment PDF",
         "Retrieves the initial environmental and social screening separately. After signing, upload it under Annex 2. Environmental and social screening results — signed PDF, within Signed documents.",
       ],
       [
@@ -1463,6 +1463,12 @@ export const manualChapters: ManualChapter[] = [
         "Si modifica el contenido después de preparar o firmar, genere, descargue, firme y cargue nuevamente ambos documentos para que coincidan con la versión vigente.",
         "Document from previous version",
         "If you edit content after preparation or signing, generate, download, sign and upload both documents again to match the current version.",
+      ],
+      [
+        "Idioma y formato de las descargas",
+        "Seleccione Español o English junto a los PDF. El idioma cambia títulos y etiquetas; sus respuestas conservan el idioma original. En versiones antiguas, la copia de consulta actualizada incluye el nuevo formato y mapa de riesgos; Formato original conserva la presentación anterior. Ninguna copia de consulta sustituye los archivos firmados.",
+        "Download language and presentation",
+        "Select Español or English beside the PDFs. The language changes headings and labels; your responses retain their original language. For older versions, the updated reference copy includes the new layout and risk map; Original format retains the earlier presentation. A reference copy does not replace signed files.",
       ],
       [
         "Enlaces recuperados al retomar",

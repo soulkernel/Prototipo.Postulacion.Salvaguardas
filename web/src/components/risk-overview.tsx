@@ -1,4 +1,5 @@
 "use client";
+import { riskMapEntries } from "@/lib/risk-map";
 import { useState } from "react";
 import { riskScore, riskLevel, type Payload, type Locale } from "@/lib/domain";
 import { riskLabel } from "@/lib/potential-risks";
@@ -21,17 +22,21 @@ const names = {
 export function RiskOverview({
   payload,
   locale,
+  stage = 1,
 }: {
   payload: Payload;
   locale: Locale;
+  stage?: number;
 }) {
   const es = locale === "es";
   const [dimension, setDimension] = useState("all");
   const [activityId, setActivityId] = useState("all");
   const [cell, setCell] = useState<string | null>(null);
-  const all = payload.activities.flatMap((activity, ai) =>
-    activity.risks.map((risk, ri) => ({ activity, ai, risk, ri })),
-  );
+  const [residual, setResidual] = useState(false);
+  const all = riskMapEntries(payload, stage === 2 && residual).map((e) => ({
+    ...e,
+    risk: { ...e.risk, probability: e.probability, severity: e.severity },
+  }));
   const rows = all.filter(
     ({ activity, risk }) =>
       (dimension === "all" || risk.dimension === dimension) &&
@@ -57,6 +62,25 @@ export function RiskOverview({
           : "Each assessment represents a risk in one activity. Select an occupied cell to view its details."}
       </p>
       <div className="risk-map-filters">
+        {stage === 2 && (
+          <label>
+            {es ? "Valoración" : "Assessment"}
+            <select
+              value={residual ? "residual" : "initial"}
+              onChange={(e) => {
+                setResidual(e.target.value === "residual");
+                setCell(null);
+              }}
+            >
+              <option value="initial">
+                {es ? "Riesgo inicial" : "Initial risk"}
+              </option>
+              <option value="residual">
+                {es ? "Riesgo residual" : "Residual risk"}
+              </option>
+            </select>
+          </label>
+        )}
         <label>
           {es ? "Tipo de riesgo" : "Risk type"}
           <select

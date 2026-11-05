@@ -3958,3 +3958,56 @@ test("manual activation has recipient binding, fifteen day expiry, one-time rede
  const c=await provision();await db.query("update private.staff_activation_links set expires_at=now()-interval '1 second' where invitation_id=$1",[c.id]);
  await assert.rejects(db.query("select public.consume_staff_link($1)",[c.token]),/GLF_INVITATION_EXPIRED/);
 });
+
+
+test("GLF observation changes preserve snapshots, isolate follow-up notes and paginate only authorized submitted versions", async()=>{
+ const owner=await temporaryAccount(),academic=await temporaryAccount(true);
+ const beforeName=(await db.query("select full_name from public.profiles where id=$1",[owner])).rows[0].full_name;
+ const idsForPage=[];
+ for(let i=0;i<12;i++){
+  const id=crypto.randomUUID();idsForPage.push(id);
+  await db.query("insert into public.applications(id,reference_code,call_id,applicant_id,status,stage,revision,payload,rules_snapshot,submitted_at) values($1,$2,$3,$4,'under_review',1,1,$5,$6,'2026-11-04T12:00:00Z')",[id,`OBS-QA-${i}`,call,owner,{concept:{title:'Draft must not appear',category_id:'large'}},rules]);
+  await db.query("insert into public.application_versions(application_id,revision,stage,payload,rules_snapshot,actor_id,submitted_at) values($1,1,1,$2,$3,$4,'2026-11-04T12:00:00Z')",[id,{concept:{title:`Frozen ${i}`,applicant_name:'Fictitious organization',category_id:'observation-test'}},rules,owner]);
+ }
+ const id=idsForPage[0];
+ const frozen=(await db.query("select document_metadata from public.application_versions where application_id=$1",[id])).rows[0].document_metadata;
+ assert.equal(frozen.format_version,2);assert.equal(frozen.author_name,beforeName);
+ await db.query("update public.profiles set full_name='Changed later' where id=$1",[owner]);
+ assert.deepEqual((await db.query("select document_metadata from public.application_versions where application_id=$1",[id])).rows[0].document_metadata,frozen);
+ // Formal reviews keep their context; follow-up notes cannot satisfy decision gates.
+ await rpc('record_review',{application_id:id,expected_revision:1,review_type:'grants',findings:'Initial finding',recommendation:'Review the evidence'},'grants');
+ const ctx=(await db.query("select review_context from public.technical_reviews where application_id=$1",[id])).rows[0].review_context;
+ assert.equal(ctx.status,'under_review');assert.equal(ctx.stage,1);assert.equal(ctx.author_name,'grants');
+ const oldStatus=(await db.query('select status from public.applications where id=$1',[id])).rows[0].status;
+ await assert.rejects(rpc('record_review_note',{app_id:id,expected_revision:1,findings:'forged',recommendation:''},owner),/GLF_FORBIDDEN/);
+ await assert.rejects(rpc('record_review_note',{app_id:id,expected_revision:1,findings:'forged',recommendation:''},academic),/GLF_FORBIDDEN/);
+ await assert.rejects(rpc('record_review_note',{app_id:id,expected_revision:0,findings:'old',recommendation:''},'reviewer'),/GLF_VERSION_CONFLICT/);
+ await assert.rejects(rpc('record_review_note',{app_id:id,expected_revision:1,findings:' ',recommendation:''},'reviewer'),/GLF_REVIEW_REQUIRED/);
+ await assert.rejects(rpc('record_review_note',{app_id:id,expected_revision:1,findings:'x'.repeat(12001),recommendation:''},'reviewer'),/GLF_REVIEW_REQUIRED/);
+ const note=await rpc('record_review_note',{app_id:id,expected_revision:1,findings:'Progress observation',recommendation:'Next action'},'reviewer');
+ assert.equal((await db.query('select status from public.applications where id=$1',[id])).rows[0].status,oldStatus);
+ assert.equal((await db.query("select count(*)::int n from public.technical_reviews where application_id=$1 and review_type='safeguards'",[id])).rows[0].n,0);
+ assert.equal((await as(owner,()=>db.query('select * from public.application_review_notes where id=$1',[note]))).rows.length,0);
+ await assert.rejects(as('reviewer',()=>db.query("update public.application_review_notes set findings='overwrite' where id=$1",[note])),/permission denied/);
+ await assert.rejects(db.query("delete from public.application_review_notes where id=$1",[note]),/GLF_REVIEW_IMMUTABLE/);
+ await db.query("update public.applications set status='contract_signed',stage=2 where id=$1",[id]);
+ await rpc('record_review_note',{app_id:id,expected_revision:1,findings:'Contract observation',recommendation:''},'coordinator');
+ assert.equal((await db.query('select count(*)::int n from public.application_review_notes where application_id=$1',[id])).rows[0].n,2);
+ const args={filter_call:call,filter_category:'observation-test',requested_page:1,page_size:10};
+ const first=await rpc('internal_application_page',args,'admin'),second=await rpc('internal_application_page',{...args,requested_page:2},'admin');
+ assert.equal(first.total,12);assert.equal(first.items.length,10);assert.equal(second.items.length,2);assert.equal(first.pages,2);
+ assert.equal(new Set([...first.items,...second.items].map(a=>a.id)).size,12);
+ assert.ok(first.items.every(a=>a.title.startsWith('Frozen')));
+ assert.equal((await rpc('internal_application_page',{...args,requested_page:999},'admin')).page,2);
+ assert.equal((await rpc('internal_application_page',{...args,filter_category:'missing'},'admin')).total,0);
+ await assert.rejects(rpc('internal_application_page',args,owner),/GLF_FORBIDDEN/);
+ assert.equal((await rpc('internal_application_page',args,academic)).total,0);
+ await db.query('insert into private.academic_application_scope(application_id) values($1)',[id]);
+ assert.equal((await rpc('internal_application_page',args,academic)).total,1);
+ assert.equal((await as(academic,()=>db.query('select * from public.application_review_notes'))).rows.filter(n=>n.application_id===id).length,2);
+ await db.exec("select set_config('request.jwt.claim.aal','aal1',false)");
+ await assert.rejects(rpc('internal_application_page',args,'admin'),/GLF_FORBIDDEN/);
+ await assert.rejects(rpc('record_review_note',{app_id:id,expected_revision:1,findings:'Without MFA',recommendation:''},'reviewer'),/GLF_FORBIDDEN/);
+ await db.exec("select set_config('request.jwt.claim.aal','aal2',false)");
+ for(const role of ['anon','authenticated'])for(const permission of ['INSERT','UPDATE','DELETE','TRUNCATE'])assert.equal((await db.query("select has_table_privilege($1,'public.application_review_notes',$2) allowed",[role,permission])).rows[0].allowed,false);
+});

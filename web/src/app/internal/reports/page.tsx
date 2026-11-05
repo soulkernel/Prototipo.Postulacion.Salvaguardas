@@ -131,11 +131,12 @@ export default async function Reports({
             <h2>{es ? "Descargar reporte" : "Download report"}</h2>
             <p>
               {es
-                ? "Descargue el reporte de la convocatoria seleccionada, con fecha y hora de corte de Galápagos."
-                : "Download the selected call report with its Galapagos cut-off date and time."}
+                ? "Descargue el reporte de la convocatoria seleccionada, con fecha y hora de corte de Galápagos. El idioma cambia títulos y etiquetas; los textos del proponente mantienen su idioma original."
+                : "Download the selected call report with its Galapagos cut-off date and time. Language changes headings and labels; applicant text retains its original language."}
             </p>
             <div className="report-download-actions">
               <DocumentDownload
+                languageSelection
                 className="button primary"
                 href={"/internal/reports/export?call=" + id + "&format=xlsx"}
                 locale={locale}
@@ -143,6 +144,7 @@ export default async function Reports({
                 {es ? "Descargar Excel" : "Download Excel"}
               </DocumentDownload>
               <DocumentDownload
+                languageSelection
                 className="button secondary"
                 href={"/internal/reports/export?call=" + id + "&format=pdf"}
                 locale={locale}
@@ -160,6 +162,7 @@ export default async function Reports({
                   : "To export data to databases or statistical analysis tools."}
               </p>
               <DocumentDownload
+                languageSelection
                 href={"/internal/reports/export?call=" + id + "&format=csv"}
                 locale={locale}
               >

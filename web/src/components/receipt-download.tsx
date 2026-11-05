@@ -12,6 +12,7 @@ export function ReceiptDownload({
   locale: Locale;
   automatic?: boolean;
 }) {
+  const [language, setLanguage] = useState(locale);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
   const flight = useRef(false);
@@ -23,7 +24,7 @@ export function ReceiptDownload({
     setBusy(true);
     setError(false);
     try {
-      const response = await fetch(`/receipts/${id}?lang=${locale}`);
+      const response = await fetch(`/receipts/${id}?lang=${language}`);
       if (
         !response.ok ||
         !response.headers.get("content-type")?.includes("application/pdf")
@@ -48,7 +49,7 @@ export function ReceiptDownload({
       flight.current = false;
       setBusy(false);
     }
-  }, [id, locale]);
+  }, [id, language]);
   useEffect(() => {
     if (automatic && !started.current) {
       started.current = true;
@@ -56,7 +57,18 @@ export function ReceiptDownload({
     }
   }, [automatic, download]);
   return (
-    <div>
+    <div className="document-download-control">
+      <label className="download-language">
+        {es ? "Idioma del comprobante" : "Receipt language"}
+        <select
+          disabled={busy}
+          value={language}
+          onChange={(e) => setLanguage(e.target.value as Locale)}
+        >
+          <option value="es">Español</option>
+          <option value="en">English</option>
+        </select>
+      </label>
       <button
         type="button"
         className="button secondary"

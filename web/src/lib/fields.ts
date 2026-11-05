@@ -22,6 +22,7 @@ export function workflowLabel(
       submitted: ["Postulación recibida", "Application received"],
       document_added: ["Anexo incorporado", "Attachment added"],
       correction_authorized: ["Corrección autorizada", "Correction authorized"],
+      review_note_recorded: ["Nota de seguimiento registrada", "Follow-up note recorded"],
       review_recorded: ["Revisión registrada", "Review recorded"],
       decision_recorded: ["Resolución registrada", "Decision recorded"],
       agreement_signed: [

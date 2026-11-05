@@ -1,3 +1,6 @@
+import { RiskOverview } from "@/components/risk-overview";
+import { VersionDownloads } from "@/components/version-downloads";
+import { ReviewHistory } from "@/components/review-history";
 import { ActivityDatesTable } from "@/components/activity-review";
 import { ConceptReview } from "@/components/concept-review";
 import { usesStructuredMonitoring } from "@/lib/concept-layout";
@@ -11,13 +14,13 @@ import { getApplication, requireReadViewer } from "@/lib/data";
 import { getLocale } from "@/lib/locale";
 import { Shell } from "@/components/shell";
 import { UploadForm } from "@/components/upload-form";
-import { ReceiptDownload } from "@/components/receipt-download";
 import { statusLabel, riskLevelLabel, workflowLabel } from "@/lib/fields";
 import { safeReturnPath, riskScore } from "@/lib/domain";
 import { strategicText } from "@/lib/strategic-alignment";
 import type { Call } from "@/lib/domain";
 import {
   recordReview,
+  recordReviewNote,
   recordDecision,
   reopenApplication,
   recordAgreement,
@@ -44,6 +47,7 @@ export default async function ReviewPage({
   const feedback = await searchParams;
   const [
     { data: reviews, error: reviewError },
+    { data: notes, error: notesError },
     { data: decisions, error: decisionError },
     { data: versions, error: versionError },
     { data: docs, error: documentError },
@@ -52,6 +56,11 @@ export default async function ReviewPage({
   ] = await Promise.all([
     viewer.db
       .from("technical_reviews")
+      .select("*")
+      .eq("application_id", id)
+      .order("created_at", { ascending: false }),
+    viewer.db
+      .from("application_review_notes")
       .select("*")
       .eq("application_id", id)
       .order("created_at", { ascending: false }),
@@ -82,6 +91,7 @@ export default async function ReviewPage({
   ]);
   if (
     reviewError ||
+    notesError ||
     decisionError ||
     versionError ||
     documentError ||
@@ -109,6 +119,7 @@ export default async function ReviewPage({
     <>
       <input type="hidden" name="id" value={id} />
       <input type="hidden" name="revision" value={a.revision} />
+      <input type="hidden" name="returnTo" value={feedback.returnTo || ""} />
     </>
   );
   return (
@@ -163,7 +174,7 @@ export default async function ReviewPage({
         ].includes(role) && (
           <Link
             className="button secondary"
-            href={`/internal/applications/${id}/working-review`}
+            href={`/internal/applications/${id}/working-review?${new URLSearchParams({ returnTo: safeReturnPath(feedback.returnTo, "/internal") })}`}
           >
             {es
               ? "Revisión administrativa y evaluación"
@@ -209,29 +220,12 @@ export default async function ReviewPage({
               {es ? "Versión" : "Version"} {v.revision} ·{" "}
               {es ? "Fase" : "Phase"} {v.stage}
             </span>
-            <div className="live-actions">
-              <ReceiptDownload id={v.id} locale={locale} />
-              <DocumentDownload
-                href={"/documents/" + v.id + "/concept"}
-                locale={locale}
-              >
-                {v.stage === 2
-                  ? es
-                    ? "Propuesta completa PDF"
-                    : "Full Proposal PDF"
-                  : es
-                    ? "Nota Conceptual PDF"
-                    : "Concept Note PDF"}
-              </DocumentDownload>
-              <DocumentDownload
-                href={"/documents/" + v.id + "/matrix"}
-                locale={locale}
-              >
-                {es
-                  ? "Evaluación ambiental y social PDF"
-                  : "Environmental and social assessment PDF"}
-              </DocumentDownload>
-            </div>
+            <VersionDownloads
+              id={v.id}
+              stage={v.stage}
+              locale={locale}
+              legacy={v.document_metadata?.format_version !== 2}
+            />
           </div>
         ))}
         {docs?.map((d) => (
@@ -295,6 +289,11 @@ export default async function ReviewPage({
             ? "Actividades y riesgos declarados"
             : "Declared activities and risks"}
         </h2>
+        <RiskOverview
+          payload={a.payload}
+          locale={locale}
+          stage={submittedStage}
+        />
         {a.payload.activities.map((activity) => (
           <article key={activity.id}>
             <h3>{activity.title}</h3>
@@ -567,34 +566,79 @@ export default async function ReviewPage({
           </form>
         </section>
       )}
+      {versions?.length &&
+      [
+        "grants_manager",
+        "sustainability_reviewer",
+        "project_coordinator",
+      ].includes(role) &&
+      viewer.profile.access_kind !== "academic" ? (
+        <section className="live-card">
+          <h2>{es ? "Añadir nota de seguimiento" : "Add follow-up note"}</h2>
+          <p>
+            {es
+              ? "Registre observaciones de esta etapa vinculadas a la última versión presentada. Cada nota se conserva en el historial; no sustituye una revisión técnica ni cambia las decisiones del expediente."
+              : "Record observations for this stage linked to the latest submitted version. Each note remains in the history; it does not replace a technical review or change application decisions."}
+          </p>
+          <form action={recordReviewNote} className="live-form">
+            {hidden}
+            <label>
+              {es ? "Observación de seguimiento" : "Follow-up observation"}
+              <textarea
+                name="findings"
+                required
+                maxLength={12000}
+                placeholder={
+                  es
+                    ? "Describa aquí la observación de esta etapa"
+                    : "Describe the observation for this stage"
+                }
+              />
+            </label>
+            <label>
+              {es
+                ? "Recomendación o siguiente acción (opcional)"
+                : "Recommendation or next action (optional)"}
+              <textarea name="recommendation" maxLength={12000} />
+            </label>
+            <SubmitButton
+              className="button primary"
+              pendingLabel={es ? "Guardando nota…" : "Saving note…"}
+            >
+              {es ? "Guardar nota en el historial" : "Save note to history"}
+            </SubmitButton>
+          </form>
+        </section>
+      ) : null}
       <section className="live-card">
         <h2>{es ? "Historia de revisión" : "Review history"}</h2>
-        {reviews?.map((r) => (
-          <div className="document-row" key={r.id}>
-            <div>
-              <strong>
-                {workflowLabel("review", r.review_type, locale)} · v{r.revision}
-              </strong>
-              <p className="preserve-text">{r.findings}</p>
-              <p>{r.recommendation}</p>
-              {r.global_risk_category && <p>{r.global_risk_category}</p>}
-            </div>
-          </div>
-        ))}
+        <ReviewHistory
+          reviews={reviews || []}
+          notes={notes || []}
+          versions={versions || []}
+          locale={locale}
+        />
         {decisions?.map((d) => (
           <p key={d.id}>
             {workflowLabel("body", d.body, locale)} ·{" "}
             {workflowLabel("decision", d.decision, locale)} · {d.reference}
           </p>
         ))}
-        {events?.map((e, i) => (
-          <p key={i}>
-            {new Date(e.created_at).toLocaleString(locale, {
-              timeZone: "Pacific/Galapagos",
-            })}{" "}
-            · {workflowLabel("event", e.event_type, locale)}
-          </p>
-        ))}
+        {events
+          ?.filter(
+            (e) =>
+              !["review_recorded", "review_note_recorded"].includes(
+                e.event_type,
+              ),
+          )
+          .map((e, i) => (
+            <p key={i}>
+              {new Date(e.created_at).toLocaleString(locale, {
+                timeZone: "Pacific/Galapagos",
+              })}{" "}
+              · {workflowLabel("event", e.event_type, locale)}
+            </p>
+          ))}
       </section>
     </Shell>
   );

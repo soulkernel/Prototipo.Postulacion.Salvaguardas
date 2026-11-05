@@ -7,10 +7,13 @@ import {
 import { requireViewer, getApplication, getRequestTime } from "@/lib/data";
 import { getLocale } from "@/lib/locale";
 import { notFound } from "next/navigation";
+import { safeReturnPath } from "@/lib/domain";
 export default async function WorkingReviewPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ returnTo?: string }>;
 }) {
   const requestTime = await getRequestTime();
   const viewer = await requireViewer([
@@ -20,6 +23,7 @@ export default async function WorkingReviewPage({
     "administrator",
   ]);
   const { id } = await params;
+  const returnTo = safeReturnPath((await searchParams).returnTo, "/internal");
   const { application: a } = await getApplication(id);
   const locale = await getLocale(),
     es = locale === "es";
@@ -79,7 +83,7 @@ export default async function WorkingReviewPage({
   if (he) throw new Error("Cannot load review audit");
   return (
     <Shell locale={locale} internal>
-      <Link href={"/internal/applications/" + id}>
+      <Link href={`/internal/applications/${id}?${new URLSearchParams({ returnTo })}`}>
         ← {es ? "Volver al expediente" : "Back to application"}
       </Link>
       <header className="module-heading">

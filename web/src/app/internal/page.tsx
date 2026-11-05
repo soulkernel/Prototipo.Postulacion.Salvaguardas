@@ -1,3 +1,5 @@
+import { InboxPagination } from "@/components/inbox-pagination";
+import { inboxPaging, type InboxPage } from "@/lib/inbox-page";
 import { ModuleHeading } from "@/components/module-heading";
 import { InboxFilters } from "@/components/inbox-filters";
 import { resolveFilters } from "@/lib/inbox-filters";
@@ -9,7 +11,12 @@ import { roleLabels, statusLabel } from "@/lib/fields";
 export default async function InternalPage({
   searchParams,
 }: {
-  searchParams: Promise<{ call?: string; category?: string }>;
+  searchParams: Promise<{
+    call?: string;
+    category?: string;
+    page?: string;
+    size?: string;
+  }>;
 }) {
   const { db, profile } = await requireReadViewer([
     "grants_manager",
@@ -20,79 +27,27 @@ export default async function InternalPage({
   ]);
   const locale = await getLocale();
   const es = locale === "es";
-  const apps: {
-    id: string;
-    reference_code: string;
-    status: string;
-    title: string;
-    proponent: string;
-    contact: string;
-    stage: number;
-    call_id: string;
-    category: string;
-  }[] = [];
-  for (let offset = 0; ; offset += 250) {
-    const { data, error } = await db
-      .from("applications")
-      .select("id,call_id,reference_code,status,stage")
-      .not("submitted_at", "is", null)
-      .order("updated_at", { ascending: false })
-      .order("id")
-      .range(offset, offset + 249);
-    if (error) throw new Error("Cannot read applications");
-    if (!data?.length) break;
-    const titles = new Map<
-      string,
-      { title: string; proponent: string; contact: string; category: string }
-    >();
-    for (let versionOffset = 0; ; versionOffset += 250) {
-      const { data: versions, error: versionError } = await db
-        .from("application_versions")
-        .select("application_id,revision,payload")
-        .in(
-          "application_id",
-          data.map((a) => a.id),
-        )
-        .order("revision", { ascending: false })
-        .order("id")
-        .range(versionOffset, versionOffset + 249);
-      if (versionError) throw new Error("Cannot read submitted versions");
-      for (const version of versions || []) {
-        if (!titles.has(version.application_id))
-          titles.set(version.application_id, {
-            title: String(version.payload?.concept?.title || ""),
-            category: String(version.payload?.concept?.category_id || ""),
-            proponent: String(
-              version.payload?.concept?.applicant_name || "",
-            ).trim(),
-            contact: String(
-              version.payload?.concept?.contact_name || "",
-            ).trim(),
-          });
-      }
-      if (!versions || versions.length < 250) break;
-    }
-    apps.push(
-      ...data.map((a) => ({
-        ...a,
-        title: titles.get(a.id)?.title || a.reference_code,
-        proponent: titles.get(a.id)?.proponent || "",
-        contact: titles.get(a.id)?.contact || "",
-        category: titles.get(a.id)?.category || "",
-      })),
-    );
-    if (data.length < 250) break;
-  }
+  const query = await searchParams;
   const calls = await getCalls();
-  const filters = resolveFilters(calls, await searchParams, locale);
-  const filtered = apps.filter(
-    (a) =>
-      (filters.call === "all" || a.call_id === filters.call) &&
-      (filters.category === "all" || a.category === filters.category),
-  );
+  const filters = resolveFilters(calls, query, locale);
+  const paging = inboxPaging(query);
+  const { data, error } = await db.rpc("internal_application_page", {
+    filter_call: filters.call === "all" ? null : filters.call,
+    filter_category: filters.category === "all" ? null : filters.category,
+    requested_page: paging.page,
+    page_size: paging.size,
+  });
+  if (error || !data) throw new Error("Cannot load application page");
+  const result = data as InboxPage;
+  const filtered = result.items;
   const returnTo =
     "/internal?" +
-    new URLSearchParams({ call: filters.call, category: filters.category });
+    new URLSearchParams({
+      call: filters.call,
+      category: filters.category,
+      page: String(result.page),
+      size: String(result.page_size),
+    });
   const categoryLabel = (id: string) =>
     filters.options.find((c) => c.id === id)?.title || "—";
   return (
@@ -134,6 +89,7 @@ export default async function InternalPage({
       </nav>
       <InboxFilters
         es={es}
+        pageSize={result.page_size}
         call={filters.call}
         category={filters.category}
         categories={filters.options}
@@ -149,36 +105,27 @@ export default async function InternalPage({
         </div>
         <div>
           {es ? "Expedientes recibidos" : "Applications received"}
-          <strong>{filtered?.length || 0}</strong>
+          <strong>{result.total}</strong>
         </div>
         <div>
           {es ? "En revisión" : "In review"}
-          <strong>
-            {filtered?.filter((a) =>
-              ["submitted", "under_review", "phase2_submitted"].includes(
-                a.status,
-              ),
-            ).length || 0}
-          </strong>
+          <strong>{result.in_review}</strong>
         </div>
         <div>
           {es
             ? "Notas conceptuales preseleccionadas"
             : "Shortlisted concept notes"}
-          <strong>{filtered.filter((a) => a.stage === 2).length}</strong>
+          <strong>{result.shortlisted}</strong>
         </div>
         <div>
           {es ? "Convenios firmados" : "Signed agreements"}
-          <strong>
-            {filtered?.filter((a) => a.status === "contract_signed").length ||
-              0}
-          </strong>
+          <strong>{result.signed}</strong>
         </div>
       </div>
       <section className="live-card">
         <h2>{es ? "Bandeja de expedientes" : "Application inbox"}</h2>
         <p>
-          {filtered.length}{" "}
+          {result.total}{" "}
           {es
             ? "expedientes coinciden con los filtros."
             : "applications match the filters."}
@@ -197,6 +144,7 @@ export default async function InternalPage({
                   </th>
                   <th>{es ? "Categoría" : "Category"}</th>
                   <th>{es ? "Etapa" : "Stage"}</th>
+                  <th>{es ? "Último envío" : "Last submitted"}</th>
                   <th />
                 </tr>
               </thead>
@@ -216,6 +164,13 @@ export default async function InternalPage({
                     </td>
                     <td>{categoryLabel(a.category)}</td>
                     <td>{statusLabel(a.status, locale)}</td>
+                    <td>
+                      {new Date(a.submitted_at).toLocaleString(locale, {
+                        timeZone: "Pacific/Galapagos",
+                        dateStyle: "short",
+                        timeStyle: "short",
+                      })}
+                    </td>
                     <td>
                       <Link
                         href={
@@ -240,6 +195,15 @@ export default async function InternalPage({
               : "No received applications match these filters."}
           </p>
         )}
+        <InboxPagination
+          page={result.page}
+          pages={result.pages}
+          total={result.total}
+          pageSize={result.page_size}
+          call={filters.call}
+          category={filters.category}
+          locale={locale}
+        />
       </section>
     </Shell>
   );

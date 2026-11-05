@@ -10,13 +10,16 @@ export function DocumentDownload({
   children,
   className = "button secondary",
   fileName,
+  languageSelection = false,
 }: {
   href: string;
   locale: Locale;
   children: React.ReactNode;
   className?: string;
   fileName?: string;
+  languageSelection?: boolean;
 }) {
+  const [language, setLanguage] = useState(locale);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
   const flight = useRef(false);
@@ -26,7 +29,9 @@ export function DocumentDownload({
     setBusy(true);
     setError(false);
     try {
-      const response = await fetch(href, { cache: "no-store" });
+      const target = new URL(href, window.location.origin);
+      if (languageSelection) target.searchParams.set("lang", language);
+      const response = await fetch(target.toString(), { cache: "no-store" });
       if (
         !response.ok ||
         /text\/html|application\/json/.test(
@@ -41,7 +46,9 @@ export function DocumentDownload({
       anchor.download =
         response.headers
           .get("content-disposition")
-          ?.match(/filename="([^"]+)"/)?.[1] || fileName || "GLF.pdf";
+          ?.match(/filename="([^"]+)"/)?.[1] ||
+        fileName ||
+        "GLF.pdf";
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
@@ -55,6 +62,19 @@ export function DocumentDownload({
   }
   return (
     <div className="document-download-control">
+      {languageSelection && (
+        <label className="download-language">
+          {locale === "es" ? "Idioma del reporte" : "Report language"}
+          <select
+            disabled={busy}
+            value={language}
+            onChange={(e) => setLanguage(e.target.value as Locale)}
+          >
+            <option value="es">Español</option>
+            <option value="en">English</option>
+          </select>
+        </label>
+      )}
       <button
         type="button"
         className={className}

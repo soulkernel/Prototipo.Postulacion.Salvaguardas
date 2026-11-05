@@ -34,7 +34,11 @@ export async function GET(request: NextRequest) {
   );
   if (error || !summary)
     return new NextResponse("Unavailable", { status: 500 });
-  const locale = await getLocale();
+  const requestedLanguage = request.nextUrl.searchParams.get("lang");
+  const locale =
+    requestedLanguage === "es" || requestedLanguage === "en"
+      ? requestedLanguage
+      : await getLocale();
   const { data: call, error: callError } = await db
     .from("calls")
     .select("code,title_es,title_en,rules")

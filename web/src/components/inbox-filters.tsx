@@ -8,18 +8,22 @@ export function InboxFilters({
   call,
   category,
   es,
+  pageSize = 10,
 }: {
   calls: { id: string; title: string }[];
   categories: { id: string; title: string }[];
   call: string;
   category: string;
   es: boolean;
+  pageSize?: number;
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
-  function update(c: string, k: string) {
+  function update(c: string, k: string, size = pageSize) {
     start(() =>
-      router.push(`/internal?${new URLSearchParams({ call: c, category: k })}`),
+      router.push(
+        `/internal?${new URLSearchParams({ call: c, category: k, size: String(size), page: "1" })}`,
+      ),
     );
   }
   return (
@@ -55,6 +59,20 @@ export function InboxFilters({
             {categories.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.title}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          {es ? "Expedientes por página" : "Applications per page"}
+          <select
+            value={pageSize}
+            disabled={pending}
+            onChange={(e) => update(call, category, Number(e.target.value))}
+          >
+            {[10, 25, 50].map((n) => (
+              <option key={n} value={n}>
+                {n}
               </option>
             ))}
           </select>

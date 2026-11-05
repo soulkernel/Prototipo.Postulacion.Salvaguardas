@@ -3,12 +3,24 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireViewer } from "@/lib/data";
 import { z } from "zod";
+import { safeReturnPath } from "@/lib/domain";
 function value(f: FormData, k: string) {
   return String(f.get(k) || "").trim();
 }
 function fail(path: string, message: string): never {
   const code = message.match(/GLF_[A-Z_]+/)?.[0] || "GLF_OPERATION_FAILED";
   redirect(path + "?error=" + code);
+}
+function reviewResult(form: FormData, id: string, error?: { message: string } | null): never {
+  const query = new URLSearchParams({
+    returnTo: safeReturnPath(value(form, "returnTo"), "/internal"),
+  });
+  if (error) query.set("error", error.message.match(/GLF_[A-Z_]+/)?.[0] || "GLF_OPERATION_FAILED");
+  else {
+    query.set("saved", "1");
+    revalidatePath("/internal/applications/" + id);
+  }
+  redirect("/internal/applications/" + id + "?" + query);
 }
 export async function createCall(form: FormData) {
   const { db } = await requireViewer(["grants_manager", "administrator"]);
@@ -97,9 +109,22 @@ export async function recordReview(form: FormData) {
     category:
       review_type === "safeguards" ? value(form, "category") || null : null,
   });
-  if (error) fail("/internal/applications/" + id, error.message);
-  revalidatePath("/internal/applications/" + id);
-  redirect("/internal/applications/" + id + "?saved=1");
+  reviewResult(form, id, error);
+}
+export async function recordReviewNote(form: FormData) {
+  const { db } = await requireViewer([
+    "grants_manager",
+    "sustainability_reviewer",
+    "project_coordinator",
+  ]);
+  const id = z.uuid().parse(form.get("id"));
+  const { error } = await db.rpc("record_review_note", {
+    app_id: id,
+    expected_revision: Number(form.get("revision")),
+    findings: value(form, "findings"),
+    recommendation: value(form, "recommendation"),
+  });
+  reviewResult(form, id, error);
 }
 export async function reopenApplication(form: FormData) {
   const { db } = await requireViewer(["grants_manager"]);
@@ -109,8 +134,7 @@ export async function reopenApplication(form: FormData) {
     deadline: value(form, "deadline") + "-06:00",
     reason: value(form, "reason"),
   });
-  if (error) fail("/internal/applications/" + id, error.message);
-  redirect("/internal/applications/" + id + "?saved=1");
+  reviewResult(form, id, error);
 }
 export async function recordDecision(form: FormData) {
   const { db } = await requireViewer(["committee_member"]);
@@ -129,8 +153,7 @@ export async function recordDecision(form: FormData) {
       ? Number(form.get("approved_amount"))
       : null,
   });
-  if (error) fail("/internal/applications/" + id, error.message);
-  redirect("/internal/applications/" + id + "?saved=1");
+  reviewResult(form, id, error);
 }
 export async function recordAgreement(form: FormData) {
   const { db } = await requireViewer(["grants_manager"]);
@@ -145,6 +168,5 @@ export async function recordAgreement(form: FormData) {
     glf_date: value(form, "glf_date"),
     applicant_date: value(form, "applicant_date"),
   });
-  if (error) fail("/internal/applications/" + id, error.message);
-  redirect("/internal/applications/" + id + "?saved=1");
+  reviewResult(form, id, error);
 }

@@ -3082,3 +3082,21 @@ select {
 .activity-schedule-table caption { text-align: start; margin-bottom: 6px; font-size: 13px; }
 .activity-schedule-table th, .activity-schedule-table td { overflow-wrap: anywhere; }
 @media (max-width: 760px) { .activity-date-grid { grid-template-columns: minmax(0,1fr); } }
+
+/* Review observations: shared GLF controls, responsive document options and history. */
+.version-downloads { width: 100%; min-width: 0; }
+.download-options { display: flex; gap: 16px; flex-wrap: wrap; align-items: end; }
+.download-options label, .download-language { display: grid; gap: 5px; font-size: .875rem; }
+.download-options select, .download-language select { min-width: 150px; max-width: 100%; }
+.document-download-control { display: grid; gap: 8px; align-content: end; }
+.version-downloads .report-download-actions { margin: 12px 0; }
+.inbox-pagination { margin-top: 20px; display: grid; gap: 10px; }
+.pagination-links { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.pagination-links > span { display: inline-flex; align-items: center; gap: 8px; }
+.pagination-links [aria-disabled="true"] { opacity: .55; pointer-events: none; }
+.pagination-gap { padding: 0 5px; }
+.review-timeline { list-style: none; margin: 20px 0; padding: 0; display: grid; gap: 14px; }
+.review-history-entry { padding: 16px 20px; border: 1px solid #d5e3ed; border-left: 4px solid #008b98; border-radius: 12px; background: #f7fafc; overflow-wrap: anywhere; }
+.review-history-entry h3 { margin-top: 0; }
+.review-history-entry h4 { font-size: .95rem; margin-bottom: 6px; }
+@media (max-width: 640px) { .download-options { display: grid; grid-template-columns: minmax(0,1fr); } .version-downloads .report-download-actions { flex-direction: column; } .pagination-links .button { min-width: 40px; } }

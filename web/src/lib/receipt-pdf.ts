@@ -12,6 +12,7 @@ export async function receiptPdf(input: {
   reference: string;
   title: string;
   responsible: string;
+  identification?: { label: string; value: string };
   actorId: string;
   category: string;
   stage: number;
@@ -93,8 +94,22 @@ export async function receiptPdf(input: {
     ],
   ];
   for (const [label, value] of fields) {
-    text(label, true);
-    text(value || "—");
+    if (
+      label === (es ? "Responsable del proyecto" : "Project lead") &&
+      input.identification
+    ) {
+      const start = y;
+      text(label, true, 10, 230, 52);
+      text(value || "—", false, 10, 230, 52);
+      const leftBottom = y;
+      y = start;
+      text(input.identification.label, true, 10, 240, 303);
+      text(input.identification.value, false, 10, 240, 303);
+      y = Math.min(y, leftBottom);
+    } else {
+      text(label, true);
+      text(value || "—");
+    }
     y -= 5;
   }
   y -= 5;

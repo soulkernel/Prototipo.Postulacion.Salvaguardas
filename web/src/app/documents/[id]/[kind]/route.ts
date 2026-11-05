@@ -48,6 +48,8 @@ export async function GET(
   const requested = request.nextUrl.searchParams.get("lang");
   const locale: Locale =
     requested === "en" || requested === "es" ? requested : await getLocale();
+  const updatedCopy =
+    !prepared && request.nextUrl.searchParams.get("view") === "updated";
   const base = process.env.NEXT_PUBLIC_SITE_URL || request.nextUrl.origin;
   const downloadUrl =
     base +
@@ -57,9 +59,12 @@ export async function GET(
     kind +
     "?lang=" +
     locale +
-    (prepared ? "&prepared=1" : "");
+    (prepared ? "&prepared=1" : "") +
+    (updatedCopy ? "&view=updated" : "");
   const result = await applicationPdf({
     payload: version.payload as Payload,
+    documentMetadata: version.document_metadata,
+    updatedCopy,
     rules: version.rules_snapshot ?? app.rules_snapshot,
     phase2Fields,
     conceptLayoutVersion: version.concept_layout_version ?? null,
@@ -74,7 +79,7 @@ export async function GET(
   return new NextResponse(Buffer.from(result.bytes), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="${documentFilename(app.reference_code, kind as "concept" | "matrix", version.revision, prepared ? version.created_at : version.submitted_at, locale, version.stage)}"`,
+      "Content-Disposition": `attachment; filename="${documentFilename(app.reference_code, kind as "concept" | "matrix", version.revision, prepared ? version.created_at : version.submitted_at, locale, version.stage).replace(/\.pdf$/, updatedCopy ? "_consulta.pdf" : ".pdf")}"`,
       "Cache-Control": "private, no-store",
       "X-Content-Type-Options": "nosniff",
       "Referrer-Policy": "no-referrer",

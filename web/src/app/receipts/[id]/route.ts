@@ -1,3 +1,4 @@
+import { proponentIdentification } from "@/lib/document-presentation";
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { getViewer } from "@/lib/data";
@@ -25,7 +26,8 @@ export async function GET(
       ),
     );
   if (viewer.profile.role !== "applicant") {
-    const { data, error } = await viewer.db.auth.mfa.getAuthenticatorAssuranceLevel();
+    const { data, error } =
+      await viewer.db.auth.mfa.getAuthenticatorAssuranceLevel();
     if (error || data?.currentLevel !== "aal2")
       return NextResponse.redirect(new URL("/security", request.url));
   }
@@ -60,6 +62,7 @@ export async function GET(
     reference: app.reference_code,
     title: payload.concept.title,
     responsible: payload.concept.contact_name,
+    identification: proponentIdentification(payload.concept, locale),
     actorId: version.actor_id,
     category: category
       ? locale === "es"

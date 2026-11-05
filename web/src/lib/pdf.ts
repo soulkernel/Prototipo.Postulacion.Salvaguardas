@@ -1,3 +1,10 @@
+import {
+  authorReference,
+  privacyNotice,
+  justifiedWords,
+  type DocumentMetadata,
+} from "./document-presentation";
+import { riskMapEntries, riskMapColors } from "./risk-map";
 import { conceptSections, narrativeBlocks } from "./concept-presentation";
 import { activityScheduleRows } from "./activity-planning";
 import {
@@ -29,6 +36,8 @@ export async function applicationPdf({
   downloadUrl,
   stage,
   rules,
+  documentMetadata,
+  updatedCopy = false,
   phase2Fields = [],
   conceptLayoutVersion = currentConceptLayout,
 }: {
@@ -41,10 +50,14 @@ export async function applicationPdf({
   downloadUrl: string;
   stage: number;
   rules?: unknown;
+  documentMetadata?: DocumentMetadata | null;
+  updatedCopy?: boolean;
   phase2Fields?: { id: string; label_es: string; label_en: string }[];
   conceptLayoutVersion?: string | null;
 }) {
   const es = locale === "es";
+  const enhanced = updatedCopy || documentMetadata?.format_version === 2;
+  const bottom = enhanced ? 100 : 72;
   payload = synchronizeRisks(payload);
   if (payload.concept.strategic_alignment)
     payload = {
@@ -122,7 +135,22 @@ export async function applicationPdf({
         color: rgb(1, 1, 1),
       }),
     );
-    y = 741;
+    if (enhanced) {
+      const label = authorReference(
+        documentMetadata?.author_name,
+        submittedAt,
+        revision,
+        locale,
+      );
+      page.drawText(label, {
+        x: 543 - font.widthOfTextAtSize(label, 8),
+        y: 753,
+        size: 8,
+        font,
+        color: rgb(0, 0, 0),
+      });
+    }
+    y = enhanced ? 731 : 741;
   }
   function newPage() {
     page = pdf.addPage([595.28, 841.89]);
@@ -164,8 +192,24 @@ export async function applicationPdf({
   function draw(text: string, heading = false, band = heading) {
     const size = heading ? 12 : 11;
     const face = heading ? bold : font;
-    const wrapped = lines(text, face, size);
-    if (heading && y < 72 + wrapped.length * 15 + 55) newPage();
+    const paragraphLines = text
+      .replace(/\r/g, "")
+      .replace(/\n[ \t]*\n(?:[ \t]*\n)+/g, "\n\n")
+      .trim()
+      .split("\n")
+      .flatMap((paragraph) => {
+        const parts = lines(paragraph, face, size);
+        return parts.map((line, i) => ({
+          line,
+          last:
+            i === parts.length - 1 ||
+            /^\s*(?:[-•–]|\d+[.)])\s/u.test(paragraph),
+        }));
+      });
+    const wrapped = enhanced
+      ? paragraphLines.map((p) => p.line)
+      : lines(text, face, size);
+    if (heading && y < bottom + wrapped.length * 15 + 55) newPage();
     if (band) {
       page.drawRectangle({
         x: 46,
@@ -182,15 +226,41 @@ export async function applicationPdf({
         color: navy,
       });
     }
-    for (const line of wrapped) {
-      if (y < 72) newPage();
-      page.drawText(line, { x: 52, y, size, font: face, color: rgb(0, 0, 0) });
+    for (const [index, line] of wrapped.entries()) {
+      if (y < bottom) newPage();
+      const words =
+        enhanced && !heading
+          ? justifiedWords(
+              line,
+              width,
+              (t) => face.widthOfTextAtSize(t, size),
+              size,
+              paragraphLines[index].last,
+            )
+          : null;
+      if (words)
+        for (const word of words)
+          page.drawText(word.text, {
+            x: 52 + word.x,
+            y,
+            size,
+            font: face,
+            color: rgb(0, 0, 0),
+          });
+      else
+        page.drawText(line, {
+          x: 52,
+          y,
+          size,
+          font: face,
+          color: rgb(0, 0, 0),
+        });
       y -= 15;
     }
     y -= heading ? 12 : 9;
   }
   function field(label: string, value: unknown) {
-    if (y < 72 + lines(label, bold, 12).length * 15 + 35) newPage();
+    if (y < bottom + lines(label, bold, 12).length * 15 + 35) newPage();
     draw(label, true, false);
     draw(String(value ?? "—") || "—");
   }
@@ -258,23 +328,23 @@ export async function applicationPdf({
       : 1;
     const firstRowHeight =
       (firstRowLines <= 8 ? firstRowLines : 2) * lineHeight + 16;
-    if (y < 72 + headHeight + firstRowHeight) newPage();
+    if (y < bottom + headHeight + firstRowHeight) newPage();
     header();
     for (const row of rows) {
       const parts = cells(row, false);
       const total = Math.max(...parts.map((c) => c.length));
       let offset = 0;
       // Keep short rows intact; long descriptions can still span pages.
-      if (total <= 8 && Math.floor((y - 72 - 16) / lineHeight) < total) {
+      if (total <= 8 && Math.floor((y - bottom - 16) / lineHeight) < total) {
         newPage();
         header();
       }
       while (offset < total) {
-        let count = Math.floor((y - 72 - 16) / lineHeight);
+        let count = Math.floor((y - bottom - 16) / lineHeight);
         if (count < 1) {
           newPage();
           header();
-          count = Math.floor((y - 72 - 16) / lineHeight);
+          count = Math.floor((y - bottom - 16) / lineHeight);
         }
         count = Math.min(count, total - offset);
         paint(parts, offset, count, false);
@@ -312,6 +382,12 @@ export async function applicationPdf({
       }).format(stamp) +
       " · Galápagos (UTC−06:00)",
   );
+  if (updatedCopy)
+    draw(
+      es
+        ? "COPIA DE CONSULTA · Formato actualizado de la versión presentada. No sustituye los documentos firmados."
+        : "REFERENCE COPY · Updated presentation of the submitted version. Does not replace signed documents.",
+    );
   field(es ? "Proyecto" : "Project", payload.concept.title);
   if (kind === "concept") {
     const money = (v: number | null) =>
@@ -441,7 +517,11 @@ export async function applicationPdf({
             16;
           if (
             y <
-            72 + lines(block.text, font, 11).length * 15 + 9 + header + firstRow
+            bottom +
+              lines(block.text, font, 11).length * 15 +
+              9 +
+              header +
+              firstRow
           )
             newPage();
         }
@@ -561,6 +641,120 @@ export async function applicationPdf({
       }
     }
   } else {
+    if (enhanced) {
+      for (const residual of stage === 2 ? [false, true] : [false]) {
+        const entries = riskMapEntries(payload, residual);
+        if (y < 440) newPage();
+        draw(
+          residual
+            ? es
+              ? "MAPA DE RIESGO RESIDUAL"
+              : "RESIDUAL RISK MAP"
+            : es
+              ? "MAPA DE RIESGO INICIAL"
+              : "INITIAL RISK MAP",
+          true,
+        );
+        draw(
+          es
+            ? "Cada evaluación corresponde a un riesgo en una actividad. Los valores se conservan tal como fueron consignados; este mapa no asigna una categoría global al proyecto."
+            : "Each assessment represents a risk in an activity. Values remain as entered; this map does not assign an overall project category.",
+        );
+        if (y < 385) newPage();
+        const top = y - 22,
+          left = 85,
+          cellWidth = 73,
+          cellHeight = 38;
+        page.drawText(es ? "Gravedad" : "Severity", {
+          x: 52,
+          y: y - 5,
+          size: 9,
+          font: bold,
+        });
+        for (let severity = 5; severity >= 1; severity--) {
+          const cy = top - (6 - severity) * cellHeight;
+          page.drawText(String(severity), {
+            x: 65,
+            y: cy + 15,
+            size: 10,
+            font: bold,
+          });
+          for (let probability = 1; probability <= 5; probability++) {
+            const x = left + (probability - 1) * cellWidth;
+            const level = riskLevel(probability * severity);
+            const color = riskMapColors[level];
+            page.drawRectangle({
+              x,
+              y: cy,
+              width: cellWidth,
+              height: cellHeight,
+              color: rgb(color[0], color[1], color[2]),
+              borderColor: rgb(0.6, 0.6, 0.6),
+              borderWidth: 0.5,
+            });
+            const count = entries.filter(
+              (e) =>
+                e.score !== null &&
+                e.probability === probability &&
+                e.severity === severity,
+            ).length;
+            page.drawText(String(probability * severity), {
+              x: x + 8,
+              y: cy + 22,
+              size: 9,
+              font,
+            });
+            if (count)
+              page.drawText(`${count} ${es ? "eval." : "assmt."}`, {
+                x: x + 8,
+                y: cy + 8,
+                size: 10,
+                font: bold,
+              });
+          }
+        }
+        for (let probability = 1; probability <= 5; probability++)
+          page.drawText(String(probability), {
+            x: left + (probability - 0.5) * cellWidth,
+            y: top - 5 * cellHeight - 16,
+            size: 10,
+            font: bold,
+          });
+        page.drawText(
+          es ? "Probabilidad de ocurrencia" : "Probability of occurrence",
+          { x: 180, y: top - 5 * cellHeight - 33, size: 10, font: bold },
+        );
+        y = top - 5 * cellHeight - 55;
+        draw(
+          es
+            ? "Bajo 1–4 · Medio 5–9 · Alto 10–15 · Muy alto 16–25"
+            : "Low 1–4 · Medium 5–9 · High 10–15 · Very high 16–25",
+        );
+        draw(
+          `${entries.filter((e) => e.score !== null).length} ${es ? "evaluaciones completas" : "complete assessments"} · ${entries.filter((e) => e.score === null).length} ${es ? "por calificar" : "awaiting assessment"}`,
+        );
+        if (entries.length)
+          table(
+            es
+              ? ["Actividad / riesgo", "Probabilidad", "Gravedad", "Categoría"]
+              : ["Activity / risk", "Probability", "Severity", "Category"],
+            entries.map((e) => [
+              `${e.code} · ${e.activity.title} / ${e.risk.name}`,
+              String(e.probability ?? "—"),
+              String(e.severity ?? "—"),
+              {
+                low: es ? "Bajo" : "Low",
+                medium: es ? "Medio" : "Medium",
+                high: es ? "Alto" : "High",
+                very_high: es ? "Muy alto" : "Very high",
+                incomplete: es ? "Sin completar" : "Incomplete",
+              }[e.level],
+            ]),
+            [245, 75, 70, 101],
+            true,
+          );
+      }
+    }
     const text = (value: string) =>
       narrativeBlocks(value).forEach((b) => {
         if (b.type === "paragraph") draw(b.text);
@@ -877,7 +1071,7 @@ export async function applicationPdf({
     draw(budgetText(payload.budget, locale));
   }
   const signatureHeight = 180 + signerLines.length * 15;
-  if (y < signatureHeight + 80) newPage();
+  if (y < signatureHeight + bottom + 8) newPage();
   const signatureTop = y - 8;
   const signatureBottom = signatureTop - signatureHeight;
   page.drawRectangle({
@@ -929,7 +1123,7 @@ export async function applicationPdf({
   );
   y = signatureBottom - 18;
 
-  if (y < 230) newPage();
+  if (y < (enhanced ? 330 : 230)) newPage();
   draw(es ? "RECUPERAR ESTA VERSIÓN" : "RETRIEVE THIS VERSION", true);
   draw(
     es
@@ -947,13 +1141,25 @@ export async function applicationPdf({
   y -= 118;
   draw(submissionNotice[locale]);
   const pages = pdf.getPages();
-  for (let i = 0; i < pages.length; i++)
+  for (let i = 0; i < pages.length; i++) {
+    if (enhanced) {
+      lines(privacyNotice[locale], font, 7.2).forEach((line, j) =>
+        pages[i].drawText(line, {
+          x: 52,
+          y: 73 - j * 9,
+          size: 7.2,
+          font,
+          color: rgb(0, 0, 0),
+        }),
+      );
+    }
     pages[i].drawText(reference + " · " + (i + 1) + " / " + pages.length, {
       x: 52,
-      y: 35,
+      y: enhanced ? 18 : 35,
       size: 8,
       font,
       color: rgb(0.3, 0.3, 0.3),
     });
+  }
   return { bytes: await pdf.save(), pages: pages.length };
 }
