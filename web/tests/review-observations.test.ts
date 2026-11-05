@@ -7,11 +7,93 @@ import {
   proponentIdentification,
   justifiedWords,
 } from "../src/lib/document-presentation";
-import { riskMapEntries } from "../src/lib/risk-map";
+import { riskMapEntries, riskMapSummary } from "../src/lib/risk-map";
 import { inboxPaging } from "../src/lib/inbox-page";
 import { applicationPdf } from "../src/lib/pdf";
 import { receiptPdf } from "../src/lib/receipt-pdf";
 import { emptyPayload, newActivity, newRisk } from "../src/lib/domain";
+
+test("map summaries count assessments, keep missing ratings separate and never average categories", () => {
+  const p = emptyPayload();
+  const a = newActivity();
+  a.risks = Array.from({ length: 6 }, () => ({
+    ...newRisk(),
+    probability: 3,
+    severity: 3,
+  }));
+  p.activities = [a];
+  const same = riskMapSummary(riskMapEntries(p), "es");
+  assert.deepEqual(same.counts, { low: 0, medium: 6, high: 0, very_high: 0 });
+  assert.match(same.text, /6 evaluaciones/);
+  assert.match(same.text, /3 × gravedad 3 = 9/);
+  a.risks.push({ ...newRisk(), probability: 5, severity: null });
+  const partial = riskMapSummary(riskMapEntries(p), "en");
+  assert.equal(partial.complete.length, 6);
+  assert.equal(partial.pending.length, 1);
+  assert.equal(partial.counts.low, 0);
+  a.risks = Array.from({ length: 25 }, (_, i) => ({
+    ...newRisk(),
+    probability: (i % 5) + 1,
+    severity: Math.floor(i / 5) + 1,
+  }));
+  const mixed = riskMapSummary(riskMapEntries(p), "en");
+  assert.deepEqual(mixed.counts, { low: 8, medium: 7, high: 6, very_high: 4 });
+  assert.doesNotMatch(mixed.text, /Probability/);
+  assert.equal(
+    riskMapSummary(riskMapEntries(p, true), "es").pending.length,
+    25,
+  );
+  assert.match(riskMapSummary([], "es").text, /No hay evaluaciones/);
+  assert.match(
+    riskMapSummary(riskMapEntries(p, true), "en").text,
+    /cannot yet be placed/,
+  );
+});
+
+test("readable initial and residual PDF maps render complete, mixed, pending and empty cases in both languages", async () => {
+  await mkdir(".test-artifacts/risk-map", { recursive: true });
+  for (const scenario of ["same", "mixed", "pending", "empty"] as const) {
+    const p = emptyPayload();
+    p.concept.title = "PRUEBA FICTICIA · Mapa de riesgos";
+    const a = newActivity();
+    a.title = "Actividad de conservación y observación costera";
+    a.risks =
+      scenario === "empty"
+        ? []
+        : Array.from({ length: scenario === "mixed" ? 25 : 6 }, (_, i) => ({
+            ...newRisk(),
+            name: `Riesgo de prueba ${i + 1}`,
+            probability: scenario === "mixed" ? (i % 5) + 1 : 3,
+            severity:
+              scenario === "pending"
+                ? null
+                : scenario === "mixed"
+                  ? Math.floor(i / 5) + 1
+                  : 3,
+            residual_probability: 1,
+            residual_severity: i % 2 === 0 ? 1 : null,
+          }));
+    p.activities = [a];
+    for (const locale of ["es", "en"] as const) {
+      const pdf = await applicationPdf({
+        payload: p,
+        reference: "GLF-QA-MAP",
+        revision: 1,
+        submittedAt: "2026-11-04T15:00:00Z",
+        kind: "matrix",
+        locale,
+        downloadUrl: "https://example.test/qa",
+        stage: 2,
+        documentMetadata: { format_version: 3, author_name: "Equipo Ficticio" },
+      });
+      assert.ok((await PDFDocument.load(pdf.bytes)).getPageCount() > 1);
+      await writeFile(
+        `.test-artifacts/risk-map/${scenario}-${locale}.pdf`,
+        pdf.bytes,
+      );
+    }
+  }
+});
 
 test("document identification uses the submitted proponent and a stable Galapagos year without fabricating authors", () => {
   assert.match(

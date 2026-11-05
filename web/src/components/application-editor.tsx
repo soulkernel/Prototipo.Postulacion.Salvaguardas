@@ -3528,7 +3528,7 @@ export function ApplicationEditor({
                   {submissionPhase(v.stage, locale)}
                 </span>
               </div>
-              <VersionDownloads id={v.id} stage={v.stage} locale={locale} legacy={v.document_metadata?.format_version !== 2} />
+              <VersionDownloads id={v.id} stage={v.stage} locale={locale} legacy={(v.document_metadata?.format_version ?? 0) < 3} />
             </div>
           ))}
         </section>

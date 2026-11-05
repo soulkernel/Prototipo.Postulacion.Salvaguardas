@@ -1156,9 +1156,9 @@ export const manualChapters: ManualChapter[] = [
       ],
       [
         "Mapa: Tipo de riesgo / Actividad / Casillas",
-        "Filtre por dimensión o actividad. Pulse una casilla ocupada para consultar las evaluaciones. La categoría usa verde, amarillo, naranja y rojo, junto a su texto; el mapa no decide selección ni aprobación.",
+        "Filtre por tipo de riesgo o actividad. El resumen y los recuadros muestran cuántas evaluaciones hay en cada categoría. Los marcadores cuentan evaluaciones, no puntajes; las casillas sin marcador no contienen registros. Pulse una casilla para consultar sus códigos, actividades, riesgos y cálculos. Las evaluaciones por calificar aparecen aparte. El mapa no asigna una categoría global ni decide aprobación.",
         "Map: Risk type / Activity / Cells",
-        "Filter by dimension or activity. Select an occupied cell to inspect assessments. Categories use green, yellow, orange and red alongside text; the map does not decide selection or approval.",
+        "Filter by risk type or activity. The summary and legend cards count assessments in each category. Markers count assessments, not scores; cells without a marker contain no records. Select a cell to inspect codes, activities, risks and calculations. Incomplete assessments appear separately. The map does not assign an overall category or decide approval.",
       ],
       [
         "Papelera: quitar evaluación de riesgo",

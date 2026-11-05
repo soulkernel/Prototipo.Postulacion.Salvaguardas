@@ -3971,7 +3971,7 @@ test("GLF observation changes preserve snapshots, isolate follow-up notes and pa
  }
  const id=idsForPage[0];
  const frozen=(await db.query("select document_metadata from public.application_versions where application_id=$1",[id])).rows[0].document_metadata;
- assert.equal(frozen.format_version,2);assert.equal(frozen.author_name,beforeName);
+ assert.equal(frozen.format_version,3);assert.equal(frozen.author_name,beforeName);
  await db.query("update public.profiles set full_name='Changed later' where id=$1",[owner]);
  assert.deepEqual((await db.query("select document_metadata from public.application_versions where application_id=$1",[id])).rows[0].document_metadata,frozen);
  // Formal reviews keep their context; follow-up notes cannot satisfy decision gates.
@@ -4011,4 +4011,23 @@ test("GLF observation changes preserve snapshots, isolate follow-up notes and pa
  await assert.rejects(rpc('record_review_note',{app_id:id,expected_revision:1,findings:'Without MFA',recommendation:''},'reviewer'),/GLF_FORBIDDEN/);
  await db.exec("select set_config('request.jwt.claim.aal','aal2',false)");
  for(const role of ['anon','authenticated'])for(const permission of ['INSERT','UPDATE','DELETE','TRUNCATE'])assert.equal((await db.query("select has_table_privilege($1,'public.application_review_notes',$2) allowed",[role,permission])).rows[0].allowed,false);
+});
+
+test("risk map format migration keeps prepared snapshots and inherited signing formats immutable", async()=>{
+ const owner=await temporaryAccount(),app=await rpc('create_application',{call_id:call},owner);
+ const oldSql=await readFile(new URL('../../supabase/migrations/202611040057_review_documents_and_inbox.sql',import.meta.url),'utf8');
+ const currentSql=await readFile(new URL('../../supabase/migrations/202611040058_readable_risk_map_format.sql',import.meta.url),'utf8');
+ const oldFunction=oldSql.slice(oldSql.indexOf('create function private.freeze_document_metadata'),oldSql.indexOf('create trigger freeze_document_metadata')).replace('create function','create or replace function');
+ await db.exec('begin');
+ try {
+  await db.exec(oldFunction);
+  const prepared=(await db.query("insert into public.prepared_documents(application_id,revision,stage,payload) values($1,77,1,$2) returning *",[app,{concept:{title:'Historic prepared QA'}}])).rows[0];
+  assert.equal(prepared.document_metadata.format_version,2);
+  const snapshot=async()=>Object.fromEntries(await Promise.all(['applications','application_versions','prepared_documents','application_documents'].map(async t=>[t,(await db.query(`select to_jsonb(row) value from public.${t} row order by id`)).rows])));
+  const before=await snapshot();await db.exec(currentSql);assert.deepEqual(await snapshot(),before);
+  const inherited=(await db.query("insert into public.application_versions(application_id,revision,stage,payload,rules_snapshot,actor_id) values($1,77,1,$2,$3,$4) returning document_metadata",[app,prepared.payload,rules,owner])).rows[0].document_metadata;
+  assert.deepEqual(inherited,prepared.document_metadata);
+  const fresh=(await db.query("insert into public.prepared_documents(application_id,revision,stage,payload) values($1,78,1,$2) returning document_metadata",[app,prepared.payload])).rows[0].document_metadata;
+  assert.equal(fresh.format_version,3);
+ } finally { await db.exec('rollback'); }
 });

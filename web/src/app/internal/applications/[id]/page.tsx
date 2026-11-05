@@ -225,7 +225,7 @@ export default async function ReviewPage({
               id={v.id}
               stage={v.stage}
               locale={locale}
-              legacy={v.document_metadata?.format_version !== 2}
+              legacy={(v.document_metadata?.format_version ?? 0) < 3}
             />
           </div>
         ))}

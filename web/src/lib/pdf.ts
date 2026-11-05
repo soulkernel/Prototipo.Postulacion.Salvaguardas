@@ -4,7 +4,14 @@ import {
   justifiedWords,
   type DocumentMetadata,
 } from "./document-presentation";
-import { riskMapEntries, riskMapColors } from "./risk-map";
+import {
+  riskMapEntries,
+  riskMapColors,
+  riskMapNames,
+  riskMapText,
+  riskMapSummary,
+} from "./risk-map";
+import { readableRiskMapPdf } from "./risk-map-pdf";
 import { conceptSections, narrativeBlocks } from "./concept-presentation";
 import { activityScheduleRows } from "./activity-planning";
 import {
@@ -56,7 +63,9 @@ export async function applicationPdf({
   conceptLayoutVersion?: string | null;
 }) {
   const es = locale === "es";
-  const enhanced = updatedCopy || documentMetadata?.format_version === 2;
+  const enhanced = updatedCopy || (documentMetadata?.format_version ?? 0) >= 2;
+  const readableMap =
+    updatedCopy || (documentMetadata?.format_version ?? 0) >= 3;
   const bottom = enhanced ? 100 : 72;
   payload = synchronizeRisks(payload);
   if (payload.concept.strategic_alignment)
@@ -644,6 +653,46 @@ export async function applicationPdf({
     if (enhanced) {
       for (const residual of stage === 2 ? [false, true] : [false]) {
         const entries = riskMapEntries(payload, residual);
+        if (readableMap) {
+          const map = readableRiskMapPdf(entries, locale, residual, font, bold);
+          if (y - map.height < bottom) newPage();
+          y = map.draw(page, y);
+          const copy = riskMapText[locale];
+          const summary = riskMapSummary(entries, locale);
+          for (const [rows, heading] of [
+            [summary.complete, copy.detail],
+            [summary.pending, copy.pendingDetail],
+          ] as const) {
+            if (!rows.length) continue;
+            if (y < bottom + 170) newPage();
+            draw(heading, true);
+            table(
+              [
+                copy.code,
+                copy.activity,
+                copy.risk,
+                es ? "Probabilidad" : "Probability",
+                es ? "Gravedad" : "Severity",
+                copy.calculation,
+                copy.category,
+              ],
+              rows.map((e) => [
+                e.code,
+                e.activity.title,
+                e.risk.name,
+                String(e.probability ?? "—"),
+                String(e.severity ?? "—"),
+                e.score === null
+                  ? "—"
+                  : `${e.probability} × ${e.severity} = ${e.score}`,
+                riskMapNames[locale][e.level],
+              ]),
+              [42, 95, 104, 74, 59, 63, 54],
+              true,
+            );
+          }
+          continue;
+        }
         if (y < 440) newPage();
         draw(
           residual
