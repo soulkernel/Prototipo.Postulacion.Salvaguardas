@@ -7,6 +7,8 @@ import { SubmitButton } from "./submit-button";
 import { signOut } from "@/app/auth/actions";
 import type { Locale } from "@/lib/domain";
 import { getViewer } from "@/lib/data";
+import { canReadInternalManual } from "@/lib/internal-manual-access";
+import { BookOpen } from "lucide-react";
 import { version } from "../../package.json";
 export async function Shell({
   locale,
@@ -146,6 +148,12 @@ export async function Shell({
                 )}
               </>
             )}
+          {viewer && canReadInternalManual(viewer.profile) && (
+            <MenuLink href="/internal/manual">
+              <BookOpen size={16} aria-hidden="true" />
+              {locale === "es" ? "Manual interno" : "Internal manual"}
+            </MenuLink>
+          )}
         </nav>
         <div className="header-account-controls">
           <LanguageSwitch locale={locale} />

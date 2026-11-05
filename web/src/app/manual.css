@@ -412,6 +412,28 @@
 .manual-filtered {
   display: none;
 }
+.manual-print-index {
+  display: none;
+}
+.manual-audience {
+  background: #f2f6fa;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 0 0 22px;
+  font-size: 13px;
+  line-height: 1.65;
+}
+.manual-outcome {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-top: 20px;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.manual-outcome p {
+  margin: 4px 0 0;
+}
 .auth-manual-link {
   font-size: 12px;
 }
@@ -514,6 +536,59 @@
   }
 }
 @media print {
+  .manual,
+  .manual * {
+    color: #000 !important;
+    font-family: Arial, sans-serif !important;
+  }
+  .manual p,
+  .manual li,
+  .manual td,
+  .manual th,
+  .manual-lead {
+    font-size: 11pt !important;
+  }
+  .manual h1,
+  .manual h2,
+  .manual h3 {
+    font-size: 12pt !important;
+    font-weight: 700;
+  }
+  .manual-print-index {
+    display: block;
+    margin-top: 20px;
+  }
+  .manual-print-index ol {
+    columns: 2;
+    column-gap: 28px;
+    padding-left: 24px;
+  }
+  .manual-print-index li {
+    break-inside: avoid;
+    margin-bottom: 6px;
+  }
+  .manual .live-empty {
+    display: none !important;
+  }
+  .manual-audience,
+  .manual-outcome,
+  .manual-tip {
+    break-inside: avoid;
+  }
+  .manual-audience,
+  .manual-tip,
+  .manual-table thead,
+  .manual-table th,
+  .manual-chapter-heading > span {
+    background: #eee !important;
+    border-color: #888 !important;
+  }
+  .manual-screen-body,
+  .manual-screen,
+  .manual-screen-field {
+    background: #fff !important;
+    border-color: #aaa !important;
+  }
   .live-header,
   .live-footer,
   .skip-link,
@@ -609,5 +684,12 @@
   @page {
     size: A4;
     margin: 16mm;
+    @bottom-right {
+      content: "Página / Page " counter(page) " / " counter(pages);
+      font:
+        9pt Arial,
+        sans-serif;
+      color: #000;
+    }
   }
 }

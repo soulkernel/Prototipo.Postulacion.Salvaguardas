@@ -1,12 +1,5 @@
-export type ManualChapter = {
-  id: string;
-  title: [string, string];
-  intro: [string, string];
-  steps: [string, string][];
-  rows: [string, string, string, string][];
-  tip: [string, string];
-  screen: [string, string][];
-};
+import type { ManualChapter } from "./manual-types";
+export type { ManualChapter } from "./manual-types";
 export const manualUpdatedDate = [
   "4 de noviembre de 2026",
   "4 November 2026",
