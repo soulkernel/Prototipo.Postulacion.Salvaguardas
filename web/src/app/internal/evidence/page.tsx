@@ -1,5 +1,5 @@
 import { ModuleHeading } from "@/components/module-heading";
-import Link from "@/components/feedback-link";
+import { BackLink } from "@/components/back-link";
 import { requireRagViewer } from "@/lib/data";
 import { getLocale } from "@/lib/locale";
 import { Shell } from "@/components/shell";
@@ -74,7 +74,7 @@ export default async function EvidencePage({
     : (approvedCount || 0) > 0;
   return (
     <Shell locale={locale} internal>
-      <Link href="/internal">← GLF</Link>
+      <BackLink href="/internal">{es ? "Volver a expedientes" : "Back to applications"}</BackLink>
       <ModuleHeading
         title={
           es

@@ -29,7 +29,7 @@ import { useEffect, useState, useRef } from "react";
 import { proposalEntryPrompt, proposalTitle } from "@/lib/proposal-guidance";
 import { ProposalFieldGuidance } from "./proposal-field-guidance";
 import { applicationStepUrl } from "@/lib/application-navigation";
-import Link from "@/components/feedback-link";
+import { BackLink } from "@/components/back-link";
 import { SignedDocumentUpload } from "./signed-document-upload";
 import { VersionDownloads } from "./version-downloads";
 import {
@@ -1589,9 +1589,9 @@ export function ApplicationEditor({
     .reduce((sum, r) => sum + (riskScore(r.probability, r.severity) || 0), 0);
   return (
     <>
-      <Link href="/applicant/applications" className="text-button">
-        ← {es ? "Mis postulaciones" : "My applications"}
-      </Link>
+      <BackLink href="/applicant/applications">
+        {es ? "Volver a mis postulaciones" : "Back to my applications"}
+      </BackLink>
       <div className="live-title application-heading module-heading">
         <div>
           <p className="eyebrow">

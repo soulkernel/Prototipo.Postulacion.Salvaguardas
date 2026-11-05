@@ -218,27 +218,32 @@ textarea:focus-visible {
   color: var(--navy);
   border-color: #cbd5df;
 }
-.button.back-link {
+.button.navigation-action {
   min-height: 44px;
   max-width: 100%;
-  margin-bottom: 16px;
   background: #edf5fc;
   border-color: #8ab9c1;
   color: var(--navy);
   white-space: normal;
 }
-.button.back-link > span {
+.button.navigation-action > span {
   display: inline-flex;
   align-items: center;
   gap: 8px;
 }
-.button.back-link svg {
+.button.navigation-action svg {
   flex-shrink: 0;
   color: var(--teal-dark);
 }
-.button.back-link:hover {
+.button.navigation-action:hover {
   background: #dfeef8;
   border-color: var(--teal-dark);
+}
+.button.navigation-action.back-link {
+  margin-bottom: 16px;
+}
+.button.navigation-action.compact {
+  padding: 8px 12px;
 }
 .button.small {
   padding: 8px 11px;

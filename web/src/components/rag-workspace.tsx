@@ -3,7 +3,7 @@ import { useState } from "react";
 import { RagMethods } from "./rag-methods";
 import type { RagProject } from "@/lib/rag-context";
 import type { Locale } from "@/lib/domain";
-import Link from "./feedback-link";
+import { ActionLink } from "./action-link";
 import { RagSavedEvidence } from "./rag-saved-evidence";
 export type RagNote = {
   id: string;
@@ -181,16 +181,13 @@ export function RagWorkspace({
                       : "Concept note · identification and assessment"
                     : es
                       ? "Propuesta completa · mitigación y PGAS"
-                      : "Full proposal · mitigation and ESMP"}{" "}
-                  {showApplicationLinks && (
-                    <>
-                      ·{" "}
-                      <Link href={`/internal/applications/${project.id}`}>
-                        {es ? "Ver expediente" : "View application"}
-                      </Link>
-                    </>
-                  )}
+                      : "Full proposal · mitigation and ESMP"}
                 </p>
+                {showApplicationLinks && (
+                  <ActionLink compact href={`/internal/applications/${project.id}`}>
+                    {es ? "Ver expediente" : "View application"}
+                  </ActionLink>
+                )}
                 {!project.risks.length && (
                   <p role="status">
                     {es

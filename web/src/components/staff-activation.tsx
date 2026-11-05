@@ -2,7 +2,7 @@
 import { PasswordInput } from "./password-input";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "@/components/feedback-link";
+import { BackLink } from "@/components/back-link";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { activateStaffAccount } from "@/app/auth/activate/actions";
 import { invitationError } from "@/lib/staff-invitations";
@@ -235,7 +235,7 @@ export function StaffActivation({
         </p>
       )}
       <p>
-        <Link href="/login">{es ? "Volver al acceso" : "Back to sign in"}</Link>
+        <BackLink href="/login">{es ? "Volver al acceso" : "Back to sign in"}</BackLink>
       </p>
     </>
   );

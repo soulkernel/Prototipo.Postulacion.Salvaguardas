@@ -2,7 +2,7 @@ import { defaultCall } from "@/lib/inbox-filters";
 import { ModuleHeading } from "@/components/module-heading";
 import { callThemeLabel } from "@/lib/call-themes";
 import { DocumentDownload } from "@/components/document-download";
-import Link from "@/components/feedback-link";
+import { BackLink } from "@/components/back-link";
 import Form from "next/form";
 import { SubmitButton } from "@/components/submit-button";
 import { requireReadViewer, getCalls } from "@/lib/data";
@@ -41,7 +41,7 @@ export default async function Reports({
   if (error) throw new Error("Report unavailable");
   return (
     <Shell locale={locale} internal>
-      <Link href="/internal">← {es ? "Panel interno" : "Staff workspace"}</Link>
+      <BackLink href="/internal">{es ? "Volver a expedientes" : "Back to applications"}</BackLink>
       <ModuleHeading title={es ? "Reportería de cierre" : "Closing reports"}>
         <p>
           {es

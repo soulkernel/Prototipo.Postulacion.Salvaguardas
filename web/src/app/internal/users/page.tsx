@@ -2,7 +2,7 @@ import { ModuleHeading } from "@/components/module-heading";
 import { SubmitButton } from "@/components/submit-button";
 import { StaffInvitations } from "@/components/staff-invitations";
 import { invitationRoles, type StaffInvitation } from "@/lib/staff-invitations";
-import Link from "@/components/feedback-link";
+import { BackLink } from "@/components/back-link";
 import { redirect } from "next/navigation";
 import { requireViewer, getRequestTime } from "@/lib/data";
 import { getLocale } from "@/lib/locale";
@@ -71,7 +71,7 @@ export default async function UsersPage({
   }
   return (
     <Shell locale={locale} internal>
-      <Link href="/internal">← GLF</Link>
+      <BackLink href="/internal">{locale === "es" ? "Volver a expedientes" : "Back to applications"}</BackLink>
       <ModuleHeading title={es ? "Gestión de usuarios" : "User management"} />
       {params.error && (
         <p role="alert" className="auth-error">

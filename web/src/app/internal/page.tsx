@@ -4,6 +4,7 @@ import { ModuleHeading } from "@/components/module-heading";
 import { InboxFilters } from "@/components/inbox-filters";
 import { resolveFilters } from "@/lib/inbox-filters";
 import Link from "@/components/feedback-link";
+import { ActionLink } from "@/components/action-link";
 import { requireReadViewer, getCalls } from "@/lib/data";
 import { getLocale } from "@/lib/locale";
 import { Shell } from "@/components/shell";
@@ -172,7 +173,9 @@ export default async function InternalPage({
                       })}
                     </td>
                     <td>
-                      <Link
+                      <ActionLink
+                        compact
+                        ariaLabel={`${es ? "Revisar expediente" : "Review application"}: ${a.title}`}
                         href={
                           "/internal/applications/" +
                           a.id +
@@ -181,7 +184,7 @@ export default async function InternalPage({
                         }
                       >
                         {es ? "Revisar" : "Review"}
-                      </Link>
+                      </ActionLink>
                     </td>
                   </tr>
                 ))}

@@ -1,6 +1,7 @@
 import { DeadlineCountdown } from "@/components/deadline-countdown";
 import { getRequestTime } from "@/lib/data";
 import Link from "@/components/feedback-link";
+import { ActionLink } from "@/components/action-link";
 import { requireViewer, getCalls } from "@/lib/data";
 import { getLocale } from "@/lib/locale";
 import { Shell } from "@/components/shell";
@@ -66,11 +67,11 @@ export default async function ApplicantPage({
             : "The concept note is your first project submission: explain what you propose, why, where and with what budget, and identify environmental and social risks. If GLF shortlists it, you will be invited to submit a full proposal."}
         </p>
         <p>
-          <Link href="/applicant/guide">
+          <ActionLink href="/applicant/guide" kind="guide">
             {es
               ? "Cómo postular · Etapas, categorías y requisitos"
               : "How to apply · Stages, categories and requirements"}
-          </Link>
+          </ActionLink>
         </p>
         {calls.length ? (
           <div className="live-form">

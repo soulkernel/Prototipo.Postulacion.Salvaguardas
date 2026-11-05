@@ -1,0 +1,9 @@
+GLF 0.7.66 — ACCIONES DE NAVEGACIÓN VISIBLES
+Alcance aprobado el 4 de noviembre de 2026 tras revisión de enlaces del portal:
+- Revisar en la bandeja: botón compacto con ícono Eye y nombre accesible que identifica el expediente.
+- Ver expediente en el contexto RAG: botón separado de los metadatos, conservando su visibilidad por permisos.
+- Regresos de Convocatorias, Reportes, Asistente RAG y Gestión de usuarios: Volver a expedientes con ArrowLeft.
+- Formulario externo: Volver a mis postulaciones; activación de cuentas: Volver al acceso; inicio externo: guía Cómo postular con BookOpen.
+ActionLink centraliza la presentación. BackLink lo reutiliza y conserva el estilo de los botones de regreso publicados en 0.7.65. Fondo azul claro, borde turquesa, texto azul oscuro, foco visible y altura mínima de 44 px; variante compacta para tablas.
+Se reutiliza FeedbackLink con indicador de carga y rótulos ES/EN. No se cambian destinos, filtros de la bandeja, roles, validaciones, datos ni migraciones. Las referencias documentales y enlaces dentro de explicaciones conservan su presentación de lectura.
+Validación local: TypeScript y ESLint de los archivos modificados. Compilación, pruebas generales y auditoría de dependencias mediante el pipeline; comprobación de navegación y presentación en Vercel.
