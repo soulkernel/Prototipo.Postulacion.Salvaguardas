@@ -1260,7 +1260,10 @@ dialog.narrative-adjust-dialog {
 .header-identity-tooltip { display: none; position: absolute; top: calc(100% + 6px); left: 0; z-index: 20; width: max-content; max-width: min(320px, calc(100vw - 36px)); overflow-wrap: anywhere; padding: 8px 10px; border: 1px solid #ccd8e8; border-radius: 6px; background: #fff; color: #233144; box-shadow: 0 3px 12px #10244526; }
 .header-identity:hover .header-identity-tooltip,
 .header-identity:focus-visible .header-identity-tooltip { display: block; }
-.live-header nav a { min-height: 40px; padding-block: 5px; }
+.live-header nav a { height: 40px; min-height: 40px; padding-block: 5px; }
+/* FeedbackLink wraps its label; keep icons beside text inside that wrapper. */
+.live-header nav a > span { display: inline-flex; align-items: center; gap: 6px; }
+.live-header nav a svg { flex-shrink: 0; }
 .header-account-controls .language-switch,
 .header-account-controls .header-sign-out { height: 40px; min-height: 40px; }
 .header-account-controls .header-sign-out { padding-block: 5px; }
