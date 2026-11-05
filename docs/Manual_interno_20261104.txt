@@ -1,0 +1,30 @@
+MANUAL INTERNO GLF — v0.7.68
+Fecha: 4 de noviembre de 2026
+
+Alcance
+Se incorpora /internal/manual al menú autenticado con el rótulo Manual interno / Internal manual. La guía contiene 25 capítulos ES/EN: orientación, acceso, perfiles, bandeja, documentos y anexos, mapa de riesgos, evaluación individual, revisión técnica, seguimiento, correcciones, resoluciones, convenios, preparación de convocatorias, reglas, publicación, consulta RAG, evidencia, observaciones RAG, errores RAG, corpus, reportes, descargas, usuarios, invitaciones e incidencias generales.
+
+Patrón visual y navegación
+Comparte ManualView con el manual del aplicante: cabecera GLF, seis accesos directos, buscador sin distinción de tildes o mayúsculas, índice, esquemas explicativos de pantalla, pasos y tablas de controles. Incorpora destinatarios y resultados esperados cuando corresponde. Los esquemas no son capturas de expedientes reales.
+El contenido del manual del aplicante se conserva; su tipo se extrae a manual-types.ts. La navegación por capítulos limpia filtros y espera la reincorporación al diseño antes de desplazar y enfocar el destino. Se mantiene navegación nativa con teclas modificadoras.
+Impresión: todos los capítulos, índice específico, Arial, títulos 12, cuerpo 11, texto negro, tablas grises y paginación. La opción utiliza el diálogo del navegador; no requiere un documento persistido en Supabase.
+
+Análisis funcional contrastado
+Expedientes y versiones: app/internal/page.tsx, applications/[id]/page.tsx, inbox-filters.tsx, version-downloads.tsx, review-history.tsx y risk-overview.tsx.
+Actuaciones: internal/actions.ts, working-review.tsx, working-actions.ts, workflow SQL y migración 057. Diferencia borrador, revisión formal, nota y resolución; conserva revisión vigente, control de concurrencia y reapertura.
+Convocatorias: calls/page.tsx, calls/actions.ts, call-editor.tsx, editores temáticos y anexos. No se documentan modificaciones ordinarias de reglas publicadas como permitidas.
+RAG: evidence/page.tsx, rag-workspace.tsx, rag-console.tsx, rag-note-form.tsx, corpus-import.tsx, rag-session.ts. Diferencia recuperación E5, generación BM25 + Qwen, verificación humana y observación vinculada. No confunde importación de corpus E5 con aprobación ni con actualización del servicio Qwen.
+Reportes y descargas: reports/page.tsx y backup-destination.tsx. Explica fecha de corte, hitos no aditivos y diferencias entre copias de expedientes y recuperación técnica del sistema.
+Cuentas: users/page.tsx, staff-invitations.tsx, account-management.tsx y sus contratos. Mantiene separación entre invitación guardada/enviada/activada, gestión delegada y acceso académico temporal.
+
+Seguridad e impacto
+La ruta usa requireReadViewer y los roles internos existentes, incluyendo internal_member solo para documentación. Académicos pueden leer la guía con las restricciones de sus pantallas operativas intactas; aplicantes habituales no acceden. Conserva sesión activa y MFA del personal. No modifica permisos de operación, bases de datos, contratos, RAG, envíos, documentos firmados ni aplicaciones académicas independientes. No requiere migración Supabase.
+
+Verificación local
+281 pruebas automatizadas aprobadas (85 de servidor/base y 196 de dominio/componentes), incluyendo búsqueda bilingüe, anclas de los recorridos, integridad de traducciones y elegibilidad de lectura del manual.
+Compilación Next satisfactoria. ESLint sin errores sobre las fuentes (se excluyen artefactos de prueba locales no versionados); permanece un aviso preexistente en database.test.mjs.
+Interacción local verificada en Chrome: 25 capítulos, búsqueda con varios términos, mensaje sin resultados, limpiar búsqueda, navegación a capítulos ocultos por filtros, idioma EN/ES y vista móvil de 390 px sin desbordamiento horizontal. Evidencia en scratch/internal-manual-0768.
+La comprobación visual de impresión se interrumpió por la protección de Computer Use al no poder identificar la URL del diálogo nativo. No se declara validada esa previsualización ni un PDF exportado.
+
+Publicación
+Rama de despliegue: feat/full-grants-platform. Los resultados de CI y Vercel se verifican sobre el commit de esta entrega. Se preservan los cambios previos ajenos al manual mediante selección explícita de archivos al confirmar.

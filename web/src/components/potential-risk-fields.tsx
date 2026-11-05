@@ -1,0 +1,280 @@
+"use client";
+import { ConfirmRemoveButton } from "./confirm-remove-button";
+import { LimitedTextarea } from "./limited-textarea";
+import { Plus } from "lucide-react";
+import type { Payload, Locale } from "@/lib/domain";
+import {
+  riskLabel,
+  synchronizeRisks,
+  type PotentialRisk,
+} from "@/lib/potential-risks";
+export function PotentialRiskFields({
+  payload,
+  locale,
+  onChange,
+}: {
+  payload: Payload;
+  locale: Locale;
+  onChange: (p: Payload) => void;
+}) {
+  const es = locale === "es",
+    rows = payload.concept.risk_register;
+  const change = (next: PotentialRisk[]) =>
+    onChange(
+      synchronizeRisks({
+        ...payload,
+        concept: {
+          ...payload.concept,
+          risk_register: next,
+          environmental_risks:
+            rows?.some((r) => r.dimension === "environmental") ||
+            next.some((r) => r.dimension === "environmental")
+              ? ""
+              : payload.concept.environmental_risks,
+          social_risks:
+            rows?.some((r) => r.dimension === "social") ||
+            next.some((r) => r.dimension === "social")
+              ? ""
+              : payload.concept.social_risks,
+        },
+      }),
+    );
+  if (!rows)
+    return (
+      <section>
+        <h3 className="application-section-title">
+          {es
+            ? "Riesgos ambientales y sociales potenciales"
+            : "Potential environmental and social risks"}
+        </h3>
+        <p>
+          {es
+            ? "Organice un riesgo por caja y después selecciónelo en cada actividad para calificarlo. El texto anterior se conserva como un registro por dimensión; puede separarlo en varios riesgos."
+            : "Organize one risk per field, then select it in each activity to assess it. Existing text is preserved as one entry per dimension; you can split it into several risks."}
+        </p>
+        <button
+          type="button"
+          className="button secondary"
+          onClick={() => {
+            const initial: PotentialRisk[] = [];
+            for (const dimension of ["environmental", "social"] as const) {
+              const name =
+                payload.concept[
+                  (dimension + "_risks") as
+                    "environmental_risks" | "social_risks"
+                ];
+              if (name.trim())
+                initial.push({
+                  id: crypto.randomUUID(),
+                  dimension,
+                  name: name.slice(0, 2000),
+                });
+            }
+            // Preserve longer historical narratives until the applicant edits them deliberately.
+            if (
+              [
+                payload.concept.environmental_risks,
+                payload.concept.social_risks,
+              ].some((t) => t.length > 2000)
+            )
+              return;
+            change(initial);
+          }}
+          disabled={[
+            payload.concept.environmental_risks,
+            payload.concept.social_risks,
+          ].some((t) => t.length > 2000)}
+        >
+          <Plus size={16} />
+          {es ? "Organizar riesgos individuales" : "Organize individual risks"}
+        </button>
+        {[
+          payload.concept.environmental_risks,
+          payload.concept.social_risks,
+        ].some((t) => t.length > 2000) && (
+          <p>
+            {es
+              ? "Conserve el texto previo y reduzca cada apartado a 2.000 caracteres antes de organizarlo."
+              : "Keep the previous text and shorten each section to 2,000 characters before organizing it."}
+          </p>
+        )}
+        <details>
+          <summary>{es ? "Texto anterior" : "Previous text"}</summary>
+          {(["environmental_risks", "social_risks"] as const).map((key) => (
+            <label key={key}>
+              {key === "environmental_risks"
+                ? es
+                  ? "Ambientales"
+                  : "Environmental"
+                : es
+                  ? "Sociales"
+                  : "Social"}
+              <LimitedTextarea
+                locale={locale}
+                rows={3}
+                placeholder={
+                  es
+                    ? "Describa los riesgos que podría generar el proyecto."
+                    : "Describe the risks the project could generate."
+                }
+                maxLength={12000}
+                value={payload.concept[key]}
+                onChange={(e) =>
+                  onChange({
+                    ...payload,
+                    concept: { ...payload.concept, [key]: e.target.value },
+                  })
+                }
+              />
+            </label>
+          ))}
+          <p style={{ whiteSpace: "pre-wrap" }}>
+            {payload.concept.environmental_risks}
+          </p>
+          <p style={{ whiteSpace: "pre-wrap" }}>
+            {payload.concept.social_risks}
+          </p>
+        </details>
+      </section>
+    );
+  return (
+    <section>
+      <h3 className="application-section-title">
+        {es ? "Riesgos potenciales" : "Potential risks"}
+      </h3>
+      <p>
+        {es
+          ? "Registre un riesgo por caja. Se vinculará con las actividades donde corresponda y se calificará allí. Si no identifica riesgos de una dimensión, explique por qué."
+          : "Enter one risk per field. Link it to the relevant activities and assess it there. If no risks are identified in a dimension, explain why."}
+      </p>
+      {(["environmental", "social"] as const).map((dimension) => (
+        <section role="group" key={dimension} className="strategic-objective">
+          <h3 className="section-card-title">
+            {dimension === "environmental"
+              ? es
+                ? "Riesgos ambientales potenciales"
+                : "Potential environmental risks"
+              : es
+                ? "Riesgos sociales potenciales"
+                : "Potential social risks"}
+          </h3>
+          {rows
+            .filter((r) => r.dimension === dimension)
+            .map((r) => {
+              const used = payload.activities.some((a) =>
+                a.risks.some((x) => x.source_id === r.id),
+              );
+              return (
+                <div key={r.id} className="potential-risk-row">
+                  <label htmlFor={"potential-" + r.id}>
+                    <span className="field-label">
+                      {riskLabel(rows, r.id, es ? "es" : "en")} *
+                    </span>
+                    <LimitedTextarea
+                      locale={locale}
+                      id={"potential-" + r.id}
+                      placeholder={
+                        es
+                          ? "Describa aquí este riesgo potencial."
+                          : "Describe this potential risk here."
+                      }
+                      rows={2}
+                      value={r.name}
+                      maxLength={2000}
+                      aria-required="true"
+                      onChange={(e) =>
+                        change(
+                          rows.map((x) =>
+                            x.id === r.id ? { ...x, name: e.target.value } : x,
+                          ),
+                        )
+                      }
+                    />
+                  </label>
+                  <ConfirmRemoveButton
+                    locale={locale}
+                    element={`${riskLabel(rows, r.id, locale)}: ${r.name || "—"}`}
+                    aria-label={
+                      (es ? "Quitar " : "Remove ") +
+                      riskLabel(rows, r.id, es ? "es" : "en")
+                    }
+                    disabled={used}
+                    title={
+                      used
+                        ? es
+                          ? "Retire primero sus asociaciones con actividades"
+                          : "Remove activity associations first"
+                        : undefined
+                    }
+                    onConfirm={() => change(rows.filter((x) => x.id !== r.id))}
+                  />
+                  {used && (
+                    <small>
+                      {es ? "Vinculado a actividades" : "Linked to activities"}
+                    </small>
+                  )}
+                </div>
+              );
+            })}
+          <button
+            type="button"
+            className="button secondary objective-add"
+            disabled={rows.length >= 100}
+            onClick={() =>
+              change([
+                ...rows,
+                { id: crypto.randomUUID(), dimension, name: "" },
+              ])
+            }
+          >
+            <Plus size={16} />
+            {dimension === "environmental"
+              ? es
+                ? "Añadir riesgo ambiental"
+                : "Add environmental risk"
+              : es
+                ? "Añadir riesgo social"
+                : "Add social risk"}
+          </button>
+          {!rows.some((r) => r.dimension === dimension) && (
+            <label>
+              <span className="field-label">
+                {es
+                  ? "Justificación de ausencia de riesgos *"
+                  : "Explanation of no identified risks *"}
+              </span>
+              <LimitedTextarea
+                locale={locale}
+                rows={2}
+                placeholder={
+                  es
+                    ? "Explique por qué no identifica riesgos en esta dimensión."
+                    : "Explain why no risks are identified in this dimension."
+                }
+                maxLength={12000}
+                value={
+                  payload.concept[
+                    dimension === "environmental"
+                      ? "environmental_risks"
+                      : "social_risks"
+                  ]
+                }
+                onChange={(e) =>
+                  onChange({
+                    ...payload,
+                    concept: {
+                      ...payload.concept,
+                      [dimension === "environmental"
+                        ? "environmental_risks"
+                        : "social_risks"]: e.target.value,
+                    },
+                  })
+                }
+              />
+            </label>
+          )}
+        </section>
+      ))}
+    </section>
+  );
+}

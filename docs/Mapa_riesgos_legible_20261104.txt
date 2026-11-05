@@ -1,0 +1,11 @@
+Mapa de riesgos legible — 4 de noviembre de 2026
+Versión del portal: 0.7.67
+
+Alcance: mapa inicial y residual en portal externo/interno y PDF ES/EN.
+Los marcadores cuentan evaluaciones por actividad y riesgo; los valores calculados se muestran en el resumen y en la tabla. Se conservan probabilidad × gravedad, los umbrales GLF y sus claves originales. La leyenda muestra categoría, cantidad y rango. Pendientes separados, sin clasificarlos como Bajo. Los filtros y la selección de casillas actualizan el detalle sin guardar ni modificar datos. No se asigna categoría global ni decisión al proyecto.
+
+PDF: bloque medido antes de dibujar para conservar mapa, resumen, ejes y leyenda en una página. Tabla de códigos, actividades, riesgos, calificaciones, cálculo y categoría. Compatible con distribuciones mixtas, iguales, pendientes, vacías y ambas fases.
+
+Compatibilidad: migración 058 cambia únicamente el formato predeterminado de los nuevos documentos a 3. Los preparados existentes conservan formato 2 o anterior; las versiones enviadas heredan exactamente el preparado. Copia de consulta actualizada disponible para formatos anteriores, separada de originales y archivos firmados. No se reescriben datos, documentos, permisos ni decisiones. No cambia contratos de identidad con otras aplicaciones.
+
+Validación: pruebas de categorías y escenarios, render PDF ES/EN, comparación binaria con PDFs anteriores, pruebas SQL de migración e inmutabilidad y navegación/filtros de la interfaz. Despliegue mediante la rama feat/full-grants-platform y Vercel; evidencia operativa en scratch/risk-map-0767 (no publicada).

@@ -1,0 +1,176 @@
+GLF — Grupo de observaciones aprobado para implementación y publicación
+Fecha: 21/10/2026, hora de Galápagos.
+Instrucción inicial: registrar observaciones hasta autorizar el grupo. El usuario aprobó después implementar y publicar el grupo en Vercel y Supabase.
+
+BASE REVISADA
+portal-app, rama feat/full-grants-platform, commit 51c8da2, versión local 0.7.56.
+Al revisar se encontró únicamente scratch/desktop.ini modificado entre los archivos
+seguidos; se conserva. No se hicieron push, despliegues ni cambios de datos.
+
+OBSERVACIONES ACORDADAS
+1. Página de inicio de postulación: envolver todo el bloque aportado en la captura,
+   desde aviso de borradores hasta plazo, en tarjeta con borde discreto, esquinas
+   redondeadas y espacio interior. Mantener el plazo destacado dentro de la tarjeta.
+2. Encabezado de expediente: dentro de la tarjeta existente, destacar juntos Nota
+   conceptual del proyecto y Proyecto: [nombre], usando la franja azul clara,
+   negrita azul oscuro, acento turquesa y bordes redondeados ya acordados. Admitir
+   nombres de varias líneas sin desbordamiento.
+3. Rótulos cortos del navegador: Información general; Descripción; Presupuesto;
+   Actividades y riesgos; Experiencia SGAS; Revisar y enviar. El nuevo paso será
+   5, después de Riesgos; Revisar pasa a 6. Equivalentes EN propuestos: General
+   information; Description; Budget; Activities and risks; ESMS experience;
+   Review and submit. Optimizar una fila en escritorio; mantener legibilidad,
+   navegación por teclado y adaptación a pantallas pequeñas.
+4. El usuario solicita sustituir el PDF de experiencia SGAS por captura web con
+   preguntas condicionales y anexo automático. También pide respetar los anexos
+   1 Experiencia y capacidad del proponente y socios, 2 Resultados del examen
+   ambiental y social (A&S screening), 3 Cartas de apoyo de socios ejecutores.
+   El diseño funcional siguiente fue aceptado con las precisiones registradas en
+   esta nota. El usuario pide un resumen consolidado antes de autorizar ejecución.
+
+FUENTES LEÍDAS
+PDF original: C:/Users/SCHUBERT/Desktop/Formulario evaluacion experiencia.pdf
+SHA256: 54D8C48570C411CD14DC21FC3DB558BB62E7A75902BE9A1D38546B7A98F29A87
+Una página del archivo, numerada 4 en el pie. Revisada visualmente completa y por
+extracción. Fuente española; no contiene una versión inglesa aprobada.
+Captura de anexos: codex-clipboard-93d7fa82-9849-43ca-bab7-bded9e564a55.png.
+
+El PDF tiene nueve filas Sí/No:
+1 Revisión del Manual SGAS GLF, procedimientos y posibilidad de cumplimiento.
+2 Revisión de Lista de Exclusión y confirmación de que el proyecto no incluye
+  actividades excluidas.
+3 Involucramiento de la organización en violaciones de derechos humanos en los
+  últimos cinco años; si Sí, estado de cualquier investigación.
+4 Experiencia aplicando normas de salvaguardia internacionales.
+5 Experiencia realizando EIA/EIAS y desarrollando herramientas de salvaguardas
+  (quejas, participación, consentimiento libre previo informado, acceso).
+6 Disponibilidad de expertos A&S en la organización.
+7 Disponibilidad de expertos en igualdad de género.
+8 Uso de personal interno para evaluaciones A&S adicionales, si se necesitan.
+9 Si se trabaja con personal externo, identificación de experiencia adecuada para
+  desarrollar herramientas de salvaguardia.
+
+DIAGNÓSTICO ACTUAL CONFIRMADO EN CÓDIGO
+- conceptSchema no tiene cuestionario de experiencia SGAS estructurado.
+- El editor tiene cinco pasos. URL usa section estable; conservar los enlaces
+  anteriores al insertar el sexto paso.
+- Ya se prepara un snapshot de payload/revisión y se generan documentos concept
+  y matrix mediante /documents/[id]/[kind]. Esa ruta solo admite ambos tipos.
+- Fase 1 ya exige nota conceptual y screening firmados. No retirar ni duplicar
+  esas firmas por añadir el cuestionario.
+- Existen requisitos de anexos configurables por convocatoria y cartas vinculadas
+  por UUID de organización. No inferir equivalencias desde el número Anexo 1/2/3.
+- El cuestionario SGAS no es la lista de proyectos similares ni el CV del Anexo 1.
+  No sustituye esos archivos, ni prueba por sí mismo la experiencia declarada.
+
+DISEÑO FUNCIONAL ACORDADO; EJECUCIÓN PENDIENTE DE CONFIRMACIÓN DEL RESUMEN
+Captura:
+- Tres grupos compactos: revisión documental (1-2), antecedentes y capacidad
+  (3-7), equipo de implementación (8-9), con tarjetas GLF, franja y márgenes
+  consistentes. Sí/No excluyentes, sin respuesta preseleccionada. Mantener texto
+  y ejemplos originales; ayudas legibles, ES/EN diferenciado de fuente oficial.
+- Q3=Sí despliega Estado de la investigación, requerido para completar. Q3=No
+  lo oculta y no lo exige. Conservar versiones históricas; una respuesta guardada
+  bajo una rama inactiva no se exporta como respuesta vigente.
+- Q4/Q5=Sí pueden abrir un detalle breve opcional, claramente adicional al PDF.
+  No convertir automáticamente toda respuesta Sí en nueva obligación documental.
+- Pregunta de aplicabilidad Uso de personal externo (Sí/No) antes de Q9; solo
+  mostrar Q9 si hay personal externo. Personal interno y externo pueden coexistir:
+  no deducir uno por negar el otro. No aplica es una condición explícita, distinta
+  de No o Sin responder. Precisar adaptación a personas naturales antes de exigir
+  preguntas que hoy dicen su organización. El usuario confirma adaptar su
+  organización a usted o su equipo para las personas naturales.
+- Borrador incompleto permitido. Al completar, validar respuestas aplicables y
+  detalle Q3. Un No sobre experiencia no produce rechazo o puntuación automática.
+  Las respuestas declarativas de revisión/cumplimiento deben mostrarse al revisor;
+  no inventar decisiones de elegibilidad que el formulario no define.
+- Enlazar Lista de Exclusión existente y Manual SGAS oficial. Manual de uso del
+  portal no equivale a Manual SGAS. Verificar referencia vigente antes de enlazar.
+
+Anexos acordados:
+- Ubicación confirmada por el usuario: toda la lista y gestión documental queda
+  al final, en el paso 6 Revisar y enviar. Mantener separadas la zona de documentos
+  firmados y la zona de anexos. Experiencia SGAS aparece incorporado en Anexos,
+  junto a las cajas de carga manual de los archivos no generados por el sistema.
+  El paso 5 contiene el cuestionario y su confirmación de finalización.
+- Anexo 1 Experiencia y capacidad del proponente y socios: mantener carga de
+  proyectos similares para organización o currículo para persona, y evidencia de
+  experiencia de socios según corresponda. El cuestionario SGAS complementa esta
+  información, pero se materializa en un documento PDF propio con el nombre
+  visible Experiencia SGAS, anexado automáticamente junto al resto de documentos.
+  No sustituye la carga del resumen de experiencia/CV ni se fusiona necesariamente
+  en su archivo. No inventar una renumeración de los tres anexos aportados.
+- Anexo 2 Resultados del examen ambiental y social (A&S screening): reutilizar
+  matrix generado a partir de actividades, riesgos y calificaciones del paso 4,
+  conservando reglas y firma vigentes. No volver a pedir la misma captura.
+- Anexo 3 Cartas de apoyo de socios ejecutores: conservar cargas por organización
+  con UUID, sus reglas actuales de aplicabilidad y control documental.
+
+Generación y compatibilidad acordadas:
+- Guardar respuestas con claves estables y versión del cuestionario, no solo PDF.
+- Al finalizar el cuestionario, el sistema genera efectivamente el PDF
+  y registra Experiencia SGAS como documento anexado al expediente. No basta un
+  enlace de descarga o una vista que aparente un archivo incorporado. No depende
+  de que el postulante descargue, firme o vuelva a subir nada, ni de que prepare
+  previamente los otros documentos de la postulación.
+- Evitar generar un archivo por pulsación. La vista de borrador refleja los datos
+  guardados; al preparar se congela la revisión del cuestionario y su documento
+  con el resto del expediente. Si se edita después, actualizar automáticamente el
+  anexo al confirmar de nuevo un cuestionario completo y conservar la versión anterior como
+  historia. Mientras haya datos incompletos, generación pendiente o error, no
+  presentar el PDF anterior como vigente ni marcar la incorporación como exitosa.
+- El usuario confirma expresamente que Experiencia SGAS NO requiere descarga,
+  firma ni carga manual. Conservar las firmas existentes de nota y screening.
+- Extender coherentemente guardado, validación cliente/servidor/SQL, progreso,
+  resumen externo/interno, documentos y anexos; RLS y privilegios existentes.
+- Compatibilidad versionada para borradores y expedientes preparados/enviados.
+  No forzar migración de los PDFs históricos a respuestas inferidas.
+
+DECISIONES CONFIRMADAS EN LA RESPUESTA DEL USUARIO
+1. PDF autónomo Experiencia SGAS, generado y anexado automáticamente como
+   complemento de la experiencia, sin firma ni carga manual; proyectos/CV aparte.
+2. Adaptar su organización a usted o su equipo para las personas naturales.
+3. El usuario acepta el resto del planteamiento presentado y pide resumen de todo
+   el grupo antes de dar confirmación para implementar. No ejecutar ni publicar
+   por esta aceptación del diseño; esperar la confirmación del resumen.
+
+PRECISIÓN POSTERIOR: FINALIZACIÓN EXPLÍCITA Y AVISO DE INCORPORACIÓN
+Requisito del usuario: debe existir un botón al concluir el cuestionario y un aviso
+que confirme que sus respuestas fueron consignadas y el formulario quedó anexado
+automáticamente a los documentos de la propuesta.
+Criterio propuesto, pendiente de aceptación con el grupo:
+- Botón Finalizar y anexar / Complete and attach al final del paso 5. Evitar
+  llamarlo Enviar porque el envío de toda la postulación ocurre en el paso 6.
+- Autoguardado conserva el borrador; no genera un PDF por cada edición. Al pulsar
+  el botón se validan las respuestas aplicables, se guarda y se genera/incorpora
+  el PDF de la revisión confirmada. No exigir que los otros pasos estén completos
+  para finalizar únicamente este cuestionario.
+- Si hay campos pendientes, mostrar errores precisos y llevar al primero; no
+  marcar finalizado. Durante la operación, Guardando y anexando..., aria-busy y
+  bloqueo para evitar doble ejecución.
+- Confirmación persistente solo después de guardar, generar y registrar realmente
+  el PDF como anexo. Texto propuesto: Sus respuestas al formulario Experiencia
+  SGAS se han guardado y el documento se ha anexado automáticamente a su propuesta.
+  Puede consultarlo en Revisar y enviar > Anexos.
+- Ofrecer enlace Ver en Anexos y botón Continuar a Revisar y enviar. La confirmación
+  es de incorporación documental, no de envío, recepción o aprobación por GLF.
+- Si cambia respuestas después, conservar borrador e historial, marcar Requiere
+  actualización y ofrecer Actualizar anexo. Nunca mostrar un PDF anterior como
+  representación vigente de respuestas modificadas. La generación y el registro
+  siguen siendo automáticos tras la confirmación del usuario, sin descarga/firma/
+  recarga manual del PDF.
+- Si guardar/generar/incorporar falla, conservar respuestas, mostrar el error y
+  permitir reintentar sin documentos duplicados ni confirmaciones falsas.
+- Implementación local 0.7.57 completada y verificada; publicación autorizada.
+
+VERIFICACIÓN DEL GRUPO APROBADO
+Sí/No sin valor por defecto; cambio de ramas y detalle Q3; no aplica en externos;
+proponente persona/organización; borrador/reapertura; autoguardado y errores;
+PDF y anexos por revisión; edición posterior; preservación de firmas/históricos;
+permisos, ES/EN, teclado y móvil; seis pasos y enlaces previos. Pruebas locales ejecutadas: 261 automatizadas sin fallos, lint, tipos, build y navegador aislado ES/EN, guardado, PDF, reapertura, actualización, errores, móvil y zoom 200 %. Migración 053 comprobada en transacción local antes de producción.
+
+ESTADO DE PUBLICACIÓN
+Migración 053 aplicada en Supabase el 21/10/2026: verificaciones correctas y huellas
+de ocho tablas sin cambios. Conserva 7 versiones enviadas, 13 documentos preparados
+y 25 documentos; nuevo hash del validador fa227a0f90e616a7ca459c7a8ff6fa17.
+Función sgas-experience publicada con verificación JWT activa. Vercel en proceso; el informe de publicación registra su resultado final.

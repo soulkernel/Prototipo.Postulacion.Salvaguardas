@@ -1,0 +1,103 @@
+M07 — Temas definidos por convocatoria
+Implementación y verificación local — 17 de octubre de 2026
+
+REPOSITORIO Y ALCANCE
+D:\GDRIVE LOCAL\CONSULTORIAS\SALVAGUARDAS GLF\portal-app
+Rama: feat/full-grants-platform
+HEAD de partida: c846969b978e7a390a3aceb9bc2dced52916bf45
+Instrucciones revisadas: web/AGENTS.md y documentación instalada de Next.js.
+Se conserva el cambio previo ajeno en scratch/desktop.ini.
+No se hizo commit, push, despliegue, migración de producción, firma, envío real ni comunicación.
+
+DIAGNÓSTICO
+El selector ya utilizaba rules_snapshot.themes cuando existía un catálogo no vacío.
+Las opciones seleccionadas por convocatoria y sus IDs estables ya estaban implementados.
+La validación SQL existente rechazaba temas ajenos al completar un expediente con catálogo.
+Brechas: sin catálogo se usaba texto libre; un valor histórico ajeno aparecía como opción habilitada.
+
+CORRECCIÓN
+1. El campo siempre es un selector; sus únicas opciones elegibles son los IDs de rules_snapshot.themes.
+   No toma las opciones generales de edición de convocatorias ni los temas de otra convocatoria.
+2. Sin catálogo, el selector queda deshabilitado, sin texto libre y con aviso ES/EN.
+   Se puede guardar el borrador. Se bloquea completar Datos generales, preparar documentos y enviar.
+3. Un valor histórico ajeno se muestra como valor anterior deshabilitado, sin sustituirlo ni borrarlo.
+   Solo una selección explícita de un tema válido lo reemplaza. No hay selección automática.
+4. Se conserva project_type, los IDs y valores guardados, los catálogos y sus traducciones.
+   Renombrar etiquetas no cambia el ID. No se modifican grant-rules.ts ni las reglas de convocatoria.
+5. Se conserva la copia de reglas del expediente; una edición posterior de la convocatoria no
+   reemplaza automáticamente su catálogo histórico.
+6. Se añade la comprobación compartida a validación/completitud, orientación de errores y acciones
+   de servidor que preparan documentos o envían. Guardar borradores sigue siendo independiente.
+7. La migración local 040 añade únicamente el bloqueo SQL de completitud cuando falta catálogo.
+   Reutiliza la validación existente de pertenencia para catálogos no vacíos; no reimplementa esa regla.
+   No actualiza datos, catálogos ni versiones; no crea nuevos permisos públicos ni RPC de evasión.
+
+ARCHIVOS DE IMPLEMENTACIÓN (rutas relativas a la raíz indicada)
+web/src/components/application-topic-select.tsx — nuevo selector accesible ES/EN.
+web/src/components/application-editor.tsx — integración y mensajes sin duplicación.
+web/src/lib/call-themes.ts — comprobación y mensajes compartidos; se conserva el catálogo existente.
+web/src/lib/domain.ts — completitud coherente, incluida convocatoria sin catálogo.
+web/src/lib/step-validation.ts — validación del paso Datos generales.
+web/src/lib/completion-guidance.ts — explicación contextual y enlace al campo correcto.
+web/src/app/applicant/actions.ts — comprobación de reglas guardadas antes de preparar/enviar.
+supabase/migrations/202610170040_call_topics_required.sql — migración local pendiente de publicación.
+
+ARCHIVOS DE PRUEBAS
+web/tests/annual-review.test.ts — catálogos distintos, IDs/etiquetas, compatibilidad, ES/EN y accesibilidad.
+web/tests/database.test.mjs — RPC, guardado/reapertura, valores ajenos, ausencia de catálogo e historia.
+web/tests/m05-server.test.mjs — acciones reales con cliente de base simulado; se preservan pruebas M05.
+web/tests/domain.test.ts — fixture de financiación actualizado con un tema explícito de prueba.
+web/tests/usability-review.test.ts — fixture completo actualizado con su catálogo de prueba.
+Los catálogos de prueba son sintéticos y aislados; no se cargaron en convocatorias reales.
+
+PRUEBAS EJECUTADAS Y RESULTADOS
+1. npm test: 154 pruebas aprobadas (51 SQL/servidor y 103 de dominio/documentos/componentes).
+   Cero fallos, cancelaciones u omisiones en la ejecución final.
+2. npm run lint: sin errores ni advertencias en la ejecución final.
+3. npm run build: compilación y TypeScript correctos; generación de 26 páginas completada.
+   El primer intento aislado encontró EPERM en .next; se repitió con permiso fuera del aislamiento
+   y la compilación final terminó correctamente. No fue un despliegue.
+4. Chrome, aplicación local aislada con ApplicationEditor real: 9 estados registrados y 19
+   comprobaciones aprobadas. Se probaron convocatorias A/B con catálogos disjuntos, ES/EN,
+   valor histórico deshabilitado, elección de ID válido, autoguardado local y reapertura.
+   Sin catálogo: selector deshabilitado, ausencia de entrada libre, aviso ES/EN y valor previo
+   conservado después de guardar/reabrir. Sin errores de consola observados.
+5. SQL en PGlite, base PostgreSQL de pruebas sin conexión a Supabase:
+   - Las dos convocatorias conservan sus catálogos y validan únicamente sus IDs.
+   - Texto libre, etiqueta o ID de otra convocatoria no permiten completar el expediente.
+   - Catálogo ausente, nulo o vacío permite guardar borradores y bloquea completitud en fases 1/2.
+   - Preparación por RPC bloqueada cuando falta catálogo o existe un tema ajeno.
+   - La migración conserva exactamente expedientes, versiones, documentos preparados, eventos
+     y convocatorias de la base aislada, incluidos registros previamente enviados.
+   - Un expediente anterior a M07 sin catálogo, con documentos preparados y dos PDF registrados
+     de prueba, es rechazado por la RPC pública de envío tras aplicar la migración local.
+     El rechazo no modifica su estado ni historia. No se firmaron documentos reales.
+   - Las funciones privadas siguen sin permiso EXECUTE para anon/authenticated.
+6. Acciones reales del servidor con cliente de Supabase simulado: rechazan ausencia de catálogo
+   y valores ajenos/históricos antes de ejecutar las RPC de preparación o envío. Una selección
+   del catálogo propio permite avanzar hasta la RPC simulada, sin presentación real.
+7. git diff --check -- web supabase: correcto. El problema de espacios de scratch/desktop.ini
+   es previo y ajeno; se conserva sin modificarlo.
+
+EVIDENCIA (rutas relativas a la raíz)
+scratch/m07-qa/tests-final.log
+scratch/m07-qa/database-final.log
+scratch/m07-qa/lint.log
+scratch/m07-qa/build-final.log
+scratch/m07-qa/browser-evidence.json
+scratch/m07-qa/browser-assertions.log
+scratch/m07-qa/assert-browser.mjs
+scratch/m07-qa/sin-catalogo.png
+scratch/m07-qa/ui.tsx y run.mjs — fixture local, sin Supabase; envío/preparación remotos bloqueados.
+
+PENDIENTES Y LÍMITES
+- Todo queda local. Para que tenga efecto en producción se necesitarán publicación web y aplicación
+  controlada de la migración 040, fuera de esta autorización. No se realizaron esas operaciones.
+- No se consultaron ni poblaron catálogos reales. Si falta uno, GLF debe proporcionar/configurar
+  su listado aprobado y versión. No se usaron categorías generales como sustituto de ese listado.
+- Un borrador histórico cuya copia de reglas no incluya temas seguirá bloqueado para completar
+  hasta una regularización controlada y autorizada. Cambiar la convocatoria actual no modifica
+  automáticamente esa copia. Ese tratamiento de datos debe acordarse por separado.
+- Las pruebas del navegador guardan en localStorage; las del servidor usan un cliente simulado
+  y las SQL usan PGlite. No se presenta esto como una prueba en producción o Supabase remoto.
+- No se alteraron expedientes enviados, montos, categorías, privilegios ni otros requisitos.
