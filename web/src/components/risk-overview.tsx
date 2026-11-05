@@ -251,10 +251,8 @@ export function RiskOverview({
               <strong>
                 {riskMapNames[locale][level]}: {counts[level]}
               </strong>
-              <span>
-                {copy.range} {riskMapRanges[level]} ·{" "}
-                {es ? "evaluaciones" : "assessments"}
-              </span>
+              <span>{es ? "evaluaciones" : "assessments"}</span>
+              <span>{copy.range} {riskMapRanges[level]}</span>
             </div>
           ))}
           <p className="field-help">{copy.formula}</p>
@@ -273,7 +271,7 @@ export function RiskOverview({
       <div id={detailId}>
         {cell && (
           <button
-            className="button"
+            className="button navigation-action"
             type="button"
             onClick={() => setCell(null)}
           >

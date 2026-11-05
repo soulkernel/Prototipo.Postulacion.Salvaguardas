@@ -1141,6 +1141,7 @@ dialog.narrative-adjust-dialog {
 .risk-map-title { margin: 20px 0 4px; color: #203e6c; font-size: 1.15rem; }
 .risk-map-subtitle { margin-top: 0; }
 .risk-map-reading { background: #edf5fc; border-left: 3px solid #008c99; border-radius: 6px; padding: 12px 16px; }
+.risk-overview .field-help { font-size: .85rem; line-height: 1.5; }
 .risk-map { width: 100%; border-collapse: separate; border-spacing: 3px; table-layout: fixed; }
 .risk-map-tick { width: 24px; }
 .risk-map th { font-size: .85rem; font-weight: 400; text-align: center; }
