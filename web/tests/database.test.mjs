@@ -3982,6 +3982,7 @@ test("GLF observation changes preserve snapshots, isolate follow-up notes and pa
  await assert.rejects(rpc('record_review_note',{app_id:id,expected_revision:1,findings:'forged',recommendation:''},owner),/GLF_FORBIDDEN/);
  await assert.rejects(rpc('record_review_note',{app_id:id,expected_revision:1,findings:'forged',recommendation:''},academic),/GLF_FORBIDDEN/);
  await assert.rejects(rpc('record_review_note',{app_id:id,expected_revision:0,findings:'old',recommendation:''},'reviewer'),/GLF_VERSION_CONFLICT/);
+ await assert.rejects(rpc('record_review_note',{app_id:id,expected_revision:null,findings:'Missing revision',recommendation:''},'reviewer'),/GLF_VERSION_CONFLICT/);
  await assert.rejects(rpc('record_review_note',{app_id:id,expected_revision:1,findings:' ',recommendation:''},'reviewer'),/GLF_REVIEW_REQUIRED/);
  await assert.rejects(rpc('record_review_note',{app_id:id,expected_revision:1,findings:'x'.repeat(12001),recommendation:''},'reviewer'),/GLF_REVIEW_REQUIRED/);
  const note=await rpc('record_review_note',{app_id:id,expected_revision:1,findings:'Progress observation',recommendation:'Next action'},'reviewer');

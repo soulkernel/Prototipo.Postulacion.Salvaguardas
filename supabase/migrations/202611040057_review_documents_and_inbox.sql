@@ -73,7 +73,7 @@ begin
  select * into p from public.profiles where id=auth.uid();
  select * into a from public.applications where id=app_id for update;
  if not found or a.submitted_at is null then raise exception 'GLF_REVIEW_STATE'; end if;
- if a.revision<>expected_revision then raise exception 'GLF_VERSION_CONFLICT' using errcode='40001'; end if;
+ if a.revision is distinct from expected_revision then raise exception 'GLF_VERSION_CONFLICT' using errcode='40001'; end if;
  if length(trim(coalesce(findings,''))) not between 1 and 12000 or length(coalesce(recommendation,''))>12000 then
   raise exception 'GLF_REVIEW_REQUIRED'; end if;
  select * into v from public.application_versions where application_id=a.id order by revision desc,id desc limit 1;
