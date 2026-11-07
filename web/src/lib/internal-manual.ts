@@ -382,8 +382,8 @@ export const internalManualChapters: ManualChapter[] = [
         "In Documents and versions choose Español or English. Download the receipt and PDFs for the version you need.",
       ],
       [
-        "Si aparece Presentación del PDF, elija Copia de consulta actualizada para el diseño actual o Formato original para el formato histórico.",
-        "If PDF presentation appears, choose Updated reference copy for the current layout or Original format for the historical layout.",
+        "Los botones de descarga entregan directamente el formato actual con los datos de esa versión enviada. Si necesita la presentación anterior, abra Historial de esta versión y descargue el documento original.",
+        "Download buttons provide the current format using that submitted version's data. If you need the earlier presentation, open History of this version and download the original document.",
       ],
       [
         "Descargue por separado los archivos firmados y anexos. Despliegue Nota Conceptual completa y, en fase 2, Propuesta completa remitida para leer los datos en pantalla.",
@@ -398,10 +398,10 @@ export const internalManualChapters: ManualChapter[] = [
         "Translates headings and labels, not applicant responses or signed-file content.",
       ],
       [
-        "Copia de consulta actualizada",
-        "Reorganiza la presentación de un envío histórico. No reemplaza el envío, el formato original ni los documentos firmados.",
-        "Updated reference copy",
-        "Updates the presentation of a historical submission. Does not replace the submission, original format or signed documents.",
+        "Historial de esta versión",
+        "Disponible para envíos con formato anterior. Conserva las descargas originales del comprobante, nota conceptual o propuesta, y evaluación A&S. Los botones principales siempre usan la presentación actual; los datos enviados y los archivos firmados se conservan.",
+        "History of this version",
+        "Available for submissions using an earlier format. Preserves original receipt, concept note or proposal, and E&S assessment downloads. Main buttons always use the current presentation; submitted data and signed files are preserved.",
       ],
       [
         "Comprobante de recepción",

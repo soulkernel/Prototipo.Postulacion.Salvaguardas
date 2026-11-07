@@ -5,6 +5,8 @@ import { PDFDocument } from "pdf-lib";
 import {
   authorReference,
   applicantIdentification,
+  currentDocumentFormat,
+  updatedDocumentCopy,
   proponentIdentification,
   justifiedWords,
 } from "../src/lib/document-presentation";
@@ -14,6 +16,22 @@ import { conceptSections } from "../src/lib/concept-presentation";
 import { applicationPdf } from "../src/lib/pdf";
 import { receiptPdf } from "../src/lib/receipt-pdf";
 import { emptyPayload, newActivity, newRisk } from "../src/lib/domain";
+
+test("ordinary downloads use the latest presentation while original and signing downloads preserve their frozen format", () => {
+  for (const format of [undefined, null, 0, 2, 3]) {
+    assert.equal(updatedDocumentCopy(format, null), true);
+    assert.equal(updatedDocumentCopy(format, "original"), false);
+    assert.equal(updatedDocumentCopy(format, "updated"), true);
+  }
+  assert.equal(updatedDocumentCopy(currentDocumentFormat, null), false);
+  for (const format of [undefined, 3, currentDocumentFormat])
+    for (const view of [null, "original", "updated", "invalid"])
+      assert.equal(
+        updatedDocumentCopy(format, view, true),
+        false,
+        "A URL cannot reformat a document prepared for signing",
+      );
+});
 
 test("applicant names remain paired with their own identification in both languages, never the contact", async () => {
   await mkdir(".test-artifacts/applicant-identity", { recursive: true });
@@ -354,7 +372,7 @@ test("updated PDF copies and new formats render in both languages without changi
         ...base,
         locale,
         kind,
-        updatedCopy: true,
+        updatedCopy: updatedDocumentCopy(undefined, null),
       });
       const enhanced = await applicationPdf({
         ...base,

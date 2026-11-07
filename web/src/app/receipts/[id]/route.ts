@@ -1,6 +1,7 @@
 import {
   applicantIdentification,
   currentDocumentFormat,
+  updatedDocumentCopy,
   proponentIdentification,
 } from "@/lib/document-presentation";
 import { NextResponse, type NextRequest } from "next/server";
@@ -61,7 +62,10 @@ export async function GET(
   const category = rules.categories.find(
     (c) => c.id === payload.concept.category_id,
   );
-  const updatedCopy = request.nextUrl.searchParams.get("view") === "updated";
+  const updatedCopy = updatedDocumentCopy(
+    version.document_metadata?.format_version,
+    request.nextUrl.searchParams.get("view"),
+  );
   const bytes = await receiptPdf({
     id,
     reference: app.reference_code,

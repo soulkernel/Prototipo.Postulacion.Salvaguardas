@@ -4,6 +4,7 @@ import { getLocale } from "@/lib/locale";
 import { applicationPdf } from "@/lib/pdf";
 import type { Payload, Locale } from "@/lib/domain";
 import { documentFilename } from "@/lib/document-name";
+import { updatedDocumentCopy } from "@/lib/document-presentation";
 import { z } from "zod";
 export const runtime = "nodejs";
 export async function GET(
@@ -48,8 +49,11 @@ export async function GET(
   const requested = request.nextUrl.searchParams.get("lang");
   const locale: Locale =
     requested === "en" || requested === "es" ? requested : await getLocale();
-  const updatedCopy =
-    !prepared && request.nextUrl.searchParams.get("view") === "updated";
+  const updatedCopy = updatedDocumentCopy(
+    version.document_metadata?.format_version,
+    request.nextUrl.searchParams.get("view"),
+    prepared,
+  );
   const base = process.env.NEXT_PUBLIC_SITE_URL || request.nextUrl.origin;
   const downloadUrl =
     base +

@@ -1315,6 +1315,8 @@ dialog.narrative-adjust-dialog {
 .account-card textarea { min-height: 80px; }
 .live-main details { padding: 12px 0; }
 .live-main summary { cursor: pointer; font-weight: 600; }
+.version-format-history { margin-top: 16px; padding-top: 12px; border-top: 1px solid #d5e2ec; }
+.version-format-history > summary { color: #465a73; font-size: 13px; }
 
 .working-review > .live-fieldset { display:grid; gap:16px; }
 .working-review .live-risk { margin:0; display:grid; gap:10px; padding:18px; }

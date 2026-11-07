@@ -17,12 +17,14 @@ export function VersionDownloads({
   legacy?: boolean;
 }) {
   const [language, setLanguage] = useState<Locale>(locale);
-  const [updated, setUpdated] = useState(legacy);
   const controlId = useId();
   const es = locale === "es";
   const query = new URLSearchParams({ lang: language });
   if (prepared) query.set("prepared", "1");
-  else if (legacy && updated) query.set("view", "updated");
+  const originalQuery = new URLSearchParams({
+    lang: language,
+    view: "original",
+  });
   return (
     <div className="version-downloads">
       <div className="download-options">
@@ -37,24 +39,6 @@ export function VersionDownloads({
             <option value="en">English</option>
           </select>
         </label>
-        {legacy && !prepared && (
-          <label>
-            {es ? "Presentación del PDF" : "PDF presentation"}
-            <select
-              value={updated ? "updated" : "original"}
-              onChange={(e) => setUpdated(e.target.value === "updated")}
-            >
-              <option value="updated">
-                {es
-                  ? "Copia de consulta actualizada"
-                  : "Updated reference copy"}
-              </option>
-              <option value="original">
-                {es ? "Formato original" : "Original format"}
-              </option>
-            </select>
-          </label>
-        )}
       </div>
       <p className="field-help">
         {es
@@ -90,6 +74,44 @@ export function VersionDownloads({
             : "Environmental and social assessment PDF"}
         </DocumentDownload>
       </div>
+      {legacy && !prepared && (
+        <details className="version-format-history">
+          <summary>
+            {es ? "Historial de esta versión" : "History of this version"}
+          </summary>
+          <p className="field-help">
+            {es
+              ? "Formato original conservado de este envío. Los archivos firmados se descargan por separado."
+              : "Preserved original format of this submission. Signed files are downloaded separately."}
+          </p>
+          <div className="report-download-actions">
+            <DocumentDownload
+              href={`/receipts/${id}?${originalQuery}`}
+              locale={locale}
+            >
+              {es ? "Comprobante original" : "Original receipt"}
+            </DocumentDownload>
+            <DocumentDownload
+              href={`/documents/${id}/concept?${originalQuery}`}
+              locale={locale}
+            >
+              {stage === 1
+                ? es
+                  ? "Nota conceptual original"
+                  : "Original concept note"
+                : es
+                  ? "Propuesta completa original"
+                  : "Original full proposal"}
+            </DocumentDownload>
+            <DocumentDownload
+              href={`/documents/${id}/matrix?${originalQuery}`}
+              locale={locale}
+            >
+              {es ? "Evaluación A&S original" : "Original E&S assessment"}
+            </DocumentDownload>
+          </div>
+        </details>
+      )}
     </div>
   );
 }

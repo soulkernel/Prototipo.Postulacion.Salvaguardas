@@ -3,6 +3,20 @@ import type { Locale, Concept } from "./domain";
 export type DocumentMetadata = { format_version: number; author_name: string };
 export const currentDocumentFormat = 4;
 
+// Ordinary submitted-document downloads use the current presentation. Prepared
+// signing documents always retain their frozen format, regardless of the URL.
+export function updatedDocumentCopy(
+  formatVersion: number | null | undefined,
+  view: string | null,
+  prepared = false,
+) {
+  return (
+    !prepared &&
+    view !== "original" &&
+    (view === "updated" || (formatVersion ?? 0) < currentDocumentFormat)
+  );
+}
+
 // Identification belongs to the applicant, never to an unrelated contact.
 export function applicantIdentification(
   concept: Pick<

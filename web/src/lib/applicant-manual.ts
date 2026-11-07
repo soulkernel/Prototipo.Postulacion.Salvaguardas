@@ -1459,9 +1459,9 @@ export const manualChapters: ManualChapter[] = [
       ],
       [
         "Idioma y formato de las descargas",
-        "Seleccione Español o English junto a los PDF. El idioma cambia títulos y etiquetas; sus respuestas conservan el idioma original. En versiones antiguas, la copia de consulta actualizada incluye el nuevo formato y mapa de riesgos; Formato original conserva la presentación anterior. Ninguna copia de consulta sustituye los archivos firmados.",
+        "Seleccione Español o English junto a los PDF. El idioma cambia títulos y etiquetas; sus respuestas conservan el idioma original. Las versiones enviadas se descargan directamente con la presentación actual. La presentación anterior queda en Historial de esta versión. Los documentos preparados para firma conservan su formato y los archivos firmados se descargan por separado.",
         "Download language and presentation",
-        "Select Español or English beside the PDFs. The language changes headings and labels; your responses retain their original language. For older versions, the updated reference copy includes the new layout and risk map; Original format retains the earlier presentation. A reference copy does not replace signed files.",
+        "Select Español or English beside the PDFs. The language changes headings and labels; your responses retain their original language. Submitted versions download directly with the current presentation. The earlier presentation is available in History of this version. Documents prepared for signing retain their format, and signed files are downloaded separately.",
       ],
       [
         "Enlaces recuperados al retomar",
@@ -1612,9 +1612,9 @@ export const manualChapters: ManualChapter[] = [
       ],
       [
         "Descargar comprobante de recepción",
-        "PDF con proyecto, referencia, fecha y hora y QR de los documentos recibidos. Identifica a la persona natural con su nombre y cédula, o a la organización con su nombre y RUC. Si la descarga no comienza, repítala. En envíos anteriores puede elegir Copia de consulta actualizada o Formato original; la copia usa los datos de ese envío y no reemplaza los documentos firmados.",
+        "PDF con proyecto, referencia, fecha y hora y QR de los documentos recibidos. Identifica a la persona natural con su nombre y cédula, o a la organización con su nombre y RUC. Descarga directamente la presentación actual con los datos de ese envío. Si la descarga no comienza, repítala. El formato anterior queda en Historial de esta versión, dentro de Versiones presentadas; los documentos firmados se conservan.",
         "Download receipt",
-        "PDF with project, reference, date and time and QR codes for received documents. It identifies the individual by name and identity card, or the organization by name and RUC. Retry if the download does not start. For older submissions choose Updated reference copy or Original format; the copy uses that submission's data and does not replace signed documents.",
+        "PDF with project, reference, date and time and QR codes for received documents. It identifies the individual by name and identity card, or the organization by name and RUC. Downloads the current presentation directly using that submission's data. Retry if the download does not start. The earlier format is available in History of this version, under Submitted versions; signed documents are preserved.",
       ],
       [
         "Versiones presentadas",
