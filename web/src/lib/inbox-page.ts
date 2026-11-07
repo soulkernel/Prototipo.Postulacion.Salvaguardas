@@ -27,3 +27,25 @@ export function inboxPaging(query: { page?: string; size?: string }) {
     size: [10, 25, 50].includes(Number(query.size)) ? Number(query.size) : 10,
   };
 }
+
+export function inboxSearch(value?: string) {
+  return (value || "").trim().replace(/\s+/gu, " ").slice(0, 200);
+}
+
+export function inboxHref(input: {
+  call: string;
+  category: string;
+  page: number;
+  size: number;
+  q?: string;
+}) {
+  const query = new URLSearchParams({
+    call: input.call,
+    category: input.category,
+    page: String(input.page),
+    size: String(input.size),
+  });
+  const search = inboxSearch(input.q);
+  if (search) query.set("q", search);
+  return "/internal?" + query;
+}

@@ -9,6 +9,7 @@ export const previousConceptLayout = "glf-concept-m08-v1";
 export type ConceptPresentation = {
   stage: number;
   layoutVersion?: string | null;
+  identificationByApplicant?: boolean;
 };
 // Shared by capture, review and new exports; persisted field names do not change.
 export const projectDescriptionOrder = [

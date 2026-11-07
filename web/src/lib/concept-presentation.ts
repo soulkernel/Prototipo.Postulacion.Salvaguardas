@@ -14,6 +14,7 @@ import {
   replicationLabel,
 } from "./sustainability-plan";
 import { identityFields, narrativeFields } from "./fields";
+import { applicantIdentification } from "./document-presentation";
 import { callThemeLabel } from "./call-themes";
 import { partnerRecords } from "./partners";
 import { projectDurationText } from "./applicant-validation";
@@ -237,6 +238,8 @@ export function conceptSections(
   const hasPartnerSupport = partners.some((p) => p.support !== undefined);
   const groupedDates = groupsProjectDates(presentation);
   const glfForm = usesCurrentGlfForm(presentation);
+  const identifyApplicant = presentation.identificationByApplicant !== false;
+  const applicant = applicantIdentification(c, locale);
   const details = identityFields
     .filter(
       (f) =>
@@ -244,6 +247,7 @@ export function conceptSections(
           "requested_amount",
           "cofinance_amount",
           "admin_cost",
+          ...(identifyApplicant ? ["applicant_name"] : []),
           ...(hasPartnerSupport ? ["partners"] : []),
           ...(groupedDates ? ["start_date", "end_date"] : []),
         ].includes(f.key),
@@ -287,6 +291,14 @@ export function conceptSections(
     ],
     [es ? "Categoría de subvención" : "Grant category", categoryLabel],
   );
+  if (identifyApplicant) {
+    details.splice(
+      3,
+      0,
+      [applicant.nameLabel, applicant.name],
+      [applicant.identificationLabel, applicant.identification],
+    );
+  }
   for (const [key, label] of (c.applicant_type === "individual"
     ? [
         [
@@ -304,7 +316,8 @@ export function conceptSections(
     keyof Concept,
     string,
   ][]) {
-    if (c[key]) details.push([label, value(key)]);
+    if (c[key] && (!identifyApplicant || key === "residence_number"))
+      details.push([label, value(key)]);
   }
   const sections: ConceptSection[] = [
     {

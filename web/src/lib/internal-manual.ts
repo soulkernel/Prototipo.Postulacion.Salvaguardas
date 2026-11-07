@@ -264,6 +264,10 @@ export const internalManualChapters: ManualChapter[] = [
         "Call · Category · Rows per page",
       ],
       [
+        "Buscar expedientes → Buscar / Limpiar",
+        "Search applications → Search / Clear",
+      ],
+      [
         "Tarjetas de avance de los expedientes filtrados",
         "Progress cards for filtered applications",
       ],
@@ -281,6 +285,14 @@ export const internalManualChapters: ManualChapter[] = [
       [
         "Seleccione convocatoria, categoría y cantidad de filas; el listado se actualiza al cambiar cada selector y vuelve a la primera página.",
         "Select call, category and number of rows; the list updates when each selector changes and returns to the first page.",
+      ],
+      [
+        "Escriba parte del código, título, nombre del proponente u organización, o persona de contacto; pulse Buscar o Enter. La búsqueda ignora mayúsculas y tildes y consulta todas las páginas de los filtros seleccionados. Use Todas las convocatorias para buscar en años anteriores.",
+        "Enter part of the reference, title, applicant or organization name, or contact person; click Search or press Enter. Search ignores case and accents and covers all pages within the selected filters. Use All calls to search previous years.",
+      ],
+      [
+        "Limpiar elimina el texto de búsqueda y conserva convocatoria, categoría y filas por página. Al revisar un expediente y volver, se conservan búsqueda, filtros y página. Si no hay coincidencias, cambie el texto o amplíe los filtros.",
+        "Clear removes the search text and keeps call, category and page size. Opening an application and returning preserves search, filters and page. If there are no matches, change the text or broaden the filters.",
       ],
       [
         "Compare referencia, título, proponente y etapa. Recorra las páginas si hay más resultados que filas visibles.",
@@ -396,6 +408,12 @@ export const internalManualChapters: ManualChapter[] = [
         "Identifica la recepción de esa versión y permite contrastar la fase y los datos registrados en el envío.",
         "Submission receipt",
         "Identifies receipt of that version and lets you cross-check its stage and recorded submission data.",
+      ],
+      [
+        "Identificación del proponente",
+        "En comprobantes y notas conceptuales del formato actual: persona natural, nombre del responsable del proyecto y su cédula; organización, nombre de la organización y su RUC. La persona de contacto se mantiene separada. Las copias de consulta de envíos anteriores usan sus datos registrados; no completan datos faltantes ni sustituyen originales o firmas.",
+        "Applicant identification",
+        "Current-format receipts and concept notes show the individual project lead with their identity card, or the organization name with its RUC. The contact person remains separate. Updated reference copies use the historical submission's recorded data; they do not fill missing data or replace originals or signatures.",
       ],
       [
         "Anexo 1",
@@ -2162,7 +2180,7 @@ export const internalManualGuide: ManualGuide = {
     "Personal interno y consulta autorizada",
     "Internal staff and authorized readers",
   ],
-  updated: ["4 de noviembre de 2026", "4 November 2026"],
+  updated: ["7 de noviembre de 2026", "7 November 2026"],
   journey: [
     ["Expedientes", "Applications", "expedientes"],
     ["Convocatorias", "Calls", "convocatorias"],

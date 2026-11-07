@@ -63,10 +63,7 @@ export function VersionDownloads({
       </p>
       <div className="report-download-actions">
         {!prepared && (
-          <DocumentDownload
-            href={`/receipts/${id}?lang=${language}`}
-            locale={locale}
-          >
+          <DocumentDownload href={`/receipts/${id}?${query}`} locale={locale}>
             {es
               ? "Descargar comprobante de recepción"
               : "Download submission receipt"}

@@ -1,6 +1,55 @@
 import type { Locale, Concept } from "./domain";
 
 export type DocumentMetadata = { format_version: number; author_name: string };
+export const currentDocumentFormat = 4;
+
+// Identification belongs to the applicant, never to an unrelated contact.
+export function applicantIdentification(
+  concept: Pick<
+    Concept,
+    "applicant_type" | "applicant_name" | "identity_number" | "ruc"
+  >,
+  locale: Locale,
+) {
+  const es = locale === "es";
+  const individual = concept.applicant_type === "individual";
+  const organization = concept.applicant_type === "organization";
+  const missing = es
+    ? "No registrado en esta versión"
+    : "Not recorded in this version";
+  return {
+    nameLabel: individual
+      ? es
+        ? "Responsable del proyecto"
+        : "Project lead"
+      : organization
+        ? es
+          ? "Nombre de la organización"
+          : "Organization name"
+        : es
+          ? "Nombre del proponente"
+          : "Applicant name",
+    name: concept.applicant_name?.trim() || missing,
+    identificationLabel: individual
+      ? es
+        ? "Cédula del responsable del proyecto"
+        : "Project lead identity card"
+      : organization
+        ? es
+          ? "RUC de la organización"
+          : "Organization RUC"
+        : es
+          ? "Identificación del proponente"
+          : "Applicant identification",
+    identification:
+      (individual
+        ? concept.identity_number
+        : organization
+          ? concept.ruc
+          : ""
+      )?.trim() || missing,
+  };
+}
 export const privacyNotice: Record<Locale, string> = {
   es: "CONFIDENCIALIDAD Y PROTECCIÓN DE DATOS. Este documento puede contener datos personales. Su acceso, uso y comunicación deben limitarse a personas autorizadas y a las finalidades de gestión y evaluación de proyectos del GLF, conforme a la normativa aplicable. Utilice los canales oficiales autorizados. Imprima únicamente cuando sea necesario.",
   en: "CONFIDENTIALITY AND DATA PROTECTION. This document may contain personal data. Access, use and disclosure must be limited to authorized persons and the purposes of GLF project management and evaluation, in accordance with applicable regulations. Use authorized official channels. Print only when necessary.",

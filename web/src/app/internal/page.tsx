@@ -1,5 +1,10 @@
 import { InboxPagination } from "@/components/inbox-pagination";
-import { inboxPaging, type InboxPage } from "@/lib/inbox-page";
+import {
+  inboxPaging,
+  inboxSearch,
+  inboxHref,
+  type InboxPage,
+} from "@/lib/inbox-page";
 import { ModuleHeading } from "@/components/module-heading";
 import { InboxFilters } from "@/components/inbox-filters";
 import { resolveFilters } from "@/lib/inbox-filters";
@@ -17,6 +22,7 @@ export default async function InternalPage({
     category?: string;
     page?: string;
     size?: string;
+    q?: string;
   }>;
 }) {
   const { db, profile } = await requireReadViewer([
@@ -32,23 +38,24 @@ export default async function InternalPage({
   const calls = await getCalls();
   const filters = resolveFilters(calls, query, locale);
   const paging = inboxPaging(query);
-  const { data, error } = await db.rpc("internal_application_page", {
+  const search = inboxSearch(query.q);
+  const { data, error } = await db.rpc("internal_application_search", {
     filter_call: filters.call === "all" ? null : filters.call,
     filter_category: filters.category === "all" ? null : filters.category,
     requested_page: paging.page,
     page_size: paging.size,
+    search_text: search,
   });
   if (error || !data) throw new Error("Cannot load application page");
   const result = data as InboxPage;
   const filtered = result.items;
-  const returnTo =
-    "/internal?" +
-    new URLSearchParams({
-      call: filters.call,
-      category: filters.category,
-      page: String(result.page),
-      size: String(result.page_size),
-    });
+  const returnTo = inboxHref({
+    call: filters.call,
+    category: filters.category,
+    page: result.page,
+    size: result.page_size,
+    q: search,
+  });
   const categoryLabel = (id: string) =>
     filters.options.find((c) => c.id === id)?.title || "—";
   return (
@@ -89,6 +96,8 @@ export default async function InternalPage({
         )}
       </nav>
       <InboxFilters
+        key={`${filters.call}:${filters.category}:${result.page_size}:${search}`}
+        search={search}
         es={es}
         pageSize={result.page_size}
         call={filters.call}
@@ -125,11 +134,17 @@ export default async function InternalPage({
       </div>
       <section className="live-card">
         <h2>{es ? "Bandeja de expedientes" : "Application inbox"}</h2>
-        <p>
+        <p role="status" aria-live="polite">
           {result.total}{" "}
           {es
             ? "expedientes coinciden con los filtros."
             : "applications match the filters."}
+          {search && (
+            <>
+              {" "}
+              {es ? "Búsqueda" : "Search"}: «{search}».
+            </>
+          )}
         </p>
         {filtered?.length ? (
           <div className="table-scroll">
@@ -140,7 +155,7 @@ export default async function InternalPage({
                   <th>{es ? "Proyecto" : "Project"}</th>
                   <th>
                     {es
-                      ? "Proponente / Responsable"
+                      ? "Proponente / Persona de contacto"
                       : "Applicant / Contact person"}
                   </th>
                   <th>{es ? "Categoría" : "Category"}</th>
@@ -194,11 +209,12 @@ export default async function InternalPage({
         ) : (
           <p>
             {es
-              ? "No hay expedientes recibidos que coincidan con estos filtros."
-              : "No received applications match these filters."}
+              ? "No hay expedientes recibidos que coincidan. Pruebe otro texto, limpie la búsqueda o amplíe los filtros."
+              : "No received applications match. Try different text, clear the search or broaden the filters."}
           </p>
         )}
         <InboxPagination
+          search={search}
           page={result.page}
           pages={result.pages}
           total={result.total}

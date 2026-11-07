@@ -2,6 +2,7 @@ import {
   authorReference,
   privacyNotice,
   justifiedWords,
+  currentDocumentFormat,
   type DocumentMetadata,
 } from "./document-presentation";
 import {
@@ -448,7 +449,13 @@ export async function applicationPdf({
         ? `Se solicita al GLF un financiamiento de ${payload.concept.requested_amount === null ? "monto no consignado" : money(payload.concept.requested_amount)} y se prevé un cofinanciamiento de ${payload.concept.cofinance_amount === null ? "monto no consignado" : money(payload.concept.cofinance_amount)}.`
         : `The applicant requests ${payload.concept.requested_amount === null ? "an unspecified amount" : money(payload.concept.requested_amount)} from GLF and plans cofinancing of ${payload.concept.cofinance_amount === null ? "an unspecified amount" : money(payload.concept.cofinance_amount)}.`,
     );
-    const presentation = { stage, layoutVersion: conceptLayoutVersion };
+    const presentation = {
+      stage,
+      layoutVersion: conceptLayoutVersion,
+      identificationByApplicant:
+        updatedCopy ||
+        (documentMetadata?.format_version ?? 0) >= currentDocumentFormat,
+    };
     const sections = conceptSections(
       payload.concept,
       locale,

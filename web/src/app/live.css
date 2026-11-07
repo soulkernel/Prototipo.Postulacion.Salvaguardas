@@ -1264,6 +1264,16 @@ dialog.narrative-adjust-dialog {
 /* FeedbackLink wraps its label; keep icons beside text inside that wrapper. */
 .live-header nav a > span { display: inline-flex; align-items: center; gap: 6px; }
 .live-header nav a svg { flex-shrink: 0; }
+.inbox-search { display: grid; gap: 8px; margin-bottom: 20px; }
+.inbox-search > label { font-weight: 700; }
+.inbox-search-controls { display: flex; gap: 8px; align-items: stretch; }
+.inbox-search-controls input { flex: 1; min-width: 0; }
+.inbox-search-controls button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex-shrink: 0; min-height: 44px; }
+.inbox-search-controls button > span { display: inline-flex; align-items: center; gap: 6px; }
+@media (max-width: 640px) {
+  .inbox-search-controls { flex-wrap: wrap; }
+  .inbox-search-controls input { flex-basis: 100%; }
+}
 .header-account-controls .language-switch,
 .header-account-controls .header-sign-out { height: 40px; min-height: 40px; }
 .header-account-controls .header-sign-out { padding-block: 5px; }

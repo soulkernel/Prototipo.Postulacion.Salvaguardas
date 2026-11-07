@@ -3,7 +3,8 @@ import assert from "node:assert/strict";
 import { readFile, readdir } from "node:fs/promises";
 import { PGlite } from "@electric-sql/pglite";
 import { vector } from "@electric-sql/pglite-pgvector";
-const db = new PGlite({ extensions: { vector } });
+import { pg_trgm } from "@electric-sql/pglite/contrib/pg_trgm";
+const db = new PGlite({ extensions: { vector, pg_trgm } });
 let currentPayloadValidator;
 const ids = {
   applicant: "00000000-0000-4000-8000-000000000001",
@@ -3971,7 +3972,7 @@ test("GLF observation changes preserve snapshots, isolate follow-up notes and pa
  }
  const id=idsForPage[0];
  const frozen=(await db.query("select document_metadata from public.application_versions where application_id=$1",[id])).rows[0].document_metadata;
- assert.equal(frozen.format_version,3);assert.equal(frozen.author_name,beforeName);
+ assert.equal(frozen.format_version,4);assert.equal(frozen.author_name,beforeName);
  await db.query("update public.profiles set full_name='Changed later' where id=$1",[owner]);
  assert.deepEqual((await db.query("select document_metadata from public.application_versions where application_id=$1",[id])).rows[0].document_metadata,frozen);
  // Formal reviews keep their context; follow-up notes cannot satisfy decision gates.
@@ -4013,6 +4014,33 @@ test("GLF observation changes preserve snapshots, isolate follow-up notes and pa
  for(const role of ['anon','authenticated'])for(const permission of ['INSERT','UPDATE','DELETE','TRUNCATE'])assert.equal((await db.query("select has_table_privilege($1,'public.application_review_notes',$2) allowed",[role,permission])).rows[0].allowed,false);
 });
 
+test("inbox search spans all matched pages, respects filters, submitted snapshots, literal text and access scope", async()=>{
+ const owner=await temporaryAccount(),academic=await temporaryAccount(true), created=[];
+ for(let i=0;i<12;i++){
+  const id=crypto.randomUUID();created.push(id);
+  await db.query("insert into public.applications(id,reference_code,call_id,applicant_id,status,stage,revision,payload,rules_snapshot,submitted_at) values($1,$2,$3,$4,'under_review',1,2,$5,$6,'2026-11-07T12:00:00Z')",[id,`SEARCH-QA-${i}`,call,owner,{concept:{title:'Draft invisible sentinel',category_id:'other'}},rules]);
+  const saved={concept:{title:`Conservación costera ${i}`,applicant_name:'Organización Águila',contact_name:'María José',category_id:'search-qa'}};
+  await db.query("insert into public.application_versions(application_id,revision,stage,payload,rules_snapshot,actor_id,submitted_at) values($1,1,1,$2,$3,$4,'2026-11-06T12:00:00Z'),($1,2,1,$5,$3,$4,'2026-11-07T12:00:00Z')",[id,{concept:{title:'Previous version sentinel',category_id:'search-qa'}},rules,owner,saved]);
+ }
+ const args={filter_call:call,filter_category:'search-qa',requested_page:1,page_size:10,search_text:'  CONSERVACION   costera  '};
+ const first=await rpc('internal_application_search',args,'admin'),second=await rpc('internal_application_search',{...args,requested_page:2},'admin');
+ assert.equal(first.total,12);assert.equal(first.in_review,12);assert.equal(first.items.length,10);assert.equal(second.items.length,2);
+ assert.equal(new Set([...first.items,...second.items].map(a=>a.id)).size,12);
+ for(const q of ['AGUILA','maria jose','conservacio\u0301n costera','SEARCH-QA-'])assert.equal((await rpc('internal_application_search',{...args,search_text:q},'admin')).total,12,q);
+ for(const q of ['Draft invisible','Previous version','%','_','\\'])assert.equal((await rpc('internal_application_search',{...args,search_text:q},'admin')).total,0,q);
+ assert.equal((await rpc('internal_application_search',{...args,requested_page:999},'admin')).page,2);
+ assert.equal((await rpc('internal_application_search',{...args,filter_category:'missing'},'admin')).total,0);
+ assert.equal((await rpc('internal_application_search',{...args,filter_call:crypto.randomUUID()},'admin')).total,0);
+ assert.equal((await rpc('internal_application_search',{...args,search_text:'SEARCH-QA-11'},'admin')).items[0].id,created[11]);
+ await assert.rejects(rpc('internal_application_search',args,owner),/GLF_FORBIDDEN/);
+ assert.equal((await rpc('internal_application_search',args,academic)).total,0);
+ await db.query('insert into private.academic_application_scope(application_id) values($1)',[created[0]]);
+ assert.equal((await rpc('internal_application_search',args,academic)).total,1);
+ await db.exec("select set_config('request.jwt.claim.aal','aal1',false)");
+ try{await assert.rejects(rpc('internal_application_search',args,'admin'),/GLF_FORBIDDEN/);}finally{await db.exec("select set_config('request.jwt.claim.aal','aal2',false)");}
+ assert.equal((await db.query("select has_function_privilege('anon','public.internal_application_search(uuid,text,integer,integer,text)','EXECUTE') allowed")).rows[0].allowed,false);
+});
+
 test("risk map format migration keeps prepared snapshots and inherited signing formats immutable", async()=>{
  const owner=await temporaryAccount(),app=await rpc('create_application',{call_id:call},owner);
  const oldSql=await readFile(new URL('../../supabase/migrations/202611040057_review_documents_and_inbox.sql',import.meta.url),'utf8');
@@ -4029,5 +4057,12 @@ test("risk map format migration keeps prepared snapshots and inherited signing f
   assert.deepEqual(inherited,prepared.document_metadata);
   const fresh=(await db.query("insert into public.prepared_documents(application_id,revision,stage,payload) values($1,78,1,$2) returning document_metadata",[app,prepared.payload])).rows[0].document_metadata;
   assert.equal(fresh.format_version,3);
+  const beforeIdentity=await snapshot();
+  await db.exec(await readFile(new URL('../../supabase/migrations/202611070060_applicant_identification_format.sql',import.meta.url),'utf8'));
+  assert.deepEqual(await snapshot(),beforeIdentity);
+  const inherited3=(await db.query("insert into public.application_versions(application_id,revision,stage,payload,rules_snapshot,actor_id) values($1,78,1,$2,$3,$4) returning document_metadata",[app,prepared.payload,rules,owner])).rows[0].document_metadata;
+  assert.deepEqual(inherited3,fresh);
+  const fresh4=(await db.query("insert into public.prepared_documents(application_id,revision,stage,payload) values($1,79,1,$2) returning document_metadata",[app,prepared.payload])).rows[0].document_metadata;
+  assert.equal(fresh4.format_version,4);
  } finally { await db.exec('rollback'); }
 });

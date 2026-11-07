@@ -7,12 +7,15 @@ export function ReceiptDownload({
   id,
   locale,
   automatic = false,
+  legacy = false,
 }: {
   id: string;
   locale: Locale;
   automatic?: boolean;
+  legacy?: boolean;
 }) {
   const [language, setLanguage] = useState(locale);
+  const [updated, setUpdated] = useState(legacy);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
   const flight = useRef(false);
@@ -24,7 +27,9 @@ export function ReceiptDownload({
     setBusy(true);
     setError(false);
     try {
-      const response = await fetch(`/receipts/${id}?lang=${language}`);
+      const response = await fetch(
+        `/receipts/${id}?lang=${language}${legacy && updated ? "&view=updated" : ""}`,
+      );
       if (
         !response.ok ||
         !response.headers.get("content-type")?.includes("application/pdf")
@@ -49,7 +54,7 @@ export function ReceiptDownload({
       flight.current = false;
       setBusy(false);
     }
-  }, [id, language]);
+  }, [id, language, legacy, updated]);
   useEffect(() => {
     if (automatic && !started.current) {
       started.current = true;
@@ -58,6 +63,23 @@ export function ReceiptDownload({
   }, [automatic, download]);
   return (
     <div className="document-download-control">
+      {legacy && (
+        <label className="download-language">
+          {es ? "Presentación del comprobante" : "Receipt presentation"}
+          <select
+            disabled={busy}
+            value={updated ? "updated" : "original"}
+            onChange={(event) => setUpdated(event.target.value === "updated")}
+          >
+            <option value="updated">
+              {es ? "Copia de consulta actualizada" : "Updated reference copy"}
+            </option>
+            <option value="original">
+              {es ? "Formato original" : "Original format"}
+            </option>
+          </select>
+        </label>
+      )}
       <label className="download-language">
         {es ? "Idioma del comprobante" : "Receipt language"}
         <select

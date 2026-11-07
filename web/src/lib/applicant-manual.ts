@@ -1,8 +1,8 @@
 import type { ManualChapter } from "./manual-types";
 export type { ManualChapter } from "./manual-types";
 export const manualUpdatedDate = [
-  "4 de noviembre de 2026",
-  "4 November 2026",
+  "7 de noviembre de 2026",
+  "7 November 2026",
 ] as const;
 export const manualFormSteps = [
   ["Información general", "General information", "datos"],
@@ -1612,9 +1612,9 @@ export const manualChapters: ManualChapter[] = [
       ],
       [
         "Descargar comprobante de recepción",
-        "PDF con proyecto, referencia, responsable, fecha y hora registradas y dos QR de los documentos. Puede volver a descargarlo si la descarga inicial no comienza.",
+        "PDF con proyecto, referencia, fecha y hora y QR de los documentos recibidos. Identifica a la persona natural con su nombre y cédula, o a la organización con su nombre y RUC. Si la descarga no comienza, repítala. En envíos anteriores puede elegir Copia de consulta actualizada o Formato original; la copia usa los datos de ese envío y no reemplaza los documentos firmados.",
         "Download receipt",
-        "PDF containing project, reference, responsible person, recorded date and time and two document QR codes. Download again if the initial download does not start.",
+        "PDF with project, reference, date and time and QR codes for received documents. It identifies the individual by name and identity card, or the organization by name and RUC. Retry if the download does not start. For older submissions choose Updated reference copy or Original format; the copy uses that submission's data and does not replace signed documents.",
       ],
       [
         "Versiones presentadas",

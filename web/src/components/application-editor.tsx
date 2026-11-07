@@ -1,4 +1,5 @@
 "use client";
+import { currentDocumentFormat } from "@/lib/document-presentation";
 import { narrativeTextForEditing } from "@/lib/concept-presentation";
 import { ConceptReview } from "./concept-review";
 import { SgasExperienceFields, GeneratedSgasAttachment, SgasReview } from "./sgas-experience-fields";
@@ -3528,7 +3529,7 @@ export function ApplicationEditor({
                   {submissionPhase(v.stage, locale)}
                 </span>
               </div>
-              <VersionDownloads id={v.id} stage={v.stage} locale={locale} legacy={(v.document_metadata?.format_version ?? 0) < 3} />
+              <VersionDownloads id={v.id} stage={v.stage} locale={locale} legacy={(v.document_metadata?.format_version ?? 0) < currentDocumentFormat} />
             </div>
           ))}
         </section>

@@ -1,5 +1,6 @@
 import Link from "./feedback-link";
 import type { Locale } from "@/lib/domain";
+import { inboxHref } from "@/lib/inbox-page";
 export function InboxPagination({
   page,
   pages,
@@ -8,6 +9,7 @@ export function InboxPagination({
   call,
   category,
   locale,
+  search = "",
 }: {
   page: number;
   pages: number;
@@ -16,10 +18,11 @@ export function InboxPagination({
   call: string;
   category: string;
   locale: Locale;
+  search?: string;
 }) {
   const es = locale === "es";
   const href = (n: number) =>
-    `/internal?${new URLSearchParams({ call, category, page: String(n), size: String(pageSize) })}`;
+    inboxHref({ call, category, page: n, size: pageSize, q: search });
   const numbers = [
     ...new Set([
       1,

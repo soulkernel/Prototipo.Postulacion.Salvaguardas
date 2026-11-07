@@ -1,4 +1,5 @@
 import { RiskOverview } from "@/components/risk-overview";
+import { currentDocumentFormat } from "@/lib/document-presentation";
 import { VersionDownloads } from "@/components/version-downloads";
 import { ReviewHistory } from "@/components/review-history";
 import { ActivityDatesTable } from "@/components/activity-review";
@@ -225,7 +226,7 @@ export default async function ReviewPage({
               id={v.id}
               stage={v.stage}
               locale={locale}
-              legacy={(v.document_metadata?.format_version ?? 0) < 3}
+              legacy={(v.document_metadata?.format_version ?? 0) < currentDocumentFormat}
             />
           </div>
         ))}

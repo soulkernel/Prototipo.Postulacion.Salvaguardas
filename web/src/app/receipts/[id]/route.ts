@@ -1,4 +1,8 @@
-import { proponentIdentification } from "@/lib/document-presentation";
+import {
+  applicantIdentification,
+  currentDocumentFormat,
+  proponentIdentification,
+} from "@/lib/document-presentation";
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { getViewer } from "@/lib/data";
@@ -57,11 +61,18 @@ export async function GET(
   const category = rules.categories.find(
     (c) => c.id === payload.concept.category_id,
   );
+  const updatedCopy = request.nextUrl.searchParams.get("view") === "updated";
   const bytes = await receiptPdf({
     id,
     reference: app.reference_code,
     title: payload.concept.title,
     responsible: payload.concept.contact_name,
+    applicant:
+      updatedCopy ||
+      (version.document_metadata?.format_version ?? 0) >= currentDocumentFormat
+        ? applicantIdentification(payload.concept, locale)
+        : undefined,
+    updatedCopy,
     identification: proponentIdentification(payload.concept, locale),
     actorId: version.actor_id,
     category: category
@@ -79,7 +90,7 @@ export async function GET(
   return new NextResponse(Buffer.from(bytes), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="${receiptNumber(id)}_${documentStamp(version.submitted_at)}_Galapagos_${locale}.pdf"`,
+      "Content-Disposition": `attachment; filename="${receiptNumber(id)}_${documentStamp(version.submitted_at)}_Galapagos_${locale}${updatedCopy ? "_consulta" : ""}.pdf"`,
       "Cache-Control": "private, no-store",
       "X-Content-Type-Options": "nosniff",
       "Referrer-Policy": "no-referrer",

@@ -1,4 +1,5 @@
 import { getRequestTime } from "@/lib/data";
+import { currentDocumentFormat } from "@/lib/document-presentation";
 import { redirect } from "next/navigation";
 import { getApplication } from "@/lib/data";
 import { getLocale } from "@/lib/locale";
@@ -111,6 +112,7 @@ export default async function ApplicationPage({
               : "Download your receipt here. If your browser blocks the automatic download, use the button."}
           </p>
           <ReceiptDownload
+            legacy={(versions[0].document_metadata?.format_version ?? 0) < currentDocumentFormat}
             id={versions[0].id}
             locale={locale}
             automatic={query.receipt === versions[0].id}

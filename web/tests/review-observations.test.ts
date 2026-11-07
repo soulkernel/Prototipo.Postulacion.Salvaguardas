@@ -4,14 +4,142 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { PDFDocument } from "pdf-lib";
 import {
   authorReference,
+  applicantIdentification,
   proponentIdentification,
   justifiedWords,
 } from "../src/lib/document-presentation";
 import { riskMapEntries, riskMapSummary } from "../src/lib/risk-map";
-import { inboxPaging } from "../src/lib/inbox-page";
+import { inboxPaging, inboxHref, inboxSearch } from "../src/lib/inbox-page";
+import { conceptSections } from "../src/lib/concept-presentation";
 import { applicationPdf } from "../src/lib/pdf";
 import { receiptPdf } from "../src/lib/receipt-pdf";
 import { emptyPayload, newActivity, newRisk } from "../src/lib/domain";
+
+test("applicant names remain paired with their own identification in both languages, never the contact", async () => {
+  await mkdir(".test-artifacts/applicant-identity", { recursive: true });
+  for (const applicant_type of ["individual", "organization"] as const)
+    for (const locale of ["es", "en"] as const) {
+      const p = emptyPayload();
+      Object.assign(p.concept, {
+        applicant_type,
+        applicant_name:
+          applicant_type === "individual"
+            ? "Ana María Prueba"
+            : "Organización Ficticia Costa",
+        contact_name: "Contacto Diferente Prueba",
+        identity_number: "0123456789",
+        ruc: "2099999999001",
+        title: "PRUEBA FICTICIA — Conservación costera",
+      });
+      const applicant = applicantIdentification(p.concept, locale);
+      assert.equal(applicant.name, p.concept.applicant_name);
+      assert.equal(
+        applicant.identification,
+        applicant_type === "individual"
+          ? p.concept.identity_number
+          : p.concept.ruc,
+      );
+      const general = conceptSections(p.concept, locale).find(
+        (s) => s.id === "general",
+      )!;
+      const rows = general.blocks.flatMap((b) =>
+        b.type === "table" ? b.rows : [],
+      );
+      assert.ok(
+        rows.some(
+          ([label, value]) =>
+            label === applicant.nameLabel && value === applicant.name,
+        ),
+      );
+      assert.ok(
+        rows.some(
+          ([label, value]) =>
+            label === applicant.identificationLabel &&
+            value === applicant.identification,
+        ),
+      );
+      assert.equal(
+        rows.filter(([, v]) => v === applicant.identification).length,
+        1,
+      );
+      assert.ok(
+        !rows.some(
+          ([, v]) =>
+            v ===
+            (applicant_type === "individual"
+              ? p.concept.ruc
+              : p.concept.identity_number),
+        ),
+      );
+      const missing = applicantIdentification(
+        { ...p.concept, applicant_name: "", identity_number: "", ruc: "" },
+        locale,
+      );
+      assert.match(missing.name, /No registrado|Not recorded/);
+      assert.match(missing.identification, /No registrado|Not recorded/);
+      const base = {
+        payload: p,
+        reference: "GLF-QA-IDENTIDAD",
+        revision: 1,
+        submittedAt: "2026-11-07T18:00:00Z",
+        kind: "concept" as const,
+        locale,
+        downloadUrl: "https://example.test/qa",
+        stage: 1,
+      };
+      const pdf = await applicationPdf({
+        ...base,
+        documentMetadata: { format_version: 4, author_name: "QA" },
+      });
+      await writeFile(
+        `.test-artifacts/applicant-identity/${applicant_type}-${locale}-concept.pdf`,
+        pdf.bytes,
+      );
+      const receipt = await receiptPdf({
+        id: "00000000-0000-4000-8000-000000000001",
+        reference: base.reference,
+        title: p.concept.title,
+        responsible: p.concept.contact_name,
+        applicant,
+        actorId: "00000000-0000-4000-8000-000000000002",
+        category: "QA",
+        stage: 1,
+        revision: 1,
+        receivedAt: base.submittedAt,
+        attachments: [],
+        baseUrl: "https://example.test",
+        locale,
+      });
+      assert.equal((await PDFDocument.load(receipt)).getPageCount(), 1);
+      await writeFile(
+        `.test-artifacts/applicant-identity/${applicant_type}-${locale}-receipt.pdf`,
+        receipt,
+      );
+    }
+});
+
+test("search URLs preserve literal text, filters and page without allowing query injection", () => {
+  assert.equal(inboxSearch("  Águila  costera \n "), "Águila costera");
+  assert.equal(inboxSearch("x".repeat(201)).length, 200);
+  const q = "Águila &call=other %_";
+  const url = new URL(
+    inboxHref({ call: "all", category: "small", page: 2, size: 25, q }),
+    "https://example.test",
+  );
+  assert.equal(url.searchParams.get("q"), q);
+  assert.equal(url.searchParams.get("call"), "all");
+  assert.equal(url.searchParams.get("category"), "small");
+  assert.equal(url.searchParams.get("page"), "2");
+  assert.ok(
+    !inboxHref({
+      call: "all",
+      category: "all",
+      page: 1,
+      size: 10,
+      q: " ",
+    }).includes("q="),
+  );
+});
 
 test("map summaries count assessments, keep missing ratings separate and never average categories", () => {
   const p = emptyPayload();

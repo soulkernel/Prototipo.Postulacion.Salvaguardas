@@ -1,0 +1,43 @@
+SUGERENCIAS FINALES GLF — ACUERDOS Y ALCANCE DE IMPLEMENTACIÓN
+Fecha: 7 de noviembre de 2026 (Galápagos).
+Fuente: Sugerencias finales para el Sistema GLF 06-11-2026.docx.
+
+Estado
+Se revisaron los tres requerimientos: búsqueda en bandeja de expedientes, identificación en el comprobante de recepción e identificación en los datos generales de la nota conceptual PDF. El usuario aprobó el alcance descrito y autorizó su implementación y publicación. No se ha enviado respuesta al remitente.
+
+Identificación aclarada expresamente por el usuario
+- Persona natural: nombre del responsable del proyecto y número de cédula de esa misma persona.
+- Persona jurídica u organización: nombre de la organización y RUC de la organización.
+- Aplicar esta presentación alternativa al comprobante de recepción y a los datos generales de la nota conceptual.
+- No agregar ni exigir una cédula adicional del responsable cuando el postulante es una organización. Se retira la propuesta anterior de captar ese dato.
+- Reutilizar los datos registrados y asegurar que cada nombre se corresponda con la identificación presentada. No deducir ni inventar identificaciones para expedientes históricos.
+
+Observación que debe incluirse en la respuesta posterior
+Una vez que se implemente y verifique el alcance autorizado y factible, preparar la respuesta al remitente incluyendo la solicitud de aclaración de «otros grupos postulantes».
+
+Fundamento
+El sistema distingue actualmente personas naturales y organizaciones. Si la expresión alude a asociaciones u otras entidades que postulan como organización y cuentan con RUC, pueden utilizar el tratamiento existente. Si alude a colectivos sin RUC o a una nueva modalidad de postulante, es necesario definir sus requisitos de identificación, representación y elegibilidad antes de incorporarlos.
+Esto excede un cambio de presentación en el PDF: podría afectar tipos admitidos por convocatoria, formularios, validaciones, persistencia, documentos, comprobantes, reportes y compatibilidad de expedientes históricos. No implica necesariamente rehacer todo el sistema; implica una ampliación funcional transversal que no recomendamos acometer dentro de este ajuste sin reglas institucionales claras.
+No crear nuevas categorías, permitir ausencia de RUC para organizaciones ni ampliar elegibilidad mientras esa aclaración no se reciba y el usuario no apruebe el alcance.
+
+Redacción propuesta para la comunicación posterior
+«Respecto de la expresión “otros grupos postulantes”, agradeceremos precisar si se refiere a entidades que ya postulan como organizaciones con RUC o a colectivos sin RUC u otra modalidad distinta. Actualmente el sistema contempla personas naturales, identificadas mediante cédula, y organizaciones, identificadas mediante RUC. Incorporar una modalidad adicional requiere definir previamente sus requisitos de identificación, representación y elegibilidad, y ajustar de forma coherente los formularios, las validaciones y los documentos relacionados. Por ello, no recomendamos ampliar los tipos de postulante dentro de este ajuste sin esa definición. Si se trata de organizaciones con RUC, el tratamiento existente permite atenderlas.»
+
+Segunda aclaración que debe incluirse en la respuesta posterior
+Por instrucción del usuario, explicar que desde el ingreso al formulario la identificación depende del tipo de postulante: cédula para personas naturales y RUC para personas jurídicas u organizaciones. No solicitar una cédula adicional de un responsable de organización dentro del alcance actual.
+Pedir al remitente que confirme expresamente si desea incorporar datos adicionales de una persona responsable del proyecto para organizaciones y cuáles serían esos datos. En caso afirmativo, proponer captar esa información en la propuesta completa (fase 2, después de la preselección), ajustar su almacenamiento y validaciones, y reflejarla en los documentos y la consulta de esa fase. El alcance requerirá una nueva definición y autorización antes de implementarlo.
+
+Precisiones para redactar una respuesta fiel al funcionamiento actual
+- El formulario ya contiene nombre, correo y teléfono de una persona de contacto. No afirmar que no se captura ninguna información personal de contacto de las organizaciones ni equiparar automáticamente contacto con responsable del proyecto.
+- Explicar que se modificarían los campos, la lógica de validación, el modelo de datos y las salidas relacionadas. No afirmar que es necesario cambiar todo el algoritmo o rehacer toda la base de datos; sería una ampliación específica con efectos en varios componentes.
+- La distinción cédula/RUC se refiere a la identificación solicitada. Se conserva el requisito vigente de credencial de residencia permanente para personas naturales; no decir que la cédula es el único requisito de todo el formulario.
+
+Redacción adicional propuesta
+«Desde el ingreso al formulario, la identificación se solicita según el tipo de postulante: cédula para personas naturales y RUC para personas jurídicas u organizaciones. Por ello, en los documentos mostraremos el nombre de la persona natural con su cédula o el nombre de la organización con su RUC, según corresponda. Actualmente también se registran datos de contacto. Si adicionalmente requieren identificar a una persona responsable del proyecto en el caso de organizaciones, agradeceremos confirmar este requerimiento y especificar los datos que desean incluir. Proponemos recoger esa información durante la postulación de la propuesta completa, posterior a la preselección, con los ajustes correspondientes en las validaciones, el modelo de datos y los documentos de esa fase. La nota conceptual mantendrá la identificación de las organizaciones mediante su nombre y RUC, sin exigir una cédula adicional.»
+
+Precisión posterior del usuario sobre la fase
+Si GLF confirma que requiere datos adicionales de un responsable para organizaciones, proponer su captura durante la postulación de la propuesta completa (fase 2, después de la preselección), no en la nota conceptual. Esta precisión reemplaza la propuesta anterior de solicitar esos datos adicionales desde Información general de fase 1. La definición de campos, requisitos y alcance sigue pendiente de confirmación; no implementar ahora esta ampliación.
+Incluir en la respuesta: «De confirmarse la necesidad de identificar a un responsable adicional del proyecto para organizaciones, proponemos recoger esa información en la fase de propuesta completa, posterior a la preselección. La nota conceptual mantendrá la identificación de la organización por su nombre y RUC.»
+
+Autorización y ejecución
+El usuario autorizó implementar el buscador y la identificación alternativa acordada, con pruebas, manuales y publicación. Trabajo en curso; registrar los resultados reales al finalizar. Las dos aclaraciones siguen fuera del alcance de implementación. Al concluir y verificarlo, informar únicamente cambios efectivamente realizados e incluir las observaciones anteriores en el borrador de respuesta. No enviar el correo sin instrucción expresa.

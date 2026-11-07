@@ -6,6 +6,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { receiptDate, receiptNumber, type ReceiptAttachment } from "./receipt";
 import type { Locale } from "./domain";
+import type { applicantIdentification } from "./document-presentation";
 
 export async function receiptPdf(input: {
   id: string;
@@ -13,6 +14,8 @@ export async function receiptPdf(input: {
   title: string;
   responsible: string;
   identification?: { label: string; value: string };
+  applicant?: ReturnType<typeof applicantIdentification>;
+  updatedCopy?: boolean;
   actorId: string;
   category: string;
   stage: number;
@@ -71,11 +74,23 @@ export async function receiptPdf(input: {
   );
   y -= 5;
   text(receiptNumber(input.id), true, 9);
+  if (input.updatedCopy)
+    text(
+      es
+        ? "COPIA DE CONSULTA ACTUALIZADA · Datos del envío original"
+        : "UPDATED REFERENCE COPY · Original submission data",
+      true,
+      9,
+    );
   y -= 10;
   const fields = [
     [es ? "Código del expediente" : "Application reference", input.reference],
     [es ? "Proyecto" : "Project", input.title],
-    [es ? "Responsable del proyecto" : "Project lead", input.responsible],
+    [
+      input.applicant?.nameLabel ||
+        (es ? "Responsable del proyecto" : "Project lead"),
+      input.applicant?.name || input.responsible,
+    ],
     [es ? "Categoría de subvención" : "Grant category", input.category],
     [
       es ? "Fase y versión recibida" : "Phase and received version",
@@ -95,16 +110,30 @@ export async function receiptPdf(input: {
   ];
   for (const [label, value] of fields) {
     if (
-      label === (es ? "Responsable del proyecto" : "Project lead") &&
-      input.identification
+      label ===
+        (input.applicant?.nameLabel ||
+          (es ? "Responsable del proyecto" : "Project lead")) &&
+      (input.applicant || input.identification)
     ) {
       const start = y;
       text(label, true, 10, 230, 52);
       text(value || "—", false, 10, 230, 52);
       const leftBottom = y;
       y = start;
-      text(input.identification.label, true, 10, 240, 303);
-      text(input.identification.value, false, 10, 240, 303);
+      text(
+        input.applicant?.identificationLabel || input.identification!.label,
+        true,
+        10,
+        240,
+        303,
+      );
+      text(
+        input.applicant?.identification || input.identification!.value,
+        false,
+        10,
+        240,
+        303,
+      );
       y = Math.min(y, leftBottom);
     } else {
       text(label, true);
