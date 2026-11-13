@@ -5,7 +5,7 @@ import { ReportDownloads } from "@/components/report-downloads";
 import { BackLink } from "@/components/back-link";
 import Form from "next/form";
 import { SubmitButton } from "@/components/submit-button";
-import { requireReadViewer, getCallOptions } from "@/lib/data";
+import { requireViewer, getCallOptions } from "@/lib/data";
 import { getLocale } from "@/lib/locale";
 import { Shell } from "@/components/shell";
 export default async function Reports({
@@ -13,7 +13,7 @@ export default async function Reports({
 }: {
   searchParams: Promise<{ call?: string }>;
 }) {
-  const { db, profile } = await requireReadViewer([
+  const { db } = await requireViewer([
     "grants_manager",
     "project_coordinator",
     "sustainability_reviewer",
@@ -31,17 +31,14 @@ export default async function Reports({
       ? calls[0]?.id
       : preferred;
   const { data: report, error } = id
-    ? await db.rpc(
-        profile.access_kind === "academic"
-          ? "academic_call_report"
-          : "call_report",
-        { requested_call: id },
-      )
+    ? await db.rpc("call_report", { requested_call: id })
     : { data: null, error: null };
   if (error) throw new Error("Report unavailable");
   return (
     <Shell locale={locale} internal>
-      <BackLink href="/internal">{es ? "Volver a expedientes" : "Back to applications"}</BackLink>
+      <BackLink href="/internal">
+        {es ? "Volver a expedientes" : "Back to applications"}
+      </BackLink>
       <ModuleHeading title={es ? "Reportería de cierre" : "Closing reports"}>
         <p>
           {es

@@ -1,6 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
-import { findRagProjects, loadRagProject } from "@/app/internal/evidence/context-actions";
+import {
+  findRagProjects,
+  loadRagProject,
+} from "@/app/internal/evidence/context-actions";
 import { RagMethods } from "./rag-methods";
 import type { RagProject } from "@/lib/rag-context";
 import type { Locale } from "@/lib/domain";
@@ -24,8 +27,6 @@ export function RagWorkspace({
   initialProject,
   notes: initialNotes,
   remote = false,
-  readOnly = false,
-  showApplicationLinks = !readOnly,
   ...enabled
 }: {
   locale: Locale;
@@ -33,8 +34,6 @@ export function RagWorkspace({
   calls: { id: string; title: string }[];
   initialProject: string;
   notes: RagNote[];
-  readOnly?: boolean;
-  showApplicationLinks?: boolean;
   e5Enabled: boolean;
   qwenEnabled: boolean;
   remote?: boolean;
@@ -60,26 +59,52 @@ export function RagWorkspace({
     if (!remote || free) return;
     let active = true;
     const timer = setTimeout(() => {
-      setListBusy(true); setListError(false);
-      findRagProjects({ call, search, page }).then((result) => {
-        if (!active) return;
-        setProjects(result.projects); setTotal(result.count); setListError(result.error);
-      }).catch(() => { if (active) setListError(true); })
-        .finally(() => { if (active) setListBusy(false); });
+      setListBusy(true);
+      setListError(false);
+      findRagProjects({ call, search, page })
+        .then((result) => {
+          if (!active) return;
+          setProjects(result.projects);
+          setTotal(result.count);
+          setListError(result.error);
+        })
+        .catch(() => {
+          if (active) setListError(true);
+        })
+        .finally(() => {
+          if (active) setListBusy(false);
+        });
     }, 250);
-    return () => { active = false; clearTimeout(timer); };
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
   }, [remote, free, call, search, page, retry]);
   useEffect(() => {
     if (!remote || !projectId || free) return;
     let active = true;
-    loadRagProject(projectId).then((result) => {
-      if (!active) return;
-      setLoadedProject(result.project); setNotes(result.notes); setContextError(result.error);
-    }).catch(() => { if (active) setContextError(true); })
-      .finally(() => { if (active) setContextBusy(false); });
-    return () => { active = false; };
+    loadRagProject(projectId)
+      .then((result) => {
+        if (!active) return;
+        setLoadedProject(result.project);
+        setNotes(result.notes);
+        setContextError(result.error);
+      })
+      .catch(() => {
+        if (active) setContextError(true);
+      })
+      .finally(() => {
+        if (active) setContextBusy(false);
+      });
+    return () => {
+      active = false;
+    };
   }, [remote, projectId, free, retry]);
-  const project = remote ? (loadedProject?.id === projectId ? loadedProject : undefined) : projects.find((p) => p.id === projectId);
+  const project = remote
+    ? loadedProject?.id === projectId
+      ? loadedProject
+      : undefined
+    : projects.find((p) => p.id === projectId);
   const contextPending = remote && projectId && !project && !contextError;
   const risk = project?.risks.find((r) => r.id === riskId);
   const levels: Record<string, string> = es
@@ -109,13 +134,9 @@ export function RagWorkspace({
           </h2>
         </div>
         <p>
-          {readOnly && !showApplicationLinks
-            ? es
-              ? "Seleccione un escenario de evaluación o realice una consulta libre."
-              : "Select an evaluation scenario or use a free query."
-            : es
-              ? "Trabaje con un expediente enviado o realice una consulta libre. La calificación del aplicante no se modifica."
-              : "Use a submitted application or a free query. The applicant’s rating remains unchanged."}
+          {es
+            ? "Trabaje con un expediente enviado o realice una consulta libre. La calificación del aplicante no se modifica."
+            : "Use a submitted application or a free query. The applicant’s rating remains unchanged."}
         </p>
         <div className="rag-mode">
           <button
@@ -135,9 +156,21 @@ export function RagWorkspace({
         </div>
         {!free && (
           <>
-            {remote && <label>{es ? "Buscar proyecto por título o referencia" : "Search project title or reference"}
-              <input type="search" value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} />
-            </label>}
+            {remote && (
+              <label>
+                {es
+                  ? "Buscar proyecto por título o referencia"
+                  : "Search project title or reference"}
+                <input
+                  type="search"
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setPage(0);
+                  }}
+                />
+              </label>
+            )}
             <div className="rag-selectors">
               <label>
                 {es ? "Convocatoria" : "Call"}
@@ -175,15 +208,17 @@ export function RagWorkspace({
                   }}
                 >
                   <option value="">
-                    {readOnly && !showApplicationLinks
-                      ? es
-                        ? "Seleccione un escenario"
-                        : "Select a scenario"
-                      : es
-                        ? "Seleccione un proyecto enviado"
-                        : "Select a submitted project"}
+                    {es
+                      ? "Seleccione un proyecto enviado"
+                      : "Select a submitted project"}
                   </option>
-                  {remote && project && !projects.some(p => p.id === project.id) && <option value={project.id}>{project.title} · {project.reference}</option>}
+                  {remote &&
+                    project &&
+                    !projects.some((p) => p.id === project.id) && (
+                      <option value={project.id}>
+                        {project.title} · {project.reference}
+                      </option>
+                    )}
                   {projects
                     .filter((p) => !call || p.callId === call)
                     .map((p) => (
@@ -194,16 +229,57 @@ export function RagWorkspace({
                 </select>
               </label>
             </div>
-            {remote && <div className="list-navigation" aria-busy={listBusy}>
-              <button type="button" disabled={listBusy || page === 0} onClick={() => setPage(p => p - 1)}>{es ? "Anterior" : "Previous"}</button>
-              <span role="status">{listBusy ? (es ? "Buscando proyectos…" : "Finding projects…") : `${es ? "Página" : "Page"} ${page + 1} · ${total} ${es ? "proyectos" : "projects"}`}</span>
-              <button type="button" disabled={listBusy || (page + 1) * 20 >= total} onClick={() => setPage(p => p + 1)}>{es ? "Siguiente" : "Next"}</button>
-            </div>}
-            {remote && (listError || contextError) && <div role="alert">
-              <p>{es ? "No se pudo cargar el proyecto. Compruebe su conexión y reintente." : "The project could not be loaded. Check your connection and retry."}</p>
-              <button type="button" disabled={listBusy || contextBusy} onClick={() => { setContextError(false); setRetry(n => n + 1); }}>{es ? "Reintentar" : "Retry"}</button>
-            </div>}
-            {(contextPending || contextBusy) && <p role="status">{es ? "Cargando riesgos y consultas del proyecto…" : "Loading project risks and queries…"}</p>}
+            {remote && (
+              <div className="list-navigation" aria-busy={listBusy}>
+                <button
+                  type="button"
+                  disabled={listBusy || page === 0}
+                  onClick={() => setPage((p) => p - 1)}
+                >
+                  {es ? "Anterior" : "Previous"}
+                </button>
+                <span role="status">
+                  {listBusy
+                    ? es
+                      ? "Buscando proyectos…"
+                      : "Finding projects…"
+                    : `${es ? "Página" : "Page"} ${page + 1} · ${total} ${es ? "proyectos" : "projects"}`}
+                </span>
+                <button
+                  type="button"
+                  disabled={listBusy || (page + 1) * 20 >= total}
+                  onClick={() => setPage((p) => p + 1)}
+                >
+                  {es ? "Siguiente" : "Next"}
+                </button>
+              </div>
+            )}
+            {remote && (listError || contextError) && (
+              <div role="alert">
+                <p>
+                  {es
+                    ? "No se pudo cargar el proyecto. Compruebe su conexión y reintente."
+                    : "The project could not be loaded. Check your connection and retry."}
+                </p>
+                <button
+                  type="button"
+                  disabled={listBusy || contextBusy}
+                  onClick={() => {
+                    setContextError(false);
+                    setRetry((n) => n + 1);
+                  }}
+                >
+                  {es ? "Reintentar" : "Retry"}
+                </button>
+              </div>
+            )}
+            {(contextPending || contextBusy) && (
+              <p role="status">
+                {es
+                  ? "Cargando riesgos y consultas del proyecto…"
+                  : "Loading project risks and queries…"}
+              </p>
+            )}
             {project && (
               <>
                 <label>
@@ -225,13 +301,7 @@ export function RagWorkspace({
                   </select>
                 </label>
                 <p className="rag-context-meta">
-                  {readOnly && !showApplicationLinks
-                    ? es
-                      ? "Escenario · versión"
-                      : "Scenario · version"
-                    : es
-                      ? "Versión enviada"
-                      : "Submitted version"}{" "}
+                  {es ? "Versión enviada" : "Submitted version"}{" "}
                   {project.revision} ·{" "}
                   {project.stage === 1
                     ? es
@@ -241,11 +311,12 @@ export function RagWorkspace({
                       ? "Propuesta completa · mitigación y PGAS"
                       : "Full proposal · mitigation and ESMP"}
                 </p>
-                {showApplicationLinks && (
-                  <ActionLink compact href={`/internal/applications/${project.id}`}>
-                    {es ? "Ver expediente" : "View application"}
-                  </ActionLink>
-                )}
+                <ActionLink
+                  compact
+                  href={`/internal/applications/${project.id}`}
+                >
+                  {es ? "Ver expediente" : "View application"}
+                </ActionLink>
                 {!project.risks.length && (
                   <p role="status">
                     {es
@@ -289,8 +360,7 @@ export function RagWorkspace({
         <RagMethods
           key={`${free}-${projectId}-${riskId}-${project?.revision || 0}`}
           locale={locale}
-          readOnly={readOnly}
-          onNoteSaved={remote ? () => setRetry(n => n + 1) : undefined}
+          onNoteSaved={remote ? () => setRetry((n) => n + 1) : undefined}
           {...enabled}
           context={!free && project && risk ? { project, risk } : undefined}
         />
@@ -301,7 +371,7 @@ export function RagWorkspace({
             : "Select a project and risk to prepare a query, or choose Free query."}
         </p>
       )}
-      {(!readOnly || showApplicationLinks) && !free && risk && (
+      {!free && risk && (
         <section className="live-card">
           <h2>
             {es

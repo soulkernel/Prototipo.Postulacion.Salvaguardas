@@ -1,11 +1,8 @@
 "use client";
 import { Trash2 } from "lucide-react";
 import { useActionState, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   changeAccount,
-  createAcademicAccount,
-  checkAccountService,
   type AccountActionState,
 } from "@/app/internal/users/account-actions";
 import { accountErrors, type ManagedAccount } from "@/lib/account-management";
@@ -28,22 +25,17 @@ function AccountControls({
   es,
   administrator,
   self,
-  requestTime,
 }: {
   account: ManagedAccount;
   es: boolean;
   administrator: boolean;
   self: boolean;
-  requestTime: number;
 }) {
   const [operation, setOperation] = useState("");
   const [state, action] = useActionState(
     changeAccount,
     {} as AccountActionState,
   );
-  const expired =
-    account.access_kind === "academic" &&
-    Date.parse(account.access_expires_at || "") <= requestTime;
   const labels: Record<string, string> = es
     ? {
         deactivate: "Desactivar",
@@ -65,7 +57,7 @@ function AccountControls({
     ? ["unarchive", ...(administrator ? ["delete"] : [])]
     : account.active
       ? ["deactivate", "revoke_sessions"]
-      : [...(!expired ? ["reactivate"] : []), "archive"];
+      : ["reactivate", "archive"];
   return (
     <article className="live-card account-card">
       <div className="account-row">
@@ -73,37 +65,19 @@ function AccountControls({
           <h3>{account.full_name || account.email}</h3>
           <p>{account.email}</p>
           <p>
-            {account.access_kind === "academic"
-              ? es
-                ? "Evaluador académico"
-                : "Academic evaluator"
-              : roleLabels[account.role as Role]?.[es ? 0 : 1]}{" "}
-            ·{" "}
+            {roleLabels[account.role as Role]?.[es ? 0 : 1]} ·{" "}
             {account.archived_at
               ? es
                 ? "Archivado"
                 : "Archived"
-              : expired
+              : account.active
                 ? es
-                  ? "Vencido"
-                  : "Expired"
-                : account.active
-                  ? es
-                    ? "Activo"
-                    : "Active"
-                  : es
-                    ? "Inactivo"
-                    : "Inactive"}
+                  ? "Activo"
+                  : "Active"
+                : es
+                  ? "Inactivo"
+                  : "Inactive"}
           </p>
-          {account.access_expires_at && (
-            <p>
-              {es ? "Vence: " : "Expires: "}
-              {new Intl.DateTimeFormat(es ? "es" : "en", {
-                dateStyle: "long",
-                timeZone: "Pacific/Galapagos",
-              }).format(new Date(account.access_expires_at))}
-            </p>
-          )}
         </div>
         {!self && (
           <label>
@@ -201,36 +175,29 @@ export function AccountManagement({
   es,
   administrator,
   userId,
-  requestTime,
 }: {
   accounts: ManagedAccount[];
   es: boolean;
   administrator: boolean;
   userId: string;
-  requestTime: number;
 }) {
   const [search, setSearch] = useState(""),
     [filter, setFilter] = useState("unarchived"),
-    [kind, setKind] = useState("all"),
     [role, setRole] = useState("all");
   const shown = accounts.filter((a) => {
-    const expired =
-      a.access_kind === "academic" &&
-      Date.parse(a.access_expires_at || "") <= requestTime;
     return (
       (!search ||
         `${a.full_name} ${a.email}`
           .toLocaleLowerCase()
           .includes(search.toLocaleLowerCase())) &&
-      (kind === "all" || a.access_kind === kind) &&
       (role === "all" || a.role === role) &&
       (filter === "all" ||
         (filter === "archived"
           ? !!a.archived_at
           : filter === "active"
-            ? a.active && !expired && !a.archived_at
+            ? a.active && !a.archived_at
             : filter === "inactive"
-              ? (!a.active || expired) && !a.archived_at
+              ? !a.active && !a.archived_at
               : !a.archived_at))
     );
   });
@@ -253,14 +220,14 @@ export function AccountManagement({
               ? [
                   ["unarchived", "Sin archivar"],
                   ["active", "Activos"],
-                  ["inactive", "Inactivos o vencidos"],
+                  ["inactive", "Inactivos"],
                   ["archived", "Archivados"],
                   ["all", "Todos"],
                 ]
               : [
                   ["unarchived", "Unarchived"],
                   ["active", "Active"],
-                  ["inactive", "Inactive or expired"],
+                  ["inactive", "Inactive"],
                   ["archived", "Archived"],
                   ["all", "All"],
                 ]
@@ -269,14 +236,6 @@ export function AccountManagement({
                 {t}
               </option>
             ))}
-          </select>
-        </label>
-        <label>
-          {es ? "Tipo de acceso" : "Access type"}
-          <select value={kind} onChange={(e) => setKind(e.target.value)}>
-            <option value="all">{es ? "Todos" : "All"}</option>
-            <option value="standard">{es ? "Habitual" : "Standard"}</option>
-            <option value="academic">{es ? "Académico" : "Academic"}</option>
           </select>
         </label>
         <label>
@@ -308,133 +267,8 @@ export function AccountManagement({
           es={es}
           administrator={administrator}
           self={a.id === userId}
-          requestTime={requestTime}
         />
       ))}
-    </section>
-  );
-}
-export function AcademicAccountForm({ es }: { es: boolean }) {
-  const [service, serviceAction] = useActionState(
-    checkAccountService,
-    {} as AccountActionState,
-  );
-  const [state, action] = useActionState(
-    createAcademicAccount,
-    {} as AccountActionState,
-  );
-  const [hidden, setHidden] = useState(false);
-  const router = useRouter();
-  return (
-    <section className="live-card">
-      <h2>
-        {es
-          ? "Crear acceso académico temporal"
-          : "Create temporary academic access"}
-      </h2>
-      <p>
-        {es
-          ? "Vigencia: tres meses desde su creación. Ingreso con correo y contraseña, sin doble factor. Permite consultar los expedientes de prueba habilitados, descargar sus archivos, recorrer formularios y reportes y utilizar los dos motores RAG. No permite modificar datos ni administrar usuarios."
-          : "Valid for three months from creation. Email/password sign-in without MFA. Allows access to the enabled test applications, file downloads, forms, reports and both RAG engines. Does not allow editing data or administering users."}
-      </p>
-      <form action={serviceAction} className="live-actions">
-        <SubmitButton
-          className="button secondary"
-          pendingLabel={es ? "Verificando…" : "Checking…"}
-        >
-          {es ? "Verificar servicio de cuentas" : "Check account service"}
-        </SubmitButton>
-        {service.ok && (
-          <span role="status">
-            {es ? "Servicio disponible" : "Service available"}
-          </span>
-        )}
-        <ErrorMessage code={service.error} es={es} />
-      </form>
-      {!state.ok ? (
-        <form action={action} className="live-form">
-          <label>
-            <span className="field-label">
-              {es ? "Nombre completo *" : "Full name *"}
-            </span>
-            <input
-              name="full_name"
-              required
-              minLength={2}
-              maxLength={200}
-              autoComplete="off"
-            />
-          </label>
-          <label>
-            <span className="field-label">
-              {es ? "Correo electrónico *" : "Email *"}
-            </span>
-            <input
-              name="email"
-              type="email"
-              required
-              maxLength={254}
-              autoComplete="off"
-            />
-          </label>
-          <label className="checkbox">
-            <input name="confirmed" type="checkbox" required />
-            {es
-              ? "Confirmo el correo y autorizo crear este acceso de evaluación. No se enviará ningún correo automáticamente."
-              : "I confirm the email and authorize evaluation access. No email will be sent automatically."}
-          </label>
-          <SubmitButton
-            className="button primary"
-            pendingLabel={es ? "Creando acceso…" : "Creating access…"}
-          >
-            {es ? "Crear acceso por tres meses" : "Create three-month access"}
-          </SubmitButton>
-          <ErrorMessage code={state.error} es={es} />
-        </form>
-      ) : (
-        <div role="status">
-          <p>
-            {es
-              ? "Cuenta creada. Guarde la contraseña antes de salir; no se mostrará nuevamente."
-              : "Account created. Save the password before leaving; it will not be shown again."}
-          </p>
-          <p>{state.email}</p>
-          <p>
-            {es ? "Enlace: " : "Link: "}
-            https://glf-postulaciones.vercel.app/evaluation
-          </p>
-          {!hidden && (
-            <label>
-              {es ? "Contraseña asignada" : "Assigned password"}
-              <input
-                type="text"
-                readOnly
-                value={state.password}
-                autoComplete="off"
-                spellCheck={false}
-              />
-            </label>
-          )}
-          <p>
-            {es ? "Vence: " : "Expires: "}
-            {state.expires_at &&
-              new Intl.DateTimeFormat(es ? "es" : "en", {
-                dateStyle: "long",
-                timeZone: "Pacific/Galapagos",
-              }).format(new Date(state.expires_at))}
-          </p>
-          <button
-            type="button"
-            className="button secondary"
-            onClick={() => {
-              setHidden(true);
-              router.refresh();
-            }}
-          >
-            {es ? "Ya guardé la contraseña · ocultar" : "Password saved · hide"}
-          </button>
-        </div>
-      )}
     </section>
   );
 }

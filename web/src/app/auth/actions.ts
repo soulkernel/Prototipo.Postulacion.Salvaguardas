@@ -89,11 +89,15 @@ export async function signIn(form: FormData) {
     .eq("id", user?.id || "")
     .maybeSingle();
   const { data: sessionValid } = await db.rpc("access_session_valid");
-  if (!profile || !profile.active || !sessionValid) {
+  if (
+    !profile ||
+    !profile.active ||
+    profile.access_kind !== "standard" ||
+    !sessionValid
+  ) {
     await db.auth.signOut({ scope: "local" });
     redirect("/login?error=account_inactive");
   }
-  if (profile.access_kind === "academic") redirect("/evaluation");
   redirect(
     safeReturnPath(
       form.get("next"),

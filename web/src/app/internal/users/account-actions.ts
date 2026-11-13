@@ -6,9 +6,6 @@ import { accountOperations } from "@/lib/account-management";
 export type AccountActionState = {
   ok?: boolean;
   error?: string;
-  email?: string;
-  password?: string;
-  expires_at?: string;
 };
 async function invokeAdmin(body: object): Promise<AccountActionState> {
   const { db } = await requireViewer(["administrator"]);
@@ -31,9 +28,6 @@ async function invokeAdmin(body: object): Promise<AccountActionState> {
   } catch {
     return { error: "GLF_SERVICE_UNAVAILABLE" };
   }
-}
-export async function checkAccountService(): Promise<AccountActionState> {
-  return invokeAdmin({ operation: "status" });
 }
 export async function changeAccount(
   _previous: AccountActionState,
@@ -79,30 +73,4 @@ export async function changeAccount(
     };
   revalidatePath("/internal/users");
   return { ok: true };
-}
-export async function createAcademicAccount(
-  _previous: AccountActionState,
-  form: FormData,
-): Promise<AccountActionState> {
-  await requireViewer(["administrator"]);
-  const parsed = z
-    .object({
-      email: z.email().max(254),
-      full_name: z.string().trim().min(2).max(200),
-      confirmed: z.literal("on"),
-    })
-    .safeParse({
-      email: String(form.get("email") || "").trim(),
-      full_name: form.get("full_name"),
-      confirmed: form.get("confirmed"),
-    });
-  if (!parsed.success) return { error: "GLF_INVALID_OPERATION" };
-  const result = await invokeAdmin({
-    operation: "create_academic",
-    email: parsed.data.email,
-    full_name: parsed.data.full_name,
-    confirmed: true,
-  });
-  if (result.ok) revalidatePath("/internal/users");
-  return result;
 }

@@ -339,7 +339,6 @@ export function ApplicationEditor({
   call,
   locale,
   editable,
-  academicReadOnly = false,
   serverNow,
   accountEmail = "",
   catalog,
@@ -356,7 +355,6 @@ export function ApplicationEditor({
   call: Call;
   locale: Locale;
   editable: boolean;
-  academicReadOnly?: boolean;
   serverNow: number;
   accountEmail?: string;
   catalog: Catalog[];
@@ -422,7 +420,7 @@ export function ApplicationEditor({
   const [autoError, setAutoError] = useState("");
   const [lastSaved, setLastSaved] = useState(application.updated_at);
   const [step, setStepState] = useState(
-    editable || academicReadOnly ? initialStep : 5,
+    editable ? initialStep : 5,
   );
   function setStep(next: number) {
     setStepState(next);
@@ -1697,11 +1695,7 @@ export function ApplicationEditor({
         <div className="live-notice">
           <LockKeyhole size={20} />
           <p>
-            {academicReadOnly
-              ? es
-                ? "Consulta académica: puede recorrer el formulario y descargar los documentos disponibles."
-                : "Academic review: browse the form and download available documents."
-              : es
+            {es
                 ? "Esta versión está bloqueada. Las correcciones requieren autorización del GLF dentro del plazo permitido."
                 : "This version is locked. Corrections require GLF authorization within the allowed deadline."}
           </p>

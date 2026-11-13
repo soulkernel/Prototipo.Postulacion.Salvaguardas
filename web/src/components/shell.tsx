@@ -52,56 +52,23 @@ export async function Shell({
             locale === "es" ? "Navegación principal" : "Main navigation"
           }
         >
-          {viewer?.profile.access_kind === "academic" && (
+          {viewer?.profile.role === "applicant" && (
             <>
-              <MenuLink href="/evaluation">
-                {locale === "es" ? "Asistente RAG" : "RAG assistant"}
+              <MenuLink href="/applicant">
+                {locale === "es" ? "Nueva postulación" : "New application"}
               </MenuLink>
-              <MenuLink href="/internal">
-                {locale === "es"
-                  ? "Expedientes recibidos"
-                  : "Received applications"}
+              <MenuLink href="/applicant/applications">
+                {locale === "es" ? "Mis postulaciones" : "My applications"}
               </MenuLink>
-              <MenuLink href="/evaluation?view=files">
-                {locale === "es"
-                  ? "Expedientes y archivos"
-                  : "Applications and files"}
-              </MenuLink>
-              <MenuLink href="/evaluation?view=calls">
-                {locale === "es" ? "Convocatorias" : "Calls"}
-              </MenuLink>
-              <MenuLink href="/internal/reports">
-                {locale === "es" ? "Reportes" : "Reports"}
+              <MenuLink href="/applicant/guide">
+                {locale === "es" ? "Cómo postular" : "How to apply"}
               </MenuLink>
               <ExclusionMenuLink locale={locale} />
               <MenuLink href="/manual">
                 {locale === "es" ? "Manual de uso" : "User manual"}
               </MenuLink>
-              <MenuLink href="/evaluation?view=workflow">
-                {locale === "es"
-                  ? "Recorrido del portal"
-                  : "Portal walkthrough"}
-              </MenuLink>
             </>
           )}
-          {viewer?.profile.role === "applicant" &&
-            viewer.profile.access_kind !== "academic" && (
-              <>
-                <MenuLink href="/applicant">
-                  {locale === "es" ? "Nueva postulación" : "New application"}
-                </MenuLink>
-                <MenuLink href="/applicant/applications">
-                  {locale === "es" ? "Mis postulaciones" : "My applications"}
-                </MenuLink>
-                <MenuLink href="/applicant/guide">
-                  {locale === "es" ? "Cómo postular" : "How to apply"}
-                </MenuLink>
-                <ExclusionMenuLink locale={locale} />
-                <MenuLink href="/manual">
-                  {locale === "es" ? "Manual de uso" : "User manual"}
-                </MenuLink>
-              </>
-            )}
           {!viewer && (
             <>
               <ExclusionMenuLink locale={locale} />
@@ -175,13 +142,7 @@ export async function Shell({
       <main className="live-main" id="main-content">
         {internal && (
           <p className="eyebrow">
-            {viewer?.profile.access_kind === "academic"
-              ? locale === "es"
-                ? "EVALUACIÓN ACADÉMICA"
-                : "ACADEMIC EVALUATION"
-              : locale === "es"
-                ? "MÓDULO INTERNO GLF"
-                : "GLF INTERNAL MODULE"}
+            {locale === "es" ? "MÓDULO INTERNO GLF" : "GLF INTERNAL MODULE"}
           </p>
         )}
         {children}

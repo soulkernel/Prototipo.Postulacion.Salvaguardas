@@ -5,12 +5,6 @@ import { AuthForm } from "@/components/auth-form";
 export default async function Home() {
   const viewer = await getViewer();
   if (viewer)
-    redirect(
-      viewer.profile.access_kind === "academic"
-        ? "/evaluation"
-        : viewer.profile.role === "applicant"
-          ? "/applicant"
-          : "/internal",
-    );
+    redirect(viewer.profile.role === "applicant" ? "/applicant" : "/internal");
   return <AuthForm locale={await getLocale()} params={{}} />;
 }

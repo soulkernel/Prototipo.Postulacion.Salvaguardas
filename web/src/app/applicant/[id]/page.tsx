@@ -42,12 +42,16 @@ export default async function ApplicationPage({
       .eq("active", true),
     viewer.db
       .from("application_versions")
-      .select("id,revision,stage,submitted_at,concept_layout_version,document_metadata,project_title:payload->concept->>title,attachments:payload->attachments")
+      .select(
+        "id,revision,stage,submitted_at,concept_layout_version,document_metadata,project_title:payload->concept->>title,attachments:payload->attachments",
+      )
       .eq("application_id", id)
       .order("revision", { ascending: false }),
     viewer.db
       .from("application_documents")
-      .select("id,file_name,kind,created_at,version_id,storage_path,generation_source,generated_locale")
+      .select(
+        "id,file_name,kind,created_at,version_id,storage_path,generation_source,generated_locale",
+      )
       .eq("application_id", id)
       .order("created_at", { ascending: false }),
     viewer.db
@@ -74,7 +78,6 @@ export default async function ApplicationPage({
   const deadline =
     application.stage === 1 ? call.closes_at : application.phase2_deadline;
   const editable = Boolean(
-    viewer.profile.access_kind !== "academic" &&
     !application.deletion_pending &&
     deadline &&
     Date.parse(deadline) > requestTime &&
@@ -85,7 +88,7 @@ export default async function ApplicationPage({
         Date.parse(application.correction_deadline) > requestTime)),
   );
   return (
-    <Shell locale={locale} internal={viewer.profile.access_kind === "academic"}>
+    <Shell locale={locale}>
       {versions?.[0] && (
         <section
           className="live-card"
@@ -124,7 +127,6 @@ export default async function ApplicationPage({
         locale={locale}
         editable={editable}
         initialStep={applicationStepFromQuery(query.step, query.section)}
-        academicReadOnly={viewer.profile.access_kind === "academic"}
         serverNow={requestTime}
         accountEmail={viewer.user.email || ""}
         catalog={catalog || []}
@@ -138,7 +140,10 @@ export default async function ApplicationPage({
                 (v) =>
                   Array.isArray(v.attachments) &&
                   v.attachments.some(
-                    (f) => f !== null && typeof f === "object" && !Array.isArray(f) &&
+                    (f) =>
+                      f !== null &&
+                      typeof f === "object" &&
+                      !Array.isArray(f) &&
                       (f.id === d.id || f.storage_path === storage_path),
                   ),
               ),

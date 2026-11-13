@@ -33,7 +33,7 @@ export async function POST(request: Request) {
   const viewer = await getViewer().catch(() => undefined);
   if (viewer === undefined) return fail("unavailable", 503);
   if (!viewer) return fail("session", 401);
-  if (viewer.profile.access_kind !== "academic") {
+  {
     if (
       !["sustainability_reviewer", "administrator"].includes(
         viewer.profile.role,
@@ -46,16 +46,15 @@ export async function POST(request: Request) {
   }
   if (!(input.method === "e5" ? ragConfigured() : qwenConfigured()))
     return fail("configuration", 503);
-  if (viewer.profile.access_kind === "academic") {
-    const { data, error } = await viewer.db.rpc("consume_academic_query");
-    if (error) return fail("unavailable", 503);
-    if (!data) return fail("quota", 429);
-  }
   const parsed = input,
     started = performance.now();
   let closed = false;
   const cancellation = new AbortController();
-  const signal = AbortSignal.any([request.signal, cancellation.signal, AbortSignal.timeout(75000)]);
+  const signal = AbortSignal.any([
+    request.signal,
+    cancellation.signal,
+    AbortSignal.timeout(75000),
+  ]);
   let heartbeat: ReturnType<typeof setInterval> | undefined;
   const stream = new ReadableStream({
     async start(controller) {
@@ -78,10 +77,12 @@ export async function POST(request: Request) {
           const embedding = await embedQuery(parsed.query, signal);
           if (closed) return;
           stage({ stage: "retrieval", model: "Supabase · pgvector" });
-          const { data, error } = await viewer.db.rpc("match_evidence", {
-            query_embedding: JSON.stringify(embedding),
-            result_limit: 6,
-          }).abortSignal(signal);
+          const { data, error } = await viewer.db
+            .rpc("match_evidence", {
+              query_embedding: JSON.stringify(embedding),
+              result_limit: 6,
+            })
+            .abortSignal(signal);
           if (error) throw new Error("unavailable");
           results = evidenceRows.parse(data || []);
         } else {

@@ -94,14 +94,29 @@ test("internal access still enforces MFA and allowed roles", async () => {
   f.aal = "aal2"; f.profile.role = "applicant";
   await assert.rejects(access.requireViewer(["administrator"]), e => e.location === "/applicant");
 });
-test("academic access remains read only and cannot enter mutating viewer paths", async () => {
-  const f = fixture(); f.profile.access_kind = "academic";
-  assert.ok(await access.requireRagViewer()); assert.ok(await access.requireReadViewer());
-  await assert.rejects(access.requireViewer(["administrator"]), e => e.location === "/evaluation");
+test("retired and unknown access kinds cannot become applicants or bypass RAG/MFA guards", async () => {
+  for (const kind of ["academic", "unknown", undefined]) {
+    const f = fixture(); f.profile.access_kind = kind;
+    assert.equal(await access.getViewer(), null);
+    await assert.rejects(access.requireRagViewer(), e => e.location === "/login");
+    await assert.rejects(access.requireViewer(), e => e.location === "/login");
+  }
+});
+test("RAG allows only institutional administrators and sustainability reviewers with MFA", async () => {
+  for (const role of ["administrator", "sustainability_reviewer"]) {
+    const f = fixture(); f.profile.role = role;
+    assert.equal((await access.requireRagViewer()).profile.role, role);
+    f.aal = "aal1";
+    await assert.rejects(access.requireRagViewer(), e => e.location === "/security");
+  }
+  for (const role of ["applicant", "grants_manager", "project_coordinator", "committee_member", "internal_member"]) {
+    const f = fixture(); f.profile.role = role;
+    await assert.rejects(access.requireRagViewer(), e => !!e.location);
+  }
 });
 
-function corpusFixture(academic = false, available = true, fail = false) {
-  const f = fixture(); f.profile.access_kind = academic ? "academic" : "standard";
+function corpusFixture(available = true, fail = false) {
+  const f = fixture();
   f.db.from = table => {
     f.calls.push(table);
     const query = { select(_columns, options) { assert.equal(options?.count, undefined); return this; },
@@ -111,8 +126,6 @@ function corpusFixture(academic = false, available = true, fail = false) {
     };
     return query;
   };
-  f.db.rpc = async name => { assert.equal(name, "academic_source_count"); f.calls.push(name);
-    return { data: available ? 1 : 0, error: fail ? new Error("network") : null }; };
   return f;
 }
 function workspace(element) {
@@ -122,22 +135,14 @@ function workspace(element) {
 }
 test("RAG availability uses approved sources without counting the entire corpus", async () => {
   for (const available of [true, false]) {
-    const f = corpusFixture(false, available);
+    const f = corpusFixture(available);
     const props = workspace(await evidence({ searchParams: Promise.resolve({ project: "project-a" }) }));
     assert.equal(props.e5Enabled, available); assert.equal(props.initialProject, "project-a");
-    assert.equal(props.calls[0].title, "Convocatoria"); assert.equal(props.readOnly, false);
+    assert.equal(props.calls[0].title, "Convocatoria");
     assert.deepEqual(f.calls, ["calls", "knowledge_chunks"]);
   }
 });
-test("academic RAG checks only its authorized source scope", async () => {
-  const f = corpusFixture(true);
-  const props = workspace(await evidence({ searchParams: Promise.resolve({}) }));
-  assert.equal(props.readOnly, true); assert.equal(props.e5Enabled, true);
-  assert.deepEqual(f.calls, ["calls", "academic_source_count"]);
-});
-test("corpus outages surface as retryable page errors in standard and academic access", async () => {
-  for (const academic of [false, true]) {
-    corpusFixture(academic, true, true);
-    await assert.rejects(evidence({ searchParams: Promise.resolve({}) }), /Corpus status unavailable/);
-  }
+test("corpus outages surface as retryable page errors", async () => {
+  corpusFixture(true, true);
+  await assert.rejects(evidence({ searchParams: Promise.resolve({}) }), /Corpus status unavailable/);
 });

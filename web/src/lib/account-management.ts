@@ -6,7 +6,6 @@ export type ManagedAccount = {
   active: boolean;
   user_admin_scope: string;
   access_kind: string;
-  access_expires_at: string | null;
   archived_at: string | null;
   account_revision: number;
 };
@@ -48,8 +47,8 @@ export const accountErrors: Record<string, [string, string]> = {
     "Deactivate and archive the account before deleting it.",
   ],
   GLF_CANNOT_REACTIVATE: [
-    "Primero quite la cuenta del archivo. Un acceso académico vencido no puede reactivarse.",
-    "Unarchive first. An expired academic account cannot be reactivated.",
+    "Primero quite la cuenta del archivo.",
+    "Unarchive first.",
   ],
   GLF_ACCOUNT_HAS_HISTORY: [
     "La cuenta tiene expedientes, documentos o actuaciones vinculadas y no puede eliminarse. Manténgala desactivada y archivada.",
@@ -66,14 +65,6 @@ export const accountErrors: Record<string, [string, string]> = {
   GLF_DELETION_PENDING: [
     "Hay una eliminación pendiente para esta cuenta. Consulte al administrador.",
     "Account deletion is pending. Contact the administrator.",
-  ],
-  GLF_EMAIL_EXISTS: [
-    "Este correo ya tiene una cuenta. No se modificó su acceso.",
-    "This email already has an account. Its access was not changed.",
-  ],
-  GLF_ACCOUNT_CREATE_FAILED: [
-    "No se pudo completar la creación. Revise el listado antes de reintentar.",
-    "Account creation could not be completed. Check the list before retrying.",
   ],
   GLF_INVALID_OPERATION: [
     "Revise los datos y confirme la operación.",

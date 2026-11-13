@@ -50,7 +50,7 @@ test("manual search finds controls and errors regardless of accents, case or wor
   assert.equal(find("   ").length, internalManualChapters.length);
   assert.ok(searchManualChapters(manualChapters, "firma", 0).length > 0);
 });
-test("reading the internal guide is limited to internal roles and academic readers", () => {
+test("reading the internal guide is limited to authorized internal roles only", () => {
   for (const role of internalManualRoles)
     assert.equal(
       canReadInternalManual({ role, access_kind: "standard" }),
@@ -62,6 +62,6 @@ test("reading the internal guide is limited to internal roles and academic reade
   );
   assert.equal(
     canReadInternalManual({ role: "applicant", access_kind: "academic" }),
-    true,
+    false,
   );
 });

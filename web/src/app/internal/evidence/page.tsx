@@ -16,26 +16,29 @@ export default async function EvidencePage({
   const { profile, db } = await requireRagViewer();
   const locale = await getLocale();
   const es = locale === "es";
-  const academic = profile.access_kind === "academic";
-  const [{ data: calls, error: callsError }, hasApprovedSources] = await Promise.all([
-    db.from("calls").select("id,title_es,title_en").order("opens_at", { ascending: false }),
-    (async () => {
-      if (academic) {
-        const { data, error } = await db.rpc("academic_source_count");
+  const [{ data: calls, error: callsError }, hasApprovedSources] =
+    await Promise.all([
+      db
+        .from("calls")
+        .select("id,title_es,title_en")
+        .order("opens_at", { ascending: false }),
+      (async () => {
+        // The page needs availability, not an exact count of the whole corpus.
+        const { data, error } = await db
+          .from("knowledge_chunks")
+          .select("id")
+          .eq("approved", true)
+          .limit(1);
         if (error) throw new Error("Corpus status unavailable");
-        return (data || 0) > 0;
-      }
-      // The page needs availability, not an exact count of the whole corpus.
-      const { data, error } = await db.from("knowledge_chunks")
-        .select("id").eq("approved", true).limit(1);
-      if (error) throw new Error("Corpus status unavailable");
-      return Boolean(data?.length);
-    })(),
-  ]);
+        return Boolean(data?.length);
+      })(),
+    ]);
   if (callsError) throw new Error("Cannot load calls");
   return (
     <Shell locale={locale} internal>
-      <BackLink href="/internal">{es ? "Volver a expedientes" : "Back to applications"}</BackLink>
+      <BackLink href="/internal">
+        {es ? "Volver a expedientes" : "Back to applications"}
+      </BackLink>
       <ModuleHeading
         title={
           es
@@ -61,8 +64,6 @@ export default async function EvidencePage({
         }))}
         initialProject={(await searchParams).project || ""}
         notes={[]}
-        readOnly={academic}
-        showApplicationLinks
       />
       {profile.role === "administrator" && (
         <section

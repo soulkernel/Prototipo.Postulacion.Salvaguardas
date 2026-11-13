@@ -10,8 +10,8 @@ export const internalManualChapters: ManualChapter[] = [
       "The internal module brings together submitted applications and tools for reviewing them. The menu displays the functions available to your account.",
     ],
     audience: [
-      "Personal interno y lectores autorizados. Los accesos académicos son de consulta.",
-      "Internal staff and authorized readers. Academic access is read-only.",
+      "Personal interno del GLF con funciones autorizadas.",
+      "GLF staff with authorized duties.",
     ],
     screen: [
       [
@@ -152,12 +152,6 @@ export const internalManualChapters: ManualChapter[] = [
         "Inactive account or revoked session",
         "The system prevents further access. Contact the administrator and sign in again once access is enabled.",
       ],
-      [
-        "Evaluador académico",
-        "Utiliza acceso temporal con correo y contraseña, sin segundo factor. Consulta los datos habilitados; no administra ni modifica expedientes.",
-        "Academic evaluator",
-        "Uses temporary email/password access without a second factor. Views authorized data; cannot administer or modify applications.",
-      ],
     ],
     outcome: [
       "Su sesión queda verificada y el menú corresponde a sus funciones vigentes.",
@@ -237,10 +231,10 @@ export const internalManualChapters: ManualChapter[] = [
         "Manages calls, accounts, downloads and corpus; views applications, evaluations and RAG. The role does not replace other roles' technical review, decision or signing responsibilities.",
       ],
       [
-        "Personal interno / acceso académico",
-        "El personal sin función operativa conserva acceso limitado. El evaluador académico tiene consulta temporal y RAG sin guardar actuaciones; los controles operativos siguen protegidos.",
-        "Internal member / academic access",
-        "Staff without operational duties retain limited access. Academic evaluators have temporary read access and RAG without saving actions; operational controls remain protected.",
+        "Personal interno",
+        "El personal sin función operativa conserva acceso limitado a su pantalla de acceso y al manual interno.",
+        "Internal member",
+        "Staff without operational duties retain limited access to their access screen and the internal manual.",
       ],
     ],
     tip: [
@@ -1290,8 +1284,8 @@ export const internalManualChapters: ManualChapter[] = [
       "RAG means retrieval-augmented generation: the assistant consults documents to support safeguards analysis. It offers E5 semantic search and grounded answers with BM25 + Qwen.",
     ],
     audience: [
-      "Sostenibilidad y Administración. Los evaluadores académicos consultan sin guardar actuaciones.",
-      "Sustainability and Administration. Academic evaluators query without saving actions.",
+      "Sostenibilidad y Administración, con segundo factor de autenticación.",
+      "Sustainability and Administration, with multi-factor authentication.",
     ],
     screen: [
       [
@@ -1545,8 +1539,8 @@ export const internalManualChapters: ManualChapter[] = [
       "Evidence and the reviewed observation are linked to the risk and queried version.",
     ],
     tip: [
-      "La consulta libre y el acceso académico no permiten guardar esta actuación. Si la versión cambió, vuelva a seleccionar el proyecto y compruebe el riesgo antes de repetir la consulta.",
-      "Free queries and academic access cannot save this action. If the version changed, reselect the project and check the risk before querying again.",
+      "La consulta libre no permite guardar esta actuación. Si la versión cambió, vuelva a seleccionar el proyecto y compruebe el riesgo antes de repetir la consulta.",
+      "Free queries cannot save this action. If the version changed, reselect the project and check the risk before querying again.",
     ],
   },
   {
@@ -1938,9 +1932,9 @@ export const internalManualChapters: ManualChapter[] = [
     rows: [
       [
         "Desactivar / reactivar",
-        "Desactivar impide continuar con el acceso y conserva el historial. Para reactivar una cuenta archivada primero debe desarchivarla; un acceso académico vencido no se reactiva.",
+        "Desactivar impide continuar con el acceso y conserva el historial. Para reactivar una cuenta archivada primero debe desarchivarla.",
         "Deactivate / reactivate",
-        "Deactivation prevents access while preserving history. Unarchive an archived account before reactivating; expired academic access cannot be reactivated.",
+        "Deactivation prevents access while preserving history. Unarchive an archived account before reactivating.",
       ],
       [
         "Revocar sesiones",
@@ -1986,13 +1980,10 @@ export const internalManualChapters: ManualChapter[] = [
   },
   {
     id: "invitaciones",
-    title: [
-      "Invitar personal y crear accesos académicos",
-      "Invite staff and create academic access",
-    ],
+    title: ["Invitar personal interno del GLF", "Invite GLF staff"],
     intro: [
-      "La invitación de personal se prepara, revisa y envía en pasos separados. El acceso académico temporal sigue un proceso distinto y se limita a la evaluación autorizada.",
-      "Staff invitations are prepared, reviewed and sent in separate steps. Temporary academic access follows a different process and is limited to authorized evaluation.",
+      "La invitación de personal se prepara, revisa y envía en pasos separados.",
+      "Staff invitations are prepared, reviewed and sent in separate steps.",
     ],
     screen: [
       [
@@ -2022,10 +2013,6 @@ export const internalManualChapters: ManualChapter[] = [
         "Cuando corresponda pulse Enviar invitación. Compruebe el estado y solicite al destinatario activar su cuenta y configurar segundo factor.",
         "When appropriate click Send invitation. Check status and ask the recipient to activate the account and set up a second factor.",
       ],
-      [
-        "Para evaluación académica, Administración usa Crear acceso académico temporal: verifica el servicio, registra nombre/correo y confirma la creación. Guarde la contraseña mostrada antes de salir y compártala por el canal autorizado.",
-        "For academic evaluation, Administration uses Create temporary academic access: checks the service, enters name/email and confirms creation. Retain the displayed password before leaving and share it through the authorized channel.",
-      ],
     ],
     rows: [
       [
@@ -2051,18 +2038,6 @@ export const internalManualChapters: ManualChapter[] = [
         "Cuando utilice la opción de enlace manual, entréguelo solo al destinatario previsto. Es un acceso sensible, no un enlace público.",
         "Manual activation link",
         "When using the manual-link option, deliver it only to the intended recipient. It is sensitive access, not a public link.",
-      ],
-      [
-        "Acceso académico",
-        "Vigencia de tres meses desde su creación. Permite consultas habilitadas, archivos, formularios, reportes y ambos métodos RAG; no modifica datos ni administra usuarios.",
-        "Academic access",
-        "Valid for three months from creation. Allows authorized queries, files, forms, reports and both RAG methods; cannot modify data or administer users.",
-      ],
-      [
-        "Contraseña académica",
-        "Se muestra tras crear la cuenta y no vuelve a mostrarse. Crear el acceso no envía un correo automático; guárdela antes de pulsar Ya guardé la contraseña · ocultar.",
-        "Academic password",
-        "Displayed after creation and not shown again. Creating access does not send automatic email; retain it before clicking Password saved · hide.",
       ],
     ],
     tip: [

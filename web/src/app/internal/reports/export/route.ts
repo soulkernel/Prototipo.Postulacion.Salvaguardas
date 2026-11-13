@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { requireReadViewer } from "@/lib/data";
+import { requireViewer } from "@/lib/data";
 import { getLocale } from "@/lib/locale";
 import {
   reportCsv,
@@ -12,7 +12,7 @@ import { z } from "zod";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 export async function GET(request: NextRequest) {
-  const { db, profile } = await requireReadViewer([
+  const { db } = await requireViewer([
     "grants_manager",
     "project_coordinator",
     "sustainability_reviewer",
@@ -28,10 +28,9 @@ export async function GET(request: NextRequest) {
   if (!params.success)
     return new NextResponse("Invalid report selection", { status: 400 });
   const { call: id, format } = params.data;
-  const { data: summary, error } = await db.rpc(
-    profile.access_kind === "academic" ? "academic_call_report" : "call_report",
-    { requested_call: id },
-  );
+  const { data: summary, error } = await db.rpc("call_report", {
+    requested_call: id,
+  });
   if (error || !summary)
     return new NextResponse("Unavailable", { status: 500 });
   const requestedLanguage = request.nextUrl.searchParams.get("lang");
@@ -47,7 +46,7 @@ export async function GET(request: NextRequest) {
   if (callError || !call)
     return new NextResponse("Unavailable", { status: 404 });
   const applications: ReportApplication[] = [];
-  // Caller-bound database client retains RLS, including the academic test scope.
+  // Caller-bound database client retains RLS, including staff permissions.
   // Export only frozen submitted versions, never the applicant's current draft.
   if (format !== "pdf") {
     for (let offset = 0; ; offset += 250) {

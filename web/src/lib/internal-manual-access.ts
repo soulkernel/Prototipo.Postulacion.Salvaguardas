@@ -13,7 +13,7 @@ export function canReadInternalManual(profile: {
   access_kind?: string;
 }) {
   return (
-    profile.access_kind === "academic" ||
+    profile.access_kind === "standard" &&
     (internalManualRoles as readonly Role[]).includes(profile.role)
   );
 }

@@ -13,7 +13,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { getRequestTime } from "@/lib/data";
 import Link from "@/components/feedback-link";
 import { BackLink } from "@/components/back-link";
-import { getApplication, requireReadViewer } from "@/lib/data";
+import { getApplication, requireViewer } from "@/lib/data";
 import { getLocale } from "@/lib/locale";
 import { Shell } from "@/components/shell";
 import { UploadForm } from "@/components/upload-form";
@@ -36,7 +36,7 @@ export default async function ReviewPage({
   searchParams: Promise<{ error?: string; saved?: string; returnTo?: string }>;
 }) {
   const requestTime = await getRequestTime();
-  await requireReadViewer([
+  await requireViewer([
     "grants_manager",
     "sustainability_reviewer",
     "project_coordinator",
@@ -75,10 +75,16 @@ export default async function ReviewPage({
       .order("created_at", { ascending: false }),
     viewer.db
       .from("application_versions")
-      .select("id,revision,stage,submitted_at,concept_layout_version,document_metadata")
+      .select(
+        "id,revision,stage,submitted_at,concept_layout_version,document_metadata",
+      )
       .eq("application_id", id)
       .order("revision", { ascending: false }),
-    viewer.db.from("latest_submitted_applications").select("payload").eq("id", id).maybeSingle(),
+    viewer.db
+      .from("latest_submitted_applications")
+      .select("payload")
+      .eq("id", id)
+      .maybeSingle(),
     viewer.db
       .from("application_documents")
       .select("id,file_name,kind")
@@ -98,13 +104,14 @@ export default async function ReviewPage({
     reviewError ||
     notesError ||
     decisionError ||
-    versionError || latestError ||
+    versionError ||
+    latestError ||
     documentError ||
     eventError ||
     callError
   )
     throw new Error("Cannot load the complete submitted dossier");
-  if (!latest?.payload && viewer.profile.access_kind !== "academic")
+  if (!latest?.payload)
     throw new Error("Submitted dossier has no submitted version");
   if (latest?.payload) a.payload = latest.payload;
   if (a.payload.concept.strategic_alignment)
@@ -120,7 +127,12 @@ export default async function ReviewPage({
     "under_review",
     "phase2_submitted",
   ].includes(a.status);
-  const corrections = correctionWindow(a.stage, call?.closes_at || null, a.phase2_deadline, requestTime);
+  const corrections = correctionWindow(
+    a.stage,
+    call?.closes_at || null,
+    a.phase2_deadline,
+    requestTime,
+  );
   const hidden = (
     <>
       <input type="hidden" name="id" value={id} />
@@ -154,13 +166,7 @@ export default async function ReviewPage({
           {statusLabel(a.status, locale)}
         </span>
       </div>
-      {viewer.profile.access_kind === "academic" && (
-        <Link className="button secondary" href={`/applicant/${id}`}>
-          {es ? "Consultar formulario completo" : "View complete form"}
-        </Link>
-      )}
-      {(viewer.profile.access_kind === "academic" ||
-        viewer.profile.role === "administrator" ||
+      {(viewer.profile.role === "administrator" ||
         viewer.profile.role === "sustainability_reviewer") && (
         <Link
           className="button secondary"
@@ -230,7 +236,10 @@ export default async function ReviewPage({
               id={v.id}
               stage={v.stage}
               locale={locale}
-              legacy={(v.document_metadata?.format_version ?? 0) < currentDocumentFormat}
+              legacy={
+                (v.document_metadata?.format_version ?? 0) <
+                currentDocumentFormat
+              }
             />
           </div>
         ))}
@@ -405,26 +414,41 @@ export default async function ReviewPage({
       {underReview && role === "grants_manager" && (
         <section className="live-card">
           <h2>{es ? "Autorizar corrección" : "Authorize a correction"}</h2>
-          <p id="correction-window-help">{corrections.allowed ? (es ? "La corrección debe recibirse antes del cierre de la convocatoria o del plazo de la propuesta completa, según la fase. Hora de Galápagos." : "The correction must be received before the call or full-proposal deadline for this phase. Galápagos time.") : (es ? "El plazo de esta fase está cerrado. No es posible autorizar una corrección fuera de ese plazo." : "This phase deadline has passed. A correction cannot be authorized outside that deadline.")}</p>
+          <p id="correction-window-help">
+            {corrections.allowed
+              ? es
+                ? "La corrección debe recibirse antes del cierre de la convocatoria o del plazo de la propuesta completa, según la fase. Hora de Galápagos."
+                : "The correction must be received before the call or full-proposal deadline for this phase. Galápagos time."
+              : es
+                ? "El plazo de esta fase está cerrado. No es posible autorizar una corrección fuera de ese plazo."
+                : "This phase deadline has passed. A correction cannot be authorized outside that deadline."}
+          </p>
           <form action={reopenApplication} className="live-form">
             <fieldset disabled={!corrections.allowed}>
-            {hidden}
-            <label>
-              {es ? "Fecha límite (Galápagos)" : "Deadline (Galápagos time)"}
-              <input type="datetime-local" name="deadline" min={corrections.min} max={corrections.max} aria-describedby="correction-window-help" required />
-            </label>
-            <label>
-              {es
-                ? "Corrección solicitada al aplicante"
-                : "Correction requested from applicant"}
-              <textarea name="reason" required />
-            </label>
-            <SubmitButton
-              pendingLabel={es ? "Procesando…" : "Processing…"}
-              className="button secondary"
-            >
-              {es ? "Autorizar reapertura" : "Authorize reopening"}
-            </SubmitButton>
+              {hidden}
+              <label>
+                {es ? "Fecha límite (Galápagos)" : "Deadline (Galápagos time)"}
+                <input
+                  type="datetime-local"
+                  name="deadline"
+                  min={corrections.min}
+                  max={corrections.max}
+                  aria-describedby="correction-window-help"
+                  required
+                />
+              </label>
+              <label>
+                {es
+                  ? "Corrección solicitada al aplicante"
+                  : "Correction requested from applicant"}
+                <textarea name="reason" required />
+              </label>
+              <SubmitButton
+                pendingLabel={es ? "Procesando…" : "Processing…"}
+                className="button secondary"
+              >
+                {es ? "Autorizar reapertura" : "Authorize reopening"}
+              </SubmitButton>
             </fieldset>
           </form>
         </section>
@@ -580,8 +604,7 @@ export default async function ReviewPage({
         "grants_manager",
         "sustainability_reviewer",
         "project_coordinator",
-      ].includes(role) &&
-      viewer.profile.access_kind !== "academic" ? (
+      ].includes(role) ? (
         <section className="live-card">
           <h2>{es ? "Añadir nota de seguimiento" : "Add follow-up note"}</h2>
           <p>

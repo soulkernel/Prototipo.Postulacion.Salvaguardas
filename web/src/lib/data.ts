@@ -17,21 +17,30 @@ export const getViewer = cache(async () => {
     data: { user },
     error,
   } = await db.auth.getUser();
-  if (error && (!error.status || error.status >= 500 || error.status === 429)) throw new Error("GLF_ACCESS_UNAVAILABLE");
+  if (error && (!error.status || error.status >= 500 || error.status === 429))
+    throw new Error("GLF_ACCESS_UNAVAILABLE");
   if (error || !user) return null;
   // Both checks use the verified user/session and must be fresh on every request.
   const [
     { data: profile, error: profileError },
     { data: sessionValid, error: sessionError },
   ] = await Promise.all([
-    db.from("profiles")
-      .select("id,full_name,role,active,user_admin_scope,access_kind,access_expires_at,archived_at")
+    db
+      .from("profiles")
+      .select(
+        "id,full_name,role,active,user_admin_scope,access_kind,archived_at",
+      )
       .eq("id", user.id)
       .maybeSingle(),
     db.rpc("access_session_valid"),
   ]);
   if (profileError) throw new Error("GLF_ACCESS_UNAVAILABLE");
-  if (!profile?.active || !roles.includes(profile.role)) return null;
+  if (
+    !profile?.active ||
+    profile.access_kind !== "standard" ||
+    !roles.includes(profile.role)
+  )
+    return null;
   if (sessionError) throw new Error("GLF_ACCESS_UNAVAILABLE");
   if (!sessionValid) return null;
   return { db, user, profile: { ...profile, role: profile.role as Role } };
@@ -39,7 +48,6 @@ export const getViewer = cache(async () => {
 export async function requireViewer(allowed?: readonly Role[]) {
   const viewer = await getViewer();
   if (!viewer) redirect("/login");
-  if (viewer.profile.access_kind === "academic") redirect("/evaluation");
   if (
     viewer.profile.role === "internal_member" &&
     !allowed?.includes("internal_member")
@@ -55,17 +63,7 @@ export async function requireViewer(allowed?: readonly Role[]) {
   return viewer;
 }
 export async function requireRagViewer() {
-  const viewer = await getViewer();
-  if (!viewer) redirect("/login");
-  if (viewer.profile.access_kind === "academic") return viewer;
   return requireViewer(["sustainability_reviewer", "administrator"]);
-}
-// Read-only entry point: mutating actions continue using requireViewer.
-export async function requireReadViewer(allowed?: readonly Role[]) {
-  const viewer = await getViewer();
-  if (!viewer) redirect("/login");
-  if (viewer.profile.access_kind === "academic") return viewer;
-  return requireViewer(allowed);
 }
 export async function getCalls(): Promise<Call[]> {
   const db = await createSupabaseServerClient();
@@ -78,7 +76,7 @@ export async function getCalls(): Promise<Call[]> {
   return (data || []) as Call[];
 }
 export async function getApplication(id: string) {
-  const viewer = await requireReadViewer();
+  const viewer = await requireViewer();
   if (!z.uuid().safeParse(id).success) notFound();
   const { data, error } = await viewer.db
     .from("applications")
@@ -104,12 +102,17 @@ export async function getApplication(id: string) {
 
 export const getRequestTime = cache(() => Date.now());
 
-export type CallOption = Pick<Call, "id" | "title_es" | "title_en" | "status" | "opens_at" | "closes_at" | "rules">;
+export type CallOption = Pick<
+  Call,
+  "id" | "title_es" | "title_en" | "status" | "opens_at" | "closes_at" | "rules"
+>;
 export const getCallOptions = cache(async (): Promise<CallOption[]> => {
   const db = await createSupabaseServerClient();
   if (!db) return [];
-  const { data, error } = await db.from("calls")
-    .select("id,title_es,title_en,status,opens_at,closes_at,rules").order("opens_at", { ascending: false });
+  const { data, error } = await db
+    .from("calls")
+    .select("id,title_es,title_en,status,opens_at,closes_at,rules")
+    .order("opens_at", { ascending: false });
   if (error) throw new Error("Cannot read call options");
   return (data || []) as CallOption[];
 });

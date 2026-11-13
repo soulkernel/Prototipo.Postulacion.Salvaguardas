@@ -15,21 +15,6 @@ Deno.serve(async (request: Request) => {
  try { const raw=await request.text(); if(raw.length>4096) throw Error(); body=JSON.parse(raw); } catch {return reply(400,{ok:false,error:"GLF_INVALID_OPERATION"});}
  const admin=createClient(url,secret,{auth:{persistSession:false,autoRefreshToken:false}});
  if(body.operation==="status") return reply(200,{ok:true});
- if(body.operation==="create_academic") {
-  const email=typeof body.email==="string"?body.email.trim().toLowerCase():"";
-  const fullName=typeof body.full_name==="string"?body.full_name.trim():"";
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254||fullName.length<2||fullName.length>200||body.confirmed!==true) return reply(400,{ok:false,error:"GLF_INVALID_INVITATION"});
-  // Never log or persist the generated password; return once to the administrator.
-  const password="GLF!"+Array.from(crypto.getRandomValues(new Uint8Array(24)),b=>b.toString(16).padStart(2,"0")).join("");
-  const {data:created,error:createError}=await admin.auth.admin.createUser({email,password,email_confirm:true,user_metadata:{full_name:fullName,glf_academic_provision:"true"}});
-  if(createError||!created.user) return reply(409,{ok:false,error:["email_exists","user_already_exists"].includes(createError?.code||"")?"GLF_EMAIL_EXISTS":"GLF_ACCOUNT_CREATE_FAILED"});
-  const {data:expires,error:finishError}=await admin.rpc("finish_academic_account",{target_user:created.user.id,actor:user.id});
-  if(finishError) {
-   await admin.from("profiles").update({active:false,archived_at:new Date().toISOString()}).eq("id",created.user.id);
-   return reply(503,{ok:false,error:"GLF_ACCOUNT_CREATE_FAILED"});
-  }
-  return reply(200,{ok:true,email,password,expires_at:expires});
- }
  if(body.operation==="delete") {
   if(typeof body.id!=="string"||!/^[0-9a-f-]{36}$/i.test(body.id)||!Number.isInteger(body.revision)||body.confirmed!==true||typeof body.reason!=="string"||body.reason.length>500) return reply(400,{ok:false,error:"GLF_INVALID_OPERATION"});
   const {error:prepareError}=await caller.rpc("prepare_account_deletion",{target_user:body.id,expected_revision:body.revision,reason:body.reason});

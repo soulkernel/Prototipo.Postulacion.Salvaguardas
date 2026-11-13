@@ -1,0 +1,53 @@
+RETIRO DEL ACCESO ACADEMICO — GLF v0.7.75
+Fecha: 12 de noviembre de 2026 (Galapagos)
+
+DECISION Y ALCANCE
+Finalizada la defensa universitaria, el titular autorizo retirar el acceso de
+la profesora y el codigo exclusivo para su evaluacion. La eliminacion definitiva
+de la cuenta y de tres tablas exclusivas fue confirmada adicionalmente durante
+la ejecucion. El repositorio universitario y sus documentos/videos quedan fuera
+del alcance. Las otras cuentas, incluidos postulantes, conservan sus permisos.
+
+IMPLEMENTACION
+- Login/getViewer rechazan tipos de acceso distintos de standard. Se eliminan
+  las excepciones academicas de las rutas de expedientes, reportes, archivos,
+  manuales y RAG. /evaluation redirige al inicio protegido por el acceso normal.
+- Se retiran el formulario de creacion, Server Action, menu, filtros exclusivos,
+  escenarios de demostracion y mensajes academicos de los manuales ES/EN.
+- RAG mantiene Qwen, E5, corpus, fuentes, consultas libres y vinculadas, progreso,
+  errores, cancelacion y notas. Roles permitidos: sustainability_reviewer y
+  administrator, ambos con segundo factor. Ningun rol adicional recibe acceso.
+- Edge user-administration conserva status y delete con sus guardas; rechaza la
+  operacion create_academic. No genera contrasenas ni provisiona cuentas temporales.
+- Migracion 062: solo standard; restaura permisos institucionales en consultas,
+  match_evidence y notas. Retira seis funciones exclusivas, cuatro politicas y
+  tres tablas de vinculos/cuotas. No usa DROP CASCADE ni reescribe migraciones
+  anteriores. Falla si quedan identidades academicas por retirar.
+- Conserva public.access_session_valid(), sus permisos y el contrato de identidad
+  compartido con Operaciones/KYC. Mantiene comprobaciones de estado y revocacion.
+  Los campos standard del contrato de perfiles siguen disponibles para clientes.
+- La cuenta se desactiva/revoca, archiva y elimina mediante la administracion
+  existente, que impide eliminar usuarios con expedientes, archivos o actuaciones.
+
+VALIDACION LOCAL
+Pruebas del portal/formularios: 303 correctas. Tres pruebas adicionales ejecutan
+la funcion Edge real con clientes aislados: rechazan provision academica, exigen
+MFA/sesion valida y conservan la guarda previa a la eliminacion de identidades.
+Pruebas SQL posteriores: 71 correctas, incluidas esas tres de Edge y la guarda
+de actualizacion que revierte la migracion si existe una identidad academica.
+Compilacion de produccion correcta. Validaciones e interfaces de fase 1/2 intactas.
+Las mediciones anteriores no atribuyen la demora de navegacion a la cuenta;
+este retiro simplifica mantenimiento y permisos, sin prometer una latencia fija.
+
+PUBLICACION SUPABASE
+Funcion Edge actualizada y confirmada por el panel. Migracion 062 aplicada
+transaccionalmente: Success. No rows returned. Cuenta academica ausente en
+Auth y perfiles. Evidencias de inventario y comprobacion en scratch/retirement-*.
+El proyecto mantiene migraciones publicadas manualmente desde SQL Editor;
+no existe supabase_migrations.schema_migrations. La fuente versionada y este
+registro documentan la aplicacion; no se introduce otro sistema de migraciones.
+
+REFERENCIA COMPARTIDA
+Contexto maestro: soulkernel/GLF, feat/portal-accesos-centralizados,
+docs/CONTEXTO_MAESTRO_GLF.md. Este cambio conserva el contrato de identidad;
+no implementa SSO ni administracion central ni modifica Operaciones/KYC.

@@ -10,7 +10,7 @@ import { InboxFilters } from "@/components/inbox-filters";
 import { resolveFilters } from "@/lib/inbox-filters";
 import Link from "@/components/feedback-link";
 import { ActionLink } from "@/components/action-link";
-import { requireReadViewer, getCallOptions } from "@/lib/data";
+import { requireViewer, getCallOptions } from "@/lib/data";
 import { getLocale } from "@/lib/locale";
 import { Shell } from "@/components/shell";
 import { roleLabels, statusLabel } from "@/lib/fields";
@@ -25,7 +25,7 @@ export default async function InternalPage({
     q?: string;
   }>;
 }) {
-  const { db, profile } = await requireReadViewer([
+  const { db, profile } = await requireViewer([
     "grants_manager",
     "sustainability_reviewer",
     "project_coordinator",
@@ -64,12 +64,7 @@ export default async function InternalPage({
         title={es ? "Expedientes y decisiones" : "Applications and decisions"}
       >
         <p>
-          {profile.full_name} ·{" "}
-          {profile.access_kind === "academic"
-            ? es
-              ? "Evaluación académica"
-              : "Academic evaluation"
-            : roleLabels[profile.role][es ? 0 : 1]}
+          {profile.full_name} · {roleLabels[profile.role][es ? 0 : 1]}
         </p>
       </ModuleHeading>
       <nav className="live-nav">

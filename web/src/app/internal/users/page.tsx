@@ -9,10 +9,7 @@ import { getLocale } from "@/lib/locale";
 import { Shell } from "@/components/shell";
 import { roles } from "@/lib/domain";
 import { roleLabels } from "@/lib/fields";
-import {
-  AccountManagement,
-  AcademicAccountForm,
-} from "@/components/account-management";
+import { AccountManagement } from "@/components/account-management";
 import type { ManagedAccount } from "@/lib/account-management";
 export default async function UsersPage({
   searchParams,
@@ -40,8 +37,11 @@ export default async function UsersPage({
     { data: invitations, error: invitationError },
   ] = await Promise.all([
     db.rpc("list_managed_accounts"),
-    db.from("staff_invitation_drafts")
-      .select("id,email,full_name,assigned_role,user_admin_scope,status,updated_at,sent_at,expires_at,accepted_at,send_count,last_error,invited_user_id,delivery_method")
+    db
+      .from("staff_invitation_drafts")
+      .select(
+        "id,email,full_name,assigned_role,user_admin_scope,status,updated_at,sent_at,expires_at,accepted_at,send_count,last_error,invited_user_id,delivery_method",
+      )
       .order("full_name"),
   ]);
   const profiles = (accountRows || []) as ManagedAccount[];
@@ -73,7 +73,9 @@ export default async function UsersPage({
   }
   return (
     <Shell locale={locale} internal>
-      <BackLink href="/internal">{locale === "es" ? "Volver a expedientes" : "Back to applications"}</BackLink>
+      <BackLink href="/internal">
+        {locale === "es" ? "Volver a expedientes" : "Back to applications"}
+      </BackLink>
       <ModuleHeading title={es ? "Gestión de usuarios" : "User management"} />
       {params.error && (
         <p role="alert" className="auth-error">
@@ -94,13 +96,11 @@ export default async function UsersPage({
         administrator={profile.role === "administrator"}
         requestTime={await getRequestTime()}
       />
-      {profile.role === "administrator" && <AcademicAccountForm es={es} />}
       <AccountManagement
         accounts={profiles}
         es={es}
         administrator={profile.role === "administrator"}
         userId={user.id}
-        requestTime={await getRequestTime()}
       />
       <section className="live-card">
         <details>
@@ -112,7 +112,7 @@ export default async function UsersPage({
           {profiles
             ?.filter(
               (p) =>
-                p.access_kind !== "academic" &&
+                p.access_kind === "standard" &&
                 !p.archived_at &&
                 !invitations?.some(
                   (i) => i.invited_user_id === p.id && i.status !== "accepted",

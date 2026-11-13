@@ -30,7 +30,6 @@ export function RagConsole({
   e5Enabled,
   qwenEnabled,
   context,
-  readOnly = false,
   initialMethod,
   suggestedQuery,
   onNoteSaved,
@@ -39,7 +38,6 @@ export function RagConsole({
   e5Enabled: boolean;
   qwenEnabled: boolean;
   context?: { project: RagProject; risk: RagRisk };
-  readOnly?: boolean;
   initialMethod?: "e5" | "qwen";
   suggestedQuery?: string;
   onNoteSaved?: () => void;
@@ -652,30 +650,41 @@ export function RagConsole({
                   <h3>
                     <AlertCircle size={20} aria-hidden="true" />
                     {response.reason === "response_malformed"
-                      ? t("La respuesta no superó el control de calidad", "The answer failed quality checks")
-                      : response.reason === "response_truncated" ||
-                    response.reason === "generation_incomplete"
                       ? t(
-                          "La generación quedó incompleta",
-                          "Generation was incomplete",
+                          "La respuesta no superó el control de calidad",
+                          "The answer failed quality checks",
                         )
-                      : response.reason === "citation_validation_failed"
+                      : response.reason === "response_truncated" ||
+                          response.reason === "generation_incomplete"
                         ? t(
-                            "Las referencias no pudieron validarse",
-                            "References could not be validated",
+                            "La generación quedó incompleta",
+                            "Generation was incomplete",
                           )
-                        : t(
-                            "Evidencia insuficiente para responder",
-                            "Insufficient evidence to answer",
-                          )}
+                        : response.reason === "citation_validation_failed"
+                          ? t(
+                              "Las referencias no pudieron validarse",
+                              "References could not be validated",
+                            )
+                          : t(
+                              "Evidencia insuficiente para responder",
+                              "Insufficient evidence to answer",
+                            )}
                   </h3>
                   {response.reason === "response_malformed" && (
                     <>
-                      <p>{t(
-                        "El modelo devolvió texto repetido o caracteres anómalos. La respuesta se descartó; su pregunta y los documentos recuperados siguen disponibles. Puede volver a consultar o utilizar el buscador E5.",
-                        "The model returned repeated text or abnormal characters. The answer was discarded; your question and retrieved documents remain available. Retry or use the E5 search."
-                      )}</p>
-                      <button type="button" className="button secondary" disabled={pending} aria-busy={pending} onClick={() => void submit()}>
+                      <p>
+                        {t(
+                          "El modelo devolvió texto repetido o caracteres anómalos. La respuesta se descartó; su pregunta y los documentos recuperados siguen disponibles. Puede volver a consultar o utilizar el buscador E5.",
+                          "The model returned repeated text or abnormal characters. The answer was discarded; your question and retrieved documents remain available. Retry or use the E5 search.",
+                        )}
+                      </p>
+                      <button
+                        type="button"
+                        className="button secondary"
+                        disabled={pending}
+                        aria-busy={pending}
+                        onClick={() => void submit()}
+                      >
                         {t("Volver a consultar", "Retry query")}
                       </button>
                     </>
@@ -752,7 +761,7 @@ export function RagConsole({
                         "Retrieved passage for review",
                       )}
                 </p>
-                {!readOnly && context && (
+                {context && (
                   <label className="rag-evidence-choice">
                     <input
                       type="checkbox"
@@ -795,7 +804,7 @@ export function RagConsole({
                 </details>
               </article>
             ))}
-            {!readOnly && context && (
+            {context && (
               <RagNoteForm
                 key={result.requestId}
                 context={context}
@@ -804,7 +813,10 @@ export function RagConsole({
                 evidence={response || { results: result.results }}
                 es={es}
                 selectedIds={selectedIds}
-                onSaved={() => { setReviewSaved(true); onNoteSaved?.(); }}
+                onSaved={() => {
+                  setReviewSaved(true);
+                  onNoteSaved?.();
+                }}
               />
             )}
             <details className="rag-technical">
