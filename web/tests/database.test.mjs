@@ -3930,7 +3930,7 @@ test("neutral internal identity requires MFA and has no grants, documents, appli
 });
 test("manual activation has recipient binding, fifteen day expiry, one-time redemption and cancellation",async()=>{
  async function provision(){
-  const user=await temporaryAccount(),email=`${user}@example.test`;
+  const user=await temporaryAccount();
   // Separate address because the preparation RPC rejects existing accounts.
   const newEmail=`invite-${user}@example.test`;
   const id=await rpc("prepare_staff_invitation",{contact_email:newEmail,contact_name:"Internal QA",desired_role:"internal_member",desired_scope:"none"},"admin");
@@ -4065,4 +4065,37 @@ test("risk map format migration keeps prepared snapshots and inherited signing f
   const fresh4=(await db.query("insert into public.prepared_documents(application_id,revision,stage,payload) values($1,79,1,$2) returning document_metadata",[app,prepared.payload])).rows[0].document_metadata;
   assert.equal(fresh4.format_version,4);
  } finally { await db.exec('rollback'); }
+});
+
+test("optimized read models return the latest submitted row, preserve RLS and align phase-one review criteria", async () => {
+  const owner = await temporaryAccount(), otherOwner = await temporaryAccount();
+  const app = await rpc("create_application", { call_id: call }, owner);
+  const p = structuredClone(payload);
+  p.concept.title = "Original submission";
+  for (const revision of [1, 2]) {
+    p.concept.title = `Submission ${revision}`;
+    await db.query("insert into public.application_versions(application_id,revision,stage,payload,rules_snapshot,actor_id) values($1,$2,1,$3,$4,$5)", [app, revision, p, rules, owner]);
+  }
+  p.concept.title = "Unsubmitted draft changes";
+  await db.query("update public.applications set payload=$2,submitted_at=now(),status='under_review' where id=$1", [app, p]);
+  const read = (who, view) => as(who, () => db.query(`select * from public.${view} where id=$1`, [app]));
+  const latest = (await read(owner, "latest_submitted_applications")).rows;
+  assert.equal(latest.length, 1);
+  assert.equal(latest[0].revision, 2);
+  assert.equal(latest[0].title, "Submission 2");
+  const summary = (await read(owner, "applicant_application_summaries")).rows[0];
+  assert.equal(summary.title, "Unsubmitted draft changes");
+  assert.equal(summary.has_versions, true);
+  assert.equal(Object.hasOwn(summary, "payload"), false);
+  for (const view of ["latest_submitted_applications", "applicant_application_summaries"]) {
+    assert.equal((await read(otherOwner, view)).rows.length, 0);
+    assert.equal((await read("admin", view)).rows.length, 1);
+    assert.equal((await db.query("select has_table_privilege('anon',$1,'SELECT') allowed", ["public." + view])).rows[0].allowed, false);
+    assert.equal((await db.query("select has_table_privilege('authenticated',$1,'UPDATE') allowed", ["public." + view])).rows[0].allowed, false);
+  }
+  const criteria = (await db.query("select criteria from public.review_templates where stage=1 and kind='administrative'")).rows[0].criteria;
+  assert.match(criteria.find(c => c.id === "budget").text, /presupuesto resumido/);
+  assert.doesNotMatch(criteria.find(c => c.id === "cofinance").text, /alguna cofinanciación/);
+  const phase2 = (await db.query("select criteria from public.review_templates where stage=2 and kind='administrative'")).rows[0].criteria;
+  assert.match(phase2.find(c => c.id === "budget").text, /presupuesto desglosado/);
 });

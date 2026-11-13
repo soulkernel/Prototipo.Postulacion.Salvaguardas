@@ -1,12 +1,25 @@
 "use client";
+import dynamic from "next/dynamic";
+import { SectionBoundary } from "./section-boundary";
+const ConceptReview = dynamic(() => import("./concept-review").then(m => m.ConceptReview), { loading: () => <p role="status" className="section-loading">…</p> });
+const MonitoringFields = dynamic(() => import("./monitoring-fields").then(m => m.MonitoringFields), { loading: () => <p role="status" className="section-loading">…</p> });
+const SustainabilityFields = dynamic(() => import("./sustainability-fields").then(m => m.SustainabilityFields), { loading: () => <p role="status" className="section-loading">…</p> });
+const ActivityPlanningFields = dynamic(() => import("./activity-planning-fields").then(m => m.ActivityPlanningFields), { loading: () => <p role="status" className="section-loading">…</p> });
+const StrategicFields = dynamic(() => import("./strategic-fields").then(m => m.StrategicFields), { loading: () => <p role="status" className="section-loading">…</p> });
+const ProjectResultFields = dynamic(() => import("./project-result-fields").then(m => m.ProjectResultFields), { loading: () => <p role="status" className="section-loading">…</p> });
+const BudgetFields = dynamic(() => import("./budget-fields").then(m => m.BudgetFields), { loading: () => <p role="status" className="section-loading">…</p> });
+const SummaryBudgetFields = dynamic(() => import("./summary-budget-fields").then(m => m.SummaryBudgetFields), { loading: () => <p role="status" className="section-loading">…</p> });
+const RiskOverview = dynamic(() => import("./risk-overview").then(m => m.RiskOverview), { loading: () => <p role="status" className="section-loading">…</p> });
+const PotentialRiskFields = dynamic(() => import("./potential-risk-fields").then(m => m.PotentialRiskFields), { loading: () => <p role="status" className="section-loading">…</p> });
+
 import { currentDocumentFormat } from "@/lib/document-presentation";
-import { narrativeTextForEditing } from "@/lib/concept-presentation";
-import { ConceptReview } from "./concept-review";
+import { narrativeTextForEditing } from "@/lib/narrative-text";
+
 import { SgasExperienceFields, GeneratedSgasAttachment, SgasReview } from "./sgas-experience-fields";
 import { finalizeSgasExperience } from "@/app/applicant/sgas-actions";
 import { currentSgasDocument, sgasIssues, sgasIssueMessage, sgasKind, sgasSource } from "@/lib/sgas-experience";
-import { MonitoringFields } from "./monitoring-fields";
-import { SustainabilityFields } from "./sustainability-fields";
+
+
 import { sustainabilityObjectiveIds } from "@/lib/sustainability-plan";
 import { monitoredObjectiveIds } from "@/lib/monitoring-plan";
 import { ApplicationTopicSelect } from "./application-topic-select";
@@ -26,7 +39,7 @@ import { NarrativeTextarea } from "./narrative-textarea";
 import { MoneyInput } from "./money-input";
 import { DeadlineCountdown } from "./deadline-countdown";
 import { DocumentDownload } from "./document-download";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { proposalEntryPrompt, proposalTitle } from "@/lib/proposal-guidance";
 import { ProposalFieldGuidance } from "./proposal-field-guidance";
 import { applicationStepUrl } from "@/lib/application-navigation";
@@ -39,7 +52,7 @@ import {
   submissionPhase,
 } from "@/lib/applicant-copy";
 import { PhoneField } from "./phone-field";
-import { ActivityPlanningFields } from "./activity-planning-fields";
+
 import { PartnerFields } from "./partner-fields";
 import {
   initializePartners,
@@ -58,11 +71,11 @@ import { stepIssues } from "@/lib/step-validation";
 import { GeographyFields } from "./geography-fields";
 import { applicantTypeAddressPatch } from "@/lib/geography";
 import { SummaryFields } from "./summary-fields";
-import { StrategicFields } from "./strategic-fields";
-import { ProjectResultFields } from "./project-result-fields";
+
+
 import { resultText } from "@/lib/project-results";
-import { BudgetFields } from "./budget-fields";
-import { SummaryBudgetFields } from "./summary-budget-fields";
+
+
 import {
   summaryBudgetMessage,
   summaryBudgetTotals,
@@ -80,8 +93,8 @@ import {
   RiskInterpretationGuide,
   RiskCategoryResult,
 } from "./risk-rating-fields";
-import { RiskOverview } from "./risk-overview";
-import { PotentialRiskFields } from "./potential-risk-fields";
+
+
 import { riskLabel } from "@/lib/potential-risks";
 import {
   identificationIssue,
@@ -469,7 +482,8 @@ export function ApplicationEditor({
     revision: number;
     created_at: string;
   } | null>(initialPrepared);
-  const dirty = JSON.stringify(payload) !== saved || !moneyTextValid;
+  const serializedPayload = useMemo(() => JSON.stringify(payload), [payload]);
+  const dirty = serializedPayload !== saved || !moneyTextValid;
   const legacySubmitted = !editable && Boolean(application.submitted_at) && !payload.concept.sgas_experience;
   const [sgasChecked,setSgasChecked] = useState(false);
   const sgasFlight=useRef(false);
@@ -960,7 +974,7 @@ export function ApplicationEditor({
     rules,
     documents,
   );
-  const progress = submissionProgress(
+  const progress = useMemo(() => submissionProgress(
     payload,
     rules,
     application.stage,
@@ -969,7 +983,7 @@ export function ApplicationEditor({
     signedDocumentsReady,
     !dirty,
     legacySubmitted,
-  );
+  ), [payload, rules, application.stage, call.phase2_schema, documents, signedDocumentsReady, dirty, legacySubmitted]);
   const completion = showCompletion
     ? completionGuidance(
         payload,
@@ -1887,6 +1901,7 @@ export function ApplicationEditor({
           </button>
         </aside>
       )}
+      <SectionBoundary key={step} es={es} onReturn={() => setStep(0)}>
       <fieldset
         disabled={!editable || busy || !!pendingPartner}
         className="live-fieldset application-entry-fields"
@@ -3056,6 +3071,7 @@ export function ApplicationEditor({
           )}
         </div>
       </fieldset>
+      </SectionBoundary>
       {step === 5 && editable && (
         <section className="live-card">
           <h2 className="application-section-title">

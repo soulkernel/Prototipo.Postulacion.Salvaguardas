@@ -60,7 +60,7 @@ export async function saveOrPublishCall(
       return failed(es ? "No se encontró la convocatoria." : "Call not found.");
     const issues = callIssues(stored as Call, locale, Date.now());
     if (issues.length) return failed(issues.join(" "));
-    const { data, error } = await db.rpc("publish_call_reviewed", {
+    const { error } = await db.rpc("publish_call_reviewed", {
       call_id: id,
       expected_revision: revision,
     });
@@ -72,12 +72,7 @@ export async function saveOrPublishCall(
       );
     revalidatePath("/internal/calls");
     revalidatePath("/applicant");
-    return {
-      call: data as Call,
-      values: previous.values,
-      saved: true,
-      sequence,
-    };
+    redirect(`/internal/calls?view=${id}&published=1`);
   }
   if (str("theme_editor_pending") === "true")
     return failed(

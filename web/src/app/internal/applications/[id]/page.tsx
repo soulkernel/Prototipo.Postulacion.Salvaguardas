@@ -1,3 +1,4 @@
+import { correctionWindow } from "@/lib/correction-window";
 import { RiskOverview } from "@/components/risk-overview";
 import { currentDocumentFormat } from "@/lib/document-presentation";
 import { VersionDownloads } from "@/components/version-downloads";
@@ -52,6 +53,7 @@ export default async function ReviewPage({
     { data: notes, error: notesError },
     { data: decisions, error: decisionError },
     { data: versions, error: versionError },
+    { data: latest, error: latestError },
     { data: docs, error: documentError },
     { data: events, error: eventError },
     { data: call, error: callError },
@@ -73,9 +75,10 @@ export default async function ReviewPage({
       .order("created_at", { ascending: false }),
     viewer.db
       .from("application_versions")
-      .select("*")
+      .select("id,revision,stage,submitted_at,concept_layout_version,document_metadata")
       .eq("application_id", id)
       .order("revision", { ascending: false }),
+    viewer.db.from("latest_submitted_applications").select("payload").eq("id", id).maybeSingle(),
     viewer.db
       .from("application_documents")
       .select("id,file_name,kind")
@@ -87,7 +90,7 @@ export default async function ReviewPage({
       .order("created_at", { ascending: false }),
     viewer.db
       .from("calls")
-      .select("phase2_schema")
+      .select("phase2_schema,closes_at")
       .eq("id", a.call_id)
       .single(),
   ]);
@@ -95,15 +98,15 @@ export default async function ReviewPage({
     reviewError ||
     notesError ||
     decisionError ||
-    versionError ||
+    versionError || latestError ||
     documentError ||
     eventError ||
     callError
   )
     throw new Error("Cannot load the complete submitted dossier");
-  if (!versions?.[0]?.payload && viewer.profile.access_kind !== "academic")
+  if (!latest?.payload && viewer.profile.access_kind !== "academic")
     throw new Error("Submitted dossier has no submitted version");
-  if (versions?.[0]?.payload) a.payload = versions[0].payload;
+  if (latest?.payload) a.payload = latest.payload;
   if (a.payload.concept.strategic_alignment)
     a.payload.concept = {
       ...a.payload.concept,
@@ -117,6 +120,7 @@ export default async function ReviewPage({
     "under_review",
     "phase2_submitted",
   ].includes(a.status);
+  const corrections = correctionWindow(a.stage, call?.closes_at || null, a.phase2_deadline, requestTime);
   const hidden = (
     <>
       <input type="hidden" name="id" value={id} />
@@ -401,11 +405,13 @@ export default async function ReviewPage({
       {underReview && role === "grants_manager" && (
         <section className="live-card">
           <h2>{es ? "Autorizar corrección" : "Authorize a correction"}</h2>
+          <p id="correction-window-help">{corrections.allowed ? (es ? "La corrección debe recibirse antes del cierre de la convocatoria o del plazo de la propuesta completa, según la fase. Hora de Galápagos." : "The correction must be received before the call or full-proposal deadline for this phase. Galápagos time.") : (es ? "El plazo de esta fase está cerrado. No es posible autorizar una corrección fuera de ese plazo." : "This phase deadline has passed. A correction cannot be authorized outside that deadline.")}</p>
           <form action={reopenApplication} className="live-form">
+            <fieldset disabled={!corrections.allowed}>
             {hidden}
             <label>
               {es ? "Fecha límite (Galápagos)" : "Deadline (Galápagos time)"}
-              <input type="datetime-local" name="deadline" required />
+              <input type="datetime-local" name="deadline" min={corrections.min} max={corrections.max} aria-describedby="correction-window-help" required />
             </label>
             <label>
               {es
@@ -419,6 +425,7 @@ export default async function ReviewPage({
             >
               {es ? "Autorizar reapertura" : "Authorize reopening"}
             </SubmitButton>
+            </fieldset>
           </form>
         </section>
       )}

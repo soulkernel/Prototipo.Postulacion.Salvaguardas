@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { getLocale } from "@/lib/locale";
 import "./globals.css";
 import "./live.css";
-import "./manual.css";
 export const metadata: Metadata = {
   title: "Portal de postulaciones | Galápagos Life Fund",
   description:

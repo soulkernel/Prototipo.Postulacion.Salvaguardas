@@ -7,19 +7,20 @@ import { DeleteDraft } from "@/components/delete-draft";
 export default async function MyApplicationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ deleted?: string }>;
+  searchParams: Promise<{ deleted?: string; page?: string }>;
 }) {
   const params = await searchParams;
   const viewer = await requireViewer(["applicant"]);
   const locale = await getLocale();
   const es = locale === "es";
-  const { data: rows, error } = await viewer.db
-    .from("applications")
+  const page = Math.max(1, Math.min(10000, Math.trunc(Number(params.page) || 1)));
+  const { data: rows, error, count } = await viewer.db
+    .from("applicant_application_summaries")
     .select(
-      "id,reference_code,payload,status,updated_at,submitted_at,revision,stage,deletion_pending,application_versions(id)",
+      "id,reference_code,title,category,status,updated_at,submitted_at,revision,stage,deletion_pending,has_versions", { count: "exact" },
     )
     .eq("applicant_id", viewer.user.id)
-    .order("updated_at", { ascending: false });
+    .order("updated_at", { ascending: false }).order("id").range((page - 1) * 20, page * 20 - 1);
   if (error) throw new Error("Cannot read applications");
   return (
     <Shell locale={locale}>
@@ -64,7 +65,7 @@ export default async function MyApplicationsPage({
                   >
                     <td>{row.reference_code}</td>
                     <td>
-                      {row.payload?.concept?.title ||
+                      {row.title ||
                         (es ? "Sin título" : "Untitled")}
                     </td>
                     <td>{statusLabel(row.status, locale, "applicant")}</td>
@@ -92,31 +93,31 @@ export default async function MyApplicationsPage({
                         {row.status === "draft" &&
                           row.stage === 1 &&
                           !row.submitted_at &&
-                          !row.application_versions?.length && (
+                          !row.has_versions && (
                             <DeleteDraft
                               id={row.id}
                               revision={row.revision}
                               title={
-                                row.payload?.concept?.title ||
+                                row.title ||
                                 (es ? "Sin título" : "Untitled")
                               }
                               reference={row.reference_code}
                               category={
-                                row.payload?.concept?.category_id === "small"
+                                row.category === "small"
                                   ? es
                                     ? "Pequeña"
                                     : "Small"
-                                  : row.payload?.concept?.category_id ===
+                                  : row.category ===
                                       "medium"
                                     ? es
                                       ? "Mediana"
                                       : "Medium"
-                                    : row.payload?.concept?.category_id ===
+                                    : row.category ===
                                         "large"
                                       ? es
                                         ? "Grande"
                                         : "Large"
-                                      : row.payload?.concept?.category_id || ""
+                                      : row.category || ""
                               }
                               locale={locale}
                               pending={row.deletion_pending}
@@ -136,6 +137,11 @@ export default async function MyApplicationsPage({
               : "Your drafts and submitted applications will appear here."}
           </p>
         )}
+        <nav className="list-navigation" aria-label={es ? "Páginas de postulaciones" : "Application pages"}>
+          {page > 1 && <Link className="button secondary" href={"?page=" + (page - 1)}>{es ? "Anterior" : "Previous"}</Link>}
+          <span>{es ? "Página" : "Page"} {page} · {count || 0} {es ? "postulaciones" : "applications"}</span>
+          {page * 20 < (count || 0) && <Link className="button secondary" href={"?page=" + (page + 1)}>{es ? "Siguiente" : "Next"}</Link>}
+        </nav>
       </section>
     </Shell>
   );

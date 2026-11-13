@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { findRagProjects, loadRagProject } from "@/app/internal/evidence/context-actions";
 import { RagMethods } from "./rag-methods";
 import type { RagProject } from "@/lib/rag-context";
 import type { Locale } from "@/lib/domain";
@@ -18,10 +19,11 @@ export type RagNote = {
 };
 export function RagWorkspace({
   locale,
-  projects,
+  projects: initialProjects,
   calls,
   initialProject,
-  notes,
+  notes: initialNotes,
+  remote = false,
   readOnly = false,
   showApplicationLinks = !readOnly,
   ...enabled
@@ -35,14 +37,50 @@ export function RagWorkspace({
   showApplicationLinks?: boolean;
   e5Enabled: boolean;
   qwenEnabled: boolean;
+  remote?: boolean;
 }) {
   const es = locale === "es";
-  const initial = projects.find((p) => p.id === initialProject);
+  const initial = initialProjects.find((p) => p.id === initialProject);
+  const [projects, setProjects] = useState(initialProjects);
+  const [notes, setNotes] = useState(initialNotes);
   const [call, setCall] = useState(initial?.callId || "");
-  const [projectId, setProjectId] = useState(initial?.id || "");
+  const [projectId, setProjectId] = useState(initialProject || "");
   const [riskId, setRiskId] = useState("");
-  const [free, setFree] = useState(!initial);
-  const project = projects.find((p) => p.id === projectId);
+  const [free, setFree] = useState(!initialProject);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
+  const [total, setTotal] = useState(0);
+  const [listBusy, setListBusy] = useState(false);
+  const [contextBusy, setContextBusy] = useState(false);
+  const [listError, setListError] = useState(false);
+  const [contextError, setContextError] = useState(false);
+  const [retry, setRetry] = useState(0);
+  const [loadedProject, setLoadedProject] = useState<RagProject | null>(null);
+  useEffect(() => {
+    if (!remote || free) return;
+    let active = true;
+    const timer = setTimeout(() => {
+      setListBusy(true); setListError(false);
+      findRagProjects({ call, search, page }).then((result) => {
+        if (!active) return;
+        setProjects(result.projects); setTotal(result.count); setListError(result.error);
+      }).catch(() => { if (active) setListError(true); })
+        .finally(() => { if (active) setListBusy(false); });
+    }, 250);
+    return () => { active = false; clearTimeout(timer); };
+  }, [remote, free, call, search, page, retry]);
+  useEffect(() => {
+    if (!remote || !projectId || free) return;
+    let active = true;
+    loadRagProject(projectId).then((result) => {
+      if (!active) return;
+      setLoadedProject(result.project); setNotes(result.notes); setContextError(result.error);
+    }).catch(() => { if (active) setContextError(true); })
+      .finally(() => { if (active) setContextBusy(false); });
+    return () => { active = false; };
+  }, [remote, projectId, free, retry]);
+  const project = remote ? (loadedProject?.id === projectId ? loadedProject : undefined) : projects.find((p) => p.id === projectId);
+  const contextPending = remote && projectId && !project && !contextError;
   const risk = project?.risks.find((r) => r.id === riskId);
   const levels: Record<string, string> = es
     ? {
@@ -97,6 +135,9 @@ export function RagWorkspace({
         </div>
         {!free && (
           <>
+            {remote && <label>{es ? "Buscar proyecto por título o referencia" : "Search project title or reference"}
+              <input type="search" value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} />
+            </label>}
             <div className="rag-selectors">
               <label>
                 {es ? "Convocatoria" : "Call"}
@@ -106,6 +147,9 @@ export function RagWorkspace({
                     setCall(e.target.value);
                     setProjectId("");
                     setRiskId("");
+                    setPage(0);
+                    setContextBusy(false);
+                    setContextError(false);
                   }}
                 >
                   <option value="">
@@ -125,6 +169,9 @@ export function RagWorkspace({
                   onChange={(e) => {
                     setProjectId(e.target.value);
                     setRiskId("");
+                    setLoadedProject(null);
+                    setContextError(false);
+                    setContextBusy(remote && Boolean(e.target.value));
                   }}
                 >
                   <option value="">
@@ -136,6 +183,7 @@ export function RagWorkspace({
                         ? "Seleccione un proyecto enviado"
                         : "Select a submitted project"}
                   </option>
+                  {remote && project && !projects.some(p => p.id === project.id) && <option value={project.id}>{project.title} · {project.reference}</option>}
                   {projects
                     .filter((p) => !call || p.callId === call)
                     .map((p) => (
@@ -146,6 +194,16 @@ export function RagWorkspace({
                 </select>
               </label>
             </div>
+            {remote && <div className="list-navigation" aria-busy={listBusy}>
+              <button type="button" disabled={listBusy || page === 0} onClick={() => setPage(p => p - 1)}>{es ? "Anterior" : "Previous"}</button>
+              <span role="status">{listBusy ? (es ? "Buscando proyectos…" : "Finding projects…") : `${es ? "Página" : "Page"} ${page + 1} · ${total} ${es ? "proyectos" : "projects"}`}</span>
+              <button type="button" disabled={listBusy || (page + 1) * 20 >= total} onClick={() => setPage(p => p + 1)}>{es ? "Siguiente" : "Next"}</button>
+            </div>}
+            {remote && (listError || contextError) && <div role="alert">
+              <p>{es ? "No se pudo cargar el proyecto. Compruebe su conexión y reintente." : "The project could not be loaded. Check your connection and retry."}</p>
+              <button type="button" disabled={listBusy || contextBusy} onClick={() => { setContextError(false); setRetry(n => n + 1); }}>{es ? "Reintentar" : "Retry"}</button>
+            </div>}
+            {(contextPending || contextBusy) && <p role="status">{es ? "Cargando riesgos y consultas del proyecto…" : "Loading project risks and queries…"}</p>}
             {project && (
               <>
                 <label>
@@ -229,9 +287,10 @@ export function RagWorkspace({
       </section>
       {free || risk ? (
         <RagMethods
-          key={`${free}-${projectId}-${riskId}`}
+          key={`${free}-${projectId}-${riskId}-${project?.revision || 0}`}
           locale={locale}
           readOnly={readOnly}
+          onNoteSaved={remote ? () => setRetry(n => n + 1) : undefined}
           {...enabled}
           context={!free && project && risk ? { project, risk } : undefined}
         />

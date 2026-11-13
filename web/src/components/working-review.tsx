@@ -149,8 +149,8 @@ export function WorkingReview({
             {!rubric && c.id === "cofinance" && (
               <small>
                 {es
-                  ? "En subvenciones pequeñas, cero cofinanciación continúa permitido. La contradicción del checklist está pendiente de aclaración y no bloquea."
-                  : "Zero cofinancing remains permitted for small grants. The checklist discrepancy requires clarification and does not block submission."}
+                  ? "En subvenciones pequeñas se permite un cofinanciamiento de cero. Para las demás categorías, revise el mínimo definido en la convocatoria."
+                  : "Zero cofinancing is allowed for small grants. For other categories, check the minimum specified in the call."}
               </small>
             )}
           </label>

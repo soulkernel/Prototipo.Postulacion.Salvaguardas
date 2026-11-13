@@ -17,6 +17,8 @@ export async function askQwen(
   mode?: AnswerMode,
 ) {
   if (!qwenConfigured()) throw new Error("configuration");
+  signal = AbortSignal.any([AbortSignal.timeout(60000), ...(signal ? [signal] : [])]);
+  signal.throwIfAborted();
   if (progress) {
     const url = new URL(process.env.GLF_QWEN_ENDPOINT!);
     if (
@@ -91,5 +93,6 @@ export async function askQwen(
     fetch,
     retrievalQuery,
     mode,
+    signal,
   );
 }

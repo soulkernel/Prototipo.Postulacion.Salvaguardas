@@ -102,9 +102,10 @@ export function CallPreview({
       <p>
         {es ? "Límite del resumen" : "Summary limit"}:{" "}
         {c.rules.summary_word_limit} {es ? "palabras" : "words"} ·{" "}
-        {es ? "Tope administrativo" : "Administrative cap"}:{" "}
+        {es ? "Tope administrativo de fase 2" : "Phase-two administrative cap"}:{" "}
         {c.rules.max_admin_percent}%
       </p>
+      <p>{es ? "Nota conceptual: gastos administrativos incluidos, hasta el 10 % del costo total del proyecto." : "Concept note: administrative expenses are included, up to 10% of total project cost."}</p>
       <h3>{es ? "Anexos obligatorios" : "Required attachments"}</h3>
       {c.rules.required_attachments.length ? (
         <ul>

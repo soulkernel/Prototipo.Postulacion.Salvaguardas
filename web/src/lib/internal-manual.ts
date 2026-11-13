@@ -828,9 +828,9 @@ export const internalManualChapters: ManualChapter[] = [
     rows: [
       [
         "Fecha límite",
-        "Se interpreta en hora de Galápagos. No puede ser pasada ni superar el cierre aplicable.",
+        "Se interpreta en hora de Galápagos. El calendario limita el ingreso a fechas futuras que no superen el cierre aplicable. Si la fase está cerrada, los controles quedan deshabilitados y se explica el motivo.",
         "Deadline",
-        "Uses Galápagos time. Cannot be in the past or exceed the applicable closing date.",
+        "Uses Galápagos time. The calendar allows future dates up to the applicable deadline. If the phase has closed, controls are disabled and the reason is displayed.",
       ],
       [
         "Motivo de corrección",
@@ -1140,8 +1140,8 @@ export const internalManualChapters: ManualChapter[] = [
         "Review each enabled category: minimum, maximum where applicable, maximum term in months and minimum cofinancing percentage.",
       ],
       [
-        "Compruebe el límite de palabras del resumen y el tope de gastos administrativos que admite la configuración.",
-        "Check the summary word limit and the administrative-expense cap allowed by the configuration.",
+        "Compruebe el límite de palabras del resumen. La nota conceptual aplica un máximo administrativo fijo del 10 % del costo total; el límite configurable corresponde a la propuesta completa de fase 2.",
+        "Check the summary word limit. The concept note uses a fixed administrative cap of 10% of total cost; the configurable cap applies to the phase-two full proposal.",
       ],
       [
         "Configure los requisitos de anexos y los avisos de privacidad en español e inglés. Distinga documentos firmados, anexos manuales y documentos generados.",
@@ -1202,8 +1202,8 @@ export const internalManualChapters: ManualChapter[] = [
       "Preview and publish calls",
     ],
     intro: [
-      "La publicación es explícita y exige una confirmación final. La vista previa trabaja con la última configuración guardada.",
-      "Publishing is explicit and requires final confirmation. Preview uses the latest saved configuration.",
+      "La publicación es explícita y exige una confirmación final. Al completarse, el sistema muestra la convocatoria publicada y un mensaje de confirmación. Un enlace anterior de edición abre su vista de consulta si ya fue publicada. La vista previa usa la última configuración guardada.",
+      "Publishing is explicit and requires final confirmation. On completion, the system displays the published call and a confirmation. An older edit link opens the read-only view if the call has already been published. Preview uses the latest saved configuration.",
     ],
     screen: [
       [
@@ -1314,8 +1314,8 @@ export const internalManualChapters: ManualChapter[] = [
         "Open RAG assistant or Review risks with the RAG assistant from an application. Choose From a project to retain the risk link.",
       ],
       [
-        "Seleccione convocatoria, proyecto enviado y Riesgo y actividad relacionada. Verifique la versión, fase y calificación declarada. Para una pregunta general use Consulta libre.",
-        "Select call, submitted project and Risk and related activity. Check version, stage and declared rating. Use Free query for a general question.",
+        "Seleccione la convocatoria y busque el proyecto por título o referencia. Use Anterior y Siguiente para recorrer los resultados, de 20 en 20. Al escoger el proyecto se cargan sus riesgos y consultas guardadas. Seleccione Riesgo y actividad relacionada y compruebe versión, fase y calificación. Para una pregunta general use Consulta libre.",
+        "Select the call and search projects by title or reference. Use Previous and Next to browse 20 results at a time. Selecting a project loads its risks and saved queries. Select Risk and related activity and check version, phase and rating. Use Free query for a general question.",
       ],
       [
         "Elija Obtener una respuesta con fuentes o Buscar fragmentos en los documentos. En contexto de proyecto seleccione Qué desea revisar.",
@@ -2071,8 +2071,8 @@ export const internalManualChapters: ManualChapter[] = [
       "Troubleshooting and final checks",
     ],
     intro: [
-      "Antes de repetir una acción, compruebe si ya quedó registrada. Los estados, versiones y permisos explican por qué algunos controles no aparecen o no permiten continuar.",
-      "Before repeating an action, check whether it was already recorded. Status, versions and permissions explain why some controls are missing or disabled.",
+      "Si una pantalla no carga, use Reintentar. Una dirección inexistente ofrece Ir al inicio. Antes de repetir una operación de guardado o publicación, compruebe si ya quedó registrada. Los estados, versiones y permisos explican por qué algunos controles no aparecen o no permiten continuar.",
+      "If a screen fails to load, use Retry. A nonexistent address offers Go to home. Before repeating a save or publication, check whether it was already recorded. Status, versions and permissions explain why some controls are missing or disabled.",
     ],
     screen: [
       [
@@ -2180,7 +2180,7 @@ export const internalManualGuide: ManualGuide = {
     "Personal interno y consulta autorizada",
     "Internal staff and authorized readers",
   ],
-  updated: ["7 de noviembre de 2026", "7 November 2026"],
+  updated: ["12 de noviembre de 2026", "12 November 2026"],
   journey: [
     ["Expedientes", "Applications", "expedientes"],
     ["Convocatorias", "Calls", "convocatorias"],

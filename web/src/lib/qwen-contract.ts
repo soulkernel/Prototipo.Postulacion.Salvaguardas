@@ -174,7 +174,9 @@ export async function requestQwen(
   request: typeof fetch = fetch,
   retrievalQuery?: string,
   mode?: AnswerMode,
+  signal?: AbortSignal,
 ): Promise<QwenResponse> {
+  signal?.throwIfAborted();
   const url = new URL(endpoint);
   if (
     url.protocol !== "https:" ||
@@ -207,7 +209,7 @@ export async function requestQwen(
     }),
     cache: "no-store",
     redirect: "error",
-    signal: AbortSignal.timeout(55000),
+    signal: AbortSignal.any([AbortSignal.timeout(55000), ...(signal ? [signal] : [])]),
   });
   if (response.status === 429) throw new Error("quota");
   if (!response.ok) throw new Error("unavailable");

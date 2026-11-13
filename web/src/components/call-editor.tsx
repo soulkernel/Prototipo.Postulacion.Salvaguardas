@@ -310,16 +310,18 @@ export function CallEditor({
             </label>
             <label>
               {es
-                ? "Tope de gastos administrativos %"
-                : "Administrative expenses cap %"}
+                ? "Límite administrativo de fase 2 (%)"
+                : "Phase-two administrative expenses cap (%)"}
               <input
                 type="number"
                 min="0"
                 max="100"
+                aria-describedby="admin-cap-scope"
                 name="admin_percent"
                 defaultValue={field("admin_percent", "10")}
                 required
               />
+              <small id="admin-cap-scope">{es ? "En la nota conceptual se aplica el límite fijo del 10 % del costo total del proyecto. Este ajuste corresponde a la propuesta completa." : "The concept note uses a fixed limit of 10% of total project cost. This setting applies to the full proposal."}</small>
             </label>
           </div>
           <CallAttachmentEditor

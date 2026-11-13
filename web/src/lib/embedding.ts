@@ -20,12 +20,14 @@ export async function requestEmbeddings(
   inputs: string[],
   kind: "query" | "passage",
   transport: typeof fetch = fetch,
+  signal?: AbortSignal,
 ) {
   const url = new URL(endpoint);
   if (url.protocol !== "https:" || url.username || url.password)
     throw new Error("GLF_INVALID_ENDPOINT");
   const body = JSON.stringify({ inputs, kind });
   for (let attempt = 0; attempt < 2; attempt++) {
+    signal?.throwIfAborted();
     let response: Response;
     try {
       response = await transport(url, {
@@ -37,9 +39,10 @@ export async function requestEmbeddings(
         body,
         cache: "no-store",
         redirect: "error",
-        signal: AbortSignal.timeout(25000),
+        signal: AbortSignal.any([AbortSignal.timeout(25000), ...(signal ? [signal] : [])]),
       });
     } catch (error) {
+      signal?.throwIfAborted();
       const transient =
         error instanceof TypeError ||
         (error instanceof Error &&

@@ -1,7 +1,7 @@
 import { ModuleHeading } from "@/components/module-heading";
 import Link from "@/components/feedback-link";
 import { BackLink } from "@/components/back-link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { requireViewer, getCalls, getRequestTime } from "@/lib/data";
 import { getLocale } from "@/lib/locale";
 import { Shell } from "@/components/shell";
@@ -12,7 +12,7 @@ import { suggestCallCodes } from "@/lib/call-codes";
 export default async function CallsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ edit?: string; view?: string; copy?: string }>;
+  searchParams: Promise<{ edit?: string; view?: string; copy?: string; published?: string }>;
 }) {
   await requireViewer(["grants_manager", "administrator"]);
   const locale = await getLocale();
@@ -26,6 +26,8 @@ export default async function CallsPage({
     ? { ...callFormValues(source), code: "", opens_at: "", closes_at: "" }
     : undefined;
   const viewed = params.view ? calls.find((c) => c.id === params.view) : null;
+  if (selected && selected.status !== "draft")
+    redirect(`/internal/calls?view=${encodeURIComponent(selected.id)}`);
   if (
     (params.edit && (!selected || selected.status !== "draft")) ||
     (params.view && !viewed) ||
@@ -38,6 +40,9 @@ export default async function CallsPage({
       <ModuleHeading title={es ? "Convocatorias" : "Calls"} />
       {viewed ? (
         <section className="live-card">
+          {params.published === "1" && viewed.status === "published" && (
+            <p role="status" className="operation-success">{es ? "Convocatoria publicada correctamente." : "Call published successfully."}</p>
+          )}
           <Link className="button secondary" href="/internal/calls">
             {es ? "Volver a convocatorias" : "Back to calls"}
           </Link>

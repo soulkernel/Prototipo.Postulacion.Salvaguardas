@@ -44,13 +44,16 @@ export default async function WorkingReviewPage({
         : ["administrative"];
   const sections = await Promise.all(
     kinds.map(async (kind) => {
-      const { data: pin, error: pe } = await viewer.db
+      const [{ data: pin, error: pe }, { data: d, error: de }] = await Promise.all([viewer.db
         .from("call_review_templates")
         .select("template_id")
         .eq("call_id", a.call_id)
         .eq("stage", v.stage)
         .eq("kind", kind)
-        .maybeSingle();
+        .maybeSingle(),
+        viewer.db.from("review_working_drafts").select("answers,notes,revision")
+          .eq("version_id", v.id).eq("reviewer_id", viewer.user.id).eq("kind", kind).maybeSingle(),
+      ]);
       if (pe) throw new Error("Cannot load pinned rubric");
       let q = viewer.db
         .from("review_templates")
@@ -62,13 +65,6 @@ export default async function WorkingReviewPage({
         .order("id", { ascending: false })
         .limit(1)
         .single();
-      const { data: d, error: de } = await viewer.db
-        .from("review_working_drafts")
-        .select("answers,notes,revision")
-        .eq("version_id", v.id)
-        .eq("reviewer_id", viewer.user.id)
-        .eq("kind", kind)
-        .maybeSingle();
       if (te || de) throw new Error("Cannot load working review");
       return { kind: kind as "rubric" | "administrative", t, d };
     }),

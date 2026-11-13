@@ -49,9 +49,9 @@ export const checklistEnglish: Record<number, Record<string, string>> = {
     deadline: "Was the concept note submitted before the deadline?",
     experience:
       "Is the required background information included for an organization, or a CV for an individual?",
-    budget: "Is the detailed budget included?",
+    budget: "Is the summary budget included and does it match the declared amounts?",
     cofinance:
-      "Is indicative cofinancing provided at a level consistent with the grant requested from the Fund (large projects); is there at least some cofinancing (small projects)?",
+      "Does cofinancing meet the requirements for the grant category?",
     format:
       "Is the concept note presented in the correct format using the supplied template?",
   },

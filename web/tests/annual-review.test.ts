@@ -14,7 +14,7 @@ import {
   individualTotal,
   draftAverage,
   administrativeChecklist,
-} from "../src/lib/evaluation-rubrics";
+} from "./fixtures/evaluation-rubrics";
 import { grantRanges, callThemes } from "../src/lib/grant-rules";
 function budget(): Budget {
   return {

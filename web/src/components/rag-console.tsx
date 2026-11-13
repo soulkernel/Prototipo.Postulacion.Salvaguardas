@@ -33,6 +33,7 @@ export function RagConsole({
   readOnly = false,
   initialMethod,
   suggestedQuery,
+  onNoteSaved,
 }: {
   locale: Locale;
   e5Enabled: boolean;
@@ -41,6 +42,7 @@ export function RagConsole({
   readOnly?: boolean;
   initialMethod?: "e5" | "qwen";
   suggestedQuery?: string;
+  onNoteSaved?: () => void;
 }) {
   const es = locale === "es",
     t = (a: string, b: string) => (es ? a : b);
@@ -789,7 +791,7 @@ export function RagConsole({
                 evidence={response || { results: result.results }}
                 es={es}
                 selectedIds={selectedIds}
-                onSaved={() => setReviewSaved(true)}
+                onSaved={() => { setReviewSaved(true); onNoteSaved?.(); }}
               />
             )}
             <details className="rag-technical">

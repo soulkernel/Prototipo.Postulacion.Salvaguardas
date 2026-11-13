@@ -117,51 +117,11 @@ textarea:focus-visible {
   outline: 3px solid #40b2c4;
   outline-offset: 2px;
 }
-.site-shell {
-  min-height: 100vh;
-  background: #fff;
-}
-.public-header {
-  max-width: 1280px;
-  margin: auto;
-  height: 92px;
-  padding: 14px 36px;
-  display: flex;
-  align-items: center;
-  gap: 36px;
-  background: #fff;
-}
-.logo-button {
-  display: flex;
-  border: 0;
-  padding: 0;
-  background: none;
-}
-.logo-button img {
-  width: 166px;
-  height: 72px;
-  object-fit: contain;
-}
-.public-nav {
-  display: flex;
-  align-items: center;
-  gap: 28px;
-  margin-left: 20px;
-}
-.public-nav button,
 .icon-button,
 .text-button {
   border: 0;
   background: transparent;
   color: var(--text);
-}
-.public-nav button {
-  color: #536175;
-  font-weight: 600;
-  font-size: 13px;
-}
-.public-nav button:hover {
-  color: var(--teal-dark);
 }
 .header-actions {
   display: flex;
@@ -2451,16 +2411,6 @@ select {
   }
 }
 @media (max-width: 760px) {
-  .public-header {
-    height: 74px;
-    padding: 9px 16px;
-    gap: 14px;
-  }
-  .logo-button img {
-    width: 130px;
-    height: 58px;
-  }
-  .public-nav,
   .header-actions > .button {
     display: none;
   }

@@ -7,8 +7,6 @@ import { RagWorkspace } from "@/components/rag-workspace";
 import { qwenConfigured } from "@/lib/qwen";
 import { ragConfigured } from "@/lib/rag";
 import { CorpusImport } from "@/components/corpus-import";
-import { projectRisks, type RagProject } from "@/lib/rag-context";
-import type { Payload } from "@/lib/domain";
 export const maxDuration = 60;
 export default async function EvidencePage({
   searchParams,
@@ -18,50 +16,11 @@ export default async function EvidencePage({
   const { profile, db } = await requireRagViewer();
   const locale = await getLocale();
   const es = locale === "es";
-  const projects: RagProject[] = [];
-  const seen = new Set<string>();
-  for (let offset = 0; ; offset += 250) {
-    const { data, error } = await db
-      .from("application_versions")
-      .select(
-        "application_id,revision,stage,payload,applications!inner(reference_code,call_id)",
-      )
-      .order("revision", { ascending: false })
-      .order("id")
-      .range(offset, offset + 249);
-    if (error) throw new Error("Cannot load submitted risk context");
-    for (const v of data || []) {
-      if (seen.has(v.application_id)) continue;
-      seen.add(v.application_id);
-      const a = Array.isArray(v.applications)
-        ? v.applications[0]
-        : v.applications;
-      const payload = v.payload as Payload;
-      projects.push({
-        id: v.application_id,
-        reference: a.reference_code,
-        callId: a.call_id,
-        revision: v.revision,
-        stage: v.stage,
-        title: payload.concept.title,
-        risks: projectRisks(payload, locale),
-      });
-    }
-    if (!data || data.length < 250) break;
-  }
   const { data: calls, error: callsError } = await db
     .from("calls")
     .select("id,title_es,title_en")
     .order("opens_at", { ascending: false });
   if (callsError) throw new Error("Cannot load calls");
-  const { data: notes, error: notesError } = await db
-    .from("rag_review_notes")
-    .select(
-      "id,application_id,risk_id,revision,method,query,observation,created_at,evidence",
-    )
-    .order("created_at", { ascending: false })
-    .limit(100);
-  if (notesError) throw new Error("Cannot load supporting review notes");
   const { count: approvedCount, error: countError } = await db
     .from("knowledge_chunks")
     .select("id", { count: "exact", head: true })
@@ -92,13 +51,14 @@ export default async function EvidencePage({
         locale={locale}
         e5Enabled={ragConfigured() && hasApprovedSources}
         qwenEnabled={qwenConfigured()}
-        projects={projects}
+        projects={[]}
+        remote
         calls={(calls || []).map((c) => ({
           id: c.id,
           title: es ? c.title_es : c.title_en,
         }))}
         initialProject={(await searchParams).project || ""}
-        notes={notes || []}
+        notes={[]}
         readOnly={academic}
         showApplicationLinks
       />

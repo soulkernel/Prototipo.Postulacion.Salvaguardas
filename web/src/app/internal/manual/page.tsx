@@ -1,3 +1,4 @@
+import "../../manual.css";
 import { Shell } from "@/components/shell";
 import { InternalManual } from "@/components/internal-manual";
 import { requireReadViewer } from "@/lib/data";

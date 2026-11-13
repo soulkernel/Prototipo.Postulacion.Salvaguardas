@@ -1,3 +1,4 @@
+// Original rubric fixture for historical scoring tests; production uses review_templates.
 export const evaluationVersion = "manual-glf-2025-v1";
 export const reviewScale = [
   "Muy deficiente",

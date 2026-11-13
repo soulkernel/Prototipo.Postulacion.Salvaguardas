@@ -42,7 +42,7 @@ export default async function ApplicationPage({
       .eq("active", true),
     viewer.db
       .from("application_versions")
-      .select("*")
+      .select("id,revision,stage,submitted_at,concept_layout_version,document_metadata,project_title:payload->concept->>title,attachments:payload->attachments")
       .eq("application_id", id)
       .order("revision", { ascending: false }),
     viewer.db
@@ -128,13 +128,7 @@ export default async function ApplicationPage({
         serverNow={requestTime}
         accountEmail={viewer.user.email || ""}
         catalog={catalog || []}
-        versions={(versions || []).map(({ payload, ...v }) => ({
-          ...v,
-          project_title:
-            typeof payload?.concept?.title === "string"
-              ? payload.concept.title
-              : undefined,
-        }))}
+        versions={versions || []}
         documents={(documents || []).map(
           ({ version_id, storage_path, ...d }) => ({
             ...d,
@@ -142,10 +136,10 @@ export default async function ApplicationPage({
               !!version_id ||
               (versions || []).some(
                 (v) =>
-                  Array.isArray(v.payload?.attachments) &&
-                  v.payload.attachments.some(
-                    (f: { id?: string; storage_path?: string }) =>
-                      f.id === d.id || f.storage_path === storage_path,
+                  Array.isArray(v.attachments) &&
+                  v.attachments.some(
+                    (f) => f !== null && typeof f === "object" && !Array.isArray(f) &&
+                      (f.id === d.id || f.storage_path === storage_path),
                   ),
               ),
           }),

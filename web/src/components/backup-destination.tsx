@@ -8,9 +8,7 @@ import {
 } from "lucide-react";
 import { ActionLabel } from "./submit-button";
 import { useRef, useState } from "react";
-import { zip } from "fflate";
 import { statusLabel } from "@/lib/fields";
-import { summaryWorkbook } from "@/lib/backup-workbook";
 import type { Locale } from "@/lib/domain";
 
 type SaveFile = {
@@ -45,6 +43,7 @@ export function BackupDestination({
   const [scope, setScope] = useState<"all" | "call" | "selected">("all");
   const [selected, setSelected] = useState<string[]>([]);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
   const [destination, setDestination] = useState<"file" | "download">("file");
   const [call, setCall] = useState(
     defaultCallId === "all" ? "" : defaultCallId,
@@ -126,6 +125,7 @@ export function BackupDestination({
             ? "La cantidad de expedientes no coincide con la selección. Actualice la página y vuelva a intentar."
             : "Application count does not match your selection. Refresh and try again.",
         );
+      const { summaryWorkbook } = await import("@/lib/backup-workbook");
       const workbook = summaryWorkbook(plan.records, locale);
       const entries: Record<string, Uint8Array> = {
         "Listado-expedientes.xlsx": workbook,
@@ -179,9 +179,9 @@ export function BackupDestination({
         );
         const packed = await new Promise<Uint8Array<ArrayBuffer>>(
           (resolve, reject) =>
-            zip(entries, { level: 1 }, (error, result) =>
+            import("fflate").then(({ zip }) => zip(entries, { level: 1 }, (error, result) =>
               error ? reject(error) : resolve(new Uint8Array(result)),
-            ),
+            )).catch(reject),
         );
         blob = new Blob([packed], { type: "application/zip" });
       }
@@ -366,7 +366,7 @@ export function BackupDestination({
               disabled={busy}
               value={call}
               onChange={(e) => {
-                setCall(e.target.value);
+                setCall(e.target.value); setPage(0);
                 setSelected([]);
                 setMessage("");
               }}
@@ -389,7 +389,7 @@ export function BackupDestination({
             disabled={busy}
             value={category}
             onChange={(e) => {
-              setCategory(e.target.value);
+              setCategory(e.target.value); setPage(0);
               setSelected([]);
               setMessage("");
             }}
@@ -419,7 +419,7 @@ export function BackupDestination({
               <input
                 value={search}
                 disabled={busy}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => { setSearch(e.target.value); setPage(0); }}
               />
             </label>
             <p>
@@ -449,7 +449,7 @@ export function BackupDestination({
                   </tr>
                 </thead>
                 <tbody>
-                  {visible.map((a) => (
+                  {visible.slice(page * 20, page * 20 + 20).map((a) => (
                     <tr key={a.id}>
                       <td>
                         <input
@@ -481,6 +481,11 @@ export function BackupDestination({
                 </tbody>
               </table>
             </div>
+            <nav className="list-navigation" aria-label={es ? "Páginas de expedientes" : "Application pages"}>
+              <button type="button" disabled={busy || page === 0} onClick={() => setPage(p => p - 1)}>{es ? "Anterior" : "Previous"}</button>
+              <span>{es ? "Página" : "Page"} {page + 1} · {visible.length}</span>
+              <button type="button" disabled={busy || (page + 1) * 20 >= visible.length} onClick={() => setPage(p => p + 1)}>{es ? "Siguiente" : "Next"}</button>
+            </nav>
             {!visible.length && (
               <p>
                 {es

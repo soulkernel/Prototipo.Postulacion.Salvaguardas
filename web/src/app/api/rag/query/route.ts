@@ -30,7 +30,8 @@ export async function POST(request: Request) {
   } catch {
     return fail("invalid", 400);
   }
-  const viewer = await getViewer();
+  const viewer = await getViewer().catch(() => undefined);
+  if (viewer === undefined) return fail("unavailable", 503);
   if (!viewer) return fail("session", 401);
   if (viewer.profile.access_kind !== "academic") {
     if (
@@ -53,6 +54,9 @@ export async function POST(request: Request) {
   const parsed = input,
     started = performance.now();
   let closed = false;
+  const cancellation = new AbortController();
+  const signal = AbortSignal.any([request.signal, cancellation.signal, AbortSignal.timeout(75000)]);
+  let heartbeat: ReturnType<typeof setInterval> | undefined;
   const stream = new ReadableStream({
     async start(controller) {
       const send = (event: unknown) => {
@@ -63,7 +67,7 @@ export async function POST(request: Request) {
       };
       const stage = (value: RagStage) =>
         send({ type: "stage", ...value, requestId });
-      const heartbeat = setInterval(() => send({ type: "heartbeat" }), 8000);
+      heartbeat = setInterval(() => send({ type: "heartbeat" }), 8000);
       try {
         let response,
           results: ReturnType<typeof evidenceRows.parse> = [],
@@ -71,13 +75,13 @@ export async function POST(request: Request) {
         if (parsed.method === "e5") {
           model = EMBEDDING_MODEL;
           stage({ stage: "embedding", model });
-          const embedding = await embedQuery(parsed.query);
+          const embedding = await embedQuery(parsed.query, signal);
           if (closed) return;
           stage({ stage: "retrieval", model: "Supabase · pgvector" });
           const { data, error } = await viewer.db.rpc("match_evidence", {
             query_embedding: JSON.stringify(embedding),
             result_limit: 6,
-          });
+          }).abortSignal(signal);
           if (error) throw new Error("unavailable");
           results = evidenceRows.parse(data || []);
         } else {
@@ -86,7 +90,7 @@ export async function POST(request: Request) {
             parsed.query,
             parsed.retrieval_query,
             stage,
-            request.signal,
+            signal,
             parsed.answer_mode,
           );
           model =
@@ -124,6 +128,8 @@ export async function POST(request: Request) {
     },
     cancel() {
       closed = true;
+      clearInterval(heartbeat);
+      cancellation.abort();
     },
   });
   return new Response(stream, {

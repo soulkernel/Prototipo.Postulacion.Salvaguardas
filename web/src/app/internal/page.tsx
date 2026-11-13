@@ -10,7 +10,7 @@ import { InboxFilters } from "@/components/inbox-filters";
 import { resolveFilters } from "@/lib/inbox-filters";
 import Link from "@/components/feedback-link";
 import { ActionLink } from "@/components/action-link";
-import { requireReadViewer, getCalls } from "@/lib/data";
+import { requireReadViewer, getCallOptions } from "@/lib/data";
 import { getLocale } from "@/lib/locale";
 import { Shell } from "@/components/shell";
 import { roleLabels, statusLabel } from "@/lib/fields";
@@ -35,7 +35,7 @@ export default async function InternalPage({
   const locale = await getLocale();
   const es = locale === "es";
   const query = await searchParams;
-  const calls = await getCalls();
+  const calls = await getCallOptions();
   const filters = resolveFilters(calls, query, locale);
   const paging = inboxPaging(query);
   const search = inboxSearch(query.q);

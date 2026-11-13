@@ -1,11 +1,11 @@
 import { defaultCall } from "@/lib/inbox-filters";
 import { ModuleHeading } from "@/components/module-heading";
 import { callThemeLabel } from "@/lib/call-themes";
-import { DocumentDownload } from "@/components/document-download";
+import { ReportDownloads } from "@/components/report-downloads";
 import { BackLink } from "@/components/back-link";
 import Form from "next/form";
 import { SubmitButton } from "@/components/submit-button";
-import { requireReadViewer, getCalls } from "@/lib/data";
+import { requireReadViewer, getCallOptions } from "@/lib/data";
 import { getLocale } from "@/lib/locale";
 import { Shell } from "@/components/shell";
 export default async function Reports({
@@ -22,7 +22,7 @@ export default async function Reports({
   ]);
   const locale = await getLocale();
   const es = locale === "es";
-  const calls = await getCalls();
+  const calls = await getCallOptions();
   const params = await searchParams;
   const preferred = defaultCall(calls);
   const id = calls.some((c) => c.id === params.call)
@@ -134,41 +134,7 @@ export default async function Reports({
                 ? "Descargue el reporte de la convocatoria seleccionada, con fecha y hora de corte de Galápagos. El idioma cambia títulos y etiquetas; los textos del proponente mantienen su idioma original."
                 : "Download the selected call report with its Galapagos cut-off date and time. Language changes headings and labels; applicant text retains its original language."}
             </p>
-            <div className="report-download-actions">
-              <DocumentDownload
-                languageSelection
-                className="button primary"
-                href={"/internal/reports/export?call=" + id + "&format=xlsx"}
-                locale={locale}
-              >
-                {es ? "Descargar Excel" : "Download Excel"}
-              </DocumentDownload>
-              <DocumentDownload
-                languageSelection
-                className="button secondary"
-                href={"/internal/reports/export?call=" + id + "&format=pdf"}
-                locale={locale}
-              >
-                {es ? "Descargar PDF" : "Download PDF"}
-              </DocumentDownload>
-            </div>
-            <details className="report-csv-option">
-              <summary>
-                {es ? "Otras opciones de exportación" : "Other export options"}
-              </summary>
-              <p>
-                {es
-                  ? "Para exportar datos a bases de datos o herramientas de análisis estadístico."
-                  : "To export data to databases or statistical analysis tools."}
-              </p>
-              <DocumentDownload
-                languageSelection
-                href={"/internal/reports/export?call=" + id + "&format=csv"}
-                locale={locale}
-              >
-                {es ? "Exportar CSV" : "Export CSV"}
-              </DocumentDownload>
-            </details>
+            <ReportDownloads callId={id!} locale={locale} />
           </section>
         </>
       )}

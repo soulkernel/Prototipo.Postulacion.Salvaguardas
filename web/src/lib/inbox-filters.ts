@@ -1,6 +1,7 @@
-import type { Call, Locale } from "./domain";
+import type { Locale } from "./domain";
+import type { CallOption } from "./data";
 
-export function defaultCall(calls: Call[], now = Date.now()) {
+export function defaultCall(calls: CallOption[], now = Date.now()) {
   const published = calls
     .filter((c) => c.status === "published")
     .sort(
@@ -20,7 +21,7 @@ export function defaultCall(calls: Call[], now = Date.now()) {
     "all"
   );
 }
-export function categoryOptions(calls: Call[], locale: Locale) {
+export function categoryOptions(calls: CallOption[], locale: Locale) {
   return [
     ...new Map(
       calls.flatMap((c) =>
@@ -36,7 +37,7 @@ export function categoryOptions(calls: Call[], locale: Locale) {
   ];
 }
 export function resolveFilters(
-  calls: Call[],
+  calls: CallOption[],
   query: { call?: string; category?: string },
   locale: Locale,
 ) {

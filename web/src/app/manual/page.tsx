@@ -1,3 +1,4 @@
+import "../manual.css";
 import { Shell } from "@/components/shell";
 import { ApplicantManual } from "@/components/applicant-manual";
 import { getLocale } from "@/lib/locale";

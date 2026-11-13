@@ -237,13 +237,14 @@ export async function saveDraft(
     .maybeSingle();
   if (readError || !stored || ![1, 2].includes(stored.stage))
     return { ok: false, error: "GLF_INVALID_PAYLOAD" };
+  const synchronized = synchronizeRisks(parsed.data);
   const { data, error } = await db.rpc("save_application", {
     application_id: id,
     expected_revision: revision,
     payload: {
-      ...synchronizeRisks(parsed.data),
+      ...synchronized,
       concept: {
-        ...synchronizeRisks(parsed.data).concept,
+        ...synchronized.concept,
         results: resultText(parsed.data.concept, "es", stored.stage),
         ...(parsed.data.concept.associated_organizations
           ? {
