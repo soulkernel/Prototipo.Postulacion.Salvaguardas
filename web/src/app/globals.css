@@ -245,23 +245,6 @@ textarea:focus-visible {
   border-radius: 6px;
   padding: 8px;
 }
-.demo-banner {
-  min-height: 34px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  background: #f0f6f6;
-  color: #3c6569;
-  border-top: 1px solid #e6eded;
-  border-bottom: 1px solid #e0eaea;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-}
-.banner-separator {
-  opacity: 0.45;
-}
 .hero {
   min-height: 495px;
   max-width: 1280px;
@@ -1282,18 +1265,6 @@ select {
   font-size: 11px;
   line-height: 1.6;
 }
-.receipt-demo {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 5px;
-  margin: 22px 0;
-  padding: 13px;
-  border: 1px solid #e5eaed;
-  border-radius: 7px;
-  background: #fafcfc;
-  color: #596b79;
-  font-size: 10px;
-}
 .success-callout {
   display: flex;
   gap: 10px;
@@ -1586,25 +1557,6 @@ select {
   max-width: 1440px;
   margin: auto;
   padding: 19px 30px 50px;
-}
-.demo-warning {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  border: 1px solid #ece4d0;
-  border-radius: 5px;
-  background: #fcfaf3;
-  color: #7e6e47;
-  font-size: 9px;
-}
-.demo-warning svg {
-  flex: none;
-}
-.demo-warning span {
-  margin-left: auto;
-  color: #8f8774;
-  font-size: 8px;
 }
 .role-switcher {
   display: flex;
@@ -2543,9 +2495,6 @@ select {
   .file-drop .button {
     margin-left: auto;
   }
-  .receipt-demo {
-    grid-template-columns: 1fr;
-  }
   .review-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -2587,13 +2536,6 @@ select {
   }
   .staff-content {
     padding: 13px 12px 78px;
-  }
-  .demo-warning {
-    align-items: flex-start;
-    font-size: 8px;
-  }
-  .demo-warning span {
-    display: none;
   }
   .role-switcher {
     align-items: flex-start;

@@ -1,7 +1,7 @@
-"""Smoke tests para la demo pública aislada.
+"""Smoke tests del servicio documental institucional GLF.
 
 No acceden a Internet ni consumen Hugging Face. Se ejecutan durante el build
-de Render para detectar errores de sintaxis, autenticación y cuotas.
+del servicio para detectar errores de sintaxis, autenticación y cuotas.
 """
 import os
 
@@ -55,8 +55,10 @@ def main():
     client = demo.app.test_client()
 
     response = client.get("/")
-    assert response.status_code == 200
-    assert b"Demo p" in response.data
+    assert response.status_code == 302
+    assert response.headers["Location"] == "https://glf-postulaciones.vercel.app/internal/evidence"
+    assert b"sessionStorage" not in response.data
+    assert b"INDEX_HTML" not in response.data
 
     unauthorized = client.post("/api/ask", json={"query": "hola"})
     assert unauthorized.status_code == 401

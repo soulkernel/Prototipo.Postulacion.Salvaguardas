@@ -51,3 +51,33 @@ REFERENCIA COMPARTIDA
 Contexto maestro: soulkernel/GLF, feat/portal-accesos-centralizados,
 docs/CONTEXTO_MAESTRO_GLF.md. Este cambio conserva el contrato de identidad;
 no implementa SSO ni administracion central ni modifica Operaciones/KYC.
+
+VERIFICACION EN PRODUCCION
+Vercel publico d8717a4 (v0.7.75), estado success. El portal muestra 22 cuentas
+y ya no presenta creacion, filtros ni menus academicos. /evaluation redirige
+al inicio institucional. KYC mantiene la sesion autorizada tras recargar.
+Inventario Supabase posterior: cuenta academica en Auth/perfiles = 0; tablas,
+politicas y funciones academicas = 0. Cuentas habituales = 22, huella de perfiles
+antes/despues identica (7d0efb267821436af5d452e712e8bbf3). Se conservan
+18 expedientes, 28 documentos, 28 objetos de Storage, 7 versiones y 3549
+fragmentos normativos. Contrato access_session_valid presente.
+Consulta real Qwen: 5 pasajes, 4 referencias citadas; buscador E5: 6 pasajes.
+Esas consultas verifican funcionamiento, no constituyen evaluacion de calidad.
+
+RETIRO COMPLEMENTARIO EN HUGGING FACE
+Se identifico una pantalla HTML academica antigua en la raiz del servicio de
+modelos. Tras explicar y obtener autorizacion para descargar service.zip,
+se comparo el paquete publicado con las fuentes locales: app.py y smoke_test.py
+eran identicos. Se elimino la interfaz HTML y su almacenamiento de codigo en
+el navegador; la raiz ahora redirige al asistente protegido del portal.
+Hugging Face: Schubertlm/glf-rag-bm25-qwen, commit
+20b3d8d41a62f838c8105867a7ab0b6fd09d4c43. Redireccion publicada comprobada.
+El paquete conserva byte por byte los otros ocho archivos del servicio,
+incluidos runtime.py y answer_policy.py. No se publican sus cambios locales
+previos. No se modifican modelos, corpus, hardware, secretos, cuotas ni rutas API.
+public_demo, X-Demo-Key y public_demo:true conservan sus nombres por ser parte
+del contrato compartido del servicio institucional, no permisos academicos.
+Pruebas: smoke del paquete publicado correcto; runtime real exige autenticacion
+en /api/ask, /api/ask-stream y /api/search, y redirige correctamente su raiz.
+Evidencia comparativa en scratch/retirement-hf/comparison.json. Tambien se retiran
+nueve reglas CSS huerfanas de pantallas demo; compilacion final correcta.
