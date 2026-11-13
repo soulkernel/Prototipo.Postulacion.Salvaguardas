@@ -1,0 +1,83 @@
+RETIRO DEL ACCESO ACADEMICO — GLF v0.7.75
+Fecha: 12 de noviembre de 2026 (Galapagos)
+
+DECISION Y ALCANCE
+Finalizada la defensa universitaria, el titular autorizo retirar el acceso de
+la profesora y el codigo exclusivo para su evaluacion. La eliminacion definitiva
+de la cuenta y de tres tablas exclusivas fue confirmada adicionalmente durante
+la ejecucion. El repositorio universitario y sus documentos/videos quedan fuera
+del alcance. Las otras cuentas, incluidos postulantes, conservan sus permisos.
+
+IMPLEMENTACION
+- Login/getViewer rechazan tipos de acceso distintos de standard. Se eliminan
+  las excepciones academicas de las rutas de expedientes, reportes, archivos,
+  manuales y RAG. /evaluation redirige al inicio protegido por el acceso normal.
+- Se retiran el formulario de creacion, Server Action, menu, filtros exclusivos,
+  escenarios de demostracion y mensajes academicos de los manuales ES/EN.
+- RAG mantiene Qwen, E5, corpus, fuentes, consultas libres y vinculadas, progreso,
+  errores, cancelacion y notas. Roles permitidos: sustainability_reviewer y
+  administrator, ambos con segundo factor. Ningun rol adicional recibe acceso.
+- Edge user-administration conserva status y delete con sus guardas; rechaza la
+  operacion create_academic. No genera contrasenas ni provisiona cuentas temporales.
+- Migracion 062: solo standard; restaura permisos institucionales en consultas,
+  match_evidence y notas. Retira seis funciones exclusivas, cuatro politicas y
+  tres tablas de vinculos/cuotas. No usa DROP CASCADE ni reescribe migraciones
+  anteriores. Falla si quedan identidades academicas por retirar.
+- Conserva public.access_session_valid(), sus permisos y el contrato de identidad
+  compartido con Operaciones/KYC. Mantiene comprobaciones de estado y revocacion.
+  Los campos standard del contrato de perfiles siguen disponibles para clientes.
+- La cuenta se desactiva/revoca, archiva y elimina mediante la administracion
+  existente, que impide eliminar usuarios con expedientes, archivos o actuaciones.
+
+VALIDACION LOCAL
+Pruebas del portal/formularios: 303 correctas. Tres pruebas adicionales ejecutan
+la funcion Edge real con clientes aislados: rechazan provision academica, exigen
+MFA/sesion valida y conservan la guarda previa a la eliminacion de identidades.
+Pruebas SQL posteriores: 71 correctas, incluidas esas tres de Edge y la guarda
+de actualizacion que revierte la migracion si existe una identidad academica.
+Compilacion de produccion correcta. Validaciones e interfaces de fase 1/2 intactas.
+Las mediciones anteriores no atribuyen la demora de navegacion a la cuenta;
+este retiro simplifica mantenimiento y permisos, sin prometer una latencia fija.
+
+PUBLICACION SUPABASE
+Funcion Edge actualizada y confirmada por el panel. Migracion 062 aplicada
+transaccionalmente: Success. No rows returned. Cuenta academica ausente en
+Auth y perfiles. Evidencias de inventario y comprobacion en scratch/retirement-*.
+El proyecto mantiene migraciones publicadas manualmente desde SQL Editor;
+no existe supabase_migrations.schema_migrations. La fuente versionada y este
+registro documentan la aplicacion; no se introduce otro sistema de migraciones.
+
+REFERENCIA COMPARTIDA
+Contexto maestro: soulkernel/GLF, feat/portal-accesos-centralizados,
+docs/CONTEXTO_MAESTRO_GLF.md. Este cambio conserva el contrato de identidad;
+no implementa SSO ni administracion central ni modifica Operaciones/KYC.
+
+VERIFICACION EN PRODUCCION
+Vercel publico d8717a4 (v0.7.75), estado success. El portal muestra 22 cuentas
+y ya no presenta creacion, filtros ni menus academicos. /evaluation redirige
+al inicio institucional. KYC mantiene la sesion autorizada tras recargar.
+Inventario Supabase posterior: cuenta academica en Auth/perfiles = 0; tablas,
+politicas y funciones academicas = 0. Cuentas habituales = 22, huella de perfiles
+antes/despues identica (7d0efb267821436af5d452e712e8bbf3). Se conservan
+18 expedientes, 28 documentos, 28 objetos de Storage, 7 versiones y 3549
+fragmentos normativos. Contrato access_session_valid presente.
+Consulta real Qwen: 5 pasajes, 4 referencias citadas; buscador E5: 6 pasajes.
+Esas consultas verifican funcionamiento, no constituyen evaluacion de calidad.
+
+RETIRO COMPLEMENTARIO EN HUGGING FACE
+Se identifico una pantalla HTML academica antigua en la raiz del servicio de
+modelos. Tras explicar y obtener autorizacion para descargar service.zip,
+se comparo el paquete publicado con las fuentes locales: app.py y smoke_test.py
+eran identicos. Se elimino la interfaz HTML y su almacenamiento de codigo en
+el navegador; la raiz ahora redirige al asistente protegido del portal.
+Hugging Face: Schubertlm/glf-rag-bm25-qwen, commit
+20b3d8d41a62f838c8105867a7ab0b6fd09d4c43. Redireccion publicada comprobada.
+El paquete conserva byte por byte los otros ocho archivos del servicio,
+incluidos runtime.py y answer_policy.py. No se publican sus cambios locales
+previos. No se modifican modelos, corpus, hardware, secretos, cuotas ni rutas API.
+public_demo, X-Demo-Key y public_demo:true conservan sus nombres por ser parte
+del contrato compartido del servicio institucional, no permisos academicos.
+Pruebas: smoke del paquete publicado correcto; runtime real exige autenticacion
+en /api/ask, /api/ask-stream y /api/search, y redirige correctamente su raiz.
+Evidencia comparativa en scratch/retirement-hf/comparison.json. Tambien se retiran
+nueve reglas CSS huerfanas de pantallas demo; compilacion final correcta.

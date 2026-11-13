@@ -1,0 +1,5 @@
+GLF 0.7.65 — BOTONES DE REGRESO
+Cambio aprobado el 4 de noviembre de 2026: destacar Volver al expediente y Volver a expedientes mediante un mismo componente BackLink, reutilizando la navegación con indicador de carga existente.
+Fondo azul claro, borde turquesa, texto azul oscuro en negrita, ícono ArrowLeft, esquinas redondeadas, altura mínima 44 px y foco de teclado visible. Ubicación anterior al título, con separación inferior.
+Se conservan destinos, filtros, página y tamaño de la bandeja; rótulos ES/EN. No modifica datos, permisos, validaciones ni contratos de Supabase.
+Validación local: TypeScript y ESLint de los componentes modificados sin errores. Compilación y pruebas generales mediante el pipeline existente; verificación visual y de regreso en el despliegue.

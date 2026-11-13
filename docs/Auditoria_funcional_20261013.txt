@@ -1,0 +1,33 @@
+AUDITORÍA FUNCIONAL E INTEGRIDAD — GLF v0.5.1
+Fecha: 13 de octubre de 2026. Commit auditado: 038507a9f4c8c09e23a3bd2ed98d10899f655f01.
+Portal: https://glf-postulaciones.vercel.app/
+
+RESULTADO
+Verificación favorable del núcleo comprobado, con pendientes reales. No constituye certificación de ausencia absoluta de errores ni aprobación para producción.
+No se modificaron roles, usuarios, permisos, formularios guardados ni expedientes enviados. No se enviaron invitaciones ni postulaciones. No se modificaron límites de gasto.
+
+EVIDENCIA ACTUAL
+1. npm test: 33 pruebas PostgreSQL/PGlite y 59 pruebas TypeScript, 92 aprobadas, cero fallos. Incluyen aislamiento de acceso, MFA, concurrencia, envíos/versiones, archivos, firmas, indicadores, relaciones objetivo-actividad-riesgo, presupuesto y revisiones.
+2. npm run lint y npx tsc --noEmit sin errores. Compilación de producción completa con Next.js 16.3.8; 25 páginas generadas. La primera compilación encontró una restricción EPERM del entorno; repetida con permisos autorizados pasó.
+3. Cinco pruebas del adaptador Python RAG aprobadas. Son pruebas controladas; no demuestran disponibilidad del proveedor remoto.
+4. HTTP publicado sin cookies: 15 rutas comprobadas. Públicas 200; privadas redirigen a login; /demo redirige a inicio. POST no autenticado a /api/files, /api/corpus e /internal/backups/export rechazado con 401/403.
+5. SQL productivo en transacción de solo lectura: cero expedientes sin convocatoria/propietario; cero versiones huérfanas; cero documentos registrados sin objeto en Storage; cero documentos asociados a versión de otro expediente; cero borradores de revisión asociados a versión de otro expediente; cero claves foráneas sin validar; cero tablas públicas sin RLS. La consulta quedó guardada. RLS activado no equivale por sí solo a una auditoría exhaustiva de cada política.
+6. Panel interno: siete expedientes de convocatoria vigente. Filtro Grande reduce correctamente a uno. Indicador Procesando visible durante navegación/filtro.
+7. Reportes: al seleccionar la convocatoria vigente muestra siete recibidas y USD 1.346.391,35 solicitados; cero aprobadas/convenios. Coincide con bandeja y selección de respaldos.
+8. Respaldos: listado identifica siete expedientes; modo Excel anuncia siete filas, sin JSON ni documentos. La interfaz finaliza con Archivo preparado. La automatización del evento de descarga no entregó ruta local (tiempo agotado); no se certifica en esta auditoría la apertura del archivo descargado ni la restauración del ZIP.
+9. Sesión externa existente: cuenta externa diferenciada, sin menú interno. Recorrido de los cuatro pasos sin editar; tres actividades y diez riesgos relacionados; bloqueo de Enviar al GLF con ambos anexos firmados pendientes. Presupuesto detallado optativo, sin asignación automática de importes históricos. Progreso 95%, sin confundir guardado con envío.
+10. Se observó un registro previo React #418 en consola de la sesión externa. No se reprodujo una nueva entrada tras recargar; no se atribuye una causa ni se declara corregido sin reproducción.
+11. E5: consulta normativa sin datos personales respondió desde el portal con seis fragmentos y referencias del corpus. Esto verifica integración, no precisión global del modelo.
+12. BM25/Qwen: dos consultas desde el portal no completaron respuesta. /healthz devuelve 200, ok=true, 271 fragmentos, siete documentos. Registros del Space confirman token válido y alcance de inferencia; en la primera consulta el proveedor devolvió HTTP 503, reintento automático y nuevo 503. El fallo está en la generación remota, no en cargar el corpus. No se cambió de modelo ni proveedor para ocultar el problema.
+
+PENDIENTES Y LÍMITES
+- Qwen: disponibilidad de inferencia remota pendiente. Mantener E5 operativo y no presentar el motor generativo como disponible hasta obtener respuesta con evidencia y citas verificables. No aumentar gasto como solución automática.
+- Recuperación: respaldo completo del sistema y copias automáticas todavía no configurados, correctamente deshabilitados en pantalla. Exigir respaldo/restauración comprobados antes de producción.
+- Reportes elige la primera convocatoria por orden de apertura; en esta sesión eligió una anterior. Propuesta: reutilizar defaultCall de bandeja/respaldos para priorizar vigente. Selección manual funciona y no hay pérdida de datos.
+- Catálogo definitivo de medidas/normas de desempeño pendiente de incorporación; no inventar referencias.
+- Persisten decisiones institucionales descritas en Revision_32_observaciones_0.5.0.txt; no convertir propuestas en reglas de exclusión automáticas.
+- No se ejecutaron envíos, firma externa, invitaciones, resolución del comité, convenio, borrados o cambios de privilegios en producción. Esos controles se verifican en pruebas aisladas; su aceptación integral con GLF sigue pendiente.
+- No se realizó carga masiva, penetración especializada ni simulación de pérdida del proveedor.
+
+RECOMENDACIÓN
+El portal puede continuar en pruebas funcionales con los técnicos. No declarar listo para producción definitiva hasta resolver disponibilidad Qwen, verificar recuperación y completar aceptación institucional. Conservar usuarios y base de datos actuales durante las pruebas.

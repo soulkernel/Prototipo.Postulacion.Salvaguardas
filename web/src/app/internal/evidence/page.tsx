@@ -1,0 +1,80 @@
+import { ModuleHeading } from "@/components/module-heading";
+import { BackLink } from "@/components/back-link";
+import { requireRagViewer } from "@/lib/data";
+import { getLocale } from "@/lib/locale";
+import { Shell } from "@/components/shell";
+import { RagWorkspace } from "@/components/rag-workspace";
+import { qwenConfigured } from "@/lib/qwen";
+import { ragConfigured } from "@/lib/rag";
+import { CorpusImport } from "@/components/corpus-import";
+export const maxDuration = 60;
+export default async function EvidencePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ project?: string }>;
+}) {
+  const { profile, db } = await requireRagViewer();
+  const locale = await getLocale();
+  const es = locale === "es";
+  const [{ data: calls, error: callsError }, hasApprovedSources] =
+    await Promise.all([
+      db
+        .from("calls")
+        .select("id,title_es,title_en")
+        .order("opens_at", { ascending: false }),
+      (async () => {
+        // The page needs availability, not an exact count of the whole corpus.
+        const { data, error } = await db
+          .from("knowledge_chunks")
+          .select("id")
+          .eq("approved", true)
+          .limit(1);
+        if (error) throw new Error("Corpus status unavailable");
+        return Boolean(data?.length);
+      })(),
+    ]);
+  if (callsError) throw new Error("Cannot load calls");
+  return (
+    <Shell locale={locale} internal>
+      <BackLink href="/internal">
+        {es ? "Volver a expedientes" : "Back to applications"}
+      </BackLink>
+      <ModuleHeading
+        title={
+          es
+            ? "Asistente de consulta de salvaguardas GLF"
+            : "GLF safeguards query assistant"
+        }
+      >
+        <p>
+          {es
+            ? "Apoyo para identificar riesgos y salvaguardas ambientales y sociales en proyectos financiados por el GLF. Utilice uno o ambos modelos para fundamentar su revisión."
+            : "Support for identifying environmental and social risks and safeguards in GLF-funded projects. Use one or both models to inform your review."}
+        </p>
+      </ModuleHeading>
+      <RagWorkspace
+        locale={locale}
+        e5Enabled={ragConfigured() && hasApprovedSources}
+        qwenEnabled={qwenConfigured()}
+        projects={[]}
+        remote
+        calls={(calls || []).map((c) => ({
+          id: c.id,
+          title: es ? c.title_es : c.title_en,
+        }))}
+        initialProject={(await searchParams).project || ""}
+        notes={[]}
+      />
+      {profile.role === "administrator" && (
+        <section
+          aria-label={
+            es ? "Administración del corpus E5" : "E5 corpus administration"
+          }
+        >
+          <h2>{es ? "Fuentes del buscador E5" : "E5 search sources"}</h2>
+          <CorpusImport locale={locale} />
+        </section>
+      )}
+    </Shell>
+  );
+}

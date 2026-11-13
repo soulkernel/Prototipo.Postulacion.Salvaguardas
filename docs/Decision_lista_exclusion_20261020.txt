@@ -1,0 +1,69 @@
+GLF — Lista de exclusión consultable — decisión e implementación v0.7.55
+Fecha: 20/10/2026.
+
+ALCANCE APROBADO
+Página /exclusions con acceso junto a Manual de uso en el encabezado del postulante
+y del acceso público. En el menú del postulante: Nueva postulación, Mis postulaciones,
+Cómo postular, Lista de exclusión, Manual de uso. Abrir la referencia en otra pestaña,
+con aviso accesible y noopener/noreferrer, conserva el contexto del formulario.
+
+FUENTE Y TRANSCRIPCIÓN
+Archivo suministrado por el usuario:
+ANEXO-B-Lista de Exclusion_Web-Oct 2024.pdf, español, cuatro páginas.
+SHA-256: db376093916a60f1b712846c5b3f04f700d99f60f7659c2202843cb036e23613
+Copia pública: /reference/glf-exclusion-list-oct-2024-es.pdf, sin modificación.
+17 apartados; cinco viñetas dentro de 1; ocho subapartados a–h dentro de 17;
+10 notas y cinco enlaces originales. No se afirma una vigencia distinta a la del
+archivo proporcionado. Se conserva la mención conjunta a exclusiones IFC y DFC,
+incluida la referencia expresa a DFC de julio de 2020 de la nota 7.
+
+El HTML elimina saltos y espacios de maquetación del PDF y representa las llamadas
+a notas como [n] en superíndice. No corrige la redacción normativa ni sustituye
+las fuentes externas por versiones nuevas. Rótulos y filtros temáticos son ayudas
+editoriales diferenciadas del texto original. Las excepciones aparecen completas
+junto al apartado/subapartado correspondiente, también al buscar o filtrar.
+
+BÚSQUEDA Y FILTROS
+Búsqueda local por palabras combinadas, sin distinguir tildes o mayúsculas;
+resaltado de coincidencias y recuento de apartados. Incluye notas y referencias
+generales, que se abren cuando contienen coincidencias. Los filtros temáticos
+se cruzan con la búsqueda y preservan numeración/orden, cláusulas completas y
+excepciones. Limpiar restaura el catálogo completo. Un resultado vacío no acredita
+elegibilidad. No se infieren coincidencias semánticas ni decisiones de rechazo.
+
+IDIOMAS Y COMPATIBILIDAD
+Controles y rótulos ES/EN; texto normativo español marcado lang=es. En inglés se
+informa que no se suministró traducción aprobada y se orienta a buscar en español
+o utilizar los filtros. No presentar una traducción generada como oficial.
+No modifica modelo, validaciones, avance, anexos, archivos históricos, envíos,
+formularios, snapshots, revisión o PDF de postulaciones. No precisa migraciones
+ni escrituras en Supabase. Se reutiliza la presentación y colores actuales GLF.
+
+COMPROBACIONES LOCALES
+237 pruebas aprobadas: 71 SQL/servidor y 166 TypeScript (seis nuevas de esta sección).
+Lint, TypeScript y compilación de producción aprobados. Verificación independiente
+contra el PDF: 40 párrafos/notas e introducción completa, ignorando solo formato,
+puntuación y llamadas numéricas de nota. Copia PDF validada con su huella binaria.
+La aplicación Next compilada se probó sin cuenta en Chrome: buscador, tildes,
+mayúsculas, notas/excepciones, filtros combinados, sin coincidencias, limpiar,
+cambio de idioma real, PDF por HTTP y descarga real, nueva pestaña, teclado,
+aria-live, etiquetas, viewport 1280/768/390/320 y zoom 200 %, sin scroll horizontal.
+Capturas inspeccionadas visualmente. Sin errores JavaScript ni solicitudes de
+escritura. Destinos externos bloqueados en la prueba: se observó únicamente
+inyección del antivirus local, registrada por separado sin desactivar protección.
+Encabezado Shell real probado además con viewer ficticio aislado: orden ES/EN,
+cuatro viewports y conservación del paso y texto ficticio no guardado al abrir.
+No constituye una auditoría formal con lector de pantalla.
+
+EVIDENCIA LOCAL
+scratch/exclusion-tests.log, exclusion-lint.log, exclusion-types.log,
+exclusion-build.log, exclusion-source-check.json, exclusion-ui.log,
+exclusion-header-ui.log.
+scratch/exclusion-qa/results.json, header-results.json, run.cjs, header.cjs,
+exclusions-es-desktop.png, exclusions-es-mobile.png, exclusions-en-desktop.png,
+search-gasolina.png, applicant-header-es.png, applicant-header-en.png,
+downloaded-original.pdf.
+
+PENDIENTE DOCUMENTAL
+Versión inglesa aprobada de la lista: no proporcionada; no se inventa traducción.
+Los enlaces externos se conservaron desde el PDF; no se certifica su vigencia.

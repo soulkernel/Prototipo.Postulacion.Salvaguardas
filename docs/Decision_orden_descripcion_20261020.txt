@@ -1,0 +1,14 @@
+DECISIÓN CONFIRMADA POR EL USUARIO — 20/10/2026
+Orden de Descripción del proyecto:
+1. Resumen del proyecto.
+2. Objetivos del proyecto, con alineación vinculada al objetivo general.
+3. Actividades.
+4. Beneficiarios y contribuciones a medios de vida.
+5. Resultados e indicadores de impacto (detalle según fase).
+6. Riesgos potenciales ambientales y sociales.
+7. Seguimiento y evaluación.
+8. Sostenibilidad y replicabilidad.
+
+Alcance: reordenar la captura, revisión externa/interna y PDF nuevos con una secuencia compartida. El manual sitúa actividades después de objetivos. No modificar requisitos, UUID, narrativa, calendarios, riesgos, guardado ni herencia de fase 1 a fase 2. No se duplican actividades en Screening: ese paso evalúa las ya registradas.
+Compatibilidad: formato v6 solo para documentos nuevos; los documentos preparados y versiones enviadas mantienen su formato registrado (v5 y anteriores). La migración 050 cambia exclusivamente los valores por defecto de metadatos de presentación, sin UPDATE de datos ni snapshots.
+Autorización: implementar y publicar en Vercel, con verificaciones de rigor. No efectuar postulaciones ni comunicaciones reales.

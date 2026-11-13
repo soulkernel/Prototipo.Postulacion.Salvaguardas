@@ -1,0 +1,70 @@
+M04 — CONFIRMACIONES EN PAPELERAS DE POSTULACIONES
+Fecha: 17 de octubre de 2026
+
+BASE Y ALCANCE
+Repositorio: D:\GDRIVE LOCAL\CONSULTORIAS\SALVAGUARDAS GLF\portal-app
+Rama: feat/full-grants-platform
+HEAD auditado: ed35d455eb01886c7ad58e3a7b7507901199f4e5; web 0.7.18.
+Instrucciones: web/AGENTS.md y guía instalada de use-client de Next.js 16.3.8.
+Se revisaron los cambios locales previos de M01/M03 antes de editar. Su diff inicial y hashes están en scratch/m04-qa/baseline.diff y baseline-hashes.json. No se hicieron commits, push, despliegues, migraciones, firmas, comunicaciones ni envíos de postulaciones. Ningún dato real fue utilizado en las pruebas.
+
+INVENTARIO CONFIRMADO ANTES DE EDITAR
+1. Organizaciones asociadas: partner-fields.tsx. Sin confirmación previa; añadida.
+2. Vínculos de alineación Plan/ODS: strategic-fields.tsx. Sin confirmación previa; añadida. Retira solo el vínculo, conserva el objetivo.
+3. Objetivos específicos: strategic-fields.tsx. Sin confirmación previa; añadida. Se conservan actividades/resultados y se eliminan sus vínculos con el objetivo confirmado. Se explica que deben revisarse sus asociaciones.
+4. Resultados: project-result-fields.tsx. Sin confirmación previa; añadida. Incluye indicador, meta, unidad, evidencia y asociación. Conserva los objetivos y cualquier texto anterior de consulta.
+5. Riesgos ambientales/sociales potenciales: potential-risk-fields.tsx. Sin confirmación previa; añadida. Se mantiene deshabilitada la eliminación si está vinculado a actividades.
+6. Actividades: activity-planning-fields.tsx. Sin confirmación previa; añadida. Se mantiene deshabilitada la eliminación mientras tenga evaluaciones de riesgo.
+7. Partidas presupuestarias de proyecto completo: budget-fields.tsx. Sin confirmación previa; añadida. Informa que se recalcularán los totales; no introduce presupuesto anual en la nota conceptual.
+8. Evaluaciones de riesgo en actividades: application-editor.tsx. Sin confirmación previa; añadida. Explica eliminación de calificaciones y medidas; conserva la actividad, el registro de riesgo potencial y evaluaciones de otras actividades.
+9. Medidas propuestas y del catálogo: application-editor.tsx. Sin confirmación previa; añadida. Identifica texto o nombre del catálogo y riesgo correspondiente.
+10. Borradores: delete-draft.tsx. Confirmación existente conservada sin duplicación ni modificaciones. Se mantienen aviso, Cancelar, confirmación explícita, bloqueo pendiente y errores.
+11. Anexos: revisados FileDropField, RequiredAttachmentUploads, SignedDocumentUpload y formularios de aplicación. No existe papelera ni acción de eliminación individual expuesta; hay carga, descarga y sustitución. No se inventó una eliminación nueva.
+12. Otros módulos: call-theme-editor, call-attachment-editor y account-management revisados solo para delimitar usos. Sin cambios. RemoveButton compartido se conserva intacto.
+
+IMPLEMENTACIÓN
+ConfirmRemoveButton es un envoltorio de uso explícito solo en Postulaciones. Mantiene el icono común, etiquetas accesibles y restricciones disabled originales. Abre un diálogo nativo modal fuera del formulario; no llama a las acciones de eliminación ni cambia el payload al abrir, cancelar o cerrar con Escape. Cancelar recibe el foco inicial y se restituye el foco al cerrar. Eliminar tiene color de peligro y bloqueo mediante ref contra doble ejecución en la misma confirmación. Solo entonces ejecuta el callback local existente. No hay mensaje de éxito anticipado. El autoguardado y sus errores permanecen a cargo del editor existente.
+
+Consistencia: al confirmar la eliminación de un objetivo específico, se limpian sus enlaces a resultados además de los enlaces a actividades que ya limpiaba el sistema. Se conserva el contenido de resultados/actividades y se actualiza el texto derivado de resultados. No se limpian indiscriminadamente asociaciones históricas ajenas al objetivo eliminado. Los IDs de elementos restantes se conservan; no se alteran expedientes enviados ni versiones inmutables.
+
+RECUPERACIÓN Y MENSAJES
+No se añadió Deshacer ni se eliminó ningún mecanismo de recuperación. Las eliminaciones locales no tienen restauración de la fila desde el formulario, de ahí el aviso «Esta acción no se puede deshacer desde el formulario». El resultado puede conservar texto anterior para consulta: se indica expresamente en su advertencia, evitando afirmar que ese texto también se borra. El flujo de borradores mantiene su eliminación por etapas y el reintento si falla el borrado de archivos; no es una función de restauración. No se modifica retención de versiones, almacenamiento ni políticas de respaldo.
+
+ARCHIVOS DE PRODUCTO MODIFICADOS POR M04 (8)
+D:\GDRIVE LOCAL\CONSULTORIAS\SALVAGUARDAS GLF\portal-app\web\src\components\confirm-remove-button.tsx
+D:\GDRIVE LOCAL\CONSULTORIAS\SALVAGUARDAS GLF\portal-app\web\src\components\partner-fields.tsx
+D:\GDRIVE LOCAL\CONSULTORIAS\SALVAGUARDAS GLF\portal-app\web\src\components\strategic-fields.tsx
+D:\GDRIVE LOCAL\CONSULTORIAS\SALVAGUARDAS GLF\portal-app\web\src\components\project-result-fields.tsx
+D:\GDRIVE LOCAL\CONSULTORIAS\SALVAGUARDAS GLF\portal-app\web\src\components\potential-risk-fields.tsx
+D:\GDRIVE LOCAL\CONSULTORIAS\SALVAGUARDAS GLF\portal-app\web\src\components\activity-planning-fields.tsx
+D:\GDRIVE LOCAL\CONSULTORIAS\SALVAGUARDAS GLF\portal-app\web\src\components\budget-fields.tsx
+D:\GDRIVE LOCAL\CONSULTORIAS\SALVAGUARDAS GLF\portal-app\web\src\components\application-editor.tsx
+
+PRUEBAS EJECUTADAS
+Entorno de navegador: Chrome, http://127.0.0.1:3189, componentes React reales del repositorio, fixtures desechables y persistencia simulada en localStorage. Se inyectó saveAction; las acciones de envío/firma se bloquean en el bundle de prueba. La eliminación de borrador se simula para probar estados de UI, sin tocar Supabase ni archivos reales.
+
+Para organizaciones, Plan, ODS, objetivos, resultados, riesgo potencial ambiental y social, actividades, medidas propuestas y de catálogo, evaluaciones ambientales/sociales y partidas: abrir, cancelar, Escape, doble clic de apertura y confirmación, una sola eliminación del elemento elegido, guardado/reapertura y conservación de elementos no seleccionados. En el caso de partidas se comprobó tanto el componente aislado como su integración real dentro de ApplicationEditor de fase 2 con autoguardado. Se comprobó que la partida DOS se conserva y el monto solicitado se recalcula a USD 30.000 solo después de confirmar.
+
+Se dejó una advertencia abierta durante 9.008 ms, superando la espera de autoguardado de 2 s: payload intacto y contador de guardados 0. Se verificó también texto inglés, Cancel/Delete y cancelación. Se comprobaron las restricciones de actividad con riesgos y riesgo potencial vinculado: permanecen deshabilitadas.
+
+Borrador: cancelar/cerrar no invoca la acción; doble clic en confirmación genera una sola llamada por intento. Fallo de archivos: mensaje visible y sin redirección de éxito. Reintento correcto: una llamada adicional y redirección simulada al listado. Persistencia del resultado local comprobada al recargar. La eliminación física real se verifica por separado en las pruebas SQL aisladas existentes.
+
+Fallo de autoguardado: se confirmó una eliminación local y se hizo fallar el guardado inyectado. El payload persistido permaneció intacto, el editor mostró «Cambios sin guardar» y el error «No se pudieron guardar los cambios…». No mostró éxito. Se reintentó Guardar borrador y se comprobó la persistencia al reabrir.
+
+Servidor: 6 escenarios de deleteDraft real compilado, con transporte/autenticación simulados y sin red: ID inválido; conflicto de revisión; protección de enviado; fallo de storage sin finalizar; fallo en finalizar sin éxito; éxito con 101 archivos en lotes de 100+1. Pasaron. También pasaron de nuevo 14 escenarios M01 y 15 M03 mediante sus comprobadores aislados.
+
+npm test: 140 pruebas aprobadas, 0 fallidas (45 SQL con PGlite local + 95 de dominio/documentos/integraciones auxiliares). Incluyen propiedad del borrador, revisión, archivos pendientes y protección después del envío.
+npm run lint: aprobado.
+npm run build: aprobado, compilación y TypeScript correctos.
+git diff --check limitado a los archivos M04: aprobado. El chequeo global detecta espacio al final de línea en scratch/desktop.ini, cambio ajeno ya presente; no se modifica.
+
+EVIDENCIAS Y REPRODUCCIÓN
+scratch/m04-qa/ui.tsx y run.mjs: arnés de UI y servidor exclusivamente local.
+scratch/m04-qa/browser-evidence.json: 19 registros capturados de las pruebas de UI, con payload antes/después cuando aplica.
+scratch/m04-qa/assert-evidence.mjs y browser-assertions.log: comprobaciones de evidencia (70 aserciones).
+scratch/m04-qa/check-server.mjs y server-check.log: pruebas de la acción real con transportes simulados. Reutiliza compiladores M01/M03 y genera dos .cjs temporales en web/.test-artifacts; se retiraron al concluir.
+scratch/m04-qa/tests.log, lint.log, build.log: salidas de las comprobaciones.
+scratch/m04-qa/confirmacion-objetivo.png y confirmacion-en.png: capturas reales de las advertencias.
+
+LÍMITES Y PENDIENTES
+No se ejecutó prueba de extremo a extremo contra un Supabase remoto ni eliminación de objetos de Storage reales. La UI usa guardado simulado; las funciones SQL se prueban con PGlite y el transporte servidor con dobles de prueba. Una comprobación posterior integrada debe realizarse solo en una base de pruebas con expedientes desechables, si se autoriza ese entorno. No se presenta como ejecutada. No hace falta migración M04. Publicación queda fuera del alcance autorizado.

@@ -1,0 +1,135 @@
+M08 · RETIRAR GASTOS ADMINISTRATIVOS DE LA NOTA CONCEPTUAL
+Revisión e implementación local · 17 de octubre de 2026
+
+Repositorio confirmado: D:\GDRIVE LOCAL\CONSULTORIAS\SALVAGUARDAS GLF\portal-app
+Rama: feat/full-grants-platform
+HEAD al iniciar y al finalizar: fb205f73bf734742b10c09eb0f79d507cbc322b0
+No se hizo commit, push, despliegue ni operación sobre Supabase de producción.
+
+DIAGNÓSTICO Y BRECHA
+El campo admin_cost estaba visible y exigido en fase 1 por el formulario,
+el avance/validaciones de cliente y el validador SQL. La revisión compartida
+y el PDF lo presentaban sin distinguir la etapa o la versión documental.
+La exigencia impedía completar una nota conceptual sin ese importe.
+
+CORRECCIÓN
+- Fase 1: retirar la captura y la obligatoriedad, sin imputar cero ni calcular
+  un valor. Solicitado + cofinanciamiento siguen formando el costo total.
+- La acción real saveDraft admite admin_cost ausente (normaliza a null) y
+  conserva exactamente un importe existente al editar otros datos.
+- El control de fase 2 permanece, con su misma fórmula y porcentaje.
+- Los PDF nuevos y la revisión de notas en edición omiten el rubro.
+- Documentos ya preparados o enviados conservan su presentación histórica.
+  La nueva metadata concept_layout_version está fuera del payload firmado:
+  registros existentes mantienen NULL; solo inserciones futuras reciben
+  glf-concept-m08-v1. Al enviar una revisión previamente preparada, se
+  conserva su versión de formato, incluso si era el formato anterior.
+- La consulta interna usa el formato de la versión presentada. No se
+  reemplazan snapshots ni se reescriben documentos o registros enviados.
+- El Excel de respaldo conserva la columna y los importes históricos; no
+  inventa cero cuando el dato no está consignado.
+- Manual de uso ES/EN: corregidas las instrucciones de captura de fase 1.
+
+MIGRACIÓN LOCAL
+supabase/migrations/202610170041_concept_without_administrative_cost.sql
+Modifica únicamente dos condiciones del validador original mediante un
+control de coincidencia exacta. Si la función cambió, aborta en lugar de
+alterar código inesperado. Retiene límites numéricos y reglas ajenas a M08.
+Agrega metadata documental nullable y un trigger que hereda el formato
+preparado al crear la versión presentada. No cambia permisos de acceso.
+Solo se ejecutó sobre PostgreSQL PGlite en memoria para las pruebas.
+NO se aplicó al proyecto Supabase remoto. Su futura aplicación debe hacerse
+junto con el código; el historial remoto de migraciones debe reconciliarse
+antes de ejecutar una migración automática masiva.
+
+PRUEBAS EJECUTADAS Y RESULTADOS
+1. npm test: 53 pruebas SQL/acciones de servidor + 107 pruebas TypeScript =
+   160 aprobadas, 0 fallidas. Incluye regresiones de permisos, temas de
+   convocatoria, socios, documentos, decisiones, fase 2 y exportaciones.
+2. M08: concepto sin admin_cost y con null; captura/progreso sin requisito
+   oculto (100% con los demás requisitos completos); importe histórico alto
+   conservado sin bloquear fase 1; exigencia y límite de fase 2 intactos.
+3. SQL directo: guardar/reabrir/preparar; rechazo de importes negativos o
+   fuera de límites y rechazo de monto incompatible con categoría.
+4. Migración: comparación de todos los registros locales preexistentes de
+   aplicaciones, versiones, preparados, eventos, convocatorias y documentos.
+   Los contenidos permanecen iguales; la nueva metadata de filas anteriores
+   es NULL. No cambian payloads ni reglas congeladas.
+5. Continuidad: envío SIMULADO únicamente en la base de pruebas, revisión e
+   invitación a fase 2, herencia de payload sin admin_cost, bloqueo al
+   preparar fase 2 mientras falta el dato y preparación permitida después
+   de completar el proyecto. El snapshot de fase 1 sigue sin el dato.
+   Los archivos del simulador son metadata sintética: no se firmó ni envió
+   ninguna postulación real.
+6. Formato: preparado histórico NULL -> versión enviada NULL; preparado
+   nuevo -> versión con glf-concept-m08-v1. Los importes originales se
+   mantienen. Funciones privadas continúan inaccesibles a roles públicos.
+7. Chrome: componente ApplicationEditor real en servidor LOCAL aislado
+   (sin Supabase y con operaciones de red bloqueadas). Fase 1 ES/EN sin
+   campo; revisión EN sin rubro; borrador con admin_cost=50000 conserva
+   el valor tras editar el título, guardar y recargar; fase 2 mantiene
+   obligatoriedad; revisión histórica ES/EN conserva el rubro.
+8. Se generaron y reabrieron 12 PDF aislados: nota nueva, borrador antiguo
+   con formato nuevo, formato histórico, fase 2 con ambos formatos y
+   evaluación AIS, en ES/EN. Extracción confirma visibilidad por etapa y
+   versión. Se renderizaron e inspeccionaron las páginas de financiamiento
+   ES/EN y la primera página ES de los formatos nuevo e histórico.
+9. Tras el ajuste final del manual y lectura de importes ausentes: 11
+   pruebas focalizadas de M08/presentación aprobadas (son repetición parcial,
+   no se suman como nuevas pruebas al total de 160).
+10. npm run lint y npm run build: aprobados. La compilación incluye TypeScript.
+11. git diff --check sobre web y supabase/migrations: sin errores.
+    scratch/desktop.ini ya tenía cambios ajenos y una advertencia de espacios;
+    se preservó sin tocar, al igual que los demás archivos ajenos de scratch.
+
+EVIDENCIA
+scratch/m08-qa/tests-final.log
+scratch/m08-qa/sql-server.log
+scratch/m08-qa/final-targeted.log
+scratch/m08-qa/lint-final.log
+scratch/m08-qa/build-final.log
+scratch/m08-qa/pdf-checks.json
+scratch/m08-qa/ui-checks.json
+scratch/m08-qa/historic-roundtrip.txt
+scratch/m08-qa/legacy-review-en.txt
+scratch/m08-qa/web-phase1-es.png
+scratch/m08-qa/web-phase2-es.png
+scratch/m08-qa/new-es-page2.png
+scratch/m08-qa/legacy-es-page2.png
+scratch/m08-qa/new-en-page2.png
+scratch/m08-qa/legacy-en-page2.png
+Los PDF y sus textos extraídos permanecen en esa misma carpeta de QA.
+
+LÍMITES Y PENDIENTES
+- No se verificó contra Supabase/Vercel remotos en este alcance local.
+  La prueba de navegador usa el componente real con guardado simulado local;
+  no representa una prueba de autenticación o almacenamiento en producción.
+- Antes de publicar: aplicar y verificar la migración local compatible con
+  el estado remoto. La publicación NO está autorizada en este requerimiento.
+- Decisión institucional pendiente: confirmar si el tope administrativo se
+  calcula sobre la subvención GLF o sobre el costo total. Se conserva la
+  fórmula vigente sobre solicitado + cofinanciamiento, sin interpretarla
+  como resolución normativa. Esto no bloquea el retiro de fase 1.
+- La nueva sección/botón de presupuesto después de Nota conceptual queda
+  pendiente. No se creó ni se reorganizó el presupuesto de fase 2.
+
+ARCHIVOS DE IMPLEMENTACIÓN Y PRUEBAS MODIFICADOS/CREADOS
+D:\GDRIVE LOCAL\CONSULTORIAS\SALVAGUARDAS GLF\portal-app\web\package.json
+D:\GDRIVE LOCAL\CONSULTORIAS\SALVAGUARDAS GLF\portal-app\web\src\app\applicant\[id]\page.tsx
+D:\GDRIVE LOCAL\CONSULTORIAS\SALVAGUARDAS GLF\portal-app\web\src\app\documents\[id]\[kind]\route.ts
+D:\GDRIVE LOCAL\CONSULTORIAS\SALVAGUARDAS GLF\portal-app\web\src\app\internal\applications\[id]\page.tsx
+D:\GDRIVE LOCAL\CONSULTORIAS\SALVAGUARDAS GLF\portal-app\web\src\components\application-editor.tsx
+D:\GDRIVE LOCAL\CONSULTORIAS\SALVAGUARDAS GLF\portal-app\web\src\components\concept-review.tsx
+D:\GDRIVE LOCAL\CONSULTORIAS\SALVAGUARDAS GLF\portal-app\web\src\lib\applicant-manual.ts
+D:\GDRIVE LOCAL\CONSULTORIAS\SALVAGUARDAS GLF\portal-app\web\src\lib\concept-presentation.ts
+D:\GDRIVE LOCAL\CONSULTORIAS\SALVAGUARDAS GLF\portal-app\web\src\lib\domain.ts
+D:\GDRIVE LOCAL\CONSULTORIAS\SALVAGUARDAS GLF\portal-app\web\src\lib\fields.ts
+D:\GDRIVE LOCAL\CONSULTORIAS\SALVAGUARDAS GLF\portal-app\web\src\lib\financial-feedback.ts
+D:\GDRIVE LOCAL\CONSULTORIAS\SALVAGUARDAS GLF\portal-app\web\src\lib\pdf.ts
+D:\GDRIVE LOCAL\CONSULTORIAS\SALVAGUARDAS GLF\portal-app\web\src\lib\step-validation.ts
+D:\GDRIVE LOCAL\CONSULTORIAS\SALVAGUARDAS GLF\portal-app\web\tests\database.test.mjs
+D:\GDRIVE LOCAL\CONSULTORIAS\SALVAGUARDAS GLF\portal-app\web\tests\domain.test.ts
+D:\GDRIVE LOCAL\CONSULTORIAS\SALVAGUARDAS GLF\portal-app\web\tests\m05-server.test.mjs
+D:\GDRIVE LOCAL\CONSULTORIAS\SALVAGUARDAS GLF\portal-app\web\src\lib\concept-layout.ts
+D:\GDRIVE LOCAL\CONSULTORIAS\SALVAGUARDAS GLF\portal-app\web\tests\concept-admin-cost.test.ts
+D:\GDRIVE LOCAL\CONSULTORIAS\SALVAGUARDAS GLF\portal-app\supabase\migrations\202610170041_concept_without_administrative_cost.sql

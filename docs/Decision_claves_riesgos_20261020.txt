@@ -1,0 +1,24 @@
+GLF — Paso 3, categoría y claves de riesgos
+Decisión confirmada por el usuario: 20/10/2026.
+
+1. Navegación: 3. Actividades y Riesgos A&S / 3. Activities and E&S Risks.
+2. Sustituir Puntaje del riesgo como rótulo principal por Categoría del riesgo /
+   Risk category, mostrando la categoría real y dejando el cálculo separado.
+   Aplicar la misma distinción a riesgo residual y tabla de referencia de fase 2.
+3. Probabilidad y gravedad conservan los valores 1–5, los datos existentes y
+   todas las validaciones. Mostrar su significado original debajo del selector;
+   consulta general de las claves al inicio del paso, sin repetirla por ficha.
+4. Definiciones transcritas de las dos imágenes proporcionadas por el usuario:
+   CLAVES DE RIESGOS ESPANOL.png y CLAVES DE RIESGOS INGLES.png, Tabla 3 de Ulf.
+   Conservar literalmente las redacciones, también probabilidad 4 y 5. El usuario
+   consultará al GLF si desean cambiarlas; no invertir ni reformular por inferencia.
+5. Usar la paleta existente del mapa: verde para bajo, amarillo para medio,
+   naranja para alto y rojo para muy alto. Ayudas de cada variable acompañadas
+   de número y texto; 1/2 verde, 3 amarillo, 4 naranja y 5 rojo. Esto no calcula
+   la categoría combinada: continúa siendo probabilidad × gravedad, con umbrales
+   vigentes 1–4, 5–9, 10–15 y 16–25. Sin ambos valores: Sin completar.
+6. Ayudas accesibles con teclado, asociadas a sus campos y con cambio anunciado;
+   una columna en móvil, sin tablas extensas permanentes ni aviso solo por hover.
+7. Consultar/plegar no cambia datos ni inicia guardado. Conservar UUID, referencias,
+   autoguardado, borradores incompletos, validaciones, mapas y continuidad a fase 2.
+   No cambiar modelos, base de datos, reglas de elegibilidad ni PDF históricos.

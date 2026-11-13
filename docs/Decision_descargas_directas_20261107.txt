@@ -1,0 +1,22 @@
+DESCARGA DIRECTA CON LA PRESENTACIÓN ACTUAL — GLF
+Fecha: 7 de noviembre de 2026 (Galápagos). Versión: 0.7.71.
+
+Acuerdo del usuario
+Los botones habituales deben descargar directamente la presentación actual. Retirar el selector «Copia de consulta actualizada / Formato original». Conservar el formato anterior únicamente como consulta histórica secundaria.
+
+Implementación
+- Descargas de comprobante, nota conceptual/propuesta y evaluación A&S usan la presentación actual de los datos de la versión enviada, sin pedir elegir formato.
+- El formato original queda plegado en «Historial de esta versión», dentro de Documentos y versiones del módulo interno y Versiones presentadas del módulo externo.
+- Se conserva el selector de idioma y los indicadores de carga, errores y protección frente a clics repetidos.
+- Las rutas de descargas entregan la presentación actual por defecto. Los enlaces históricos explícitos usan view=original; se mantiene compatibilidad con view=updated.
+- Un documento preparado para firma conserva siempre su formato congelado, incluso si se manipula el parámetro de presentación. No se alteran firmas, archivos recibidos, datos enviados, versiones ni permisos.
+- Las copias de envíos históricos conservan en el PDF su identificación de procedencia y su fecha/versión originales. Descargar con el diseño actual no constituye un nuevo envío ni modifica la decisión del GLF.
+- Manuales de postulante e interno ajustados en español e inglés.
+
+Verificación local
+16 pruebas específicas satisfactorias: presentación actual por defecto, conservación del original, documentos preparados para firma, PDF, comprobantes y manuales.
+Análisis de código sin errores (una advertencia preexistente no relacionada); tipos y compilación satisfactorios.
+Navegador: descarga normal, historial plegado y original en otro idioma, documentos preparados y comprobante del postulante. Se verificaron los destinos reales de las descargas.
+
+Impacto y continuidad
+No requiere migración ni cambios de Supabase, de identidad compartida o de otras aplicaciones GLF. Conserva los acuerdos anteriores sobre cédula/RUC y la propuesta de captar un responsable adicional para organizaciones únicamente en fase 2 si GLF lo confirma. Evidencias de publicación y prueba en producción se registran en el informe local de publicación de la versión.

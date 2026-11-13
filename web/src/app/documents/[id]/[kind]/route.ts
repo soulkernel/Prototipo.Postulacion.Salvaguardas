@@ -1,0 +1,92 @@
+import { NextResponse, type NextRequest } from "next/server";
+import { getViewer } from "@/lib/data";
+import { getLocale } from "@/lib/locale";
+import { applicationPdf } from "@/lib/pdf";
+import type { Payload, Locale } from "@/lib/domain";
+import { documentFilename } from "@/lib/document-name";
+import { updatedDocumentCopy } from "@/lib/document-presentation";
+import { z } from "zod";
+export const runtime = "nodejs";
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string; kind: string }> },
+) {
+  const { id, kind } = await params;
+  if (!z.uuid().safeParse(id).success || !["concept", "matrix"].includes(kind))
+    return new NextResponse("Not found", { status: 404 });
+  const viewer = await getViewer();
+  if (!viewer)
+    return NextResponse.redirect(
+      new URL(
+        "/login?next=" +
+          encodeURIComponent(request.nextUrl.pathname + request.nextUrl.search),
+        request.url,
+      ),
+    );
+  const prepared = request.nextUrl.searchParams.get("prepared") === "1";
+  const { data: version } = await viewer.db
+    .from(prepared ? "prepared_documents" : "application_versions")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (!version) return new NextResponse("Not found", { status: 404 });
+  const { data: app } = await viewer.db
+    .from("applications")
+    .select("reference_code,rules_snapshot,call_id")
+    .eq("id", version.application_id)
+    .single();
+  if (!app) return new NextResponse("Not found", { status: 404 });
+  let phase2Fields = [];
+  if (version.stage === 2) {
+    const { data: call, error } = await viewer.db
+      .from("calls")
+      .select("phase2_schema")
+      .eq("id", app.call_id)
+      .single();
+    if (error || !call) return new NextResponse("Unavailable", { status: 503 });
+    phase2Fields = call.phase2_schema || [];
+  }
+  const requested = request.nextUrl.searchParams.get("lang");
+  const locale: Locale =
+    requested === "en" || requested === "es" ? requested : await getLocale();
+  const updatedCopy = updatedDocumentCopy(
+    version.document_metadata?.format_version,
+    request.nextUrl.searchParams.get("view"),
+    prepared,
+  );
+  const base = process.env.NEXT_PUBLIC_SITE_URL || request.nextUrl.origin;
+  const downloadUrl =
+    base +
+    "/documents/" +
+    id +
+    "/" +
+    kind +
+    "?lang=" +
+    locale +
+    (prepared ? "&prepared=1" : "") +
+    (updatedCopy ? "&view=updated" : "");
+  const result = await applicationPdf({
+    payload: version.payload as Payload,
+    documentMetadata: version.document_metadata,
+    updatedCopy,
+    rules: version.rules_snapshot ?? app.rules_snapshot,
+    phase2Fields,
+    conceptLayoutVersion: version.concept_layout_version ?? null,
+    stage: version.stage,
+    reference: app.reference_code,
+    revision: version.revision,
+    submittedAt: prepared ? version.created_at : version.submitted_at,
+    kind: kind as "concept" | "matrix",
+    locale,
+    downloadUrl,
+  });
+  return new NextResponse(Buffer.from(result.bytes), {
+    headers: {
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename="${documentFilename(app.reference_code, kind as "concept" | "matrix", version.revision, prepared ? version.created_at : version.submitted_at, locale, version.stage).replace(/\.pdf$/, updatedCopy ? "_consulta.pdf" : ".pdf")}"`,
+      "Cache-Control": "private, no-store",
+      "X-Content-Type-Options": "nosniff",
+      "Referrer-Policy": "no-referrer",
+    },
+  });
+}

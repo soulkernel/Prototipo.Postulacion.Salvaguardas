@@ -1,0 +1,70 @@
+GLF — Seguimiento y evaluación en la nota conceptual
+Decisión del usuario: 20 de octubre de 2026.
+
+La nota conceptual sí debe recoger estrategias y actividades de seguimiento y
+los principales indicadores propuestos de avance y éxito. Esto precisa la
+decisión sobre resultados por fase: Resultados conserva solo objetivo asociado
+y resultado esperado; Seguimiento identifica las medidas preliminares vinculadas.
+El método detallado, las metas, las unidades y las evidencias se desarrollan en
+el proyecto completo. No calcular automáticamente cumplimiento en fase 1.
+
+ESTRUCTURA APROBADA
+Cada ficha corresponde a un indicador y contiene, en este orden:
+1. Parámetro de evaluación que propone (rótulo exacto aprobado):
+   Avance de una actividad / Logro de un resultado.
+2. Actividad o resultado al que dará seguimiento: selección de un registro
+   existente del mismo proyecto, según el parámetro elegido.
+3. Indicador propuesto: qué observará o medirá para comprobar avance o logro.
+4. Estrategia y actividades de seguimiento: cómo realizará esa comprobación.
+Se muestran automáticamente todos los objetivos específicos asociados al
+registro seleccionado. Las actividades pueden tener varios objetivos.
+Se permite agregar indicadores para un mismo registro. No se exige un indicador
+por cada actividad o resultado, ni ambos tipos en cada postulación.
+La sección se ubica después de Actividades en la captura y en los nuevos
+resúmenes/PDF. La propuesta reemplaza la opción genérica Proyecto completo.
+
+VÍNCULOS Y COMPATIBILIDAD
+Los resultados ya apuntan a un objetivo específico y las actividades a uno o
+varios. Compartir un objetivo no implica una relación actividad-resultado:
+no inferir ese vínculo ni reasignar referencias automáticamente.
+Cada indicador tiene UUID propio y una referencia explícita de tipo + ID.
+Renombrar o reordenar actualiza la presentación sin alterar identidades.
+Eliminar el registro referido conserva la ficha y sus textos, avisa en la
+confirmación y exige revisar la referencia antes de completar/enviar.
+Cambiar el parámetro limpia solo la selección de la referencia; conserva los
+textos del indicador y la estrategia. Los borradores incompletos se guardan.
+El texto monitoring anterior se conserva literalmente. Los borradores narrativos
+siguen siendo editables; organizar en fichas es una acción explícita sin inferir
+indicadores ni asociaciones. El nuevo monitoring_plan es la fuente estructurada.
+No convertir silenciosamente narrativas, modificar snapshots ni documentos
+firmados. Nuevo formato de presentación: glf-concept-20261020-v4; conservar los
+formatos v3/v2/v1/NULL y sus reglas previas.
+
+CONTINUIDAD FUTURA
+En fase 2 se retoman los mismos indicadores y referencias. Allí se desarrollará
+la metodología (metas, unidades, cálculo, periodicidad, responsables y evidencia).
+Las mediciones futuras deberán referenciar el ID del indicador y la versión del
+plan aprobado, conservando la trazabilidad con actividades, resultados y objetivos.
+No duplicar información ni copiar el indicador propuesto como indicador de
+impacto de un resultado sin una revisión explícita cuando corresponda.
+Esta implementación recoge y vincula la propuesta; no construye todavía un
+módulo de mediciones periódicas ni nuevas decisiones de aprobación.
+
+IMPLEMENTACIÓN Y PUBLICACIÓN
+Las validaciones de cliente, servidor y SQL deben concordar. La migración local
+048 no modifica registros históricos. Su publicación requiere aplicarla antes
+de desplegar el frontend que utiliza el nuevo formato de presentación.
+
+PRECISIÓN POSTERIOR APROBADA: CAPTURA PRINCIPAL VINCULADA
+Las fichas son la captura principal también para borradores con narrativa previa.
+El texto monitoring se conserva literalmente, como referencia consultable, sin
+conversión automática ni guardado por abrir/consultar. Se retira la organización
+opcional. Abrir muestra una ficha vacía transitoria; solo editar o agregar guarda.
+Preparar/enviar exige al menos una ficha completa y vinculada en cliente,
+servidor y SQL; guardar borradores incompletos sigue permitido. No se exige una
+ficha por cada actividad/resultado ni se añaden metas o metodología detallada.
+Se conservan los UUID de indicadores existentes y los vínculos de Sostenibilidad.
+La migración 051 solo refuerza la validación en operaciones nuevas, sin actualizar
+aplicaciones, narrativas, documentos preparados, versiones ni firmas históricas.
+Las salidas actuales utilizan las fichas existentes; los documentos congelados
+mantienen el formato y el contenido registrados. No se crea aún seguimiento real.

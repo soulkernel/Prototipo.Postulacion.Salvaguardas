@@ -1,0 +1,60 @@
+M03 — PROVINCIA DEL DOMICILIO DEL PROPONENTE
+Consolidación que sustituye M02. Implementación exclusivamente local.
+Fecha: 17 de octubre de 2026.
+
+BASE RECONFIRMADA
+Repositorio: D:\GDRIVE LOCAL\CONSULTORIAS\SALVAGUARDAS GLF\portal-app
+Rama: feat/full-grants-platform
+HEAD: ed35d455eb01886c7ad58e3a7b7507901199f4e5 (no se creó otro commit).
+Versión base: 0.7.18, sin incremento ni publicación.
+Se leyeron web/AGENTS.md y la guía local de Next para componentes cliente. Se revisaron antes de editar las diferencias existentes de M01. El cambio ajeno de scratch/desktop.ini y el resto de los archivos previos se preservaron.
+Rutas reales revisadas: web/src/components/application-editor.tsx, web/src/components/geography-fields.tsx, web/src/lib/geography.ts, web/src/lib/domain.ts, web/src/app/applicant/actions.ts y supabase/migrations.
+
+DIAGNÓSTICO INFORMADO ANTES DE EDITAR
+Provincia ofrecía las 24 provincias para cualquier tipo de proponente. Cambiar el tipo solo cambiaba applicant_type. La carga del formulario conservaba el payload y los datos para nuevas aplicaciones se copiaban desde el proponente anterior sin adaptar provincia. geographyIssues aceptaba cualquier provincia ecuatoriana válida y una ciudad no vacía. La comprobación del servidor antes de completar utilizaba esa misma validación. No existía la restricción SQL de provincia para organizaciones.
+Ciudad ya tenía catálogo dependiente de provincia y una opción de otra ciudad/localidad. Se conserva ese mecanismo y su carácter parcial; no se convierte en un catálogo cerrado.
+
+REGLA IMPLEMENTADA
+Organización: al elegir el tipo, province pasa a Galápagos. El control queda deshabilitado con una única provincia y el valor real forma parte del payload JSON, por lo que no se pierde al guardar. No depende de la serialización de controles HTML deshabilitados.
+Persona natural: mantiene las 24 provincias de Ecuador y las opciones de ciudad de la provincia elegida.
+Persona natural → Organización: conserva una ciudad catalogada de Galápagos. Una ciudad incompatible, o una localidad libre de una provincia distinta cuya pertenencia no puede comprobarse, queda vacía y se pide reseleccionarla. Si ya estaba en Galápagos, conserva también las localidades libres compatibles.
+Organización → Persona natural: conserva Galápagos y la ciudad actual; habilita las demás provincias. No borra nombres, contactos, título, dirección, RUC ni montos.
+Al cambiar provincia se conserva una ciudad compatible; si no puede determinarse la compatibilidad se solicita nueva selección. Las ciudades conocidas del catálogo que pertenecen a otra provincia se marcan como incompatibles. Las localidades no incluidas conservan la opción de texto libre y no se afirman verificadas externamente.
+Los datos copiados para crear una aplicación nueva de organización se adaptan a Galápagos; nunca se reescribe la aplicación de origen.
+El servidor rechaza guardar, preparar o enviar una organización cuya provincia no sea Galápagos. SQL también rechaza esa escritura, incluidos los borradores y las dos fases. Las demás validaciones existentes siguen delegándose al validador previo.
+
+COMPATIBILIDAD Y DATOS HISTÓRICOS
+No se ejecutaron consultas sobre expedientes de producción; no se afirma que existan allí casos incompatibles concretos.
+Si se abre un borrador antiguo de organización con otra provincia, no se normaliza ni se guarda automáticamente. La provincia anterior se identifica como valor incompatible y deshabilitado; Galápagos es la única provincia de corrección habilitada. La ciudad queda pendiente de revisión al efectuar esa selección explícita. El servidor no acepta una nueva escritura incompatible.
+No se alteran versiones enviadas ni registros existentes mediante la migración. Se propone, por separado y previa autorización, identificar los casos reales incompatibles y revisarlos individualmente; no se ejecutó ni se preparó una actualización masiva.
+
+ARCHIVOS MODIFICADOS EN ESTA CORRECCIÓN
+- web/src/lib/geography.ts: regla compartida de organización, compatibilidad de ciudad y cambios de tipo/provincia.
+- web/src/components/geography-fields.tsx: provincia fija, advertencia para borradores antiguos y ciudad seleccionable dependiente de provincia.
+- web/src/components/application-editor.tsx: transición del tipo con parche limitado al domicilio y mensaje de rechazo del servidor.
+- web/src/lib/domain.ts: adaptación de valores iniciales exclusivamente para una nueva aplicación y validación geográfica compartida existente.
+- web/src/app/applicant/actions.ts: rechazo de provincia incompatible al guardar y comprobación del payload almacenado antes de preparar/enviar.
+- web/src/app/live.css: advertencia de provincia y alineación visual de los controles de domicilio.
+- web/tests/domain.test.ts: escenarios de provincia, ciudad, transición, render real de los controles y preservación del resto del contenido.
+- web/tests/database.test.mjs: validación SQL/RPC, persistencia y preservación de versiones/historial. Se adaptó el fixture canónico de organización a Galápagos y la prueba de reaplicación M01 al encadenamiento de la nueva migración.
+Nuevo:
+- supabase/migrations/202610170038_organization_galapagos_domicile.sql: envoltorio compatible, sin UPDATE de registros y sin exponer funciones privadas.
+
+PRESERVACIÓN DE M01 Y RUC
+Se guardó el diff previo en scratch/m03-qa/baseline-m01.diff. Los hashes iniciales/finales coinciden para la migración 037 de M01, grant-category-select.tsx y financial-feedback.ts. Las pruebas de M01 siguen aprobando. En archivos compartidos se agregaron únicamente las reglas de domicilio.
+El comprobador aislado scratch/m01-qa/check-server.mjs adapta su fixture de organización a Galápagos para que continúe siendo un caso válido bajo M03; no se cambió la regla M01.
+No se modificó applicant-validation.ts ni la verificación existente del RUC. No se incorporaron consultas externas, validación tributaria remota ni modificaciones de nombres/contactos/título.
+
+PRUEBAS EJECUTADAS Y RESULTADOS
+1. npm test: 140 aprobadas, cero fallos/omitidas: 45 de base de datos y 95 de TypeScript/documentos/lógica. Evidencia: scratch/m03-qa/tests.log.
+2. PGlite aislado: ejecución de las migraciones locales. Organización con Guayas, Pichincha, provincia vacía o ausente rechazada; Galápagos aceptada. Persona natural con Guayas, Pichincha y Azuay aceptada por esta regla. Probado al guardar/completar y en fases 1/2.
+3. RPC save_application directo: rechaza organización/Guayas, acepta la corrección explícita a Galápagos y permite leer de nuevo el mismo payload guardado. Reaplicar la migración 038 sobre un borrador incompatible simulado conserva idénticas aplicaciones, versiones y eventos. Los roles anon/authenticated no pueden ejecutar el validador privado anterior.
+4. Acciones reales de servidor con autenticación/base de datos simuladas: 15 casos M03 aprobados para guardar/preparar/enviar, más 14 casos de regresión M01. Los casos incompatibles se rechazan antes del RPC; el payload de guardado contiene Galápagos. Las acciones elegibles incompletas pueden detenerse posteriormente por otros campos, por lo que no se presentan como envíos completos. Sin conexión remota. Evidencia: scratch/m03-qa/server-check.log.
+5. Chrome en http://127.0.0.1:3188, ApplicationEditor real con guardado simulado local: persona natural inicial Pichincha/Quito; selección Guayas/Guayaquil; cambio a organización con Galápagos bloqueada y ciudad vacía; selección de Puerto Ayora; guardado y reapertura conservando Galápagos/Puerto Ayora; vuelta a persona natural con 24 provincias habilitadas y Puerto Ayora conservada; Azuay/Cuenca → Organización vuelve a pedir ciudad; selección y guardado de Puerto Villamil. Evidencia: scratch/m03-qa/browser-evidence.json y organizacion-galapagos.png.
+6. Compilación de producción local aprobada, incluidos TypeScript y 26 páginas. Evidencia: scratch/m03-qa/build.log y build-final.log. Lint aprobado tras retirar dos bundles temporales CommonJS generados por el comprobador de servidor; el primer lint detectó esos artefactos, no errores de la aplicación. Evidencia final: scratch/m03-qa/lint.log. git diff --check de web/supabase aprobado.
+
+LÍMITES Y PENDIENTES
+Solo cambios locales sin commit, push, despliegue, migración remota, firma, comunicación o envío real. El portal publicado no incorpora todavía M01 ni M03. No se cambió su versión.
+La migración 038 queda preparada para aplicar después de 037 cuando se autorice la publicación coordinada del conjunto.
+Las pruebas SQL fueron locales. El guardado del navegador y las dependencias de las pruebas Server Actions fueron simulados; no se probaron escrituras de datos reales en Supabase.
+Vista local de revisión: http://127.0.0.1:3188, solo disponible en este computador mientras el servidor de pruebas siga activo. Contiene el formulario real con M01 y M03; no es el portal publicado.

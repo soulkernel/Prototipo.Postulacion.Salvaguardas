@@ -1,0 +1,30 @@
+OBSERVACIONES GLF — DOCUMENTOS Y REVISIÓN INTERNA
+Fecha: 4 de noviembre de 2026. Versión web: 0.7.64.
+
+Alcance aprobado
+1. Acuse: cédula del proponente natural o RUC de la organización, tomado de la versión enviada, junto al responsable.
+2. Nota conceptual y matriz A&S: justificar párrafos narrativos, sin estirar últimas líneas ni listas; encabezado superior derecho con año, iniciales de autor y versión; conservar código único del expediente.
+3. Pie de confidencialidad y protección de datos en ambos documentos, bilingüe y sin prometer garantías legales absolutas.
+4. Mapa 5x5 inicial en PDF y consulta interna; residual únicamente en fase 2. Mantener probabilidad por gravedad, bandas 1–4/5–9/10–15/16–25, vínculo actividad-riesgo y valoración humana. No asignar categoría global automática.
+5. Selector ES/EN en descargas de documentos, acuse y reportes. Traducir estructura y rótulos, conservando respuestas originales del postulante.
+6. Historial con autor, fecha, fase y versión. Notas de seguimiento inmutables separadas de evaluaciones formales, disponibles para los tres roles técnicos existentes incluso después de la evaluación. No sustituyen evaluaciones ni habilitan decisiones.
+7. Bandeja paginada en servidor (10/25/50), anterior/siguiente y números, fecha de presentación, filtros y posición conservados al regresar del expediente y de su revisión.
+
+Compatibilidad y contratos
+- Migración aditiva 202611040057_review_documents_and_inbox.sql. No reescribe payloads, documentos preparados, versiones, firmas ni revisiones anteriores.
+- document_metadata congela el formato y autor al preparar. Al enviar se hereda la metadata del documento preparado, incluso null para un preparado histórico. Las versiones nuevas sin preparado usan el autor del envío.
+- Las descargas originales históricas conservan su formato. La copia de consulta actualizada es explícita, se basa en la misma versión y no sustituye archivos firmados. Los preparados históricos nunca se actualizan silenciosamente.
+- application_review_notes guarda seguimiento mediante record_review_note; RLS limita lectura, los clientes no insertan/editan/borran directamente y el historial no se sobrescribe. Control de revisión y MFA existentes conservados.
+- internal_application_page es SECURITY INVOKER y mantiene RLS y el alcance académico. Filtra y cuenta antes de paginar, orden estable por fecha/id, no expone borradores.
+- La identidad central, cuentas, roles, MFA, SSO y contratos compartidos con Operaciones/KYC no cambian. Ninguna acción necesaria en consumidores de identidad.
+- Manual web del postulante actualizado para explicar idioma y formatos históricos.
+
+Verificación previa a publicación
+- 275 pruebas automatizadas aprobadas; incluyen 65 de base de datos. 17 pruebas de documentos aprobadas en ejecución focalizada.
+- TypeScript sin errores; compilación de producción aprobada. ESLint sin errores; advertencia previa de variable email sin uso en database.test.mjs.
+- Inspección visual de PDF ES/EN, nota conceptual, matriz inicial y residual, acuse, justificación, encabezado y pie; originales históricos comparados byte a byte en pruebas.
+- RLS/MFA, aislamiento de notas respecto de evaluaciones, inmutabilidad, conflictos de versión, paginación de 12 expedientes, filtros y alcance académico probados en PostgreSQL local PGlite.
+- Supabase glf-postulaciones: migración ejecutada mediante SQL Editor en transacción con timeout y comprobación de hashes de filas antes/después. Conservados 18 expedientes, 7 versiones, 13 preparados, 28 documentos, 23 perfiles; 0 decisiones y 0 evaluaciones formales existentes. Ninguna fila histórica modificada.
+
+Entrega al usuario
+Publicar en la rama feat/full-grants-platform; main y el repositorio académico quedan fuera del alcance. Facilitar portal publicado para pruebas del usuario. Preparar el resumen definitivo para correo una vez que el usuario complete su revisión; no enviar correos automáticamente.
