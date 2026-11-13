@@ -20,6 +20,19 @@ const source = z.object({
 });
 export const answerMode = z.enum(["brief", "expanded"]);
 export type AnswerMode = z.infer<typeof answerMode>;
+
+function hasDegenerateGeneration(answer: string) {
+  // Reject broken generation; do not silently rewrite a model's conclusions.
+  if (/([!?¡¿])\1{11,}/u.test(answer)) return true;
+  const seen = new Set<string>();
+  for (const paragraph of answer.split(/\n\s*\n/)) {
+    const normalized = paragraph.replace(/\s+/g, " ").trim().toLocaleLowerCase();
+    if (normalized.length < 160) continue;
+    if (seen.has(normalized)) return true;
+    seen.add(normalized);
+  }
+  return false;
+}
 export const qwenDiagnostics = z
   .object({
     policy_version: z.string().min(1).max(80),
@@ -60,6 +73,7 @@ export const qwenResponse = z
         "citation_validation_failed",
         "response_truncated",
         "generation_incomplete",
+        "response_malformed",
       ])
       .optional(),
     answer_mode: answerMode.optional(),
@@ -145,6 +159,16 @@ export const qwenResponse = z
         code: "custom",
         message: "Abstention must not be presented as a grounded answer",
       });
+  })
+  .transform((result) => {
+    if (!result.generated || !hasDegenerateGeneration(result.answer)) return result;
+    return {
+      ...result,
+      generated: false,
+      sources: [],
+      reason: "response_malformed" as const,
+      answer: "La respuesta contiene repeticiones o caracteres anómalos y no se presenta. Consulte los pasajes recuperados o vuelva a intentarlo.",
+    };
   });
 export type QwenResponse = z.infer<typeof qwenResponse>;
 

@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { requestQwen, qwenResponse } from "../src/lib/qwen-contract";
+import { requestQwen, qwenResponse, validateQwenCitations } from "../src/lib/qwen-contract";
+import { exportRagResult } from "../src/lib/rag-session";
 
 const source = {
   chunk_id: "GLF::P1",
@@ -17,6 +18,33 @@ const grounded = {
   results: [{ ...source, text: "Fragmento normativo", score: 1 }],
   timings: { total_seconds: 1.2 },
 };
+
+test("broken provider generation is withheld while retrieved evidence remains usable", () => {
+  const paragraph = "Las organizaciones deben evaluar los riesgos ambientales y sociales de sus actividades y comprobar el alcance de las disposiciones aplicables en el documento original [GLF::P1].";
+  for (const answer of [
+    `${paragraph}\n\n${"!".repeat(500)}${paragraph}`,
+    `${paragraph}\n\nQué falta verificar\n\n${paragraph}`,
+  ]) {
+    const result = validateQwenCitations({ ...grounded, answer });
+    assert.equal(result.generated, false);
+    assert.equal(result.reason, "response_malformed");
+    assert.deepEqual(result.sources, []);
+    assert.deepEqual(result.results, grounded.results);
+    assert.deepEqual(qwenResponse.parse(result), result);
+    const exported = exportRagResult({
+      method: "qwen", query: "Consulta de riesgos", requestId: "test",
+      seconds: 1, version: "test", model: "Qwen", results: [], response: result,
+    }, "Consulta libre", true);
+    assert.ok(!exported.includes(paragraph));
+    assert.ok(!exported.includes("!!!"));
+    assert.match(exported, /Fragmento normativo/);
+  }
+});
+
+test("normal punctuation and recurring short headings do not suppress valid answers", () => {
+  const answer = "Disposiciones\n\nRevise el manual [GLF::P1].\n\nDisposiciones\n\n¿Qué actividad realizará? ¡Compruebe su alcance!";
+  assert.equal(validateQwenCitations({ ...grounded, answer }).generated, true);
+});
 test("Qwen validates original evidence and safe abstention independently", () => {
   assert.ok(qwenResponse.safeParse(grounded).success);
   assert.ok(

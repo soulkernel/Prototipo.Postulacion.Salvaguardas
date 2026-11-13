@@ -1632,6 +1632,12 @@ export const internalManualChapters: ManualChapter[] = [
         "Insufficient evidence",
         "A possible outcome, not necessarily a service error. Rephrase or review other sources; do not invent a conclusion.",
       ],
+      [
+        "La respuesta no superó el control de calidad",
+        "El modelo devolvió repeticiones o caracteres anómalos. El texto defectuoso se descarta y los pasajes recuperados siguen disponibles. Pulse Volver a consultar o use el buscador E5; no se modifica la evaluación del proyecto.",
+        "The answer failed quality checks",
+        "The model returned repetitions or abnormal characters. The broken answer is discarded and retrieved passages remain available. Click Retry query or use E5 search; the project assessment is not changed.",
+      ],
     ],
     tip: [
       "La consulta no aprueba ni rechaza proyectos, aunque el asistente encuentre una condición de exclusión. Contraste la norma y registre la valoración humana correspondiente.",

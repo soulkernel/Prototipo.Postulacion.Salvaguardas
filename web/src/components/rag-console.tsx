@@ -651,7 +651,9 @@ export function RagConsole({
                 <div className="rag-notice rag-warning">
                   <h3>
                     <AlertCircle size={20} aria-hidden="true" />
-                    {response.reason === "response_truncated" ||
+                    {response.reason === "response_malformed"
+                      ? t("La respuesta no superó el control de calidad", "The answer failed quality checks")
+                      : response.reason === "response_truncated" ||
                     response.reason === "generation_incomplete"
                       ? t(
                           "La generación quedó incompleta",
@@ -667,6 +669,17 @@ export function RagConsole({
                             "Insufficient evidence to answer",
                           )}
                   </h3>
+                  {response.reason === "response_malformed" && (
+                    <>
+                      <p>{t(
+                        "El modelo devolvió texto repetido o caracteres anómalos. La respuesta se descartó; su pregunta y los documentos recuperados siguen disponibles. Puede volver a consultar o utilizar el buscador E5.",
+                        "The model returned repeated text or abnormal characters. The answer was discarded; your question and retrieved documents remain available. Retry or use the E5 search."
+                      )}</p>
+                      <button type="button" className="button secondary" disabled={pending} aria-busy={pending} onClick={() => void submit()}>
+                        {t("Volver a consultar", "Retry query")}
+                      </button>
+                    </>
+                  )}
                   {(response.reason === "response_truncated" ||
                     response.reason === "generation_incomplete") && (
                     <p>
