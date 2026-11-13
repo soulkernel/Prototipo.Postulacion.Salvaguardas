@@ -16,21 +16,23 @@ export default async function EvidencePage({
   const { profile, db } = await requireRagViewer();
   const locale = await getLocale();
   const es = locale === "es";
-  const { data: calls, error: callsError } = await db
-    .from("calls")
-    .select("id,title_es,title_en")
-    .order("opens_at", { ascending: false });
-  if (callsError) throw new Error("Cannot load calls");
-  const { count: approvedCount, error: countError } = await db
-    .from("knowledge_chunks")
-    .select("id", { count: "exact", head: true })
-    .eq("approved", true);
-  if (countError) throw new Error("Corpus status unavailable");
   const academic = profile.access_kind === "academic";
-  const academicCount = academic ? await db.rpc("academic_source_count") : null;
-  const hasApprovedSources = academic
-    ? !academicCount?.error && (academicCount?.data || 0) > 0
-    : (approvedCount || 0) > 0;
+  const [{ data: calls, error: callsError }, hasApprovedSources] = await Promise.all([
+    db.from("calls").select("id,title_es,title_en").order("opens_at", { ascending: false }),
+    (async () => {
+      if (academic) {
+        const { data, error } = await db.rpc("academic_source_count");
+        if (error) throw new Error("Corpus status unavailable");
+        return (data || 0) > 0;
+      }
+      // The page needs availability, not an exact count of the whole corpus.
+      const { data, error } = await db.from("knowledge_chunks")
+        .select("id").eq("approved", true).limit(1);
+      if (error) throw new Error("Corpus status unavailable");
+      return Boolean(data?.length);
+    })(),
+  ]);
+  if (callsError) throw new Error("Cannot load calls");
   return (
     <Shell locale={locale} internal>
       <BackLink href="/internal">{es ? "Volver a expedientes" : "Back to applications"}</BackLink>

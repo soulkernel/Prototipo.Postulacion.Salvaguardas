@@ -19,18 +19,19 @@ export const getViewer = cache(async () => {
   } = await db.auth.getUser();
   if (error && (!error.status || error.status >= 500 || error.status === 429)) throw new Error("GLF_ACCESS_UNAVAILABLE");
   if (error || !user) return null;
-  const { data: profile, error: profileError } = await db
-    .from("profiles")
-    .select(
-      "id,full_name,role,active,user_admin_scope,access_kind,access_expires_at,archived_at",
-    )
-    .eq("id", user.id)
-    .maybeSingle();
+  // Both checks use the verified user/session and must be fresh on every request.
+  const [
+    { data: profile, error: profileError },
+    { data: sessionValid, error: sessionError },
+  ] = await Promise.all([
+    db.from("profiles")
+      .select("id,full_name,role,active,user_admin_scope,access_kind,access_expires_at,archived_at")
+      .eq("id", user.id)
+      .maybeSingle(),
+    db.rpc("access_session_valid"),
+  ]);
   if (profileError) throw new Error("GLF_ACCESS_UNAVAILABLE");
   if (!profile?.active || !roles.includes(profile.role)) return null;
-  const { data: sessionValid, error: sessionError } = await db.rpc(
-    "access_session_valid",
-  );
   if (sessionError) throw new Error("GLF_ACCESS_UNAVAILABLE");
   if (!sessionValid) return null;
   return { db, user, profile: { ...profile, role: profile.role as Role } };

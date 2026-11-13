@@ -7,24 +7,28 @@ import { BackupDestination } from "@/components/backup-destination";
 export default async function BackupsPage() {
   const viewer = await requireViewer(["administrator"]);
   const locale = await getLocale();
-  const calls = await getCallOptions();
-  const applications: {
-    id: string;
-    call_id: string;
-    reference_code: string;
-    title: string;
-    category: string;
-    proponent: string;
-    status: string;
-  }[] = [];
-  for (let offset = 0; ; offset += 250) {
-    const { data, error } = await viewer.db.from("latest_submitted_applications")
-      .select("id,call_id,reference_code,title,category,proponent,status")
-      .order("reference_code").order("id").range(offset, offset + 249);
-    if (error) throw new Error("Cannot load backup applications");
-    applications.push(...(data || []));
-    if (!data || data.length < 250) break;
-  }
+  const [calls, applications] = await Promise.all([
+    getCallOptions(),
+    (async () => {
+      const rows: {
+        id: string;
+        call_id: string;
+        reference_code: string;
+        title: string;
+        category: string;
+        proponent: string;
+        status: string;
+      }[] = [];
+      for (let offset = 0; ; offset += 250) {
+        const { data, error } = await viewer.db.from("latest_submitted_applications")
+          .select("id,call_id,reference_code,title,category,proponent,status")
+          .order("reference_code").order("id").range(offset, offset + 249);
+        if (error) throw new Error("Cannot load backup applications");
+        rows.push(...(data || []));
+        if (!data || data.length < 250) return rows;
+      }
+    })(),
+  ]);
   return (
     <Shell locale={locale} internal>
       <BackupDestination

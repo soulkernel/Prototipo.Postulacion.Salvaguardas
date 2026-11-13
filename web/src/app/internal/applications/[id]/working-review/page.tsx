@@ -42,7 +42,8 @@ export default async function WorkingReviewPage({
       : viewer.profile.role === "committee_member"
         ? ["rubric"]
         : ["administrative"];
-  const sections = await Promise.all(
+  const [sections, { data: history, error: he }] = await Promise.all([
+    Promise.all(
     kinds.map(async (kind) => {
       const [{ data: pin, error: pe }, { data: d, error: de }] = await Promise.all([viewer.db
         .from("call_review_templates")
@@ -68,14 +69,15 @@ export default async function WorkingReviewPage({
       if (te || de) throw new Error("Cannot load working review");
       return { kind: kind as "rubric" | "administrative", t, d };
     }),
-  );
-  const { data: history, error: he } = await viewer.db
+    ),
+    viewer.db
     .from("review_draft_history")
     .select("revision,created_at,notes")
     .eq("application_id", id)
     .eq("reviewer_id", viewer.user.id)
     .order("created_at", { ascending: false })
-    .limit(50);
+    .limit(50),
+  ]);
   if (he) throw new Error("Cannot load review audit");
   return (
     <Shell locale={locale} internal>
